@@ -1,0 +1,1067 @@
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.LevelCheck,"ax",%progbits
+  20              		.align	2
+  21              		.global	LevelCheck
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	LevelCheck, %function
+  25              	LevelCheck:
+  26              	.LFB64:
+  27              		.file 1 "main.c"
+   1:main.c        **** /* ========================================
+   2:main.c        ****  *
+   3:main.c        ****  * Copyright YOUR COMPANY, THE YEAR
+   4:main.c        ****  * All Rights Reserved
+   5:main.c        ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:main.c        ****  *
+   7:main.c        ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:main.c        ****  * WHICH IS THE PROPERTY OF your company.
+   9:main.c        ****  *
+  10:main.c        ****  * ========================================
+  11:main.c        **** */
+  12:main.c        **** #include "project.h"
+  13:main.c        **** 
+  14:main.c        **** CY_ISR_PROTO(LevelCheck);
+  15:main.c        **** static uint16 levelCounter = 0;
+  16:main.c        **** static uint8 zeroCount = 0; 
+  17:main.c        **** static uint8 oneCount = 0; 
+  18:main.c        **** //static uint8 messageBit = 0; 
+  19:main.c        **** static uint8 currentBit = 0;
+  20:main.c        **** 
+  21:main.c        **** int main(void)
+  22:main.c        **** {
+  23:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+  24:main.c        ****     BPF_Comp_Start();
+  25:main.c        ****     ShiftReg_Start();
+  26:main.c        ****     Ref_OpAmp_Start();
+  27:main.c        ****     PGA_Start() ; 
+  28:main.c        ****     OutComp_Start();
+  29:main.c        ****     LevelCount_Start();
+  30:main.c        ****     LeveCountISR_StartEx(LevelCheck);
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 2
+
+
+  31:main.c        ****     
+  32:main.c        ****     HighF_BPF_Comp_Start();
+  33:main.c        ****     HighF_ShiftReg_Start();
+  34:main.c        ****     HighF_Ref_OpAmp_Start();
+  35:main.c        ****     HighF_PGA_Start() ; 
+  36:main.c        ****     HighF_OutComp_Start();
+  37:main.c        ****     HighF_LevelCount_Start();
+  38:main.c        ****     //LeveCountISR_StartEx(LevelCheck);
+  39:main.c        ****     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+  40:main.c        **** 
+  41:main.c        ****     for(;;)
+  42:main.c        ****     {
+  43:main.c        ****         
+  44:main.c        ****         /* Place your application code here. */
+  45:main.c        ****     }
+  46:main.c        **** }
+  47:main.c        **** //Bit length = 0.5s
+  48:main.c        **** //counter period = 0.05s
+  49:main.c        **** //will check bit 10 times, to debounce
+  50:main.c        **** //will set bit after 0.4s (8 checks) 
+  51:main.c        **** CY_ISR(LevelCheck){
+  28              		.loc 1 51 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 08B5     		push	{r3, lr}
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 3, -8
+  35              		.cfi_offset 14, -4
+  52:main.c        ****     levelCounter++;
+  36              		.loc 1 52 0
+  37 0002 114A     		ldr	r2, .L7
+  38 0004 1388     		ldrh	r3, [r2]
+  39 0006 0133     		adds	r3, r3, #1
+  40 0008 1380     		strh	r3, [r2]	@ movhi
+  53:main.c        ****     
+  54:main.c        ****     if(OutComp_GetCompare() != 0){
+  41              		.loc 1 54 0
+  42 000a FFF7FEFF 		bl	OutComp_GetCompare
+  43              	.LVL0:
+  44 000e 20B1     		cbz	r0, .L2
+  55:main.c        ****         oneCount++;
+  45              		.loc 1 55 0
+  46 0010 0D4A     		ldr	r2, .L7
+  47 0012 9378     		ldrb	r3, [r2, #2]	@ zero_extendqisi2
+  48 0014 0133     		adds	r3, r3, #1
+  49 0016 9370     		strb	r3, [r2, #2]
+  50 0018 03E0     		b	.L3
+  51              	.L2:
+  56:main.c        ****     }else{
+  57:main.c        ****         zeroCount++;
+  52              		.loc 1 57 0
+  53 001a 0B4A     		ldr	r2, .L7
+  54 001c D378     		ldrb	r3, [r2, #3]	@ zero_extendqisi2
+  55 001e 0133     		adds	r3, r3, #1
+  56 0020 D370     		strb	r3, [r2, #3]
+  57              	.L3:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 3
+
+
+  58:main.c        ****     }
+  59:main.c        ****     
+  60:main.c        ****     //debouncing every 0.4s, with a check of 7/8 hits 
+  61:main.c        ****     if(levelCounter == 8){
+  58              		.loc 1 61 0
+  59 0022 094B     		ldr	r3, .L7
+  60 0024 1B88     		ldrh	r3, [r3]
+  61 0026 082B     		cmp	r3, #8
+  62 0028 0DD1     		bne	.L1
+  62:main.c        ****         if(oneCount >= 7){
+  63              		.loc 1 62 0
+  64 002a 074B     		ldr	r3, .L7
+  65 002c 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+  66 002e 062B     		cmp	r3, #6
+  67 0030 02D9     		bls	.L5
+  63:main.c        ****             currentBit = 1;
+  64:main.c        ****             oneCount = 1;
+  68              		.loc 1 64 0
+  69 0032 0122     		movs	r2, #1
+  70 0034 044B     		ldr	r3, .L7
+  71 0036 9A70     		strb	r2, [r3, #2]
+  72              	.L5:
+  65:main.c        ****         
+  66:main.c        ****         }if(zeroCount >= 7){
+  73              		.loc 1 66 0
+  74 0038 034B     		ldr	r3, .L7
+  75 003a DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+  76 003c 062B     		cmp	r3, #6
+  77 003e 02D9     		bls	.L1
+  67:main.c        ****             currentBit = 0; 
+  68:main.c        ****             zeroCount = 0; 
+  78              		.loc 1 68 0
+  79 0040 0022     		movs	r2, #0
+  80 0042 014B     		ldr	r3, .L7
+  81 0044 DA70     		strb	r2, [r3, #3]
+  82              	.L1:
+  83 0046 08BD     		pop	{r3, pc}
+  84              	.L8:
+  85              		.align	2
+  86              	.L7:
+  87 0048 00000000 		.word	.LANCHOR0
+  88              		.cfi_endproc
+  89              	.LFE64:
+  90              		.size	LevelCheck, .-LevelCheck
+  91              		.section	.text.main,"ax",%progbits
+  92              		.align	2
+  93              		.global	main
+  94              		.thumb
+  95              		.thumb_func
+  96              		.type	main, %function
+  97              	main:
+  98              	.LFB63:
+  22:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+  99              		.loc 1 22 0
+ 100              		.cfi_startproc
+ 101              		@ Volatile: function does not return.
+ 102              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 4
+
+
+ 103              		@ frame_needed = 0, uses_anonymous_args = 0
+ 104 0000 08B5     		push	{r3, lr}
+ 105              		.cfi_def_cfa_offset 8
+ 106              		.cfi_offset 3, -8
+ 107              		.cfi_offset 14, -4
+  23:main.c        ****     BPF_Comp_Start();
+ 108              		.loc 1 23 0
+ 109              		.syntax unified
+ 110              	@ 23 "main.c" 1
+ 111 0002 62B6     		CPSIE   i
+ 112              	@ 0 "" 2
+  24:main.c        ****     ShiftReg_Start();
+ 113              		.loc 1 24 0
+ 114              		.thumb
+ 115              		.syntax unified
+ 116 0004 FFF7FEFF 		bl	BPF_Comp_Start
+ 117              	.LVL1:
+  25:main.c        ****     Ref_OpAmp_Start();
+ 118              		.loc 1 25 0
+ 119 0008 FFF7FEFF 		bl	ShiftReg_Start
+ 120              	.LVL2:
+  26:main.c        ****     PGA_Start() ; 
+ 121              		.loc 1 26 0
+ 122 000c FFF7FEFF 		bl	Ref_OpAmp_Start
+ 123              	.LVL3:
+  27:main.c        ****     OutComp_Start();
+ 124              		.loc 1 27 0
+ 125 0010 FFF7FEFF 		bl	PGA_Start
+ 126              	.LVL4:
+  28:main.c        ****     LevelCount_Start();
+ 127              		.loc 1 28 0
+ 128 0014 FFF7FEFF 		bl	OutComp_Start
+ 129              	.LVL5:
+  29:main.c        ****     LeveCountISR_StartEx(LevelCheck);
+ 130              		.loc 1 29 0
+ 131 0018 FFF7FEFF 		bl	LevelCount_Start
+ 132              	.LVL6:
+  30:main.c        ****     
+ 133              		.loc 1 30 0
+ 134 001c 0748     		ldr	r0, .L12
+ 135 001e FFF7FEFF 		bl	LeveCountISR_StartEx
+ 136              	.LVL7:
+  32:main.c        ****     HighF_ShiftReg_Start();
+ 137              		.loc 1 32 0
+ 138 0022 FFF7FEFF 		bl	HighF_BPF_Comp_Start
+ 139              	.LVL8:
+  33:main.c        ****     HighF_Ref_OpAmp_Start();
+ 140              		.loc 1 33 0
+ 141 0026 FFF7FEFF 		bl	HighF_ShiftReg_Start
+ 142              	.LVL9:
+  34:main.c        ****     HighF_PGA_Start() ; 
+ 143              		.loc 1 34 0
+ 144 002a FFF7FEFF 		bl	HighF_Ref_OpAmp_Start
+ 145              	.LVL10:
+  35:main.c        ****     HighF_OutComp_Start();
+ 146              		.loc 1 35 0
+ 147 002e FFF7FEFF 		bl	HighF_PGA_Start
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 5
+
+
+ 148              	.LVL11:
+  36:main.c        ****     HighF_LevelCount_Start();
+ 149              		.loc 1 36 0
+ 150 0032 FFF7FEFF 		bl	HighF_OutComp_Start
+ 151              	.LVL12:
+  37:main.c        ****     //LeveCountISR_StartEx(LevelCheck);
+ 152              		.loc 1 37 0
+ 153 0036 FFF7FEFF 		bl	HighF_LevelCount_Start
+ 154              	.LVL13:
+ 155              	.L10:
+ 156 003a FEE7     		b	.L10
+ 157              	.L13:
+ 158              		.align	2
+ 159              	.L12:
+ 160 003c 00000000 		.word	LevelCheck
+ 161              		.cfi_endproc
+ 162              	.LFE63:
+ 163              		.size	main, .-main
+ 164              		.bss
+ 165              		.align	1
+ 166              		.set	.LANCHOR0,. + 0
+ 167              		.type	levelCounter, %object
+ 168              		.size	levelCounter, 2
+ 169              	levelCounter:
+ 170 0000 0000     		.space	2
+ 171              		.type	oneCount, %object
+ 172              		.size	oneCount, 1
+ 173              	oneCount:
+ 174 0002 00       		.space	1
+ 175              		.type	zeroCount, %object
+ 176              		.size	zeroCount, 1
+ 177              	zeroCount:
+ 178 0003 00       		.space	1
+ 179              		.text
+ 180              	.Letext0:
+ 181              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 182              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 183              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 184              		.file 5 "Generated_Source\\PSoC5/OutComp.h"
+ 185              		.file 6 "Generated_Source\\PSoC5/BPF_Comp.h"
+ 186              		.file 7 "Generated_Source\\PSoC5/ShiftReg.h"
+ 187              		.file 8 "Generated_Source\\PSoC5/Ref_OpAmp.h"
+ 188              		.file 9 "Generated_Source\\PSoC5/PGA.h"
+ 189              		.file 10 "Generated_Source\\PSoC5/LevelCount.h"
+ 190              		.file 11 "Generated_Source\\PSoC5/LeveCountISR.h"
+ 191              		.file 12 "Generated_Source\\PSoC5/HighF_BPF_Comp.h"
+ 192              		.file 13 "Generated_Source\\PSoC5/HighF_ShiftReg.h"
+ 193              		.file 14 "Generated_Source\\PSoC5/HighF_Ref_OpAmp.h"
+ 194              		.file 15 "Generated_Source\\PSoC5/HighF_PGA.h"
+ 195              		.file 16 "Generated_Source\\PSoC5/HighF_OutComp.h"
+ 196              		.file 17 "Generated_Source\\PSoC5/HighF_LevelCount.h"
+ 197              		.file 18 "Generated_Source\\PSoC5/core_cm3.h"
+ 198              		.section	.debug_info,"",%progbits
+ 199              	.Ldebug_info0:
+ 200 0000 5E020000 		.4byte	0x25e
+ 201 0004 0400     		.2byte	0x4
+ 202 0006 00000000 		.4byte	.Ldebug_abbrev0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 6
+
+
+ 203 000a 04       		.byte	0x4
+ 204 000b 01       		.uleb128 0x1
+ 205 000c C2000000 		.4byte	.LASF35
+ 206 0010 0C       		.byte	0xc
+ 207 0011 3E020000 		.4byte	.LASF36
+ 208 0015 43000000 		.4byte	.LASF37
+ 209 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 210 001d 00000000 		.4byte	0
+ 211 0021 00000000 		.4byte	.Ldebug_line0
+ 212 0025 02       		.uleb128 0x2
+ 213 0026 01       		.byte	0x1
+ 214 0027 06       		.byte	0x6
+ 215 0028 A0020000 		.4byte	.LASF0
+ 216 002c 02       		.uleb128 0x2
+ 217 002d 01       		.byte	0x1
+ 218 002e 08       		.byte	0x8
+ 219 002f B4000000 		.4byte	.LASF1
+ 220 0033 02       		.uleb128 0x2
+ 221 0034 02       		.byte	0x2
+ 222 0035 05       		.byte	0x5
+ 223 0036 6E020000 		.4byte	.LASF2
+ 224 003a 02       		.uleb128 0x2
+ 225 003b 02       		.byte	0x2
+ 226 003c 07       		.byte	0x7
+ 227 003d 6C010000 		.4byte	.LASF3
+ 228 0041 03       		.uleb128 0x3
+ 229 0042 28000000 		.4byte	.LASF9
+ 230 0046 02       		.byte	0x2
+ 231 0047 3F       		.byte	0x3f
+ 232 0048 4C000000 		.4byte	0x4c
+ 233 004c 02       		.uleb128 0x2
+ 234 004d 04       		.byte	0x4
+ 235 004e 05       		.byte	0x5
+ 236 004f 8D020000 		.4byte	.LASF4
+ 237 0053 02       		.uleb128 0x2
+ 238 0054 04       		.byte	0x4
+ 239 0055 07       		.byte	0x7
+ 240 0056 5A010000 		.4byte	.LASF5
+ 241 005a 02       		.uleb128 0x2
+ 242 005b 08       		.byte	0x8
+ 243 005c 05       		.byte	0x5
+ 244 005d 30020000 		.4byte	.LASF6
+ 245 0061 02       		.uleb128 0x2
+ 246 0062 08       		.byte	0x8
+ 247 0063 07       		.byte	0x7
+ 248 0064 C3020000 		.4byte	.LASF7
+ 249 0068 04       		.uleb128 0x4
+ 250 0069 04       		.byte	0x4
+ 251 006a 05       		.byte	0x5
+ 252 006b 696E7400 		.ascii	"int\000"
+ 253 006f 02       		.uleb128 0x2
+ 254 0070 04       		.byte	0x4
+ 255 0071 07       		.byte	0x7
+ 256 0072 C4010000 		.4byte	.LASF8
+ 257 0076 03       		.uleb128 0x3
+ 258 0077 8C000000 		.4byte	.LASF10
+ 259 007b 03       		.byte	0x3
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 7
+
+
+ 260 007c 2C       		.byte	0x2c
+ 261 007d 41000000 		.4byte	0x41
+ 262 0081 05       		.uleb128 0x5
+ 263 0082 87020000 		.4byte	.LASF11
+ 264 0086 04       		.byte	0x4
+ 265 0087 9201     		.2byte	0x192
+ 266 0089 2C000000 		.4byte	0x2c
+ 267 008d 05       		.uleb128 0x5
+ 268 008e A8010000 		.4byte	.LASF12
+ 269 0092 04       		.byte	0x4
+ 270 0093 9301     		.2byte	0x193
+ 271 0095 3A000000 		.4byte	0x3a
+ 272 0099 02       		.uleb128 0x2
+ 273 009a 04       		.byte	0x4
+ 274 009b 04       		.byte	0x4
+ 275 009c 94000000 		.4byte	.LASF13
+ 276 00a0 02       		.uleb128 0x2
+ 277 00a1 08       		.byte	0x8
+ 278 00a2 04       		.byte	0x4
+ 279 00a3 8C010000 		.4byte	.LASF14
+ 280 00a7 02       		.uleb128 0x2
+ 281 00a8 01       		.byte	0x1
+ 282 00a9 08       		.byte	0x8
+ 283 00aa 45020000 		.4byte	.LASF15
+ 284 00ae 02       		.uleb128 0x2
+ 285 00af 08       		.byte	0x8
+ 286 00b0 04       		.byte	0x4
+ 287 00b1 07020000 		.4byte	.LASF16
+ 288 00b5 02       		.uleb128 0x2
+ 289 00b6 04       		.byte	0x4
+ 290 00b7 07       		.byte	0x7
+ 291 00b8 27020000 		.4byte	.LASF17
+ 292 00bc 06       		.uleb128 0x6
+ 293 00bd 9A000000 		.4byte	.LASF38
+ 294 00c1 01       		.byte	0x1
+ 295 00c2 33       		.byte	0x33
+ 296 00c3 00000000 		.4byte	.LFB64
+ 297 00c7 4C000000 		.4byte	.LFE64-.LFB64
+ 298 00cb 01       		.uleb128 0x1
+ 299 00cc 9C       		.byte	0x9c
+ 300 00cd DB000000 		.4byte	0xdb
+ 301 00d1 07       		.uleb128 0x7
+ 302 00d2 0E000000 		.4byte	.LVL0
+ 303 00d6 C7010000 		.4byte	0x1c7
+ 304 00da 00       		.byte	0
+ 305 00db 08       		.uleb128 0x8
+ 306 00dc A3010000 		.4byte	.LASF39
+ 307 00e0 01       		.byte	0x1
+ 308 00e1 15       		.byte	0x15
+ 309 00e2 68000000 		.4byte	0x68
+ 310 00e6 00000000 		.4byte	.LFB63
+ 311 00ea 40000000 		.4byte	.LFE63-.LFB63
+ 312 00ee 01       		.uleb128 0x1
+ 313 00ef 9C       		.byte	0x9c
+ 314 00f0 78010000 		.4byte	0x178
+ 315 00f4 07       		.uleb128 0x7
+ 316 00f5 08000000 		.4byte	.LVL1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 8
+
+
+ 317 00f9 D2010000 		.4byte	0x1d2
+ 318 00fd 07       		.uleb128 0x7
+ 319 00fe 0C000000 		.4byte	.LVL2
+ 320 0102 DD010000 		.4byte	0x1dd
+ 321 0106 07       		.uleb128 0x7
+ 322 0107 10000000 		.4byte	.LVL3
+ 323 010b E8010000 		.4byte	0x1e8
+ 324 010f 07       		.uleb128 0x7
+ 325 0110 14000000 		.4byte	.LVL4
+ 326 0114 F3010000 		.4byte	0x1f3
+ 327 0118 07       		.uleb128 0x7
+ 328 0119 18000000 		.4byte	.LVL5
+ 329 011d FE010000 		.4byte	0x1fe
+ 330 0121 07       		.uleb128 0x7
+ 331 0122 1C000000 		.4byte	.LVL6
+ 332 0126 09020000 		.4byte	0x209
+ 333 012a 09       		.uleb128 0x9
+ 334 012b 22000000 		.4byte	.LVL7
+ 335 012f 14020000 		.4byte	0x214
+ 336 0133 41010000 		.4byte	0x141
+ 337 0137 0A       		.uleb128 0xa
+ 338 0138 01       		.uleb128 0x1
+ 339 0139 50       		.byte	0x50
+ 340 013a 05       		.uleb128 0x5
+ 341 013b 03       		.byte	0x3
+ 342 013c 00000000 		.4byte	LevelCheck
+ 343 0140 00       		.byte	0
+ 344 0141 07       		.uleb128 0x7
+ 345 0142 26000000 		.4byte	.LVL8
+ 346 0146 1F020000 		.4byte	0x21f
+ 347 014a 07       		.uleb128 0x7
+ 348 014b 2A000000 		.4byte	.LVL9
+ 349 014f 2A020000 		.4byte	0x22a
+ 350 0153 07       		.uleb128 0x7
+ 351 0154 2E000000 		.4byte	.LVL10
+ 352 0158 35020000 		.4byte	0x235
+ 353 015c 07       		.uleb128 0x7
+ 354 015d 32000000 		.4byte	.LVL11
+ 355 0161 40020000 		.4byte	0x240
+ 356 0165 07       		.uleb128 0x7
+ 357 0166 36000000 		.4byte	.LVL12
+ 358 016a 4B020000 		.4byte	0x24b
+ 359 016e 07       		.uleb128 0x7
+ 360 016f 3A000000 		.4byte	.LVL13
+ 361 0173 56020000 		.4byte	0x256
+ 362 0177 00       		.byte	0
+ 363 0178 0B       		.uleb128 0xb
+ 364 0179 EF010000 		.4byte	.LASF18
+ 365 017d 01       		.byte	0x1
+ 366 017e 0F       		.byte	0xf
+ 367 017f 8D000000 		.4byte	0x8d
+ 368 0183 05       		.uleb128 0x5
+ 369 0184 03       		.byte	0x3
+ 370 0185 00000000 		.4byte	levelCounter
+ 371 0189 0B       		.uleb128 0xb
+ 372 018a 50010000 		.4byte	.LASF19
+ 373 018e 01       		.byte	0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 9
+
+
+ 374 018f 10       		.byte	0x10
+ 375 0190 81000000 		.4byte	0x81
+ 376 0194 05       		.uleb128 0x5
+ 377 0195 03       		.byte	0x3
+ 378 0196 03000000 		.4byte	zeroCount
+ 379 019a 0B       		.uleb128 0xb
+ 380 019b E6010000 		.4byte	.LASF20
+ 381 019f 01       		.byte	0x1
+ 382 01a0 11       		.byte	0x11
+ 383 01a1 81000000 		.4byte	0x81
+ 384 01a5 05       		.uleb128 0x5
+ 385 01a6 03       		.byte	0x3
+ 386 01a7 02000000 		.4byte	oneCount
+ 387 01ab 0C       		.uleb128 0xc
+ 388 01ac FC010000 		.4byte	.LASF40
+ 389 01b0 01       		.byte	0x1
+ 390 01b1 13       		.byte	0x13
+ 391 01b2 81000000 		.4byte	0x81
+ 392 01b6 0D       		.uleb128 0xd
+ 393 01b7 7F010000 		.4byte	.LASF41
+ 394 01bb 12       		.byte	0x12
+ 395 01bc 1207     		.2byte	0x712
+ 396 01be C2010000 		.4byte	0x1c2
+ 397 01c2 0E       		.uleb128 0xe
+ 398 01c3 76000000 		.4byte	0x76
+ 399 01c7 0F       		.uleb128 0xf
+ 400 01c8 15000000 		.4byte	.LASF21
+ 401 01cc 15000000 		.4byte	.LASF21
+ 402 01d0 05       		.byte	0x5
+ 403 01d1 42       		.byte	0x42
+ 404 01d2 0F       		.uleb128 0xf
+ 405 01d3 78020000 		.4byte	.LASF22
+ 406 01d7 78020000 		.4byte	.LASF22
+ 407 01db 06       		.byte	0x6
+ 408 01dc 3F       		.byte	0x3f
+ 409 01dd 0F       		.uleb128 0xf
+ 410 01de A5000000 		.4byte	.LASF23
+ 411 01e2 A5000000 		.4byte	.LASF23
+ 412 01e6 07       		.byte	0x7
+ 413 01e7 3C       		.byte	0x3c
+ 414 01e8 0F       		.uleb128 0xf
+ 415 01e9 93010000 		.4byte	.LASF24
+ 416 01ed 93010000 		.4byte	.LASF24
+ 417 01f1 08       		.byte	0x8
+ 418 01f2 33       		.byte	0x33
+ 419 01f3 0F       		.uleb128 0xf
+ 420 01f4 96020000 		.4byte	.LASF25
+ 421 01f8 96020000 		.4byte	.LASF25
+ 422 01fc 09       		.byte	0x9
+ 423 01fd 3E       		.byte	0x3e
+ 424 01fe 0F       		.uleb128 0xf
+ 425 01ff 60020000 		.4byte	.LASF26
+ 426 0203 60020000 		.4byte	.LASF26
+ 427 0207 05       		.byte	0x5
+ 428 0208 3F       		.byte	0x3f
+ 429 0209 0F       		.uleb128 0xf
+ 430 020a 32000000 		.4byte	.LASF27
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 10
+
+
+ 431 020e 32000000 		.4byte	.LASF27
+ 432 0212 0A       		.byte	0xa
+ 433 0213 4F       		.byte	0x4f
+ 434 0214 0F       		.uleb128 0xf
+ 435 0215 D1010000 		.4byte	.LASF28
+ 436 0219 D1010000 		.4byte	.LASF28
+ 437 021d 0B       		.byte	0xb
+ 438 021e 18       		.byte	0x18
+ 439 021f 0F       		.uleb128 0xf
+ 440 0220 AF010000 		.4byte	.LASF29
+ 441 0224 AF010000 		.4byte	.LASF29
+ 442 0228 0C       		.byte	0xc
+ 443 0229 3F       		.byte	0x3f
+ 444 022a 0F       		.uleb128 0xf
+ 445 022b 00000000 		.4byte	.LASF30
+ 446 022f 00000000 		.4byte	.LASF30
+ 447 0233 0D       		.byte	0xd
+ 448 0234 3C       		.byte	0x3c
+ 449 0235 0F       		.uleb128 0xf
+ 450 0236 4A020000 		.4byte	.LASF31
+ 451 023a 4A020000 		.4byte	.LASF31
+ 452 023e 0E       		.byte	0xe
+ 453 023f 33       		.byte	0x33
+ 454 0240 0F       		.uleb128 0xf
+ 455 0241 7C000000 		.4byte	.LASF32
+ 456 0245 7C000000 		.4byte	.LASF32
+ 457 0249 0F       		.byte	0xf
+ 458 024a 3E       		.byte	0x3e
+ 459 024b 0F       		.uleb128 0xf
+ 460 024c 13020000 		.4byte	.LASF33
+ 461 0250 13020000 		.4byte	.LASF33
+ 462 0254 10       		.byte	0x10
+ 463 0255 3F       		.byte	0x3f
+ 464 0256 0F       		.uleb128 0xf
+ 465 0257 AC020000 		.4byte	.LASF34
+ 466 025b AC020000 		.4byte	.LASF34
+ 467 025f 11       		.byte	0x11
+ 468 0260 4F       		.byte	0x4f
+ 469 0261 00       		.byte	0
+ 470              		.section	.debug_abbrev,"",%progbits
+ 471              	.Ldebug_abbrev0:
+ 472 0000 01       		.uleb128 0x1
+ 473 0001 11       		.uleb128 0x11
+ 474 0002 01       		.byte	0x1
+ 475 0003 25       		.uleb128 0x25
+ 476 0004 0E       		.uleb128 0xe
+ 477 0005 13       		.uleb128 0x13
+ 478 0006 0B       		.uleb128 0xb
+ 479 0007 03       		.uleb128 0x3
+ 480 0008 0E       		.uleb128 0xe
+ 481 0009 1B       		.uleb128 0x1b
+ 482 000a 0E       		.uleb128 0xe
+ 483 000b 55       		.uleb128 0x55
+ 484 000c 17       		.uleb128 0x17
+ 485 000d 11       		.uleb128 0x11
+ 486 000e 01       		.uleb128 0x1
+ 487 000f 10       		.uleb128 0x10
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 11
+
+
+ 488 0010 17       		.uleb128 0x17
+ 489 0011 00       		.byte	0
+ 490 0012 00       		.byte	0
+ 491 0013 02       		.uleb128 0x2
+ 492 0014 24       		.uleb128 0x24
+ 493 0015 00       		.byte	0
+ 494 0016 0B       		.uleb128 0xb
+ 495 0017 0B       		.uleb128 0xb
+ 496 0018 3E       		.uleb128 0x3e
+ 497 0019 0B       		.uleb128 0xb
+ 498 001a 03       		.uleb128 0x3
+ 499 001b 0E       		.uleb128 0xe
+ 500 001c 00       		.byte	0
+ 501 001d 00       		.byte	0
+ 502 001e 03       		.uleb128 0x3
+ 503 001f 16       		.uleb128 0x16
+ 504 0020 00       		.byte	0
+ 505 0021 03       		.uleb128 0x3
+ 506 0022 0E       		.uleb128 0xe
+ 507 0023 3A       		.uleb128 0x3a
+ 508 0024 0B       		.uleb128 0xb
+ 509 0025 3B       		.uleb128 0x3b
+ 510 0026 0B       		.uleb128 0xb
+ 511 0027 49       		.uleb128 0x49
+ 512 0028 13       		.uleb128 0x13
+ 513 0029 00       		.byte	0
+ 514 002a 00       		.byte	0
+ 515 002b 04       		.uleb128 0x4
+ 516 002c 24       		.uleb128 0x24
+ 517 002d 00       		.byte	0
+ 518 002e 0B       		.uleb128 0xb
+ 519 002f 0B       		.uleb128 0xb
+ 520 0030 3E       		.uleb128 0x3e
+ 521 0031 0B       		.uleb128 0xb
+ 522 0032 03       		.uleb128 0x3
+ 523 0033 08       		.uleb128 0x8
+ 524 0034 00       		.byte	0
+ 525 0035 00       		.byte	0
+ 526 0036 05       		.uleb128 0x5
+ 527 0037 16       		.uleb128 0x16
+ 528 0038 00       		.byte	0
+ 529 0039 03       		.uleb128 0x3
+ 530 003a 0E       		.uleb128 0xe
+ 531 003b 3A       		.uleb128 0x3a
+ 532 003c 0B       		.uleb128 0xb
+ 533 003d 3B       		.uleb128 0x3b
+ 534 003e 05       		.uleb128 0x5
+ 535 003f 49       		.uleb128 0x49
+ 536 0040 13       		.uleb128 0x13
+ 537 0041 00       		.byte	0
+ 538 0042 00       		.byte	0
+ 539 0043 06       		.uleb128 0x6
+ 540 0044 2E       		.uleb128 0x2e
+ 541 0045 01       		.byte	0x1
+ 542 0046 3F       		.uleb128 0x3f
+ 543 0047 19       		.uleb128 0x19
+ 544 0048 03       		.uleb128 0x3
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 12
+
+
+ 545 0049 0E       		.uleb128 0xe
+ 546 004a 3A       		.uleb128 0x3a
+ 547 004b 0B       		.uleb128 0xb
+ 548 004c 3B       		.uleb128 0x3b
+ 549 004d 0B       		.uleb128 0xb
+ 550 004e 27       		.uleb128 0x27
+ 551 004f 19       		.uleb128 0x19
+ 552 0050 11       		.uleb128 0x11
+ 553 0051 01       		.uleb128 0x1
+ 554 0052 12       		.uleb128 0x12
+ 555 0053 06       		.uleb128 0x6
+ 556 0054 40       		.uleb128 0x40
+ 557 0055 18       		.uleb128 0x18
+ 558 0056 9742     		.uleb128 0x2117
+ 559 0058 19       		.uleb128 0x19
+ 560 0059 01       		.uleb128 0x1
+ 561 005a 13       		.uleb128 0x13
+ 562 005b 00       		.byte	0
+ 563 005c 00       		.byte	0
+ 564 005d 07       		.uleb128 0x7
+ 565 005e 898201   		.uleb128 0x4109
+ 566 0061 00       		.byte	0
+ 567 0062 11       		.uleb128 0x11
+ 568 0063 01       		.uleb128 0x1
+ 569 0064 31       		.uleb128 0x31
+ 570 0065 13       		.uleb128 0x13
+ 571 0066 00       		.byte	0
+ 572 0067 00       		.byte	0
+ 573 0068 08       		.uleb128 0x8
+ 574 0069 2E       		.uleb128 0x2e
+ 575 006a 01       		.byte	0x1
+ 576 006b 3F       		.uleb128 0x3f
+ 577 006c 19       		.uleb128 0x19
+ 578 006d 03       		.uleb128 0x3
+ 579 006e 0E       		.uleb128 0xe
+ 580 006f 3A       		.uleb128 0x3a
+ 581 0070 0B       		.uleb128 0xb
+ 582 0071 3B       		.uleb128 0x3b
+ 583 0072 0B       		.uleb128 0xb
+ 584 0073 27       		.uleb128 0x27
+ 585 0074 19       		.uleb128 0x19
+ 586 0075 49       		.uleb128 0x49
+ 587 0076 13       		.uleb128 0x13
+ 588 0077 8701     		.uleb128 0x87
+ 589 0079 19       		.uleb128 0x19
+ 590 007a 11       		.uleb128 0x11
+ 591 007b 01       		.uleb128 0x1
+ 592 007c 12       		.uleb128 0x12
+ 593 007d 06       		.uleb128 0x6
+ 594 007e 40       		.uleb128 0x40
+ 595 007f 18       		.uleb128 0x18
+ 596 0080 9742     		.uleb128 0x2117
+ 597 0082 19       		.uleb128 0x19
+ 598 0083 01       		.uleb128 0x1
+ 599 0084 13       		.uleb128 0x13
+ 600 0085 00       		.byte	0
+ 601 0086 00       		.byte	0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 13
+
+
+ 602 0087 09       		.uleb128 0x9
+ 603 0088 898201   		.uleb128 0x4109
+ 604 008b 01       		.byte	0x1
+ 605 008c 11       		.uleb128 0x11
+ 606 008d 01       		.uleb128 0x1
+ 607 008e 31       		.uleb128 0x31
+ 608 008f 13       		.uleb128 0x13
+ 609 0090 01       		.uleb128 0x1
+ 610 0091 13       		.uleb128 0x13
+ 611 0092 00       		.byte	0
+ 612 0093 00       		.byte	0
+ 613 0094 0A       		.uleb128 0xa
+ 614 0095 8A8201   		.uleb128 0x410a
+ 615 0098 00       		.byte	0
+ 616 0099 02       		.uleb128 0x2
+ 617 009a 18       		.uleb128 0x18
+ 618 009b 9142     		.uleb128 0x2111
+ 619 009d 18       		.uleb128 0x18
+ 620 009e 00       		.byte	0
+ 621 009f 00       		.byte	0
+ 622 00a0 0B       		.uleb128 0xb
+ 623 00a1 34       		.uleb128 0x34
+ 624 00a2 00       		.byte	0
+ 625 00a3 03       		.uleb128 0x3
+ 626 00a4 0E       		.uleb128 0xe
+ 627 00a5 3A       		.uleb128 0x3a
+ 628 00a6 0B       		.uleb128 0xb
+ 629 00a7 3B       		.uleb128 0x3b
+ 630 00a8 0B       		.uleb128 0xb
+ 631 00a9 49       		.uleb128 0x49
+ 632 00aa 13       		.uleb128 0x13
+ 633 00ab 02       		.uleb128 0x2
+ 634 00ac 18       		.uleb128 0x18
+ 635 00ad 00       		.byte	0
+ 636 00ae 00       		.byte	0
+ 637 00af 0C       		.uleb128 0xc
+ 638 00b0 34       		.uleb128 0x34
+ 639 00b1 00       		.byte	0
+ 640 00b2 03       		.uleb128 0x3
+ 641 00b3 0E       		.uleb128 0xe
+ 642 00b4 3A       		.uleb128 0x3a
+ 643 00b5 0B       		.uleb128 0xb
+ 644 00b6 3B       		.uleb128 0x3b
+ 645 00b7 0B       		.uleb128 0xb
+ 646 00b8 49       		.uleb128 0x49
+ 647 00b9 13       		.uleb128 0x13
+ 648 00ba 00       		.byte	0
+ 649 00bb 00       		.byte	0
+ 650 00bc 0D       		.uleb128 0xd
+ 651 00bd 34       		.uleb128 0x34
+ 652 00be 00       		.byte	0
+ 653 00bf 03       		.uleb128 0x3
+ 654 00c0 0E       		.uleb128 0xe
+ 655 00c1 3A       		.uleb128 0x3a
+ 656 00c2 0B       		.uleb128 0xb
+ 657 00c3 3B       		.uleb128 0x3b
+ 658 00c4 05       		.uleb128 0x5
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 14
+
+
+ 659 00c5 49       		.uleb128 0x49
+ 660 00c6 13       		.uleb128 0x13
+ 661 00c7 3F       		.uleb128 0x3f
+ 662 00c8 19       		.uleb128 0x19
+ 663 00c9 3C       		.uleb128 0x3c
+ 664 00ca 19       		.uleb128 0x19
+ 665 00cb 00       		.byte	0
+ 666 00cc 00       		.byte	0
+ 667 00cd 0E       		.uleb128 0xe
+ 668 00ce 35       		.uleb128 0x35
+ 669 00cf 00       		.byte	0
+ 670 00d0 49       		.uleb128 0x49
+ 671 00d1 13       		.uleb128 0x13
+ 672 00d2 00       		.byte	0
+ 673 00d3 00       		.byte	0
+ 674 00d4 0F       		.uleb128 0xf
+ 675 00d5 2E       		.uleb128 0x2e
+ 676 00d6 00       		.byte	0
+ 677 00d7 3F       		.uleb128 0x3f
+ 678 00d8 19       		.uleb128 0x19
+ 679 00d9 3C       		.uleb128 0x3c
+ 680 00da 19       		.uleb128 0x19
+ 681 00db 6E       		.uleb128 0x6e
+ 682 00dc 0E       		.uleb128 0xe
+ 683 00dd 03       		.uleb128 0x3
+ 684 00de 0E       		.uleb128 0xe
+ 685 00df 3A       		.uleb128 0x3a
+ 686 00e0 0B       		.uleb128 0xb
+ 687 00e1 3B       		.uleb128 0x3b
+ 688 00e2 0B       		.uleb128 0xb
+ 689 00e3 00       		.byte	0
+ 690 00e4 00       		.byte	0
+ 691 00e5 00       		.byte	0
+ 692              		.section	.debug_aranges,"",%progbits
+ 693 0000 24000000 		.4byte	0x24
+ 694 0004 0200     		.2byte	0x2
+ 695 0006 00000000 		.4byte	.Ldebug_info0
+ 696 000a 04       		.byte	0x4
+ 697 000b 00       		.byte	0
+ 698 000c 0000     		.2byte	0
+ 699 000e 0000     		.2byte	0
+ 700 0010 00000000 		.4byte	.LFB64
+ 701 0014 4C000000 		.4byte	.LFE64-.LFB64
+ 702 0018 00000000 		.4byte	.LFB63
+ 703 001c 40000000 		.4byte	.LFE63-.LFB63
+ 704 0020 00000000 		.4byte	0
+ 705 0024 00000000 		.4byte	0
+ 706              		.section	.debug_ranges,"",%progbits
+ 707              	.Ldebug_ranges0:
+ 708 0000 00000000 		.4byte	.LFB64
+ 709 0004 4C000000 		.4byte	.LFE64
+ 710 0008 00000000 		.4byte	.LFB63
+ 711 000c 40000000 		.4byte	.LFE63
+ 712 0010 00000000 		.4byte	0
+ 713 0014 00000000 		.4byte	0
+ 714              		.section	.debug_line,"",%progbits
+ 715              	.Ldebug_line0:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 15
+
+
+ 716 0000 5F020000 		.section	.debug_str,"MS",%progbits,1
+ 716      02002402 
+ 716      00000201 
+ 716      FB0E0D00 
+ 716      01010101 
+ 717              	.LASF30:
+ 718 0000 48696768 		.ascii	"HighF_ShiftReg_Start\000"
+ 718      465F5368 
+ 718      69667452 
+ 718      65675F53 
+ 718      74617274 
+ 719              	.LASF21:
+ 720 0015 4F757443 		.ascii	"OutComp_GetCompare\000"
+ 720      6F6D705F 
+ 720      47657443 
+ 720      6F6D7061 
+ 720      726500
+ 721              	.LASF9:
+ 722 0028 5F5F696E 		.ascii	"__int32_t\000"
+ 722      7433325F 
+ 722      7400
+ 723              	.LASF27:
+ 724 0032 4C657665 		.ascii	"LevelCount_Start\000"
+ 724      6C436F75 
+ 724      6E745F53 
+ 724      74617274 
+ 724      00
+ 725              	.LASF37:
+ 726 0043 433A5C55 		.ascii	"C:\\Users\\ipfajard\\Documents\\PSoC Creator\\FSK\\"
+ 726      73657273 
+ 726      5C697066 
+ 726      616A6172 
+ 726      645C446F 
+ 727 0070 46534B52 		.ascii	"FSKRx.cydsn\000"
+ 727      782E6379 
+ 727      64736E00 
+ 728              	.LASF32:
+ 729 007c 48696768 		.ascii	"HighF_PGA_Start\000"
+ 729      465F5047 
+ 729      415F5374 
+ 729      61727400 
+ 730              	.LASF10:
+ 731 008c 696E7433 		.ascii	"int32_t\000"
+ 731      325F7400 
+ 732              	.LASF13:
+ 733 0094 666C6F61 		.ascii	"float\000"
+ 733      7400
+ 734              	.LASF38:
+ 735 009a 4C657665 		.ascii	"LevelCheck\000"
+ 735      6C436865 
+ 735      636B00
+ 736              	.LASF23:
+ 737 00a5 53686966 		.ascii	"ShiftReg_Start\000"
+ 737      74526567 
+ 737      5F537461 
+ 737      727400
+ 738              	.LASF1:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 16
+
+
+ 739 00b4 756E7369 		.ascii	"unsigned char\000"
+ 739      676E6564 
+ 739      20636861 
+ 739      7200
+ 740              	.LASF35:
+ 741 00c2 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 741      43313120 
+ 741      352E342E 
+ 741      31203230 
+ 741      31363036 
+ 742 00f5 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 742      20726576 
+ 742      6973696F 
+ 742      6E203233 
+ 742      37373135 
+ 743 0128 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 743      66756E63 
+ 743      74696F6E 
+ 743      2D736563 
+ 743      74696F6E 
+ 744              	.LASF19:
+ 745 0150 7A65726F 		.ascii	"zeroCount\000"
+ 745      436F756E 
+ 745      7400
+ 746              	.LASF5:
+ 747 015a 6C6F6E67 		.ascii	"long unsigned int\000"
+ 747      20756E73 
+ 747      69676E65 
+ 747      6420696E 
+ 747      7400
+ 748              	.LASF3:
+ 749 016c 73686F72 		.ascii	"short unsigned int\000"
+ 749      7420756E 
+ 749      7369676E 
+ 749      65642069 
+ 749      6E7400
+ 750              	.LASF41:
+ 751 017f 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 751      52784275 
+ 751      66666572 
+ 751      00
+ 752              	.LASF14:
+ 753 018c 646F7562 		.ascii	"double\000"
+ 753      6C6500
+ 754              	.LASF24:
+ 755 0193 5265665F 		.ascii	"Ref_OpAmp_Start\000"
+ 755      4F70416D 
+ 755      705F5374 
+ 755      61727400 
+ 756              	.LASF39:
+ 757 01a3 6D61696E 		.ascii	"main\000"
+ 757      00
+ 758              	.LASF12:
+ 759 01a8 75696E74 		.ascii	"uint16\000"
+ 759      313600
+ 760              	.LASF29:
+ 761 01af 48696768 		.ascii	"HighF_BPF_Comp_Start\000"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 17
+
+
+ 761      465F4250 
+ 761      465F436F 
+ 761      6D705F53 
+ 761      74617274 
+ 762              	.LASF8:
+ 763 01c4 756E7369 		.ascii	"unsigned int\000"
+ 763      676E6564 
+ 763      20696E74 
+ 763      00
+ 764              	.LASF28:
+ 765 01d1 4C657665 		.ascii	"LeveCountISR_StartEx\000"
+ 765      436F756E 
+ 765      74495352 
+ 765      5F537461 
+ 765      72744578 
+ 766              	.LASF20:
+ 767 01e6 6F6E6543 		.ascii	"oneCount\000"
+ 767      6F756E74 
+ 767      00
+ 768              	.LASF18:
+ 769 01ef 6C657665 		.ascii	"levelCounter\000"
+ 769      6C436F75 
+ 769      6E746572 
+ 769      00
+ 770              	.LASF40:
+ 771 01fc 63757272 		.ascii	"currentBit\000"
+ 771      656E7442 
+ 771      697400
+ 772              	.LASF16:
+ 773 0207 6C6F6E67 		.ascii	"long double\000"
+ 773      20646F75 
+ 773      626C6500 
+ 774              	.LASF33:
+ 775 0213 48696768 		.ascii	"HighF_OutComp_Start\000"
+ 775      465F4F75 
+ 775      74436F6D 
+ 775      705F5374 
+ 775      61727400 
+ 776              	.LASF17:
+ 777 0227 73697A65 		.ascii	"sizetype\000"
+ 777      74797065 
+ 777      00
+ 778              	.LASF6:
+ 779 0230 6C6F6E67 		.ascii	"long long int\000"
+ 779      206C6F6E 
+ 779      6720696E 
+ 779      7400
+ 780              	.LASF36:
+ 781 023e 6D61696E 		.ascii	"main.c\000"
+ 781      2E6300
+ 782              	.LASF15:
+ 783 0245 63686172 		.ascii	"char\000"
+ 783      00
+ 784              	.LASF31:
+ 785 024a 48696768 		.ascii	"HighF_Ref_OpAmp_Start\000"
+ 785      465F5265 
+ 785      665F4F70 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccVHE3iu.s 			page 18
+
+
+ 785      416D705F 
+ 785      53746172 
+ 786              	.LASF26:
+ 787 0260 4F757443 		.ascii	"OutComp_Start\000"
+ 787      6F6D705F 
+ 787      53746172 
+ 787      7400
+ 788              	.LASF2:
+ 789 026e 73686F72 		.ascii	"short int\000"
+ 789      7420696E 
+ 789      7400
+ 790              	.LASF22:
+ 791 0278 4250465F 		.ascii	"BPF_Comp_Start\000"
+ 791      436F6D70 
+ 791      5F537461 
+ 791      727400
+ 792              	.LASF11:
+ 793 0287 75696E74 		.ascii	"uint8\000"
+ 793      3800
+ 794              	.LASF4:
+ 795 028d 6C6F6E67 		.ascii	"long int\000"
+ 795      20696E74 
+ 795      00
+ 796              	.LASF25:
+ 797 0296 5047415F 		.ascii	"PGA_Start\000"
+ 797      53746172 
+ 797      7400
+ 798              	.LASF0:
+ 799 02a0 7369676E 		.ascii	"signed char\000"
+ 799      65642063 
+ 799      68617200 
+ 800              	.LASF34:
+ 801 02ac 48696768 		.ascii	"HighF_LevelCount_Start\000"
+ 801      465F4C65 
+ 801      76656C43 
+ 801      6F756E74 
+ 801      5F537461 
+ 802              	.LASF7:
+ 803 02c3 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 803      206C6F6E 
+ 803      6720756E 
+ 803      7369676E 
+ 803      65642069 
+ 804              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

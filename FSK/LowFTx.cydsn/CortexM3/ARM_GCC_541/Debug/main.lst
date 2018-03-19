@@ -1,0 +1,1344 @@
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.Prefix_Int,"ax",%progbits
+  20              		.align	2
+  21              		.global	Prefix_Int
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	Prefix_Int, %function
+  25              	Prefix_Int:
+  26              	.LFB64:
+  27              		.file 1 "main.c"
+   1:main.c        **** /* ========================================
+   2:main.c        ****  *
+   3:main.c        ****  * Copyright YOUR COMPANY, THE YEAR
+   4:main.c        ****  * All Rights Reserved
+   5:main.c        ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:main.c        ****  *
+   7:main.c        ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:main.c        ****  * WHICH IS THE PROPERTY OF your company.
+   9:main.c        ****  *
+  10:main.c        ****  * ========================================
+  11:main.c        **** */
+  12:main.c        **** #include "project.h"
+  13:main.c        **** 
+  14:main.c        **** #define Count4_Seconds 1 
+  15:main.c        **** #define CountHalf_Second 55
+  16:main.c        **** //count = 0.5s / T
+  17:main.c        **** #define ZeroHalf_Second 45
+  18:main.c        **** #define LED_ON  0xFF
+  19:main.c        **** #define LED_OFF 0 
+  20:main.c        **** #define oneByte 4 
+  21:main.c        **** #define twoByte 8
+  22:main.c        **** #define ZERO 0
+  23:main.c        **** #define ONE 0xFF
+  24:main.c        **** 
+  25:main.c        **** CY_ISR_PROTO(Prefix_Int);
+  26:main.c        **** CY_ISR_PROTO(Zero_Int);
+  27:main.c        **** 
+  28:main.c        **** //static int zeroCounter = 0; 
+  29:main.c        **** static uint8 testLEDStatus = LED_ON;
+  30:main.c        **** static int pwmCounter = 1;
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 2
+
+
+  31:main.c        **** static int zeroCounter = 1;
+  32:main.c        **** static uint8 bitCase = ZERO;
+  33:main.c        **** static uint8 messageBit = 0; 
+  34:main.c        **** int main(void)
+  35:main.c        **** {
+  36:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+  37:main.c        ****     //LowFLow_Start();
+  38:main.c        ****     //FSK_Start();
+  39:main.c        ****     LowFHigh_Start() ;
+  40:main.c        ****     //FSKOutput_Start();
+  41:main.c        ****     LowFPwm_Start(); 
+  42:main.c        ****     ZeroPwm_Start();
+  43:main.c        ****     ZeroPwm_Sleep();
+  44:main.c        ****     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+  45:main.c        ****     OneInt_StartEx(Prefix_Int);
+  46:main.c        ****     ZeroInt_StartEx(Zero_Int);
+  47:main.c        ****     //SleepTimer_Start() ;
+  48:main.c        ****     LEDTest_Write(testLEDStatus);
+  49:main.c        ****     //LowFPwm_WriteCompare(127);
+  50:main.c        ****     for(;;)
+  51:main.c        ****     {
+  52:main.c        ****         /* Place your application code here. */
+  53:main.c        ****         
+  54:main.c        ****         if((pwmCounter % CountHalf_Second) == 0){
+  55:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+  56:main.c        ****             LEDTest_Write(testLEDStatus); 
+  57:main.c        ****             //CyDelay(100);
+  58:main.c        ****             messageBit++;
+  59:main.c        ****             pwmCounter = 1;
+  60:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+  61:main.c        ****         }
+  62:main.c        ****         
+  63:main.c        ****         if((zeroCounter % ZeroHalf_Second) == 0){
+  64:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+  65:main.c        ****             LEDTest_Write(testLEDStatus); 
+  66:main.c        ****             //CyDelay(100);
+  67:main.c        ****             messageBit++;
+  68:main.c        ****             zeroCounter = 1;
+  69:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+  70:main.c        ****         }
+  71:main.c        ****         
+  72:main.c        ****         
+  73:main.c        ****         switch(messageBit){
+  74:main.c        ****         
+  75:main.c        ****             case 0:
+  76:main.c        ****                 bitCase = ONE;
+  77:main.c        ****             
+  78:main.c        ****             break; 
+  79:main.c        ****             case 1:
+  80:main.c        ****                 bitCase = ONE; 
+  81:main.c        ****             break;
+  82:main.c        ****             case 2:
+  83:main.c        ****                 bitCase = ONE; 
+  84:main.c        ****             break;
+  85:main.c        ****             case 3:
+  86:main.c        ****                 bitCase = ONE; 
+  87:main.c        ****             break;
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 3
+
+
+  88:main.c        ****             case 4:
+  89:main.c        ****                 bitCase = ZERO; 
+  90:main.c        ****                 LowFPwm_Sleep();
+  91:main.c        ****                 ZeroPwm_Start();
+  92:main.c        ****                 
+  93:main.c        ****             break; 
+  94:main.c        ****             case 5:
+  95:main.c        ****                 bitCase = ZERO; 
+  96:main.c        ****                 //CyDelay(50);
+  97:main.c        ****                 //messageBit++;
+  98:main.c        ****                 
+  99:main.c        ****             break; 
+ 100:main.c        ****             case 6:
+ 101:main.c        ****                 bitCase = ONE; 
+ 102:main.c        ****                 //LowFPwm_Wakeup();
+ 103:main.c        ****                 //LowFPwm_Start();
+ 104:main.c        ****                 LowFPwm_Start();
+ 105:main.c        ****                 ZeroPwm_Sleep();
+ 106:main.c        ****             break; 
+ 107:main.c        ****             case 7:
+ 108:main.c        ****                 bitCase = ZERO; 
+ 109:main.c        ****                 //LowFPwm_Sleep();
+ 110:main.c        ****                 LowFPwm_Sleep();
+ 111:main.c        ****                 ZeroPwm_Start();
+ 112:main.c        ****             break; 
+ 113:main.c        ****             case 8:
+ 114:main.c        ****                 bitCase = ONE; 
+ 115:main.c        ****                 //LowFPwm_Wakeup();
+ 116:main.c        ****                 //LowFPwm_Start();
+ 117:main.c        ****                 LowFPwm_Start();
+ 118:main.c        ****                 ZeroPwm_Sleep();
+ 119:main.c        ****             break;     
+ 120:main.c        ****             case 9:
+ 121:main.c        ****                 bitCase = ONE; 
+ 122:main.c        ****                 //LowFPwm_Sleep();
+ 123:main.c        ****             break;
+ 124:main.c        ****             case 10:
+ 125:main.c        ****                 bitCase = ONE; 
+ 126:main.c        ****                 
+ 127:main.c        ****             break;
+ 128:main.c        ****             case 11:
+ 129:main.c        ****                 bitCase = ONE; 
+ 130:main.c        ****                 
+ 131:main.c        ****             break;    
+ 132:main.c        ****             
+ 133:main.c        ****         default:
+ 134:main.c        ****         break; 
+ 135:main.c        ****   
+ 136:main.c        ****         }
+ 137:main.c        ****         
+ 138:main.c        ****         //MuxSelect_Write(bitCase);
+ 139:main.c        ****         MuxSelOut_Write(bitCase);
+ 140:main.c        ****       
+ 141:main.c        ****     }
+ 142:main.c        **** }
+ 143:main.c        **** 
+ 144:main.c        **** 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 4
+
+
+ 145:main.c        **** CY_ISR(Prefix_Int){
+  28              		.loc 1 145 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+ 146:main.c        ****     
+ 147:main.c        ****     pwmCounter++;
+  33              		.loc 1 147 0
+  34 0000 024A     		ldr	r2, .L2
+  35 0002 1368     		ldr	r3, [r2]
+  36 0004 0133     		adds	r3, r3, #1
+  37 0006 1360     		str	r3, [r2]
+  38 0008 7047     		bx	lr
+  39              	.L3:
+  40 000a 00BF     		.align	2
+  41              	.L2:
+  42 000c 00000000 		.word	.LANCHOR0
+  43              		.cfi_endproc
+  44              	.LFE64:
+  45              		.size	Prefix_Int, .-Prefix_Int
+  46              		.section	.text.Zero_Int,"ax",%progbits
+  47              		.align	2
+  48              		.global	Zero_Int
+  49              		.thumb
+  50              		.thumb_func
+  51              		.type	Zero_Int, %function
+  52              	Zero_Int:
+  53              	.LFB65:
+ 148:main.c        **** 
+ 149:main.c        ****     
+ 150:main.c        ****     //SleepTimer_GetStatus() ;
+ 151:main.c        **** 
+ 152:main.c        **** }
+ 153:main.c        **** 
+ 154:main.c        **** CY_ISR(Zero_Int){
+  54              		.loc 1 154 0
+  55              		.cfi_startproc
+  56              		@ args = 0, pretend = 0, frame = 0
+  57              		@ frame_needed = 0, uses_anonymous_args = 0
+  58              		@ link register save eliminated.
+ 155:main.c        ****     
+ 156:main.c        ****     zeroCounter++;
+  59              		.loc 1 156 0
+  60 0000 024A     		ldr	r2, .L5
+  61 0002 5368     		ldr	r3, [r2, #4]
+  62 0004 0133     		adds	r3, r3, #1
+  63 0006 5360     		str	r3, [r2, #4]
+  64 0008 7047     		bx	lr
+  65              	.L6:
+  66 000a 00BF     		.align	2
+  67              	.L5:
+  68 000c 00000000 		.word	.LANCHOR0
+  69              		.cfi_endproc
+  70              	.LFE65:
+  71              		.size	Zero_Int, .-Zero_Int
+  72              		.section	.text.main,"ax",%progbits
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 5
+
+
+  73              		.align	2
+  74              		.global	main
+  75              		.thumb
+  76              		.thumb_func
+  77              		.type	main, %function
+  78              	main:
+  79              	.LFB63:
+  35:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+  80              		.loc 1 35 0
+  81              		.cfi_startproc
+  82              		@ Volatile: function does not return.
+  83              		@ args = 0, pretend = 0, frame = 0
+  84              		@ frame_needed = 0, uses_anonymous_args = 0
+  85 0000 08B5     		push	{r3, lr}
+  86              		.cfi_def_cfa_offset 8
+  87              		.cfi_offset 3, -8
+  88              		.cfi_offset 14, -4
+  36:main.c        ****     //LowFLow_Start();
+  89              		.loc 1 36 0
+  90              		.syntax unified
+  91              	@ 36 "main.c" 1
+  92 0002 62B6     		CPSIE   i
+  93              	@ 0 "" 2
+  39:main.c        ****     //FSKOutput_Start();
+  94              		.loc 1 39 0
+  95              		.thumb
+  96              		.syntax unified
+  97 0004 FFF7FEFF 		bl	LowFHigh_Start
+  98              	.LVL0:
+  41:main.c        ****     ZeroPwm_Start();
+  99              		.loc 1 41 0
+ 100 0008 FFF7FEFF 		bl	LowFPwm_Start
+ 101              	.LVL1:
+  42:main.c        ****     ZeroPwm_Sleep();
+ 102              		.loc 1 42 0
+ 103 000c FFF7FEFF 		bl	ZeroPwm_Start
+ 104              	.LVL2:
+  43:main.c        ****     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+ 105              		.loc 1 43 0
+ 106 0010 FFF7FEFF 		bl	ZeroPwm_Sleep
+ 107              	.LVL3:
+  45:main.c        ****     ZeroInt_StartEx(Zero_Int);
+ 108              		.loc 1 45 0
+ 109 0014 4848     		ldr	r0, .L26
+ 110 0016 FFF7FEFF 		bl	OneInt_StartEx
+ 111              	.LVL4:
+  46:main.c        ****     //SleepTimer_Start() ;
+ 112              		.loc 1 46 0
+ 113 001a 4848     		ldr	r0, .L26+4
+ 114 001c FFF7FEFF 		bl	ZeroInt_StartEx
+ 115              	.LVL5:
+  48:main.c        ****     //LowFPwm_WriteCompare(127);
+ 116              		.loc 1 48 0
+ 117 0020 474B     		ldr	r3, .L26+8
+ 118 0022 187A     		ldrb	r0, [r3, #8]	@ zero_extendqisi2
+ 119 0024 FFF7FEFF 		bl	LEDTest_Write
+ 120              	.LVL6:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 6
+
+
+ 121              	.L24:
+  54:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+ 122              		.loc 1 54 0
+ 123 0028 454B     		ldr	r3, .L26+8
+ 124 002a 1A68     		ldr	r2, [r3]
+ 125 002c 454B     		ldr	r3, .L26+12
+ 126 002e 83FB0231 		smull	r3, r1, r3, r2
+ 127 0032 D317     		asrs	r3, r2, #31
+ 128 0034 C3EB6103 		rsb	r3, r3, r1, asr #1
+ 129 0038 C3EBC301 		rsb	r1, r3, r3, lsl #3
+ 130 003c C3EBC103 		rsb	r3, r3, r1, lsl #3
+ 131 0040 9A42     		cmp	r2, r3
+ 132 0042 0CD1     		bne	.L8
+  55:main.c        ****             LEDTest_Write(testLEDStatus); 
+ 133              		.loc 1 55 0
+ 134 0044 3E4C     		ldr	r4, .L26+8
+ 135 0046 207A     		ldrb	r0, [r4, #8]	@ zero_extendqisi2
+ 136 0048 C043     		mvns	r0, r0
+ 137 004a C0B2     		uxtb	r0, r0
+ 138 004c 2072     		strb	r0, [r4, #8]
+  56:main.c        ****             //CyDelay(100);
+ 139              		.loc 1 56 0
+ 140 004e FFF7FEFF 		bl	LEDTest_Write
+ 141              	.LVL7:
+  58:main.c        ****             pwmCounter = 1;
+ 142              		.loc 1 58 0
+ 143 0052 3D4A     		ldr	r2, .L26+16
+ 144 0054 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 145 0056 0133     		adds	r3, r3, #1
+ 146 0058 1370     		strb	r3, [r2]
+  59:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+ 147              		.loc 1 59 0
+ 148 005a 0123     		movs	r3, #1
+ 149 005c 2360     		str	r3, [r4]
+ 150              	.L8:
+  63:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+ 151              		.loc 1 63 0
+ 152 005e 384B     		ldr	r3, .L26+8
+ 153 0060 5A68     		ldr	r2, [r3, #4]
+ 154 0062 3A48     		ldr	r0, .L26+20
+ 155 0064 82FB0001 		smull	r0, r1, r2, r0
+ 156 0068 1144     		add	r1, r1, r2
+ 157 006a D317     		asrs	r3, r2, #31
+ 158 006c C3EB6113 		rsb	r3, r3, r1, asr #5
+ 159 0070 03EB4303 		add	r3, r3, r3, lsl #1
+ 160 0074 C3EB0313 		rsb	r3, r3, r3, lsl #4
+ 161 0078 9A42     		cmp	r2, r3
+ 162 007a 0CD1     		bne	.L9
+  64:main.c        ****             LEDTest_Write(testLEDStatus); 
+ 163              		.loc 1 64 0
+ 164 007c 304C     		ldr	r4, .L26+8
+ 165 007e 207A     		ldrb	r0, [r4, #8]	@ zero_extendqisi2
+ 166 0080 C043     		mvns	r0, r0
+ 167 0082 C0B2     		uxtb	r0, r0
+ 168 0084 2072     		strb	r0, [r4, #8]
+  65:main.c        ****             //CyDelay(100);
+ 169              		.loc 1 65 0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 7
+
+
+ 170 0086 FFF7FEFF 		bl	LEDTest_Write
+ 171              	.LVL8:
+  67:main.c        ****             zeroCounter = 1;
+ 172              		.loc 1 67 0
+ 173 008a 2F4A     		ldr	r2, .L26+16
+ 174 008c 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 175 008e 0133     		adds	r3, r3, #1
+ 176 0090 1370     		strb	r3, [r2]
+  68:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+ 177              		.loc 1 68 0
+ 178 0092 0123     		movs	r3, #1
+ 179 0094 6360     		str	r3, [r4, #4]
+ 180              	.L9:
+  73:main.c        ****         
+ 181              		.loc 1 73 0
+ 182 0096 2C4B     		ldr	r3, .L26+16
+ 183 0098 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 184 009a 0B2B     		cmp	r3, #11
+ 185 009c 46D8     		bhi	.L10
+ 186 009e DFE803F0 		tbb	[pc, r3]
+ 187              	.L12:
+ 188 00a2 06       		.byte	(.L11-.L12)/2
+ 189 00a3 0A       		.byte	(.L13-.L12)/2
+ 190 00a4 0E       		.byte	(.L14-.L12)/2
+ 191 00a5 12       		.byte	(.L15-.L12)/2
+ 192 00a6 16       		.byte	(.L16-.L12)/2
+ 193 00a7 1E       		.byte	(.L17-.L12)/2
+ 194 00a8 22       		.byte	(.L18-.L12)/2
+ 195 00a9 2A       		.byte	(.L19-.L12)/2
+ 196 00aa 32       		.byte	(.L20-.L12)/2
+ 197 00ab 3A       		.byte	(.L21-.L12)/2
+ 198 00ac 3E       		.byte	(.L22-.L12)/2
+ 199 00ad 42       		.byte	(.L23-.L12)/2
+ 200              		.p2align 1
+ 201              	.L11:
+  76:main.c        ****             
+ 202              		.loc 1 76 0
+ 203 00ae FF22     		movs	r2, #255
+ 204 00b0 254B     		ldr	r3, .L26+16
+ 205 00b2 5A70     		strb	r2, [r3, #1]
+  78:main.c        ****             case 1:
+ 206              		.loc 1 78 0
+ 207 00b4 3AE0     		b	.L10
+ 208              	.L13:
+  80:main.c        ****             break;
+ 209              		.loc 1 80 0
+ 210 00b6 FF22     		movs	r2, #255
+ 211 00b8 234B     		ldr	r3, .L26+16
+ 212 00ba 5A70     		strb	r2, [r3, #1]
+  81:main.c        ****             case 2:
+ 213              		.loc 1 81 0
+ 214 00bc 36E0     		b	.L10
+ 215              	.L14:
+  83:main.c        ****             break;
+ 216              		.loc 1 83 0
+ 217 00be FF22     		movs	r2, #255
+ 218 00c0 214B     		ldr	r3, .L26+16
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 8
+
+
+ 219 00c2 5A70     		strb	r2, [r3, #1]
+  84:main.c        ****             case 3:
+ 220              		.loc 1 84 0
+ 221 00c4 32E0     		b	.L10
+ 222              	.L15:
+  86:main.c        ****             break;
+ 223              		.loc 1 86 0
+ 224 00c6 FF22     		movs	r2, #255
+ 225 00c8 1F4B     		ldr	r3, .L26+16
+ 226 00ca 5A70     		strb	r2, [r3, #1]
+  87:main.c        ****             case 4:
+ 227              		.loc 1 87 0
+ 228 00cc 2EE0     		b	.L10
+ 229              	.L16:
+  89:main.c        ****                 LowFPwm_Sleep();
+ 230              		.loc 1 89 0
+ 231 00ce 0022     		movs	r2, #0
+ 232 00d0 1D4B     		ldr	r3, .L26+16
+ 233 00d2 5A70     		strb	r2, [r3, #1]
+  90:main.c        ****                 ZeroPwm_Start();
+ 234              		.loc 1 90 0
+ 235 00d4 FFF7FEFF 		bl	LowFPwm_Sleep
+ 236              	.LVL9:
+  91:main.c        ****                 
+ 237              		.loc 1 91 0
+ 238 00d8 FFF7FEFF 		bl	ZeroPwm_Start
+ 239              	.LVL10:
+  93:main.c        ****             case 5:
+ 240              		.loc 1 93 0
+ 241 00dc 26E0     		b	.L10
+ 242              	.L17:
+  95:main.c        ****                 //CyDelay(50);
+ 243              		.loc 1 95 0
+ 244 00de 0022     		movs	r2, #0
+ 245 00e0 194B     		ldr	r3, .L26+16
+ 246 00e2 5A70     		strb	r2, [r3, #1]
+  99:main.c        ****             case 6:
+ 247              		.loc 1 99 0
+ 248 00e4 22E0     		b	.L10
+ 249              	.L18:
+ 101:main.c        ****                 //LowFPwm_Wakeup();
+ 250              		.loc 1 101 0
+ 251 00e6 FF22     		movs	r2, #255
+ 252 00e8 174B     		ldr	r3, .L26+16
+ 253 00ea 5A70     		strb	r2, [r3, #1]
+ 104:main.c        ****                 ZeroPwm_Sleep();
+ 254              		.loc 1 104 0
+ 255 00ec FFF7FEFF 		bl	LowFPwm_Start
+ 256              	.LVL11:
+ 105:main.c        ****             break; 
+ 257              		.loc 1 105 0
+ 258 00f0 FFF7FEFF 		bl	ZeroPwm_Sleep
+ 259              	.LVL12:
+ 106:main.c        ****             case 7:
+ 260              		.loc 1 106 0
+ 261 00f4 1AE0     		b	.L10
+ 262              	.L19:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 9
+
+
+ 108:main.c        ****                 //LowFPwm_Sleep();
+ 263              		.loc 1 108 0
+ 264 00f6 0022     		movs	r2, #0
+ 265 00f8 134B     		ldr	r3, .L26+16
+ 266 00fa 5A70     		strb	r2, [r3, #1]
+ 110:main.c        ****                 ZeroPwm_Start();
+ 267              		.loc 1 110 0
+ 268 00fc FFF7FEFF 		bl	LowFPwm_Sleep
+ 269              	.LVL13:
+ 111:main.c        ****             break; 
+ 270              		.loc 1 111 0
+ 271 0100 FFF7FEFF 		bl	ZeroPwm_Start
+ 272              	.LVL14:
+ 112:main.c        ****             case 8:
+ 273              		.loc 1 112 0
+ 274 0104 12E0     		b	.L10
+ 275              	.L20:
+ 114:main.c        ****                 //LowFPwm_Wakeup();
+ 276              		.loc 1 114 0
+ 277 0106 FF22     		movs	r2, #255
+ 278 0108 0F4B     		ldr	r3, .L26+16
+ 279 010a 5A70     		strb	r2, [r3, #1]
+ 117:main.c        ****                 ZeroPwm_Sleep();
+ 280              		.loc 1 117 0
+ 281 010c FFF7FEFF 		bl	LowFPwm_Start
+ 282              	.LVL15:
+ 118:main.c        ****             break;     
+ 283              		.loc 1 118 0
+ 284 0110 FFF7FEFF 		bl	ZeroPwm_Sleep
+ 285              	.LVL16:
+ 119:main.c        ****             case 9:
+ 286              		.loc 1 119 0
+ 287 0114 0AE0     		b	.L10
+ 288              	.L21:
+ 121:main.c        ****                 //LowFPwm_Sleep();
+ 289              		.loc 1 121 0
+ 290 0116 FF22     		movs	r2, #255
+ 291 0118 0B4B     		ldr	r3, .L26+16
+ 292 011a 5A70     		strb	r2, [r3, #1]
+ 123:main.c        ****             case 10:
+ 293              		.loc 1 123 0
+ 294 011c 06E0     		b	.L10
+ 295              	.L22:
+ 125:main.c        ****                 
+ 296              		.loc 1 125 0
+ 297 011e FF22     		movs	r2, #255
+ 298 0120 094B     		ldr	r3, .L26+16
+ 299 0122 5A70     		strb	r2, [r3, #1]
+ 127:main.c        ****             case 11:
+ 300              		.loc 1 127 0
+ 301 0124 02E0     		b	.L10
+ 302              	.L23:
+ 129:main.c        ****                 
+ 303              		.loc 1 129 0
+ 304 0126 FF22     		movs	r2, #255
+ 305 0128 074B     		ldr	r3, .L26+16
+ 306 012a 5A70     		strb	r2, [r3, #1]
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 10
+
+
+ 307              	.L10:
+ 139:main.c        ****       
+ 308              		.loc 1 139 0
+ 309 012c 064B     		ldr	r3, .L26+16
+ 310 012e 5878     		ldrb	r0, [r3, #1]	@ zero_extendqisi2
+ 311 0130 FFF7FEFF 		bl	MuxSelOut_Write
+ 312              	.LVL17:
+ 141:main.c        **** }
+ 313              		.loc 1 141 0
+ 314 0134 78E7     		b	.L24
+ 315              	.L27:
+ 316 0136 00BF     		.align	2
+ 317              	.L26:
+ 318 0138 00000000 		.word	Prefix_Int
+ 319 013c 00000000 		.word	Zero_Int
+ 320 0140 00000000 		.word	.LANCHOR0
+ 321 0144 95204F09 		.word	156180629
+ 322 0148 00000000 		.word	.LANCHOR1
+ 323 014c B7600BB6 		.word	-1240768329
+ 324              		.cfi_endproc
+ 325              	.LFE63:
+ 326              		.size	main, .-main
+ 327              		.data
+ 328              		.align	2
+ 329              		.set	.LANCHOR0,. + 0
+ 330              		.type	pwmCounter, %object
+ 331              		.size	pwmCounter, 4
+ 332              	pwmCounter:
+ 333 0000 01000000 		.word	1
+ 334              		.type	zeroCounter, %object
+ 335              		.size	zeroCounter, 4
+ 336              	zeroCounter:
+ 337 0004 01000000 		.word	1
+ 338              		.type	testLEDStatus, %object
+ 339              		.size	testLEDStatus, 1
+ 340              	testLEDStatus:
+ 341 0008 FF       		.byte	-1
+ 342              		.bss
+ 343              		.set	.LANCHOR1,. + 0
+ 344              		.type	messageBit, %object
+ 345              		.size	messageBit, 1
+ 346              	messageBit:
+ 347 0000 00       		.space	1
+ 348              		.type	bitCase, %object
+ 349              		.size	bitCase, 1
+ 350              	bitCase:
+ 351 0001 00       		.space	1
+ 352              		.text
+ 353              	.Letext0:
+ 354              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 355              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 356              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 357              		.file 5 "Generated_Source\\PSoC5/LowFHigh.h"
+ 358              		.file 6 "Generated_Source\\PSoC5/LowFPwm.h"
+ 359              		.file 7 "Generated_Source\\PSoC5/ZeroPwm.h"
+ 360              		.file 8 "Generated_Source\\PSoC5/OneInt.h"
+ 361              		.file 9 "Generated_Source\\PSoC5/ZeroInt.h"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 11
+
+
+ 362              		.file 10 "Generated_Source\\PSoC5/LEDTest.h"
+ 363              		.file 11 "Generated_Source\\PSoC5/MuxSelOut.h"
+ 364              		.file 12 "Generated_Source\\PSoC5/core_cm3.h"
+ 365              		.section	.debug_info,"",%progbits
+ 366              	.Ldebug_info0:
+ 367 0000 70020000 		.4byte	0x270
+ 368 0004 0400     		.2byte	0x4
+ 369 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 370 000a 04       		.byte	0x4
+ 371 000b 01       		.uleb128 0x1
+ 372 000c 6E000000 		.4byte	.LASF33
+ 373 0010 0C       		.byte	0xc
+ 374 0011 02020000 		.4byte	.LASF34
+ 375 0015 A9010000 		.4byte	.LASF35
+ 376 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 377 001d 00000000 		.4byte	0
+ 378 0021 00000000 		.4byte	.Ldebug_line0
+ 379 0025 02       		.uleb128 0x2
+ 380 0026 01       		.byte	0x1
+ 381 0027 06       		.byte	0x6
+ 382 0028 51020000 		.4byte	.LASF0
+ 383 002c 02       		.uleb128 0x2
+ 384 002d 01       		.byte	0x1
+ 385 002e 08       		.byte	0x8
+ 386 002f 60000000 		.4byte	.LASF1
+ 387 0033 02       		.uleb128 0x2
+ 388 0034 02       		.byte	0x2
+ 389 0035 05       		.byte	0x5
+ 390 0036 1E020000 		.4byte	.LASF2
+ 391 003a 02       		.uleb128 0x2
+ 392 003b 02       		.byte	0x2
+ 393 003c 07       		.byte	0x7
+ 394 003d 1C010000 		.4byte	.LASF3
+ 395 0041 03       		.uleb128 0x3
+ 396 0042 1F000000 		.4byte	.LASF9
+ 397 0046 02       		.byte	0x2
+ 398 0047 3F       		.byte	0x3f
+ 399 0048 4C000000 		.4byte	0x4c
+ 400 004c 02       		.uleb128 0x2
+ 401 004d 04       		.byte	0x4
+ 402 004e 05       		.byte	0x5
+ 403 004f 2E020000 		.4byte	.LASF4
+ 404 0053 02       		.uleb128 0x2
+ 405 0054 04       		.byte	0x4
+ 406 0055 07       		.byte	0x7
+ 407 0056 0A010000 		.4byte	.LASF5
+ 408 005a 02       		.uleb128 0x2
+ 409 005b 08       		.byte	0x8
+ 410 005c 05       		.byte	0x5
+ 411 005d F4010000 		.4byte	.LASF6
+ 412 0061 02       		.uleb128 0x2
+ 413 0062 08       		.byte	0x8
+ 414 0063 07       		.byte	0x7
+ 415 0064 7F010000 		.4byte	.LASF7
+ 416 0068 04       		.uleb128 0x4
+ 417 0069 04       		.byte	0x4
+ 418 006a 05       		.byte	0x5
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 12
+
+
+ 419 006b 696E7400 		.ascii	"int\000"
+ 420 006f 02       		.uleb128 0x2
+ 421 0070 04       		.byte	0x4
+ 422 0071 07       		.byte	0x7
+ 423 0072 72010000 		.4byte	.LASF8
+ 424 0076 03       		.uleb128 0x3
+ 425 0077 E3010000 		.4byte	.LASF10
+ 426 007b 03       		.byte	0x3
+ 427 007c 2C       		.byte	0x2c
+ 428 007d 41000000 		.4byte	0x41
+ 429 0081 05       		.uleb128 0x5
+ 430 0082 28020000 		.4byte	.LASF11
+ 431 0086 04       		.byte	0x4
+ 432 0087 9201     		.2byte	0x192
+ 433 0089 2C000000 		.4byte	0x2c
+ 434 008d 02       		.uleb128 0x2
+ 435 008e 04       		.byte	0x4
+ 436 008f 04       		.byte	0x4
+ 437 0090 40000000 		.4byte	.LASF12
+ 438 0094 02       		.uleb128 0x2
+ 439 0095 08       		.byte	0x8
+ 440 0096 04       		.byte	0x4
+ 441 0097 4A010000 		.4byte	.LASF13
+ 442 009b 02       		.uleb128 0x2
+ 443 009c 01       		.byte	0x1
+ 444 009d 08       		.byte	0x8
+ 445 009e 09020000 		.4byte	.LASF14
+ 446 00a2 02       		.uleb128 0x2
+ 447 00a3 08       		.byte	0x8
+ 448 00a4 04       		.byte	0x4
+ 449 00a5 37020000 		.4byte	.LASF15
+ 450 00a9 02       		.uleb128 0x2
+ 451 00aa 04       		.byte	0x4
+ 452 00ab 07       		.byte	0x7
+ 453 00ac EB010000 		.4byte	.LASF16
+ 454 00b0 06       		.uleb128 0x6
+ 455 00b1 35000000 		.4byte	.LASF17
+ 456 00b5 01       		.byte	0x1
+ 457 00b6 91       		.byte	0x91
+ 458 00b7 00000000 		.4byte	.LFB64
+ 459 00bb 10000000 		.4byte	.LFE64-.LFB64
+ 460 00bf 01       		.uleb128 0x1
+ 461 00c0 9C       		.byte	0x9c
+ 462 00c1 06       		.uleb128 0x6
+ 463 00c2 5D020000 		.4byte	.LASF18
+ 464 00c6 01       		.byte	0x1
+ 465 00c7 9A       		.byte	0x9a
+ 466 00c8 00000000 		.4byte	.LFB65
+ 467 00cc 10000000 		.4byte	.LFE65-.LFB65
+ 468 00d0 01       		.uleb128 0x1
+ 469 00d1 9C       		.byte	0x9c
+ 470 00d2 07       		.uleb128 0x7
+ 471 00d3 51010000 		.4byte	.LASF36
+ 472 00d7 01       		.byte	0x1
+ 473 00d8 22       		.byte	0x22
+ 474 00d9 68000000 		.4byte	0x68
+ 475 00dd 00000000 		.4byte	.LFB63
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 13
+
+
+ 476 00e1 50010000 		.4byte	.LFE63-.LFB63
+ 477 00e5 01       		.uleb128 0x1
+ 478 00e6 9C       		.byte	0x9c
+ 479 00e7 AA010000 		.4byte	0x1aa
+ 480 00eb 08       		.uleb128 0x8
+ 481 00ec 08000000 		.4byte	.LVL0
+ 482 00f0 10020000 		.4byte	0x210
+ 483 00f4 08       		.uleb128 0x8
+ 484 00f5 0C000000 		.4byte	.LVL1
+ 485 00f9 1B020000 		.4byte	0x21b
+ 486 00fd 08       		.uleb128 0x8
+ 487 00fe 10000000 		.4byte	.LVL2
+ 488 0102 26020000 		.4byte	0x226
+ 489 0106 08       		.uleb128 0x8
+ 490 0107 14000000 		.4byte	.LVL3
+ 491 010b 31020000 		.4byte	0x231
+ 492 010f 09       		.uleb128 0x9
+ 493 0110 1A000000 		.4byte	.LVL4
+ 494 0114 3C020000 		.4byte	0x23c
+ 495 0118 26010000 		.4byte	0x126
+ 496 011c 0A       		.uleb128 0xa
+ 497 011d 01       		.uleb128 0x1
+ 498 011e 50       		.byte	0x50
+ 499 011f 05       		.uleb128 0x5
+ 500 0120 03       		.byte	0x3
+ 501 0121 00000000 		.4byte	Prefix_Int
+ 502 0125 00       		.byte	0
+ 503 0126 09       		.uleb128 0x9
+ 504 0127 20000000 		.4byte	.LVL5
+ 505 012b 47020000 		.4byte	0x247
+ 506 012f 3D010000 		.4byte	0x13d
+ 507 0133 0A       		.uleb128 0xa
+ 508 0134 01       		.uleb128 0x1
+ 509 0135 50       		.byte	0x50
+ 510 0136 05       		.uleb128 0x5
+ 511 0137 03       		.byte	0x3
+ 512 0138 00000000 		.4byte	Zero_Int
+ 513 013c 00       		.byte	0
+ 514 013d 08       		.uleb128 0x8
+ 515 013e 28000000 		.4byte	.LVL6
+ 516 0142 52020000 		.4byte	0x252
+ 517 0146 08       		.uleb128 0x8
+ 518 0147 52000000 		.4byte	.LVL7
+ 519 014b 52020000 		.4byte	0x252
+ 520 014f 08       		.uleb128 0x8
+ 521 0150 8A000000 		.4byte	.LVL8
+ 522 0154 52020000 		.4byte	0x252
+ 523 0158 08       		.uleb128 0x8
+ 524 0159 D8000000 		.4byte	.LVL9
+ 525 015d 5D020000 		.4byte	0x25d
+ 526 0161 08       		.uleb128 0x8
+ 527 0162 DC000000 		.4byte	.LVL10
+ 528 0166 26020000 		.4byte	0x226
+ 529 016a 08       		.uleb128 0x8
+ 530 016b F0000000 		.4byte	.LVL11
+ 531 016f 1B020000 		.4byte	0x21b
+ 532 0173 08       		.uleb128 0x8
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 14
+
+
+ 533 0174 F4000000 		.4byte	.LVL12
+ 534 0178 31020000 		.4byte	0x231
+ 535 017c 08       		.uleb128 0x8
+ 536 017d 00010000 		.4byte	.LVL13
+ 537 0181 5D020000 		.4byte	0x25d
+ 538 0185 08       		.uleb128 0x8
+ 539 0186 04010000 		.4byte	.LVL14
+ 540 018a 26020000 		.4byte	0x226
+ 541 018e 08       		.uleb128 0x8
+ 542 018f 10010000 		.4byte	.LVL15
+ 543 0193 1B020000 		.4byte	0x21b
+ 544 0197 08       		.uleb128 0x8
+ 545 0198 14010000 		.4byte	.LVL16
+ 546 019c 31020000 		.4byte	0x231
+ 547 01a0 08       		.uleb128 0x8
+ 548 01a1 34010000 		.4byte	.LVL17
+ 549 01a5 68020000 		.4byte	0x268
+ 550 01a9 00       		.byte	0
+ 551 01aa 0B       		.uleb128 0xb
+ 552 01ab 43020000 		.4byte	.LASF19
+ 553 01af 01       		.byte	0x1
+ 554 01b0 1D       		.byte	0x1d
+ 555 01b1 81000000 		.4byte	0x81
+ 556 01b5 05       		.uleb128 0x5
+ 557 01b6 03       		.byte	0x3
+ 558 01b7 08000000 		.4byte	testLEDStatus
+ 559 01bb 0B       		.uleb128 0xb
+ 560 01bc 9E010000 		.4byte	.LASF20
+ 561 01c0 01       		.byte	0x1
+ 562 01c1 1E       		.byte	0x1e
+ 563 01c2 68000000 		.4byte	0x68
+ 564 01c6 05       		.uleb128 0x5
+ 565 01c7 03       		.byte	0x3
+ 566 01c8 00000000 		.4byte	pwmCounter
+ 567 01cc 0B       		.uleb128 0xb
+ 568 01cd 29000000 		.4byte	.LASF21
+ 569 01d1 01       		.byte	0x1
+ 570 01d2 1F       		.byte	0x1f
+ 571 01d3 68000000 		.4byte	0x68
+ 572 01d7 05       		.uleb128 0x5
+ 573 01d8 03       		.byte	0x3
+ 574 01d9 04000000 		.4byte	zeroCounter
+ 575 01dd 0B       		.uleb128 0xb
+ 576 01de 96010000 		.4byte	.LASF22
+ 577 01e2 01       		.byte	0x1
+ 578 01e3 20       		.byte	0x20
+ 579 01e4 81000000 		.4byte	0x81
+ 580 01e8 05       		.uleb128 0x5
+ 581 01e9 03       		.byte	0x3
+ 582 01ea 01000000 		.4byte	bitCase
+ 583 01ee 0B       		.uleb128 0xb
+ 584 01ef 55000000 		.4byte	.LASF23
+ 585 01f3 01       		.byte	0x1
+ 586 01f4 21       		.byte	0x21
+ 587 01f5 81000000 		.4byte	0x81
+ 588 01f9 05       		.uleb128 0x5
+ 589 01fa 03       		.byte	0x3
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 15
+
+
+ 590 01fb 00000000 		.4byte	messageBit
+ 591 01ff 0C       		.uleb128 0xc
+ 592 0200 2F010000 		.4byte	.LASF37
+ 593 0204 0C       		.byte	0xc
+ 594 0205 1207     		.2byte	0x712
+ 595 0207 0B020000 		.4byte	0x20b
+ 596 020b 0D       		.uleb128 0xd
+ 597 020c 76000000 		.4byte	0x76
+ 598 0210 0E       		.uleb128 0xe
+ 599 0211 00000000 		.4byte	.LASF24
+ 600 0215 00000000 		.4byte	.LASF24
+ 601 0219 05       		.byte	0x5
+ 602 021a 27       		.byte	0x27
+ 603 021b 0E       		.uleb128 0xe
+ 604 021c 66020000 		.4byte	.LASF25
+ 605 0220 66020000 		.4byte	.LASF25
+ 606 0224 06       		.byte	0x6
+ 607 0225 92       		.byte	0x92
+ 608 0226 0E       		.uleb128 0xe
+ 609 0227 64010000 		.4byte	.LASF26
+ 610 022b 64010000 		.4byte	.LASF26
+ 611 022f 07       		.byte	0x7
+ 612 0230 92       		.byte	0x92
+ 613 0231 0E       		.uleb128 0xe
+ 614 0232 FC000000 		.4byte	.LASF27
+ 615 0236 FC000000 		.4byte	.LASF27
+ 616 023a 07       		.byte	0x7
+ 617 023b DC       		.byte	0xdc
+ 618 023c 0E       		.uleb128 0xe
+ 619 023d 46000000 		.4byte	.LASF28
+ 620 0241 46000000 		.4byte	.LASF28
+ 621 0245 08       		.byte	0x8
+ 622 0246 18       		.byte	0x18
+ 623 0247 0E       		.uleb128 0xe
+ 624 0248 0F000000 		.4byte	.LASF29
+ 625 024c 0F000000 		.4byte	.LASF29
+ 626 0250 09       		.byte	0x9
+ 627 0251 18       		.byte	0x18
+ 628 0252 0E       		.uleb128 0xe
+ 629 0253 56010000 		.4byte	.LASF30
+ 630 0257 56010000 		.4byte	.LASF30
+ 631 025b 0A       		.byte	0xa
+ 632 025c 26       		.byte	0x26
+ 633 025d 0E       		.uleb128 0xe
+ 634 025e 3C010000 		.4byte	.LASF31
+ 635 0262 3C010000 		.4byte	.LASF31
+ 636 0266 06       		.byte	0x6
+ 637 0267 DC       		.byte	0xdc
+ 638 0268 0E       		.uleb128 0xe
+ 639 0269 0E020000 		.4byte	.LASF32
+ 640 026d 0E020000 		.4byte	.LASF32
+ 641 0271 0B       		.byte	0xb
+ 642 0272 26       		.byte	0x26
+ 643 0273 00       		.byte	0
+ 644              		.section	.debug_abbrev,"",%progbits
+ 645              	.Ldebug_abbrev0:
+ 646 0000 01       		.uleb128 0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 16
+
+
+ 647 0001 11       		.uleb128 0x11
+ 648 0002 01       		.byte	0x1
+ 649 0003 25       		.uleb128 0x25
+ 650 0004 0E       		.uleb128 0xe
+ 651 0005 13       		.uleb128 0x13
+ 652 0006 0B       		.uleb128 0xb
+ 653 0007 03       		.uleb128 0x3
+ 654 0008 0E       		.uleb128 0xe
+ 655 0009 1B       		.uleb128 0x1b
+ 656 000a 0E       		.uleb128 0xe
+ 657 000b 55       		.uleb128 0x55
+ 658 000c 17       		.uleb128 0x17
+ 659 000d 11       		.uleb128 0x11
+ 660 000e 01       		.uleb128 0x1
+ 661 000f 10       		.uleb128 0x10
+ 662 0010 17       		.uleb128 0x17
+ 663 0011 00       		.byte	0
+ 664 0012 00       		.byte	0
+ 665 0013 02       		.uleb128 0x2
+ 666 0014 24       		.uleb128 0x24
+ 667 0015 00       		.byte	0
+ 668 0016 0B       		.uleb128 0xb
+ 669 0017 0B       		.uleb128 0xb
+ 670 0018 3E       		.uleb128 0x3e
+ 671 0019 0B       		.uleb128 0xb
+ 672 001a 03       		.uleb128 0x3
+ 673 001b 0E       		.uleb128 0xe
+ 674 001c 00       		.byte	0
+ 675 001d 00       		.byte	0
+ 676 001e 03       		.uleb128 0x3
+ 677 001f 16       		.uleb128 0x16
+ 678 0020 00       		.byte	0
+ 679 0021 03       		.uleb128 0x3
+ 680 0022 0E       		.uleb128 0xe
+ 681 0023 3A       		.uleb128 0x3a
+ 682 0024 0B       		.uleb128 0xb
+ 683 0025 3B       		.uleb128 0x3b
+ 684 0026 0B       		.uleb128 0xb
+ 685 0027 49       		.uleb128 0x49
+ 686 0028 13       		.uleb128 0x13
+ 687 0029 00       		.byte	0
+ 688 002a 00       		.byte	0
+ 689 002b 04       		.uleb128 0x4
+ 690 002c 24       		.uleb128 0x24
+ 691 002d 00       		.byte	0
+ 692 002e 0B       		.uleb128 0xb
+ 693 002f 0B       		.uleb128 0xb
+ 694 0030 3E       		.uleb128 0x3e
+ 695 0031 0B       		.uleb128 0xb
+ 696 0032 03       		.uleb128 0x3
+ 697 0033 08       		.uleb128 0x8
+ 698 0034 00       		.byte	0
+ 699 0035 00       		.byte	0
+ 700 0036 05       		.uleb128 0x5
+ 701 0037 16       		.uleb128 0x16
+ 702 0038 00       		.byte	0
+ 703 0039 03       		.uleb128 0x3
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 17
+
+
+ 704 003a 0E       		.uleb128 0xe
+ 705 003b 3A       		.uleb128 0x3a
+ 706 003c 0B       		.uleb128 0xb
+ 707 003d 3B       		.uleb128 0x3b
+ 708 003e 05       		.uleb128 0x5
+ 709 003f 49       		.uleb128 0x49
+ 710 0040 13       		.uleb128 0x13
+ 711 0041 00       		.byte	0
+ 712 0042 00       		.byte	0
+ 713 0043 06       		.uleb128 0x6
+ 714 0044 2E       		.uleb128 0x2e
+ 715 0045 00       		.byte	0
+ 716 0046 3F       		.uleb128 0x3f
+ 717 0047 19       		.uleb128 0x19
+ 718 0048 03       		.uleb128 0x3
+ 719 0049 0E       		.uleb128 0xe
+ 720 004a 3A       		.uleb128 0x3a
+ 721 004b 0B       		.uleb128 0xb
+ 722 004c 3B       		.uleb128 0x3b
+ 723 004d 0B       		.uleb128 0xb
+ 724 004e 27       		.uleb128 0x27
+ 725 004f 19       		.uleb128 0x19
+ 726 0050 11       		.uleb128 0x11
+ 727 0051 01       		.uleb128 0x1
+ 728 0052 12       		.uleb128 0x12
+ 729 0053 06       		.uleb128 0x6
+ 730 0054 40       		.uleb128 0x40
+ 731 0055 18       		.uleb128 0x18
+ 732 0056 9742     		.uleb128 0x2117
+ 733 0058 19       		.uleb128 0x19
+ 734 0059 00       		.byte	0
+ 735 005a 00       		.byte	0
+ 736 005b 07       		.uleb128 0x7
+ 737 005c 2E       		.uleb128 0x2e
+ 738 005d 01       		.byte	0x1
+ 739 005e 3F       		.uleb128 0x3f
+ 740 005f 19       		.uleb128 0x19
+ 741 0060 03       		.uleb128 0x3
+ 742 0061 0E       		.uleb128 0xe
+ 743 0062 3A       		.uleb128 0x3a
+ 744 0063 0B       		.uleb128 0xb
+ 745 0064 3B       		.uleb128 0x3b
+ 746 0065 0B       		.uleb128 0xb
+ 747 0066 27       		.uleb128 0x27
+ 748 0067 19       		.uleb128 0x19
+ 749 0068 49       		.uleb128 0x49
+ 750 0069 13       		.uleb128 0x13
+ 751 006a 8701     		.uleb128 0x87
+ 752 006c 19       		.uleb128 0x19
+ 753 006d 11       		.uleb128 0x11
+ 754 006e 01       		.uleb128 0x1
+ 755 006f 12       		.uleb128 0x12
+ 756 0070 06       		.uleb128 0x6
+ 757 0071 40       		.uleb128 0x40
+ 758 0072 18       		.uleb128 0x18
+ 759 0073 9742     		.uleb128 0x2117
+ 760 0075 19       		.uleb128 0x19
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 18
+
+
+ 761 0076 01       		.uleb128 0x1
+ 762 0077 13       		.uleb128 0x13
+ 763 0078 00       		.byte	0
+ 764 0079 00       		.byte	0
+ 765 007a 08       		.uleb128 0x8
+ 766 007b 898201   		.uleb128 0x4109
+ 767 007e 00       		.byte	0
+ 768 007f 11       		.uleb128 0x11
+ 769 0080 01       		.uleb128 0x1
+ 770 0081 31       		.uleb128 0x31
+ 771 0082 13       		.uleb128 0x13
+ 772 0083 00       		.byte	0
+ 773 0084 00       		.byte	0
+ 774 0085 09       		.uleb128 0x9
+ 775 0086 898201   		.uleb128 0x4109
+ 776 0089 01       		.byte	0x1
+ 777 008a 11       		.uleb128 0x11
+ 778 008b 01       		.uleb128 0x1
+ 779 008c 31       		.uleb128 0x31
+ 780 008d 13       		.uleb128 0x13
+ 781 008e 01       		.uleb128 0x1
+ 782 008f 13       		.uleb128 0x13
+ 783 0090 00       		.byte	0
+ 784 0091 00       		.byte	0
+ 785 0092 0A       		.uleb128 0xa
+ 786 0093 8A8201   		.uleb128 0x410a
+ 787 0096 00       		.byte	0
+ 788 0097 02       		.uleb128 0x2
+ 789 0098 18       		.uleb128 0x18
+ 790 0099 9142     		.uleb128 0x2111
+ 791 009b 18       		.uleb128 0x18
+ 792 009c 00       		.byte	0
+ 793 009d 00       		.byte	0
+ 794 009e 0B       		.uleb128 0xb
+ 795 009f 34       		.uleb128 0x34
+ 796 00a0 00       		.byte	0
+ 797 00a1 03       		.uleb128 0x3
+ 798 00a2 0E       		.uleb128 0xe
+ 799 00a3 3A       		.uleb128 0x3a
+ 800 00a4 0B       		.uleb128 0xb
+ 801 00a5 3B       		.uleb128 0x3b
+ 802 00a6 0B       		.uleb128 0xb
+ 803 00a7 49       		.uleb128 0x49
+ 804 00a8 13       		.uleb128 0x13
+ 805 00a9 02       		.uleb128 0x2
+ 806 00aa 18       		.uleb128 0x18
+ 807 00ab 00       		.byte	0
+ 808 00ac 00       		.byte	0
+ 809 00ad 0C       		.uleb128 0xc
+ 810 00ae 34       		.uleb128 0x34
+ 811 00af 00       		.byte	0
+ 812 00b0 03       		.uleb128 0x3
+ 813 00b1 0E       		.uleb128 0xe
+ 814 00b2 3A       		.uleb128 0x3a
+ 815 00b3 0B       		.uleb128 0xb
+ 816 00b4 3B       		.uleb128 0x3b
+ 817 00b5 05       		.uleb128 0x5
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 19
+
+
+ 818 00b6 49       		.uleb128 0x49
+ 819 00b7 13       		.uleb128 0x13
+ 820 00b8 3F       		.uleb128 0x3f
+ 821 00b9 19       		.uleb128 0x19
+ 822 00ba 3C       		.uleb128 0x3c
+ 823 00bb 19       		.uleb128 0x19
+ 824 00bc 00       		.byte	0
+ 825 00bd 00       		.byte	0
+ 826 00be 0D       		.uleb128 0xd
+ 827 00bf 35       		.uleb128 0x35
+ 828 00c0 00       		.byte	0
+ 829 00c1 49       		.uleb128 0x49
+ 830 00c2 13       		.uleb128 0x13
+ 831 00c3 00       		.byte	0
+ 832 00c4 00       		.byte	0
+ 833 00c5 0E       		.uleb128 0xe
+ 834 00c6 2E       		.uleb128 0x2e
+ 835 00c7 00       		.byte	0
+ 836 00c8 3F       		.uleb128 0x3f
+ 837 00c9 19       		.uleb128 0x19
+ 838 00ca 3C       		.uleb128 0x3c
+ 839 00cb 19       		.uleb128 0x19
+ 840 00cc 6E       		.uleb128 0x6e
+ 841 00cd 0E       		.uleb128 0xe
+ 842 00ce 03       		.uleb128 0x3
+ 843 00cf 0E       		.uleb128 0xe
+ 844 00d0 3A       		.uleb128 0x3a
+ 845 00d1 0B       		.uleb128 0xb
+ 846 00d2 3B       		.uleb128 0x3b
+ 847 00d3 0B       		.uleb128 0xb
+ 848 00d4 00       		.byte	0
+ 849 00d5 00       		.byte	0
+ 850 00d6 00       		.byte	0
+ 851              		.section	.debug_aranges,"",%progbits
+ 852 0000 2C000000 		.4byte	0x2c
+ 853 0004 0200     		.2byte	0x2
+ 854 0006 00000000 		.4byte	.Ldebug_info0
+ 855 000a 04       		.byte	0x4
+ 856 000b 00       		.byte	0
+ 857 000c 0000     		.2byte	0
+ 858 000e 0000     		.2byte	0
+ 859 0010 00000000 		.4byte	.LFB64
+ 860 0014 10000000 		.4byte	.LFE64-.LFB64
+ 861 0018 00000000 		.4byte	.LFB65
+ 862 001c 10000000 		.4byte	.LFE65-.LFB65
+ 863 0020 00000000 		.4byte	.LFB63
+ 864 0024 50010000 		.4byte	.LFE63-.LFB63
+ 865 0028 00000000 		.4byte	0
+ 866 002c 00000000 		.4byte	0
+ 867              		.section	.debug_ranges,"",%progbits
+ 868              	.Ldebug_ranges0:
+ 869 0000 00000000 		.4byte	.LFB64
+ 870 0004 10000000 		.4byte	.LFE64
+ 871 0008 00000000 		.4byte	.LFB65
+ 872 000c 10000000 		.4byte	.LFE65
+ 873 0010 00000000 		.4byte	.LFB63
+ 874 0014 50010000 		.4byte	.LFE63
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 20
+
+
+ 875 0018 00000000 		.4byte	0
+ 876 001c 00000000 		.4byte	0
+ 877              		.section	.debug_line,"",%progbits
+ 878              	.Ldebug_line0:
+ 879 0000 16020000 		.section	.debug_str,"MS",%progbits,1
+ 879      0200A901 
+ 879      00000201 
+ 879      FB0E0D00 
+ 879      01010101 
+ 880              	.LASF24:
+ 881 0000 4C6F7746 		.ascii	"LowFHigh_Start\000"
+ 881      48696768 
+ 881      5F537461 
+ 881      727400
+ 882              	.LASF29:
+ 883 000f 5A65726F 		.ascii	"ZeroInt_StartEx\000"
+ 883      496E745F 
+ 883      53746172 
+ 883      74457800 
+ 884              	.LASF9:
+ 885 001f 5F5F696E 		.ascii	"__int32_t\000"
+ 885      7433325F 
+ 885      7400
+ 886              	.LASF21:
+ 887 0029 7A65726F 		.ascii	"zeroCounter\000"
+ 887      436F756E 
+ 887      74657200 
+ 888              	.LASF17:
+ 889 0035 50726566 		.ascii	"Prefix_Int\000"
+ 889      69785F49 
+ 889      6E7400
+ 890              	.LASF12:
+ 891 0040 666C6F61 		.ascii	"float\000"
+ 891      7400
+ 892              	.LASF28:
+ 893 0046 4F6E6549 		.ascii	"OneInt_StartEx\000"
+ 893      6E745F53 
+ 893      74617274 
+ 893      457800
+ 894              	.LASF23:
+ 895 0055 6D657373 		.ascii	"messageBit\000"
+ 895      61676542 
+ 895      697400
+ 896              	.LASF1:
+ 897 0060 756E7369 		.ascii	"unsigned char\000"
+ 897      676E6564 
+ 897      20636861 
+ 897      7200
+ 898              	.LASF33:
+ 899 006e 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 899      43313120 
+ 899      352E342E 
+ 899      31203230 
+ 899      31363036 
+ 900 00a1 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 900      20726576 
+ 900      6973696F 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 21
+
+
+ 900      6E203233 
+ 900      37373135 
+ 901 00d4 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 901      66756E63 
+ 901      74696F6E 
+ 901      2D736563 
+ 901      74696F6E 
+ 902              	.LASF27:
+ 903 00fc 5A65726F 		.ascii	"ZeroPwm_Sleep\000"
+ 903      50776D5F 
+ 903      536C6565 
+ 903      7000
+ 904              	.LASF5:
+ 905 010a 6C6F6E67 		.ascii	"long unsigned int\000"
+ 905      20756E73 
+ 905      69676E65 
+ 905      6420696E 
+ 905      7400
+ 906              	.LASF3:
+ 907 011c 73686F72 		.ascii	"short unsigned int\000"
+ 907      7420756E 
+ 907      7369676E 
+ 907      65642069 
+ 907      6E7400
+ 908              	.LASF37:
+ 909 012f 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 909      52784275 
+ 909      66666572 
+ 909      00
+ 910              	.LASF31:
+ 911 013c 4C6F7746 		.ascii	"LowFPwm_Sleep\000"
+ 911      50776D5F 
+ 911      536C6565 
+ 911      7000
+ 912              	.LASF13:
+ 913 014a 646F7562 		.ascii	"double\000"
+ 913      6C6500
+ 914              	.LASF36:
+ 915 0151 6D61696E 		.ascii	"main\000"
+ 915      00
+ 916              	.LASF30:
+ 917 0156 4C454454 		.ascii	"LEDTest_Write\000"
+ 917      6573745F 
+ 917      57726974 
+ 917      6500
+ 918              	.LASF26:
+ 919 0164 5A65726F 		.ascii	"ZeroPwm_Start\000"
+ 919      50776D5F 
+ 919      53746172 
+ 919      7400
+ 920              	.LASF8:
+ 921 0172 756E7369 		.ascii	"unsigned int\000"
+ 921      676E6564 
+ 921      20696E74 
+ 921      00
+ 922              	.LASF7:
+ 923 017f 6C6F6E67 		.ascii	"long long unsigned int\000"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 22
+
+
+ 923      206C6F6E 
+ 923      6720756E 
+ 923      7369676E 
+ 923      65642069 
+ 924              	.LASF22:
+ 925 0196 62697443 		.ascii	"bitCase\000"
+ 925      61736500 
+ 926              	.LASF20:
+ 927 019e 70776D43 		.ascii	"pwmCounter\000"
+ 927      6F756E74 
+ 927      657200
+ 928              	.LASF35:
+ 929 01a9 433A5C55 		.ascii	"C:\\Users\\ipfajard\\Documents\\PSoC Creator\\FSK\\"
+ 929      73657273 
+ 929      5C697066 
+ 929      616A6172 
+ 929      645C446F 
+ 930 01d6 4C6F7746 		.ascii	"LowFTx.cydsn\000"
+ 930      54782E63 
+ 930      7964736E 
+ 930      00
+ 931              	.LASF10:
+ 932 01e3 696E7433 		.ascii	"int32_t\000"
+ 932      325F7400 
+ 933              	.LASF16:
+ 934 01eb 73697A65 		.ascii	"sizetype\000"
+ 934      74797065 
+ 934      00
+ 935              	.LASF6:
+ 936 01f4 6C6F6E67 		.ascii	"long long int\000"
+ 936      206C6F6E 
+ 936      6720696E 
+ 936      7400
+ 937              	.LASF34:
+ 938 0202 6D61696E 		.ascii	"main.c\000"
+ 938      2E6300
+ 939              	.LASF14:
+ 940 0209 63686172 		.ascii	"char\000"
+ 940      00
+ 941              	.LASF32:
+ 942 020e 4D757853 		.ascii	"MuxSelOut_Write\000"
+ 942      656C4F75 
+ 942      745F5772 
+ 942      69746500 
+ 943              	.LASF2:
+ 944 021e 73686F72 		.ascii	"short int\000"
+ 944      7420696E 
+ 944      7400
+ 945              	.LASF11:
+ 946 0228 75696E74 		.ascii	"uint8\000"
+ 946      3800
+ 947              	.LASF4:
+ 948 022e 6C6F6E67 		.ascii	"long int\000"
+ 948      20696E74 
+ 948      00
+ 949              	.LASF15:
+ 950 0237 6C6F6E67 		.ascii	"long double\000"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccQEwFRh.s 			page 23
+
+
+ 950      20646F75 
+ 950      626C6500 
+ 951              	.LASF19:
+ 952 0243 74657374 		.ascii	"testLEDStatus\000"
+ 952      4C454453 
+ 952      74617475 
+ 952      7300
+ 953              	.LASF0:
+ 954 0251 7369676E 		.ascii	"signed char\000"
+ 954      65642063 
+ 954      68617200 
+ 955              	.LASF18:
+ 956 025d 5A65726F 		.ascii	"Zero_Int\000"
+ 956      5F496E74 
+ 956      00
+ 957              	.LASF25:
+ 958 0266 4C6F7746 		.ascii	"LowFPwm_Start\000"
+ 958      50776D5F 
+ 958      53746172 
+ 958      7400
+ 959              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

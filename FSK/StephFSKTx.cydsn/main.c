@@ -36,7 +36,7 @@ int main(void)
     isr_halfsec_StartEx(isr_halfsec);
     
     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
-    int bitCase;
+    int bitCase = 0;
 
     
     for(;;)
@@ -50,16 +50,16 @@ int main(void)
             break; 
             // DATA
             case 1:
-                bitCase = ZERO; 
-            break; 
-            case 2:
-                bitCase = ZERO; 
-            break; 
-            case 3:
                 bitCase = ONE; 
             break; 
-            case 4:
+            case 2:
+                bitCase = ONE; 
+            break; 
+            case 3:
                 bitCase = ZERO; 
+            break; 
+            case 4:
+                bitCase = ONE; 
             break; 
             // END OF DATA
             case 5:
@@ -69,6 +69,15 @@ int main(void)
                 bitCase = ONE; 
             break;   
             case 7:
+                bitCase = ZERO;
+            break;
+            case 8:
+                bitCase = ZERO;
+            break;
+            case 9:
+                bitCase = ZERO;
+            break;
+            case 10:
                 bitTime = 0;
             break;
         default:

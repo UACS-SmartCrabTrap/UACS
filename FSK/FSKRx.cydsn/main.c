@@ -20,6 +20,7 @@ static uint8 oneCount = 0;
 static uint8 currentBit = 0;
 static uint8 dataCount = 0;
 static uint8 data = 0;
+static uint8 crabs = 0;
 static uint8 dataFlag = 0;
 static uint8 lcdFlag = 0;
 
@@ -43,23 +44,28 @@ int main(void)
     LCD_Char_Start();
     //LeveCountISR_StartEx(LevelCheck);
     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+    char OutputString[12];
+    sprintf(OutputString, "%i", data);
+    LCD_Char_Position(0u,0u);
+    LCD_Char_PrintString(OutputString);
+    LCD_Char_PrintString(" is sad");
 
     for(;;)
     {
         
         /* Place your application code here. */
         if(lcdFlag == 1){
-
-        char OutputString[12];
-
-        sprintf(OutputString, "%i", data);
-        LCD_Char_Position(0u,0u);
-        LCD_Char_PrintString(OutputString);
+            sprintf(OutputString, "%i", crabs);
+            LCD_Char_Position(0u,0u);
+            LCD_Char_PrintString(OutputString);
+            LCD_Char_PrintString(" is awesome");
+            dataFlag = 0;
+            }
         }
     }
-}
+
 //Bit length = 0.5s
-//counter period = 0.05s
+//timer period = 0.05s
 //will check bit 10 times, to debounce
 //will set bit after 0.4s (8 checks) 
 CY_ISR(LevelCount){
@@ -72,12 +78,12 @@ CY_ISR(LevelCount){
     }
     
     //debouncing every 0.4s, with a check of 7/8 hits 
-    if(levelCounter == 8){
+    if(levelCounter == 10){
         if(oneCount >= 7){
             currentBit = 0x01;
             oneCount = 0;
         
-        }if(zeroCount >= 7){
+        }else{
             currentBit = 0x00; 
             zeroCount = 0; 
         }
@@ -93,10 +99,12 @@ CY_ISR(LevelCount){
             dataCount = 0;
             data = 0x00;
             dataFlag = 1;
+        
         // Look for data
-        }else if ((dataFlag == 1) && (dataCount < 4)){
-            dataCount++;
-        }else if((dataFlag == 1) && (dataCount > 4)){
+        
+        }else if((dataFlag == 1) && (dataCount > 3)){
+            crabs = data;
+            data = 0;
             dataCount = 0;
             dataFlag = 0;
             lcdFlag = 1;

@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: LeveCountISR.c  
+* File Name: LevelCountISR.c  
 * Version 1.70
 *
 *  Description:
@@ -18,15 +18,15 @@
 
 #include <cydevice_trm.h>
 #include <CyLib.h>
-#include <LeveCountISR.h>
+#include <LevelCountISR.h>
 #include "cyapicallbacks.h"
 
-#if !defined(LeveCountISR__REMOVED) /* Check for removal by optimization */
+#if !defined(LevelCountISR__REMOVED) /* Check for removal by optimization */
 
 /*******************************************************************************
 *  Place your includes, defines and code here 
 ********************************************************************************/
-/* `#START LeveCountISR_intc` */
+/* `#START LevelCountISR_intc` */
 
 /* `#END` */
 
@@ -42,7 +42,7 @@ CY_ISR_PROTO(IntDefaultHandler);
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_Start
+* Function Name: LevelCountISR_Start
 ********************************************************************************
 *
 * Summary:
@@ -58,24 +58,24 @@ CY_ISR_PROTO(IntDefaultHandler);
 *   None
 *
 *******************************************************************************/
-void LeveCountISR_Start(void)
+void LevelCountISR_Start(void)
 {
     /* For all we know the interrupt is active. */
-    LeveCountISR_Disable();
+    LevelCountISR_Disable();
 
-    /* Set the ISR to point to the LeveCountISR Interrupt. */
-    LeveCountISR_SetVector(&LeveCountISR_Interrupt);
+    /* Set the ISR to point to the LevelCountISR Interrupt. */
+    LevelCountISR_SetVector(&LevelCountISR_Interrupt);
 
     /* Set the priority. */
-    LeveCountISR_SetPriority((uint8)LeveCountISR_INTC_PRIOR_NUMBER);
+    LevelCountISR_SetPriority((uint8)LevelCountISR_INTC_PRIOR_NUMBER);
 
     /* Enable it. */
-    LeveCountISR_Enable();
+    LevelCountISR_Enable();
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_StartEx
+* Function Name: LevelCountISR_StartEx
 ********************************************************************************
 *
 * Summary:
@@ -101,24 +101,24 @@ void LeveCountISR_Start(void)
 *   None
 *
 *******************************************************************************/
-void LeveCountISR_StartEx(cyisraddress address)
+void LevelCountISR_StartEx(cyisraddress address)
 {
     /* For all we know the interrupt is active. */
-    LeveCountISR_Disable();
+    LevelCountISR_Disable();
 
-    /* Set the ISR to point to the LeveCountISR Interrupt. */
-    LeveCountISR_SetVector(address);
+    /* Set the ISR to point to the LevelCountISR Interrupt. */
+    LevelCountISR_SetVector(address);
 
     /* Set the priority. */
-    LeveCountISR_SetPriority((uint8)LeveCountISR_INTC_PRIOR_NUMBER);
+    LevelCountISR_SetPriority((uint8)LevelCountISR_INTC_PRIOR_NUMBER);
 
     /* Enable it. */
-    LeveCountISR_Enable();
+    LevelCountISR_Enable();
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_Stop
+* Function Name: LevelCountISR_Stop
 ********************************************************************************
 *
 * Summary:
@@ -131,22 +131,22 @@ void LeveCountISR_StartEx(cyisraddress address)
 *   None
 *
 *******************************************************************************/
-void LeveCountISR_Stop(void)
+void LevelCountISR_Stop(void)
 {
     /* Disable this interrupt. */
-    LeveCountISR_Disable();
+    LevelCountISR_Disable();
 
     /* Set the ISR to point to the passive one. */
-    LeveCountISR_SetVector(&IntDefaultHandler);
+    LevelCountISR_SetVector(&IntDefaultHandler);
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_Interrupt
+* Function Name: LevelCountISR_Interrupt
 ********************************************************************************
 *
 * Summary:
-*   The default Interrupt Service Routine for LeveCountISR.
+*   The default Interrupt Service Routine for LevelCountISR.
 *
 *   Add custom code between the coments to keep the next version of this file
 *   from over writting your code.
@@ -157,27 +157,27 @@ void LeveCountISR_Stop(void)
 *   None
 *
 *******************************************************************************/
-CY_ISR(LeveCountISR_Interrupt)
+CY_ISR(LevelCountISR_Interrupt)
 {
-    #ifdef LeveCountISR_INTERRUPT_INTERRUPT_CALLBACK
-        LeveCountISR_Interrupt_InterruptCallback();
-    #endif /* LeveCountISR_INTERRUPT_INTERRUPT_CALLBACK */ 
+    #ifdef LevelCountISR_INTERRUPT_INTERRUPT_CALLBACK
+        LevelCountISR_Interrupt_InterruptCallback();
+    #endif /* LevelCountISR_INTERRUPT_INTERRUPT_CALLBACK */ 
 
     /*  Place your Interrupt code here. */
-    /* `#START LeveCountISR_Interrupt` */
+    /* `#START LevelCountISR_Interrupt` */
 
     /* `#END` */
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_SetVector
+* Function Name: LevelCountISR_SetVector
 ********************************************************************************
 *
 * Summary:
-*   Change the ISR vector for the Interrupt. Note calling LeveCountISR_Start
+*   Change the ISR vector for the Interrupt. Note calling LevelCountISR_Start
 *   will override any effect this method would have had. To set the vector 
-*   before the component has been started use LeveCountISR_StartEx instead.
+*   before the component has been started use LevelCountISR_StartEx instead.
 * 
 *   When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
 *   used to provide consistent definition across compilers:
@@ -197,18 +197,18 @@ CY_ISR(LeveCountISR_Interrupt)
 *   None
 *
 *******************************************************************************/
-void LeveCountISR_SetVector(cyisraddress address)
+void LevelCountISR_SetVector(cyisraddress address)
 {
     cyisraddress * ramVectorTable;
 
     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
 
-    ramVectorTable[CYINT_IRQ_BASE + (uint32)LeveCountISR__INTC_NUMBER] = address;
+    ramVectorTable[CYINT_IRQ_BASE + (uint32)LevelCountISR__INTC_NUMBER] = address;
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_GetVector
+* Function Name: LevelCountISR_GetVector
 ********************************************************************************
 *
 * Summary:
@@ -221,26 +221,26 @@ void LeveCountISR_SetVector(cyisraddress address)
 *   Address of the ISR in the interrupt vector table.
 *
 *******************************************************************************/
-cyisraddress LeveCountISR_GetVector(void)
+cyisraddress LevelCountISR_GetVector(void)
 {
     cyisraddress * ramVectorTable;
 
     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
 
-    return ramVectorTable[CYINT_IRQ_BASE + (uint32)LeveCountISR__INTC_NUMBER];
+    return ramVectorTable[CYINT_IRQ_BASE + (uint32)LevelCountISR__INTC_NUMBER];
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_SetPriority
+* Function Name: LevelCountISR_SetPriority
 ********************************************************************************
 *
 * Summary:
 *   Sets the Priority of the Interrupt. 
 *
-*   Note calling LeveCountISR_Start or LeveCountISR_StartEx will 
+*   Note calling LevelCountISR_Start or LevelCountISR_StartEx will 
 *   override any effect this API would have had. This API should only be called
-*   after LeveCountISR_Start or LeveCountISR_StartEx has been called. 
+*   after LevelCountISR_Start or LevelCountISR_StartEx has been called. 
 *   To set the initial priority for the component, use the Design-Wide Resources
 *   Interrupt Editor.
 *
@@ -255,14 +255,14 @@ cyisraddress LeveCountISR_GetVector(void)
 *   None
 *
 *******************************************************************************/
-void LeveCountISR_SetPriority(uint8 priority)
+void LevelCountISR_SetPriority(uint8 priority)
 {
-    *LeveCountISR_INTC_PRIOR = priority << 5;
+    *LevelCountISR_INTC_PRIOR = priority << 5;
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_GetPriority
+* Function Name: LevelCountISR_GetPriority
 ********************************************************************************
 *
 * Summary:
@@ -277,19 +277,19 @@ void LeveCountISR_SetPriority(uint8 priority)
 *    PSoC 4: Priority is from 0 to 3.
 *
 *******************************************************************************/
-uint8 LeveCountISR_GetPriority(void)
+uint8 LevelCountISR_GetPriority(void)
 {
     uint8 priority;
 
 
-    priority = *LeveCountISR_INTC_PRIOR >> 5;
+    priority = *LevelCountISR_INTC_PRIOR >> 5;
 
     return priority;
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_Enable
+* Function Name: LevelCountISR_Enable
 ********************************************************************************
 *
 * Summary:
@@ -304,15 +304,15 @@ uint8 LeveCountISR_GetPriority(void)
 *   None
 *
 *******************************************************************************/
-void LeveCountISR_Enable(void)
+void LevelCountISR_Enable(void)
 {
     /* Enable the general interrupt. */
-    *LeveCountISR_INTC_SET_EN = LeveCountISR__INTC_MASK;
+    *LevelCountISR_INTC_SET_EN = LevelCountISR__INTC_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_GetState
+* Function Name: LevelCountISR_GetState
 ********************************************************************************
 *
 * Summary:
@@ -325,15 +325,15 @@ void LeveCountISR_Enable(void)
 *   1 if enabled, 0 if disabled.
 *
 *******************************************************************************/
-uint8 LeveCountISR_GetState(void)
+uint8 LevelCountISR_GetState(void)
 {
     /* Get the state of the general interrupt. */
-    return ((*LeveCountISR_INTC_SET_EN & (uint32)LeveCountISR__INTC_MASK) != 0u) ? 1u:0u;
+    return ((*LevelCountISR_INTC_SET_EN & (uint32)LevelCountISR__INTC_MASK) != 0u) ? 1u:0u;
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_Disable
+* Function Name: LevelCountISR_Disable
 ********************************************************************************
 *
 * Summary:
@@ -346,15 +346,15 @@ uint8 LeveCountISR_GetState(void)
 *   None
 *
 *******************************************************************************/
-void LeveCountISR_Disable(void)
+void LevelCountISR_Disable(void)
 {
     /* Disable the general interrupt. */
-    *LeveCountISR_INTC_CLR_EN = LeveCountISR__INTC_MASK;
+    *LevelCountISR_INTC_CLR_EN = LevelCountISR__INTC_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_SetPending
+* Function Name: LevelCountISR_SetPending
 ********************************************************************************
 *
 * Summary:
@@ -373,14 +373,14 @@ void LeveCountISR_Disable(void)
 *   interrupts).
 *
 *******************************************************************************/
-void LeveCountISR_SetPending(void)
+void LevelCountISR_SetPending(void)
 {
-    *LeveCountISR_INTC_SET_PD = LeveCountISR__INTC_MASK;
+    *LevelCountISR_INTC_SET_PD = LevelCountISR__INTC_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: LeveCountISR_ClearPending
+* Function Name: LevelCountISR_ClearPending
 ********************************************************************************
 *
 * Summary:
@@ -398,9 +398,9 @@ void LeveCountISR_SetPending(void)
 *   None
 *
 *******************************************************************************/
-void LeveCountISR_ClearPending(void)
+void LevelCountISR_ClearPending(void)
 {
-    *LeveCountISR_INTC_CLR_PD = LeveCountISR__INTC_MASK;
+    *LevelCountISR_INTC_CLR_PD = LevelCountISR__INTC_MASK;
 }
 
 #endif /* End check for removal by optimization */

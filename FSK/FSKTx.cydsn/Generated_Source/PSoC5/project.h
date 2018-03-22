@@ -45,6 +45,8 @@
 #include "LowF_ZeroPWM.h"
 #include "LowF_ZeroCLK.h"
 #include "LowF_ZeroInt.h"
+#include "currentBit_aliases.h"
+#include "currentBit.h"
 #include "core_cm3_psoc5.h"
 #include "CyDmac.h"
 #include "CyFlash.h"

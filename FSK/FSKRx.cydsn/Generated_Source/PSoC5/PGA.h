@@ -98,7 +98,7 @@ void PGA_Enable(void)                ;
 *       Initialization Values
 ***************************************/
 
-#define PGA_DEFAULT_GAIN             (0u)
+#define PGA_DEFAULT_GAIN             (1u)
 #define PGA_VREF_MODE                ((0u != 0x00u) ? (0x00u) : PGA_GNDVREF_E)
 #define PGA_DEFAULT_POWER            (1u)
 

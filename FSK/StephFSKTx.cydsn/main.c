@@ -31,8 +31,8 @@ int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
     
-    PWM_1_Start();
-    Timer_1_Start();
+    PWM_Modulator_Start();
+    PWM_Switch_Timer_Start();
     isr_halfsec_StartEx(isr_halfsec);
     
     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
@@ -77,11 +77,11 @@ int main(void)
         } //end of Switch 
         
         if(bitCase == 1){
-            PWM_1_WritePeriod(FREQ(ONE_FREQ));
-            PWM_1_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
+            PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
+            PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
         }else if(bitCase == 0){
-            PWM_1_WritePeriod(FREQ(ZERO_FREQ));
-            PWM_1_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+            PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
+            PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
         }
     }
 }

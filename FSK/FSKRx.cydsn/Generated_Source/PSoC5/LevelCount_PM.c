@@ -1,20 +1,20 @@
 /*******************************************************************************
-* File Name: LevelCount_PM.c  
-* Version 3.0
+* File Name: LevelCount_PM.c
+* Version 2.70
 *
 *  Description:
-*    This file provides the power management source code to API for the
-*    Counter.  
+*     This file provides the power management source code to API for the
+*     Timer.
 *
 *   Note:
 *     None
 *
-********************************************************************************
-* Copyright 2008-2012, Cypress Semiconductor Corporation.  All rights reserved.
-* You may use this file only in accordance with the license, terms, conditions, 
-* disclaimers, and limitations in the end user license agreement accompanying 
+*******************************************************************************
+* Copyright 2008-2014, Cypress Semiconductor Corporation.  All rights reserved.
+* You may use this file only in accordance with the license, terms, conditions,
+* disclaimers, and limitations in the end user license agreement accompanying
 * the software package with which this file was provided.
-*******************************************************************************/
+********************************************************************************/
 
 #include "LevelCount.h"
 
@@ -24,32 +24,35 @@ static LevelCount_backupStruct LevelCount_backup;
 /*******************************************************************************
 * Function Name: LevelCount_SaveConfig
 ********************************************************************************
+*
 * Summary:
 *     Save the current user configuration
 *
-* Parameters:  
+* Parameters:
 *  void
 *
-* Return: 
+* Return:
 *  void
 *
 * Global variables:
-*  LevelCount_backup:  Variables of this global structure are modified to 
-*  store the values of non retention configuration registers when Sleep() API is 
+*  LevelCount_backup:  Variables of this global structure are modified to
+*  store the values of non retention configuration registers when Sleep() API is
 *  called.
 *
 *******************************************************************************/
 void LevelCount_SaveConfig(void) 
 {
     #if (!LevelCount_UsingFixedFunction)
+        LevelCount_backup.TimerUdb = LevelCount_ReadCounter();
+        LevelCount_backup.InterruptMaskValue = LevelCount_STATUS_MASK;
+        #if (LevelCount_UsingHWCaptureCounter)
+            LevelCount_backup.TimerCaptureCounter = LevelCount_ReadCaptureCount();
+        #endif /* Back Up capture counter register  */
 
-        LevelCount_backup.CounterUdb = LevelCount_ReadCounter();
-
-        #if(!LevelCount_ControlRegRemoved)
-            LevelCount_backup.CounterControlRegister = LevelCount_ReadControlRegister();
-        #endif /* (!LevelCount_ControlRegRemoved) */
-
-    #endif /* (!LevelCount_UsingFixedFunction) */
+        #if(!LevelCount_UDB_CONTROL_REG_REMOVED)
+            LevelCount_backup.TimerControlRegister = LevelCount_ReadControlRegister();
+        #endif /* Backup the enable state of the Timer component */
+    #endif /* Backup non retention registers in UDB implementation. All fixed function registers are retention */
 }
 
 
@@ -60,70 +63,67 @@ void LevelCount_SaveConfig(void)
 * Summary:
 *  Restores the current user configuration.
 *
-* Parameters:  
+* Parameters:
 *  void
 *
-* Return: 
+* Return:
 *  void
 *
 * Global variables:
-*  LevelCount_backup:  Variables of this global structure are used to 
+*  LevelCount_backup:  Variables of this global structure are used to
 *  restore the values of non retention registers on wakeup from sleep mode.
 *
 *******************************************************************************/
 void LevelCount_RestoreConfig(void) 
-{      
+{   
     #if (!LevelCount_UsingFixedFunction)
 
-       LevelCount_WriteCounter(LevelCount_backup.CounterUdb);
+        LevelCount_WriteCounter(LevelCount_backup.TimerUdb);
+        LevelCount_STATUS_MASK =LevelCount_backup.InterruptMaskValue;
+        #if (LevelCount_UsingHWCaptureCounter)
+            LevelCount_SetCaptureCount(LevelCount_backup.TimerCaptureCounter);
+        #endif /* Restore Capture counter register*/
 
-        #if(!LevelCount_ControlRegRemoved)
-            LevelCount_WriteControlRegister(LevelCount_backup.CounterControlRegister);
-        #endif /* (!LevelCount_ControlRegRemoved) */
-
-    #endif /* (!LevelCount_UsingFixedFunction) */
+        #if(!LevelCount_UDB_CONTROL_REG_REMOVED)
+            LevelCount_WriteControlRegister(LevelCount_backup.TimerControlRegister);
+        #endif /* Restore the enable state of the Timer component */
+    #endif /* Restore non retention registers in the UDB implementation only */
 }
 
 
 /*******************************************************************************
 * Function Name: LevelCount_Sleep
 ********************************************************************************
+*
 * Summary:
 *     Stop and Save the user configuration
 *
-* Parameters:  
+* Parameters:
 *  void
 *
-* Return: 
+* Return:
 *  void
 *
 * Global variables:
-*  LevelCount_backup.enableState:  Is modified depending on the enable 
-*  state of the block before entering sleep mode.
+*  LevelCount_backup.TimerEnableState:  Is modified depending on the
+*  enable state of the block before entering sleep mode.
 *
 *******************************************************************************/
 void LevelCount_Sleep(void) 
 {
-    #if(!LevelCount_ControlRegRemoved)
+    #if(!LevelCount_UDB_CONTROL_REG_REMOVED)
         /* Save Counter's enable state */
         if(LevelCount_CTRL_ENABLE == (LevelCount_CONTROL & LevelCount_CTRL_ENABLE))
         {
-            /* Counter is enabled */
-            LevelCount_backup.CounterEnableState = 1u;
+            /* Timer is enabled */
+            LevelCount_backup.TimerEnableState = 1u;
         }
         else
         {
-            /* Counter is disabled */
-            LevelCount_backup.CounterEnableState = 0u;
+            /* Timer is disabled */
+            LevelCount_backup.TimerEnableState = 0u;
         }
-    #else
-        LevelCount_backup.CounterEnableState = 1u;
-        if(LevelCount_backup.CounterEnableState != 0u)
-        {
-            LevelCount_backup.CounterEnableState = 0u;
-        }
-    #endif /* (!LevelCount_ControlRegRemoved) */
-    
+    #endif /* Back up enable state from the Timer control register */
     LevelCount_Stop();
     LevelCount_SaveConfig();
 }
@@ -135,29 +135,27 @@ void LevelCount_Sleep(void)
 *
 * Summary:
 *  Restores and enables the user configuration
-*  
-* Parameters:  
+*
+* Parameters:
 *  void
 *
-* Return: 
+* Return:
 *  void
 *
 * Global variables:
-*  LevelCount_backup.enableState:  Is used to restore the enable state of 
+*  LevelCount_backup.enableState:  Is used to restore the enable state of
 *  block on wakeup from sleep mode.
 *
 *******************************************************************************/
 void LevelCount_Wakeup(void) 
 {
     LevelCount_RestoreConfig();
-    #if(!LevelCount_ControlRegRemoved)
-        if(LevelCount_backup.CounterEnableState == 1u)
-        {
-            /* Enable Counter's operation */
-            LevelCount_Enable();
-        } /* Do nothing if Counter was disabled before */    
-    #endif /* (!LevelCount_ControlRegRemoved) */
-    
+    #if(!LevelCount_UDB_CONTROL_REG_REMOVED)
+        if(LevelCount_backup.TimerEnableState == 1u)
+        {     /* Enable Timer's operation */
+                LevelCount_Enable();
+        } /* Do nothing if Timer was disabled before */
+    #endif /* Remove this code section if Control register is removed */
 }
 
 

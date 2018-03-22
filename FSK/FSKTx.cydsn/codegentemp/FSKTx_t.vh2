@@ -1,5 +1,5 @@
 -- Project:   C:\Users\sdysart\Documents\UACS\UACS\FSK\FSKTx.cydsn\FSKTx.cyprj
--- Generated: 03/21/2018 20:38:41
+-- Generated: 03/22/2018 04:14:19
 -- PSoC Creator  4.1 Update 1
 
 ENTITY FSKTx IS
@@ -10,7 +10,8 @@ ENTITY FSKTx IS
         LowF_FSK_Out(0)_PAD : OUT std_ulogic;
         LEDTest(0)_PAD : OUT std_ulogic;
         LowF_MuxSelIn(0)_PAD : IN std_ulogic;
-        LowF_MuxSelOut(0)_PAD : OUT std_ulogic);
+        LowF_MuxSelOut(0)_PAD : OUT std_ulogic;
+        currentBit(0)_PAD : OUT std_ulogic);
     ATTRIBUTE voltage_VDDABUF OF __DEFAULT__ : ENTITY IS 5e0;
     ATTRIBUTE voltage_VDDA OF __DEFAULT__ : ENTITY IS 5e0;
     ATTRIBUTE voltage_VUSB OF __DEFAULT__ : ENTITY IS 5e0;
@@ -46,7 +47,7 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     SIGNAL Net_172 : bit;
     ATTRIBUTE placement_force OF Net_172 : SIGNAL IS "U(3,3,A)2";
     SIGNAL Net_195 : bit;
-    ATTRIBUTE placement_force OF Net_195 : SIGNAL IS "U(3,3,B)0";
+    ATTRIBUTE placement_force OF Net_195 : SIGNAL IS "U(2,3,B)2";
     SIGNAL Net_199 : bit;
     SIGNAL Net_216 : bit;
     ATTRIBUTE udbclken_assigned OF Net_216 : SIGNAL IS "True";
@@ -55,7 +56,7 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     SIGNAL Net_217 : bit;
     ATTRIBUTE placement_force OF Net_217 : SIGNAL IS "U(2,2,B)2";
     SIGNAL Net_234 : bit;
-    ATTRIBUTE placement_force OF Net_234 : SIGNAL IS "U(2,2,B)0";
+    ATTRIBUTE placement_force OF Net_234 : SIGNAL IS "U(2,2,B)3";
     SIGNAL Net_72 : bit;
     ATTRIBUTE udbclken_assigned OF Net_72 : SIGNAL IS "True";
     ATTRIBUTE global_signal OF Net_72 : SIGNAL IS true;
@@ -63,18 +64,18 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     SIGNAL Net_73 : bit;
     ATTRIBUTE placement_force OF Net_73 : SIGNAL IS "U(3,0,A)2";
     SIGNAL Net_82 : bit;
-    ATTRIBUTE placement_force OF Net_82 : SIGNAL IS "U(3,0,B)0";
+    ATTRIBUTE placement_force OF Net_82 : SIGNAL IS "U(2,0,B)2";
     SIGNAL Net_86 : bit;
-    ATTRIBUTE placement_force OF Net_86 : SIGNAL IS "U(3,1,B)0";
+    ATTRIBUTE placement_force OF Net_86 : SIGNAL IS "U(2,1,B)3";
     SIGNAL Net_87 : bit;
-    ATTRIBUTE placement_force OF Net_87 : SIGNAL IS "U(2,1,B)3";
+    ATTRIBUTE placement_force OF Net_87 : SIGNAL IS "U(2,1,A)3";
     SIGNAL Net_88 : bit;
     SIGNAL Net_90 : bit;
     ATTRIBUTE udbclken_assigned OF Net_90 : SIGNAL IS "True";
     ATTRIBUTE global_signal OF Net_90 : SIGNAL IS true;
     SIGNAL Net_90_local : bit;
     SIGNAL Net_91 : bit;
-    ATTRIBUTE placement_force OF Net_91 : SIGNAL IS "U(2,1,B)2";
+    ATTRIBUTE placement_force OF Net_91 : SIGNAL IS "U(2,1,A)2";
     SIGNAL Net_96 : bit;
     ATTRIBUTE udbclken_assigned OF Net_96 : SIGNAL IS "True";
     ATTRIBUTE global_signal OF Net_96 : SIGNAL IS true;
@@ -111,7 +112,7 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     SIGNAL \HighF_ZeroPWM:PWMUDB:prevCompare1\ : bit;
     ATTRIBUTE placement_force OF \HighF_ZeroPWM:PWMUDB:prevCompare1\ : SIGNAL IS "U(2,2,A)0";
     SIGNAL \HighF_ZeroPWM:PWMUDB:runmode_enable\ : bit;
-    ATTRIBUTE placement_force OF \HighF_ZeroPWM:PWMUDB:runmode_enable\ : SIGNAL IS "U(3,2,A)0";
+    ATTRIBUTE placement_force OF \HighF_ZeroPWM:PWMUDB:runmode_enable\ : SIGNAL IS "U(2,2,B)0";
     SIGNAL \LowF_OnePWM:PWMUDB:sP16:pwmdp:u0.ce0__sig\ : bit;
     SIGNAL \HighF_ZeroPWM:PWMUDB:status_0\ : bit;
     ATTRIBUTE placement_force OF \HighF_ZeroPWM:PWMUDB:status_0\ : SIGNAL IS "U(2,2,A)1";
@@ -129,12 +130,12 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     SIGNAL \LowF_OnePWM:PWMUDB:control_6\ : bit;
     SIGNAL \LowF_OnePWM:PWMUDB:control_7\ : bit;
     SIGNAL \LowF_OnePWM:PWMUDB:prevCompare1\ : bit;
-    ATTRIBUTE placement_force OF \LowF_OnePWM:PWMUDB:prevCompare1\ : SIGNAL IS "U(3,0,A)3";
+    ATTRIBUTE placement_force OF \LowF_OnePWM:PWMUDB:prevCompare1\ : SIGNAL IS "U(3,0,B)2";
     SIGNAL \LowF_OnePWM:PWMUDB:runmode_enable\ : bit;
     ATTRIBUTE placement_force OF \LowF_OnePWM:PWMUDB:runmode_enable\ : SIGNAL IS "U(3,0,A)0";
     SIGNAL \LowF_ZeroPWM:PWMUDB:sP16:pwmdp:u0.ce0__sig\ : bit;
     SIGNAL \LowF_OnePWM:PWMUDB:status_0\ : bit;
-    ATTRIBUTE placement_force OF \LowF_OnePWM:PWMUDB:status_0\ : SIGNAL IS "U(3,0,B)2";
+    ATTRIBUTE placement_force OF \LowF_OnePWM:PWMUDB:status_0\ : SIGNAL IS "U(3,0,B)3";
     SIGNAL \LowF_OnePWM:PWMUDB:status_2\ : bit;
     ATTRIBUTE placement_force OF \LowF_OnePWM:PWMUDB:status_2\ : SIGNAL IS "U(3,0,A)1";
     SIGNAL \LowF_OnePWM:PWMUDB:status_3\ : bit;
@@ -149,19 +150,20 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     SIGNAL \LowF_ZeroPWM:PWMUDB:control_6\ : bit;
     SIGNAL \LowF_ZeroPWM:PWMUDB:control_7\ : bit;
     SIGNAL \LowF_ZeroPWM:PWMUDB:prevCompare1\ : bit;
-    ATTRIBUTE placement_force OF \LowF_ZeroPWM:PWMUDB:prevCompare1\ : SIGNAL IS "U(2,1,A)0";
+    ATTRIBUTE placement_force OF \LowF_ZeroPWM:PWMUDB:prevCompare1\ : SIGNAL IS "U(2,1,B)1";
     SIGNAL \LowF_ZeroPWM:PWMUDB:runmode_enable\ : bit;
-    ATTRIBUTE placement_force OF \LowF_ZeroPWM:PWMUDB:runmode_enable\ : SIGNAL IS "U(3,1,A)3";
+    ATTRIBUTE placement_force OF \LowF_ZeroPWM:PWMUDB:runmode_enable\ : SIGNAL IS "U(2,1,A)0";
     SIGNAL \LowF_ZeroPWM:PWMUDB:status_0\ : bit;
-    ATTRIBUTE placement_force OF \LowF_ZeroPWM:PWMUDB:status_0\ : SIGNAL IS "U(2,1,A)1";
+    ATTRIBUTE placement_force OF \LowF_ZeroPWM:PWMUDB:status_0\ : SIGNAL IS "U(2,1,B)2";
     SIGNAL \LowF_ZeroPWM:PWMUDB:status_2\ : bit;
-    ATTRIBUTE placement_force OF \LowF_ZeroPWM:PWMUDB:status_2\ : SIGNAL IS "U(2,1,B)1";
+    ATTRIBUTE placement_force OF \LowF_ZeroPWM:PWMUDB:status_2\ : SIGNAL IS "U(2,1,A)1";
     SIGNAL \LowF_ZeroPWM:PWMUDB:status_3\ : bit;
     SIGNAL \LowF_ZeroPWM:PWMUDB:tc_i\ : bit;
     SIGNAL __ONE__ : bit;
     ATTRIBUTE POWER OF __ONE__ : SIGNAL IS true;
     SIGNAL __ZERO__ : bit;
     ATTRIBUTE GROUND OF __ZERO__ : SIGNAL IS true;
+    SIGNAL currentBit(0)__PA : bit;
     SIGNAL one : bit;
     ATTRIBUTE POWER OF one : SIGNAL IS true;
     SIGNAL zero : bit;
@@ -230,16 +232,18 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     ATTRIBUTE Location OF LowF_MuxSelIn(0) : LABEL IS "P0[0]";
     ATTRIBUTE lib_model OF LowF_MuxSelOut(0) : LABEL IS "iocell7";
     ATTRIBUTE Location OF LowF_MuxSelOut(0) : LABEL IS "P0[1]";
+    ATTRIBUTE lib_model OF currentBit(0) : LABEL IS "iocell8";
+    ATTRIBUTE Location OF currentBit(0) : LABEL IS "P0[2]";
     ATTRIBUTE lib_model OF \HighF_OnePWM:PWMUDB:status_2\ : LABEL IS "macrocell1";
     ATTRIBUTE Location OF \HighF_OnePWM:PWMUDB:status_2\ : LABEL IS "U(3,3)";
     ATTRIBUTE lib_model OF Net_195 : LABEL IS "macrocell2";
-    ATTRIBUTE Location OF Net_195 : LABEL IS "U(3,3)";
+    ATTRIBUTE Location OF Net_195 : LABEL IS "U(2,3)";
     ATTRIBUTE lib_model OF \HighF_ZeroPWM:PWMUDB:status_2\ : LABEL IS "macrocell3";
     ATTRIBUTE Location OF \HighF_ZeroPWM:PWMUDB:status_2\ : LABEL IS "U(2,2)";
     ATTRIBUTE lib_model OF \LowF_OnePWM:PWMUDB:status_2\ : LABEL IS "macrocell4";
     ATTRIBUTE Location OF \LowF_OnePWM:PWMUDB:status_2\ : LABEL IS "U(3,0)";
     ATTRIBUTE lib_model OF Net_86 : LABEL IS "macrocell5";
-    ATTRIBUTE Location OF Net_86 : LABEL IS "U(3,1)";
+    ATTRIBUTE Location OF Net_86 : LABEL IS "U(2,1)";
     ATTRIBUTE lib_model OF \LowF_ZeroPWM:PWMUDB:status_2\ : LABEL IS "macrocell6";
     ATTRIBUTE Location OF \LowF_ZeroPWM:PWMUDB:status_2\ : LABEL IS "U(2,1)";
     ATTRIBUTE lib_model OF \HighF_OnePWM:PWMUDB:genblk1:ctrlreg\ : LABEL IS "controlcell1";
@@ -252,7 +256,7 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     ATTRIBUTE Location OF \HighF_OnePWM:PWMUDB:sP16:pwmdp:u1\ : LABEL IS "U(3,3)";
     ATTRIBUTE Location OF HighF_OneInt : LABEL IS "[IntrContainer=(0)][IntrId=(0)]";
     ATTRIBUTE lib_model OF \HighF_ZeroPWM:PWMUDB:genblk1:ctrlreg\ : LABEL IS "controlcell2";
-    ATTRIBUTE Location OF \HighF_ZeroPWM:PWMUDB:genblk1:ctrlreg\ : LABEL IS "U(3,2)";
+    ATTRIBUTE Location OF \HighF_ZeroPWM:PWMUDB:genblk1:ctrlreg\ : LABEL IS "U(2,2)";
     ATTRIBUTE lib_model OF \HighF_ZeroPWM:PWMUDB:genblk8:stsreg\ : LABEL IS "statusicell2";
     ATTRIBUTE Location OF \HighF_ZeroPWM:PWMUDB:genblk8:stsreg\ : LABEL IS "U(2,2)";
     ATTRIBUTE lib_model OF \HighF_ZeroPWM:PWMUDB:sP16:pwmdp:u0\ : LABEL IS "datapathcell3";
@@ -270,7 +274,7 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     ATTRIBUTE Location OF \LowF_OnePWM:PWMUDB:sP16:pwmdp:u1\ : LABEL IS "U(3,0)";
     ATTRIBUTE Location OF LowF_OneInt : LABEL IS "[IntrContainer=(0)][IntrId=(2)]";
     ATTRIBUTE lib_model OF \LowF_ZeroPWM:PWMUDB:genblk1:ctrlreg\ : LABEL IS "controlcell4";
-    ATTRIBUTE Location OF \LowF_ZeroPWM:PWMUDB:genblk1:ctrlreg\ : LABEL IS "U(3,1)";
+    ATTRIBUTE Location OF \LowF_ZeroPWM:PWMUDB:genblk1:ctrlreg\ : LABEL IS "U(2,1)";
     ATTRIBUTE lib_model OF \LowF_ZeroPWM:PWMUDB:genblk8:stsreg\ : LABEL IS "statusicell4";
     ATTRIBUTE Location OF \LowF_ZeroPWM:PWMUDB:genblk8:stsreg\ : LABEL IS "U(2,1)";
     ATTRIBUTE lib_model OF \LowF_ZeroPWM:PWMUDB:sP16:pwmdp:u0\ : LABEL IS "datapathcell7";
@@ -289,7 +293,7 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     ATTRIBUTE lib_model OF Net_172 : LABEL IS "macrocell11";
     ATTRIBUTE Location OF Net_172 : LABEL IS "U(3,3)";
     ATTRIBUTE lib_model OF \HighF_ZeroPWM:PWMUDB:runmode_enable\ : LABEL IS "macrocell12";
-    ATTRIBUTE Location OF \HighF_ZeroPWM:PWMUDB:runmode_enable\ : LABEL IS "U(3,2)";
+    ATTRIBUTE Location OF \HighF_ZeroPWM:PWMUDB:runmode_enable\ : LABEL IS "U(2,2)";
     ATTRIBUTE lib_model OF \HighF_ZeroPWM:PWMUDB:prevCompare1\ : LABEL IS "macrocell13";
     ATTRIBUTE Location OF \HighF_ZeroPWM:PWMUDB:prevCompare1\ : LABEL IS "U(2,2)";
     ATTRIBUTE lib_model OF \HighF_ZeroPWM:PWMUDB:status_0\ : LABEL IS "macrocell14";
@@ -305,11 +309,11 @@ ARCHITECTURE __DEFAULT__ OF FSKTx IS
     ATTRIBUTE lib_model OF \LowF_OnePWM:PWMUDB:status_0\ : LABEL IS "macrocell19";
     ATTRIBUTE Location OF \LowF_OnePWM:PWMUDB:status_0\ : LABEL IS "U(3,0)";
     ATTRIBUTE lib_model OF Net_82 : LABEL IS "macrocell20";
-    ATTRIBUTE Location OF Net_82 : LABEL IS "U(3,0)";
+    ATTRIBUTE Location OF Net_82 : LABEL IS "U(2,0)";
     ATTRIBUTE lib_model OF Net_73 : LABEL IS "macrocell21";
     ATTRIBUTE Location OF Net_73 : LABEL IS "U(3,0)";
     ATTRIBUTE lib_model OF \LowF_ZeroPWM:PWMUDB:runmode_enable\ : LABEL IS "macrocell22";
-    ATTRIBUTE Location OF \LowF_ZeroPWM:PWMUDB:runmode_enable\ : LABEL IS "U(3,1)";
+    ATTRIBUTE Location OF \LowF_ZeroPWM:PWMUDB:runmode_enable\ : LABEL IS "U(2,1)";
     ATTRIBUTE lib_model OF \LowF_ZeroPWM:PWMUDB:prevCompare1\ : LABEL IS "macrocell23";
     ATTRIBUTE Location OF \LowF_ZeroPWM:PWMUDB:prevCompare1\ : LABEL IS "U(2,1)";
     ATTRIBUTE lib_model OF \LowF_ZeroPWM:PWMUDB:status_0\ : LABEL IS "macrocell24";
@@ -1256,6 +1260,96 @@ BEGIN
             pa_out => LowF_MuxSelOut(0)__PA,
             oe => open,
             pad_in => LowF_MuxSelOut(0)_PAD,
+            in_clock => open,
+            in_clock_en => '1',
+            in_reset => '0',
+            out_clock => open,
+            out_clock_en => '1',
+            out_reset => '0');
+
+    currentBit:logicalport
+        GENERIC MAP(
+            drive_mode => "110",
+            ibuf_enabled => "1",
+            id => "8e5cde57-1f84-4da8-85a0-1e844cc86a4e",
+            init_dr_st => "0",
+            input_buffer_sel => "00",
+            input_clk_en => 0,
+            input_sync => "1",
+            input_sync_mode => "0",
+            intr_mode => "00",
+            invert_in_clock => 0,
+            invert_in_clock_en => 0,
+            invert_in_reset => 0,
+            invert_out_clock => 0,
+            invert_out_clock_en => 0,
+            invert_out_reset => 0,
+            io_voltage => "",
+            layout_mode => "CONTIGUOUS",
+            oe_conn => "0",
+            oe_reset => 0,
+            oe_sync => "0",
+            output_clk_en => 0,
+            output_clock_mode => "0",
+            output_conn => "0",
+            output_mode => "0",
+            output_reset => 0,
+            output_sync => "0",
+            ovt_hyst_trim => "0",
+            ovt_needed => "0",
+            ovt_slew_control => "00",
+            pa_in_clock => -1,
+            pa_in_clock_en => -1,
+            pa_in_reset => -1,
+            pa_out_clock => -1,
+            pa_out_clock_en => -1,
+            pa_out_reset => -1,
+            pin_aliases => "",
+            pin_mode => "O",
+            por_state => 4,
+            port_alias_group => "",
+            port_alias_required => 0,
+            sio_group_cnt => 0,
+            sio_hifreq => "00000000",
+            sio_hyst => "1",
+            sio_ibuf => "00000000",
+            sio_info => "00",
+            sio_obuf => "00000000",
+            sio_refsel => "00000000",
+            sio_vohsel => "00000000",
+            sio_vtrip => "00000000",
+            slew_rate => "0",
+            spanning => 0,
+            sw_only => 0,
+            use_annotation => "0",
+            vtrip => "10",
+            width => 1,
+            in_clk_inv => 0,
+            in_clken_inv => 0,
+            in_clken_mode => 1,
+            in_rst_inv => 0,
+            out_clk_inv => 0,
+            out_clken_inv => 0,
+            out_clken_mode => 1,
+            out_rst_inv => 0)
+        PORT MAP(
+            in_clock_en => open,
+            in_reset => open,
+            out_clock_en => open,
+            out_reset => open);
+
+    currentBit(0):iocell
+        GENERIC MAP(
+            in_sync_mode => 0,
+            out_sync_mode => 0,
+            oe_sync_mode => 0,
+            logicalport => "currentBit",
+            logicalport_pin_id => 0,
+            io_capabilities => "0000000000000000000000000000000000000000000000000000000000000001")
+        PORT MAP(
+            pa_out => currentBit(0)__PA,
+            oe => open,
+            pad_in => currentBit(0)_PAD,
             in_clock => open,
             in_clock_en => '1',
             in_reset => '0',

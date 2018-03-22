@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 1
 
 
    1              		.syntax unified
@@ -42,8 +42,8 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
   12:main.c        **** #include "project.h"
   13:main.c        **** //LowF Counts for 0.5s bit time
   14:main.c        **** //count = 0.5s / T
-  15:main.c        **** #define L_OneHalf_Second 55
-  16:main.c        **** #define L_ZeroHalf_Second 45
+  15:main.c        **** #define L_OneHalf_Second 50
+  16:main.c        **** #define L_ZeroHalf_Second 43
   17:main.c        **** 
   18:main.c        **** #define H_OneHalf_Second 55
   19:main.c        **** #define H_ZeroHalf_Second 45
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
   28:main.c        **** //Low F Interrupts
   29:main.c        **** CY_ISR_PROTO(LowF_Zero_Int);
   30:main.c        **** CY_ISR_PROTO(LowF_One_Int);
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 2
 
 
   31:main.c        **** 
@@ -100,186 +100,189 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
   67:main.c        ****     HighF_OneInt_StartEx(HighF_Zero_Int);
   68:main.c        ****     HighF_ZeroInt_StartEx(HighF_One_Int);
   69:main.c        **** 
-  70:main.c        ****     for(;;)
-  71:main.c        ****     {
-  72:main.c        ****         /* Place your application code here. */
-  73:main.c        ****         
-  74:main.c        ****         //When the counters are such that the bit has been held for 0.5s
-  75:main.c        ****         //Move all counters such that next bitis being transmitted 
-  76:main.c        ****         if((L_oneCounter % L_OneHalf_Second) == 0){
-  77:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
-  78:main.c        ****             LEDTest_Write(testLEDStatus); 
-  79:main.c        ****             L_messageBit++;
-  80:main.c        ****             L_oneCounter = 1;
-  81:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
-  82:main.c        ****         }
-  83:main.c        ****         
-  84:main.c        ****         if((L_zeroCounter % L_ZeroHalf_Second) == 0){
-  85:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
-  86:main.c        ****             LEDTest_Write(testLEDStatus); 
-  87:main.c        ****             L_messageBit++;
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 3
+  70:main.c        ****     
+  71:main.c        ****     for(;;)
+  72:main.c        ****     {
+  73:main.c        ****         /* Place your application code here. */
+  74:main.c        ****         
+  75:main.c        ****         //When the counters are such that the bit has been held for 0.5s
+  76:main.c        ****         //Move all counters such that next bit is being transmitted 
+  77:main.c        ****         if((L_oneCounter % L_OneHalf_Second) == 0){
+  78:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+  79:main.c        ****             LEDTest_Write(testLEDStatus); 
+  80:main.c        ****             L_messageBit++;
+  81:main.c        ****             L_oneCounter = 1;
+  82:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+  83:main.c        ****         }
+  84:main.c        ****         
+  85:main.c        ****         if((L_zeroCounter % L_ZeroHalf_Second) == 0){
+  86:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+  87:main.c        ****             LEDTest_Write(testLEDStatus); 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 3
 
 
-  88:main.c        ****             L_zeroCounter = 1;
-  89:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
-  90:main.c        ****         }
-  91:main.c        ****         
-  92:main.c        ****         if((H_oneCounter % H_OneHalf_Second) == 0){
-  93:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
-  94:main.c        ****             LEDTest_Write(testLEDStatus); 
-  95:main.c        ****             H_messageBit++;
-  96:main.c        ****             H_oneCounter = 1;
-  97:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
-  98:main.c        ****         }
-  99:main.c        ****         
- 100:main.c        ****         if((H_zeroCounter % H_ZeroHalf_Second) == 0){
- 101:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
- 102:main.c        ****             LEDTest_Write(testLEDStatus); 
- 103:main.c        ****             H_messageBit++;
- 104:main.c        ****             H_zeroCounter = 1;
- 105:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
- 106:main.c        ****         }
- 107:main.c        ****         
- 108:main.c        ****         switch(L_messageBit){
- 109:main.c        ****         
- 110:main.c        ****             case 0:
- 111:main.c        ****                 bitCase = ONE;
- 112:main.c        ****             
- 113:main.c        ****             break; 
- 114:main.c        ****             case 1:
- 115:main.c        ****                 bitCase = ONE; 
- 116:main.c        ****             break;
- 117:main.c        ****             case 2:
- 118:main.c        ****                 bitCase = ONE; 
- 119:main.c        ****             break;
- 120:main.c        ****             case 3:
- 121:main.c        ****                 bitCase = ONE; 
- 122:main.c        ****             break;
- 123:main.c        ****             case 4:
- 124:main.c        ****                 bitCase = ZERO; 
- 125:main.c        ****                 LowF_OnePWM_Sleep();
- 126:main.c        ****                 LowF_ZeroPWM_Start();
- 127:main.c        ****                 
- 128:main.c        ****             break; 
- 129:main.c        ****             case 5:
- 130:main.c        ****                 bitCase = ZERO; 
- 131:main.c        ****               
- 132:main.c        ****             break; 
- 133:main.c        ****             case 6:
- 134:main.c        ****                 bitCase = ONE; 
- 135:main.c        ****                 LowF_ZeroPWM_Sleep();
- 136:main.c        ****                 LowF_OnePWM_Start();
- 137:main.c        ****             break; 
- 138:main.c        ****             case 7:
- 139:main.c        ****                 bitCase = ZERO; 
- 140:main.c        ****                 LowF_OnePWM_Sleep();
- 141:main.c        ****                 LowF_ZeroPWM_Start();
- 142:main.c        ****             break; 
- 143:main.c        ****             case 8:
- 144:main.c        ****                 bitCase = ONE; 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 4
+  88:main.c        ****             L_messageBit++;
+  89:main.c        ****             L_zeroCounter = 1;
+  90:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+  91:main.c        ****         }
+  92:main.c        ****         
+  93:main.c        ****         if((H_oneCounter % H_OneHalf_Second) == 0){
+  94:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+  95:main.c        ****             LEDTest_Write(testLEDStatus); 
+  96:main.c        ****             H_messageBit++;
+  97:main.c        ****             H_oneCounter = 1;
+  98:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+  99:main.c        ****         }
+ 100:main.c        ****         
+ 101:main.c        ****         if((H_zeroCounter % H_ZeroHalf_Second) == 0){
+ 102:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+ 103:main.c        ****             LEDTest_Write(testLEDStatus); 
+ 104:main.c        ****             H_messageBit++;
+ 105:main.c        ****             H_zeroCounter = 1;
+ 106:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+ 107:main.c        ****         }
+ 108:main.c        ****         
+ 109:main.c        ****         switch(L_messageBit){
+ 110:main.c        ****         
+ 111:main.c        ****             case 0:
+ 112:main.c        ****                 bitCase = ONE;
+ 113:main.c        ****             
+ 114:main.c        ****             break; 
+ 115:main.c        ****             case 1:
+ 116:main.c        ****                 bitCase = ONE; 
+ 117:main.c        ****             break;
+ 118:main.c        ****             case 2:
+ 119:main.c        ****                 bitCase = ONE; 
+ 120:main.c        ****             break;
+ 121:main.c        ****             case 3:
+ 122:main.c        ****                 bitCase = ONE; 
+ 123:main.c        ****             break;
+ 124:main.c        ****             case 4:
+ 125:main.c        ****                 bitCase = ZERO; 
+ 126:main.c        ****                 LowF_OnePWM_Sleep();
+ 127:main.c        ****                 LowF_ZeroPWM_Start();
+ 128:main.c        ****                 
+ 129:main.c        ****             break; 
+ 130:main.c        ****             case 5:
+ 131:main.c        ****                 bitCase = ZERO; 
+ 132:main.c        ****               
+ 133:main.c        ****             break; 
+ 134:main.c        ****             case 6:
+ 135:main.c        ****                 bitCase = ONE; 
+ 136:main.c        ****                 LowF_ZeroPWM_Sleep();
+ 137:main.c        ****                 LowF_OnePWM_Start();
+ 138:main.c        ****             break; 
+ 139:main.c        ****             case 7:
+ 140:main.c        ****                 bitCase = ZERO; 
+ 141:main.c        ****                 LowF_OnePWM_Sleep();
+ 142:main.c        ****                 LowF_ZeroPWM_Start();
+ 143:main.c        ****             break; 
+ 144:main.c        ****             case 8:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 4
 
 
- 145:main.c        ****                 LowF_ZeroPWM_Sleep();
- 146:main.c        ****                 LowF_OnePWM_Start();
- 147:main.c        ****             break;     
- 148:main.c        ****             case 9:
- 149:main.c        ****                 bitCase = ONE; 
- 150:main.c        ****             break;
- 151:main.c        ****             case 10:
- 152:main.c        ****                 bitCase = ONE; 
- 153:main.c        ****                 
- 154:main.c        ****             break;
- 155:main.c        ****             case 11:
- 156:main.c        ****                 bitCase = ONE; 
- 157:main.c        ****                 
- 158:main.c        ****             break;    
- 159:main.c        ****             
- 160:main.c        ****         default:
- 161:main.c        ****         break; 
- 162:main.c        ****   
- 163:main.c        ****         }
- 164:main.c        ****         
- 165:main.c        ****         
+ 145:main.c        ****                 bitCase = ONE; 
+ 146:main.c        ****                 LowF_ZeroPWM_Sleep();
+ 147:main.c        ****                 LowF_OnePWM_Start();
+ 148:main.c        ****             break;     
+ 149:main.c        ****             case 9:
+ 150:main.c        ****                 bitCase = ONE; 
+ 151:main.c        ****             break;
+ 152:main.c        ****             case 10:
+ 153:main.c        ****                 bitCase = ONE; 
+ 154:main.c        ****                 
+ 155:main.c        ****             break;
+ 156:main.c        ****             case 11:
+ 157:main.c        ****                 bitCase = ONE; 
+ 158:main.c        ****                 L_messageBit = 0;
+ 159:main.c        ****                 
+ 160:main.c        ****             break;    
+ 161:main.c        ****             
+ 162:main.c        ****         default:
+ 163:main.c        ****         break; 
+ 164:main.c        ****   
+ 165:main.c        ****         }
  166:main.c        ****         
- 167:main.c        ****         switch(H_messageBit){
+ 167:main.c        ****         
  168:main.c        ****         
- 169:main.c        ****             case 0:
- 170:main.c        ****                 bitCase = ONE;
- 171:main.c        ****             
- 172:main.c        ****             break; 
- 173:main.c        ****             case 1:
- 174:main.c        ****                 bitCase = ONE; 
- 175:main.c        ****             break;
- 176:main.c        ****             case 2:
- 177:main.c        ****                 bitCase = ONE; 
- 178:main.c        ****             break;
- 179:main.c        ****             case 3:
- 180:main.c        ****                 bitCase = ONE; 
- 181:main.c        ****             break;
- 182:main.c        ****             case 4:
- 183:main.c        ****                 bitCase = ZERO; 
- 184:main.c        ****                 HighF_OnePWM_Sleep();
- 185:main.c        ****                 HighF_ZeroPWM_Start();
- 186:main.c        ****                 
- 187:main.c        ****             break; 
- 188:main.c        ****             case 5:
- 189:main.c        ****                 bitCase = ZERO; 
- 190:main.c        ****               
- 191:main.c        ****             break; 
- 192:main.c        ****             case 6:
- 193:main.c        ****                 bitCase = ONE; 
- 194:main.c        ****                 HighF_ZeroPWM_Sleep();
- 195:main.c        ****                 HighF_OnePWM_Start();
- 196:main.c        ****             break; 
- 197:main.c        ****             case 7:
- 198:main.c        ****                 bitCase = ZERO; 
- 199:main.c        ****                 HighF_OnePWM_Sleep();
- 200:main.c        ****                 HighF_ZeroPWM_Start();
- 201:main.c        ****             break; 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 5
+ 169:main.c        ****         switch(H_messageBit){
+ 170:main.c        ****         
+ 171:main.c        ****             case 0:
+ 172:main.c        ****                 bitCase = ONE;
+ 173:main.c        ****             
+ 174:main.c        ****             break; 
+ 175:main.c        ****             case 1:
+ 176:main.c        ****                 bitCase = ONE; 
+ 177:main.c        ****             break;
+ 178:main.c        ****             case 2:
+ 179:main.c        ****                 bitCase = ONE; 
+ 180:main.c        ****             break;
+ 181:main.c        ****             case 3:
+ 182:main.c        ****                 bitCase = ONE; 
+ 183:main.c        ****             break;
+ 184:main.c        ****             case 4:
+ 185:main.c        ****                 bitCase = ZERO; 
+ 186:main.c        ****                 HighF_OnePWM_Sleep();
+ 187:main.c        ****                 HighF_ZeroPWM_Start();
+ 188:main.c        ****                 
+ 189:main.c        ****             break; 
+ 190:main.c        ****             case 5:
+ 191:main.c        ****                 bitCase = ZERO; 
+ 192:main.c        ****               
+ 193:main.c        ****             break; 
+ 194:main.c        ****             case 6:
+ 195:main.c        ****                 bitCase = ONE; 
+ 196:main.c        ****                 HighF_ZeroPWM_Sleep();
+ 197:main.c        ****                 HighF_OnePWM_Start();
+ 198:main.c        ****             break; 
+ 199:main.c        ****             case 7:
+ 200:main.c        ****                 bitCase = ZERO; 
+ 201:main.c        ****                 HighF_OnePWM_Sleep();
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 5
 
 
- 202:main.c        ****             case 8:
- 203:main.c        ****                 bitCase = ONE; 
- 204:main.c        ****                 HighF_ZeroPWM_Sleep();
- 205:main.c        ****                 HighF_OnePWM_Start();
- 206:main.c        ****             break;     
- 207:main.c        ****             case 9:
- 208:main.c        ****                 bitCase = ONE; 
- 209:main.c        ****             break;
- 210:main.c        ****             case 10:
- 211:main.c        ****                 bitCase = ONE; 
- 212:main.c        ****                 
- 213:main.c        ****             break;
- 214:main.c        ****             case 11:
- 215:main.c        ****                 bitCase = ONE; 
- 216:main.c        ****                 
- 217:main.c        ****             break;    
- 218:main.c        ****             
- 219:main.c        ****         default:
- 220:main.c        ****         break; 
- 221:main.c        ****   
- 222:main.c        ****         }
- 223:main.c        ****         
- 224:main.c        ****         LowF_MuxSelOut_Write(bitCase);
- 225:main.c        ****         HighF_MuxSelOut_Write(bitCase);
- 226:main.c        ****     }
- 227:main.c        **** }
- 228:main.c        **** 
- 229:main.c        **** //Low F Interrupts
- 230:main.c        **** //Triggered on PWM TC
- 231:main.c        **** //Will increment counter, that will determine the bit time in main code
- 232:main.c        **** CY_ISR(LowF_Zero_Int){
-  28              		.loc 1 232 0
+ 202:main.c        ****                 HighF_ZeroPWM_Start();
+ 203:main.c        ****             break; 
+ 204:main.c        ****             case 8:
+ 205:main.c        ****                 bitCase = ONE; 
+ 206:main.c        ****                 HighF_ZeroPWM_Sleep();
+ 207:main.c        ****                 HighF_OnePWM_Start();
+ 208:main.c        ****             break;     
+ 209:main.c        ****             case 9:
+ 210:main.c        ****                 bitCase = ONE; 
+ 211:main.c        ****             break;
+ 212:main.c        ****             case 10:
+ 213:main.c        ****                 bitCase = ONE; 
+ 214:main.c        ****                 
+ 215:main.c        ****             break;
+ 216:main.c        ****             case 11:
+ 217:main.c        ****                 bitCase = ONE; 
+ 218:main.c        ****                 H_messageBit = 0;
+ 219:main.c        ****                 
+ 220:main.c        ****             break;    
+ 221:main.c        ****             
+ 222:main.c        ****         default:
+ 223:main.c        ****         break; 
+ 224:main.c        ****   
+ 225:main.c        ****         }
+ 226:main.c        ****         
+ 227:main.c        ****         LowF_MuxSelOut_Write(bitCase);
+ 228:main.c        ****         HighF_MuxSelOut_Write(bitCase);
+ 229:main.c        ****     }
+ 230:main.c        **** }
+ 231:main.c        **** 
+ 232:main.c        **** //Low F Interrupts
+ 233:main.c        **** //Triggered on PWM TC
+ 234:main.c        **** //Will increment counter, that will determine the bit time in main code
+ 235:main.c        **** CY_ISR(LowF_Zero_Int){
+  28              		.loc 1 235 0
   29              		.cfi_startproc
   30              		@ args = 0, pretend = 0, frame = 0
   31              		@ frame_needed = 0, uses_anonymous_args = 0
   32              		@ link register save eliminated.
- 233:main.c        ****    
- 234:main.c        ****    L_zeroCounter++;
-  33              		.loc 1 234 0
+ 236:main.c        ****    
+ 237:main.c        ****    L_zeroCounter++;
+  33              		.loc 1 237 0
   34 0000 024A     		ldr	r2, .L2
   35 0002 1368     		ldr	r3, [r2]
   36 0004 0133     		adds	r3, r3, #1
@@ -295,26 +298,26 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
   46              		.section	.text.LowF_One_Int,"ax",%progbits
   47              		.align	2
   48              		.global	LowF_One_Int
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 6
+
+
   49              		.thumb
   50              		.thumb_func
   51              		.type	LowF_One_Int, %function
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 6
-
-
   52              	LowF_One_Int:
   53              	.LFB65:
- 235:main.c        **** 
- 236:main.c        **** }
- 237:main.c        **** 
- 238:main.c        **** CY_ISR(LowF_One_Int){
-  54              		.loc 1 238 0
+ 238:main.c        **** 
+ 239:main.c        **** }
+ 240:main.c        **** 
+ 241:main.c        **** CY_ISR(LowF_One_Int){
+  54              		.loc 1 241 0
   55              		.cfi_startproc
   56              		@ args = 0, pretend = 0, frame = 0
   57              		@ frame_needed = 0, uses_anonymous_args = 0
   58              		@ link register save eliminated.
- 239:main.c        ****     
- 240:main.c        ****     L_oneCounter++;
-  59              		.loc 1 240 0
+ 242:main.c        ****     
+ 243:main.c        ****     L_oneCounter++;
+  59              		.loc 1 243 0
   60 0000 024A     		ldr	r2, .L5
   61 0002 5368     		ldr	r3, [r2, #4]
   62 0004 0133     		adds	r3, r3, #1
@@ -335,18 +338,18 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
   77              		.type	HighF_Zero_Int, %function
   78              	HighF_Zero_Int:
   79              	.LFB66:
- 241:main.c        **** 
- 242:main.c        **** }
- 243:main.c        **** 
- 244:main.c        **** CY_ISR_PROTO(HighF_Zero_Int){
-  80              		.loc 1 244 0
+ 244:main.c        **** 
+ 245:main.c        **** }
+ 246:main.c        **** 
+ 247:main.c        **** CY_ISR_PROTO(HighF_Zero_Int){
+  80              		.loc 1 247 0
   81              		.cfi_startproc
   82              		@ args = 0, pretend = 0, frame = 0
   83              		@ frame_needed = 0, uses_anonymous_args = 0
   84              		@ link register save eliminated.
- 245:main.c        ****    
- 246:main.c        ****     H_zeroCounter++;
-  85              		.loc 1 246 0
+ 248:main.c        ****    
+ 249:main.c        ****     H_zeroCounter++;
+  85              		.loc 1 249 0
   86 0000 024A     		ldr	r2, .L8
   87 0002 9368     		ldr	r3, [r2, #8]
   88 0004 0133     		adds	r3, r3, #1
@@ -355,12 +358,12 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
   91              	.L9:
   92 000a 00BF     		.align	2
   93              	.L8:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 7
+
+
   94 000c 00000000 		.word	.LANCHOR0
   95              		.cfi_endproc
   96              	.LFE66:
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 7
-
-
   97              		.size	HighF_Zero_Int, .-HighF_Zero_Int
   98              		.section	.text.HighF_One_Int,"ax",%progbits
   99              		.align	2
@@ -370,17 +373,17 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
  103              		.type	HighF_One_Int, %function
  104              	HighF_One_Int:
  105              	.LFB67:
- 247:main.c        **** 
- 248:main.c        **** }
- 249:main.c        **** CY_ISR_PROTO(HighF_One_Int){
- 106              		.loc 1 249 0
+ 250:main.c        **** 
+ 251:main.c        **** }
+ 252:main.c        **** CY_ISR_PROTO(HighF_One_Int){
+ 106              		.loc 1 252 0
  107              		.cfi_startproc
  108              		@ args = 0, pretend = 0, frame = 0
  109              		@ frame_needed = 0, uses_anonymous_args = 0
  110              		@ link register save eliminated.
- 250:main.c        ****     
- 251:main.c        ****     H_oneCounter++;
- 111              		.loc 1 251 0
+ 253:main.c        ****     
+ 254:main.c        ****     H_oneCounter++;
+ 111              		.loc 1 254 0
  112 0000 024A     		ldr	r2, .L11
  113 0002 D368     		ldr	r3, [r2, #12]
  114 0004 0133     		adds	r3, r3, #1
@@ -415,12 +418,12 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
  141              		.loc 1 48 0
  142              		.syntax unified
  143              	@ 48 "main.c" 1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 8
+
+
  144 0002 62B6     		CPSIE   i
  145              	@ 0 "" 2
   51:main.c        ****     //LowF_ZeroPWM_Start();
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 8
-
-
  146              		.loc 1 51 0
  147              		.thumb
  148              		.syntax unified
@@ -465,1527 +468,1534 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 1
  179 0030 FFF7FEFF 		bl	HighF_ZeroInt_StartEx
  180              	.LVL8:
  181              	.L46:
-  76:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
- 182              		.loc 1 76 0
+  77:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+ 182              		.loc 1 77 0
  183 0034 854B     		ldr	r3, .L48
  184 0036 5A68     		ldr	r2, [r3, #4]
  185 0038 894B     		ldr	r3, .L48+20
  186 003a 83FB0231 		smull	r3, r1, r3, r2
  187 003e D317     		asrs	r3, r2, #31
- 188 0040 C3EB6103 		rsb	r3, r3, r1, asr #1
- 189 0044 C3EBC301 		rsb	r1, r3, r3, lsl #3
- 190 0048 C3EBC103 		rsb	r3, r3, r1, lsl #3
- 191 004c 9A42     		cmp	r2, r3
- 192 004e 0CD1     		bne	.L14
-  77:main.c        ****             LEDTest_Write(testLEDStatus); 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 9
+ 188 0040 C3EB2113 		rsb	r3, r3, r1, asr #4
+ 189 0044 3221     		movs	r1, #50
+ 190 0046 01FB1323 		mls	r3, r1, r3, r2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 9
 
 
- 193              		.loc 1 77 0
- 194 0050 7E4C     		ldr	r4, .L48
- 195 0052 207C     		ldrb	r0, [r4, #16]	@ zero_extendqisi2
- 196 0054 C043     		mvns	r0, r0
- 197 0056 C0B2     		uxtb	r0, r0
- 198 0058 2074     		strb	r0, [r4, #16]
-  78:main.c        ****             L_messageBit++;
- 199              		.loc 1 78 0
- 200 005a FFF7FEFF 		bl	LEDTest_Write
- 201              	.LVL9:
-  79:main.c        ****             L_oneCounter = 1;
- 202              		.loc 1 79 0
- 203 005e 814A     		ldr	r2, .L48+24
- 204 0060 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
- 205 0062 0133     		adds	r3, r3, #1
- 206 0064 1370     		strb	r3, [r2]
-  80:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
- 207              		.loc 1 80 0
- 208 0066 0123     		movs	r3, #1
- 209 0068 6360     		str	r3, [r4, #4]
- 210              	.L14:
-  84:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
- 211              		.loc 1 84 0
- 212 006a 784B     		ldr	r3, .L48
- 213 006c 1A68     		ldr	r2, [r3]
- 214 006e 7E48     		ldr	r0, .L48+28
- 215 0070 82FB0001 		smull	r0, r1, r2, r0
- 216 0074 1144     		add	r1, r1, r2
- 217 0076 D317     		asrs	r3, r2, #31
- 218 0078 C3EB6113 		rsb	r3, r3, r1, asr #5
- 219 007c 03EB4303 		add	r3, r3, r3, lsl #1
- 220 0080 C3EB0313 		rsb	r3, r3, r3, lsl #4
- 221 0084 9A42     		cmp	r2, r3
- 222 0086 0CD1     		bne	.L15
-  85:main.c        ****             LEDTest_Write(testLEDStatus); 
- 223              		.loc 1 85 0
- 224 0088 704C     		ldr	r4, .L48
- 225 008a 207C     		ldrb	r0, [r4, #16]	@ zero_extendqisi2
- 226 008c C043     		mvns	r0, r0
- 227 008e C0B2     		uxtb	r0, r0
- 228 0090 2074     		strb	r0, [r4, #16]
-  86:main.c        ****             L_messageBit++;
- 229              		.loc 1 86 0
- 230 0092 FFF7FEFF 		bl	LEDTest_Write
- 231              	.LVL10:
-  87:main.c        ****             L_zeroCounter = 1;
- 232              		.loc 1 87 0
- 233 0096 734A     		ldr	r2, .L48+24
- 234 0098 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
- 235 009a 0133     		adds	r3, r3, #1
- 236 009c 1370     		strb	r3, [r2]
-  88:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
- 237              		.loc 1 88 0
- 238 009e 0123     		movs	r3, #1
- 239 00a0 2360     		str	r3, [r4]
- 240              	.L15:
-  92:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 10
+ 191 004a 63B9     		cbnz	r3, .L14
+  78:main.c        ****             LEDTest_Write(testLEDStatus); 
+ 192              		.loc 1 78 0
+ 193 004c 7F4C     		ldr	r4, .L48
+ 194 004e 207C     		ldrb	r0, [r4, #16]	@ zero_extendqisi2
+ 195 0050 C043     		mvns	r0, r0
+ 196 0052 C0B2     		uxtb	r0, r0
+ 197 0054 2074     		strb	r0, [r4, #16]
+  79:main.c        ****             L_messageBit++;
+ 198              		.loc 1 79 0
+ 199 0056 FFF7FEFF 		bl	LEDTest_Write
+ 200              	.LVL9:
+  80:main.c        ****             L_oneCounter = 1;
+ 201              		.loc 1 80 0
+ 202 005a 824A     		ldr	r2, .L48+24
+ 203 005c 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 204 005e 0133     		adds	r3, r3, #1
+ 205 0060 1370     		strb	r3, [r2]
+  81:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+ 206              		.loc 1 81 0
+ 207 0062 0123     		movs	r3, #1
+ 208 0064 6360     		str	r3, [r4, #4]
+ 209              	.L14:
+  85:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+ 210              		.loc 1 85 0
+ 211 0066 794B     		ldr	r3, .L48
+ 212 0068 1A68     		ldr	r2, [r3]
+ 213 006a 7F4B     		ldr	r3, .L48+28
+ 214 006c 83FB0231 		smull	r3, r1, r3, r2
+ 215 0070 D317     		asrs	r3, r2, #31
+ 216 0072 C3EBE103 		rsb	r3, r3, r1, asr #3
+ 217 0076 2B21     		movs	r1, #43
+ 218 0078 01FB1323 		mls	r3, r1, r3, r2
+ 219 007c 63B9     		cbnz	r3, .L15
+  86:main.c        ****             LEDTest_Write(testLEDStatus); 
+ 220              		.loc 1 86 0
+ 221 007e 734C     		ldr	r4, .L48
+ 222 0080 207C     		ldrb	r0, [r4, #16]	@ zero_extendqisi2
+ 223 0082 C043     		mvns	r0, r0
+ 224 0084 C0B2     		uxtb	r0, r0
+ 225 0086 2074     		strb	r0, [r4, #16]
+  87:main.c        ****             L_messageBit++;
+ 226              		.loc 1 87 0
+ 227 0088 FFF7FEFF 		bl	LEDTest_Write
+ 228              	.LVL10:
+  88:main.c        ****             L_zeroCounter = 1;
+ 229              		.loc 1 88 0
+ 230 008c 754A     		ldr	r2, .L48+24
+ 231 008e 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 232 0090 0133     		adds	r3, r3, #1
+ 233 0092 1370     		strb	r3, [r2]
+  89:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+ 234              		.loc 1 89 0
+ 235 0094 0123     		movs	r3, #1
+ 236 0096 2360     		str	r3, [r4]
+ 237              	.L15:
+  93:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 10
 
 
- 241              		.loc 1 92 0
- 242 00a2 6A4B     		ldr	r3, .L48
- 243 00a4 DA68     		ldr	r2, [r3, #12]
- 244 00a6 6E4B     		ldr	r3, .L48+20
- 245 00a8 83FB0231 		smull	r3, r1, r3, r2
- 246 00ac D317     		asrs	r3, r2, #31
- 247 00ae C3EB6103 		rsb	r3, r3, r1, asr #1
- 248 00b2 C3EBC301 		rsb	r1, r3, r3, lsl #3
- 249 00b6 C3EBC103 		rsb	r3, r3, r1, lsl #3
- 250 00ba 9A42     		cmp	r2, r3
- 251 00bc 0CD1     		bne	.L16
-  93:main.c        ****             LEDTest_Write(testLEDStatus); 
- 252              		.loc 1 93 0
- 253 00be 634C     		ldr	r4, .L48
- 254 00c0 207C     		ldrb	r0, [r4, #16]	@ zero_extendqisi2
- 255 00c2 C043     		mvns	r0, r0
- 256 00c4 C0B2     		uxtb	r0, r0
- 257 00c6 2074     		strb	r0, [r4, #16]
-  94:main.c        ****             H_messageBit++;
- 258              		.loc 1 94 0
- 259 00c8 FFF7FEFF 		bl	LEDTest_Write
- 260              	.LVL11:
-  95:main.c        ****             H_oneCounter = 1;
- 261              		.loc 1 95 0
- 262 00cc 654A     		ldr	r2, .L48+24
- 263 00ce 5378     		ldrb	r3, [r2, #1]	@ zero_extendqisi2
- 264 00d0 0133     		adds	r3, r3, #1
- 265 00d2 5370     		strb	r3, [r2, #1]
-  96:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
- 266              		.loc 1 96 0
- 267 00d4 0123     		movs	r3, #1
- 268 00d6 E360     		str	r3, [r4, #12]
- 269              	.L16:
- 100:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
- 270              		.loc 1 100 0
- 271 00d8 5C4B     		ldr	r3, .L48
- 272 00da 9A68     		ldr	r2, [r3, #8]
- 273 00dc 6248     		ldr	r0, .L48+28
- 274 00de 82FB0001 		smull	r0, r1, r2, r0
- 275 00e2 1144     		add	r1, r1, r2
- 276 00e4 D317     		asrs	r3, r2, #31
- 277 00e6 C3EB6113 		rsb	r3, r3, r1, asr #5
- 278 00ea 03EB4303 		add	r3, r3, r3, lsl #1
- 279 00ee C3EB0313 		rsb	r3, r3, r3, lsl #4
- 280 00f2 9A42     		cmp	r2, r3
- 281 00f4 0CD1     		bne	.L17
- 101:main.c        ****             LEDTest_Write(testLEDStatus); 
- 282              		.loc 1 101 0
- 283 00f6 554C     		ldr	r4, .L48
- 284 00f8 207C     		ldrb	r0, [r4, #16]	@ zero_extendqisi2
- 285 00fa C043     		mvns	r0, r0
- 286 00fc C0B2     		uxtb	r0, r0
- 287 00fe 2074     		strb	r0, [r4, #16]
- 102:main.c        ****             H_messageBit++;
- 288              		.loc 1 102 0
- 289 0100 FFF7FEFF 		bl	LEDTest_Write
- 290              	.LVL12:
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 11
+ 238              		.loc 1 93 0
+ 239 0098 6C4B     		ldr	r3, .L48
+ 240 009a DA68     		ldr	r2, [r3, #12]
+ 241 009c 734B     		ldr	r3, .L48+32
+ 242 009e 83FB0231 		smull	r3, r1, r3, r2
+ 243 00a2 D317     		asrs	r3, r2, #31
+ 244 00a4 C3EB6103 		rsb	r3, r3, r1, asr #1
+ 245 00a8 C3EBC301 		rsb	r1, r3, r3, lsl #3
+ 246 00ac C3EBC103 		rsb	r3, r3, r1, lsl #3
+ 247 00b0 9A42     		cmp	r2, r3
+ 248 00b2 0CD1     		bne	.L16
+  94:main.c        ****             LEDTest_Write(testLEDStatus); 
+ 249              		.loc 1 94 0
+ 250 00b4 654C     		ldr	r4, .L48
+ 251 00b6 207C     		ldrb	r0, [r4, #16]	@ zero_extendqisi2
+ 252 00b8 C043     		mvns	r0, r0
+ 253 00ba C0B2     		uxtb	r0, r0
+ 254 00bc 2074     		strb	r0, [r4, #16]
+  95:main.c        ****             H_messageBit++;
+ 255              		.loc 1 95 0
+ 256 00be FFF7FEFF 		bl	LEDTest_Write
+ 257              	.LVL11:
+  96:main.c        ****             H_oneCounter = 1;
+ 258              		.loc 1 96 0
+ 259 00c2 684A     		ldr	r2, .L48+24
+ 260 00c4 5378     		ldrb	r3, [r2, #1]	@ zero_extendqisi2
+ 261 00c6 0133     		adds	r3, r3, #1
+ 262 00c8 5370     		strb	r3, [r2, #1]
+  97:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+ 263              		.loc 1 97 0
+ 264 00ca 0123     		movs	r3, #1
+ 265 00cc E360     		str	r3, [r4, #12]
+ 266              	.L16:
+ 101:main.c        ****             testLEDStatus = testLEDStatus ^ 0xFF; 
+ 267              		.loc 1 101 0
+ 268 00ce 5F4B     		ldr	r3, .L48
+ 269 00d0 9A68     		ldr	r2, [r3, #8]
+ 270 00d2 6748     		ldr	r0, .L48+36
+ 271 00d4 82FB0001 		smull	r0, r1, r2, r0
+ 272 00d8 1144     		add	r1, r1, r2
+ 273 00da D317     		asrs	r3, r2, #31
+ 274 00dc C3EB6113 		rsb	r3, r3, r1, asr #5
+ 275 00e0 03EB4303 		add	r3, r3, r3, lsl #1
+ 276 00e4 C3EB0313 		rsb	r3, r3, r3, lsl #4
+ 277 00e8 9A42     		cmp	r2, r3
+ 278 00ea 0CD1     		bne	.L17
+ 102:main.c        ****             LEDTest_Write(testLEDStatus); 
+ 279              		.loc 1 102 0
+ 280 00ec 574C     		ldr	r4, .L48
+ 281 00ee 207C     		ldrb	r0, [r4, #16]	@ zero_extendqisi2
+ 282 00f0 C043     		mvns	r0, r0
+ 283 00f2 C0B2     		uxtb	r0, r0
+ 284 00f4 2074     		strb	r0, [r4, #16]
+ 103:main.c        ****             H_messageBit++;
+ 285              		.loc 1 103 0
+ 286 00f6 FFF7FEFF 		bl	LEDTest_Write
+ 287              	.LVL12:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 11
 
 
- 103:main.c        ****             H_zeroCounter = 1;
- 291              		.loc 1 103 0
- 292 0104 574A     		ldr	r2, .L48+24
- 293 0106 5378     		ldrb	r3, [r2, #1]	@ zero_extendqisi2
- 294 0108 0133     		adds	r3, r3, #1
- 295 010a 5370     		strb	r3, [r2, #1]
- 104:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
- 296              		.loc 1 104 0
- 297 010c 0123     		movs	r3, #1
- 298 010e A360     		str	r3, [r4, #8]
- 299              	.L17:
- 108:main.c        ****         
- 300              		.loc 1 108 0
- 301 0110 544B     		ldr	r3, .L48+24
- 302 0112 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
- 303 0114 0B2B     		cmp	r3, #11
- 304 0116 46D8     		bhi	.L18
- 305 0118 DFE803F0 		tbb	[pc, r3]
- 306              	.L20:
- 307 011c 06       		.byte	(.L19-.L20)/2
- 308 011d 0A       		.byte	(.L21-.L20)/2
- 309 011e 0E       		.byte	(.L22-.L20)/2
- 310 011f 12       		.byte	(.L23-.L20)/2
- 311 0120 16       		.byte	(.L24-.L20)/2
- 312 0121 1E       		.byte	(.L25-.L20)/2
- 313 0122 22       		.byte	(.L26-.L20)/2
- 314 0123 2A       		.byte	(.L27-.L20)/2
- 315 0124 32       		.byte	(.L28-.L20)/2
- 316 0125 3A       		.byte	(.L29-.L20)/2
- 317 0126 3E       		.byte	(.L30-.L20)/2
- 318 0127 42       		.byte	(.L31-.L20)/2
- 319              		.p2align 1
- 320              	.L19:
- 111:main.c        ****             
- 321              		.loc 1 111 0
- 322 0128 FF22     		movs	r2, #255
- 323 012a 4E4B     		ldr	r3, .L48+24
- 324 012c 9A70     		strb	r2, [r3, #2]
- 113:main.c        ****             case 1:
- 325              		.loc 1 113 0
- 326 012e 3AE0     		b	.L18
- 327              	.L21:
- 115:main.c        ****             break;
- 328              		.loc 1 115 0
- 329 0130 FF22     		movs	r2, #255
- 330 0132 4C4B     		ldr	r3, .L48+24
- 331 0134 9A70     		strb	r2, [r3, #2]
- 116:main.c        ****             case 2:
- 332              		.loc 1 116 0
- 333 0136 36E0     		b	.L18
- 334              	.L22:
- 118:main.c        ****             break;
- 335              		.loc 1 118 0
- 336 0138 FF22     		movs	r2, #255
- 337 013a 4A4B     		ldr	r3, .L48+24
- 338 013c 9A70     		strb	r2, [r3, #2]
- 119:main.c        ****             case 3:
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 12
+ 104:main.c        ****             H_zeroCounter = 1;
+ 288              		.loc 1 104 0
+ 289 00fa 5A4A     		ldr	r2, .L48+24
+ 290 00fc 5378     		ldrb	r3, [r2, #1]	@ zero_extendqisi2
+ 291 00fe 0133     		adds	r3, r3, #1
+ 292 0100 5370     		strb	r3, [r2, #1]
+ 105:main.c        ****             //can't reset to 0 due to mod operator, so reset to 1
+ 293              		.loc 1 105 0
+ 294 0102 0123     		movs	r3, #1
+ 295 0104 A360     		str	r3, [r4, #8]
+ 296              	.L17:
+ 109:main.c        ****         
+ 297              		.loc 1 109 0
+ 298 0106 574B     		ldr	r3, .L48+24
+ 299 0108 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 300 010a 0B2B     		cmp	r3, #11
+ 301 010c 48D8     		bhi	.L18
+ 302 010e DFE803F0 		tbb	[pc, r3]
+ 303              	.L20:
+ 304 0112 06       		.byte	(.L19-.L20)/2
+ 305 0113 0A       		.byte	(.L21-.L20)/2
+ 306 0114 0E       		.byte	(.L22-.L20)/2
+ 307 0115 12       		.byte	(.L23-.L20)/2
+ 308 0116 16       		.byte	(.L24-.L20)/2
+ 309 0117 1E       		.byte	(.L25-.L20)/2
+ 310 0118 22       		.byte	(.L26-.L20)/2
+ 311 0119 2A       		.byte	(.L27-.L20)/2
+ 312 011a 32       		.byte	(.L28-.L20)/2
+ 313 011b 3A       		.byte	(.L29-.L20)/2
+ 314 011c 3E       		.byte	(.L30-.L20)/2
+ 315 011d 42       		.byte	(.L31-.L20)/2
+ 316              		.p2align 1
+ 317              	.L19:
+ 112:main.c        ****             
+ 318              		.loc 1 112 0
+ 319 011e FF22     		movs	r2, #255
+ 320 0120 504B     		ldr	r3, .L48+24
+ 321 0122 9A70     		strb	r2, [r3, #2]
+ 114:main.c        ****             case 1:
+ 322              		.loc 1 114 0
+ 323 0124 3CE0     		b	.L18
+ 324              	.L21:
+ 116:main.c        ****             break;
+ 325              		.loc 1 116 0
+ 326 0126 FF22     		movs	r2, #255
+ 327 0128 4E4B     		ldr	r3, .L48+24
+ 328 012a 9A70     		strb	r2, [r3, #2]
+ 117:main.c        ****             case 2:
+ 329              		.loc 1 117 0
+ 330 012c 38E0     		b	.L18
+ 331              	.L22:
+ 119:main.c        ****             break;
+ 332              		.loc 1 119 0
+ 333 012e FF22     		movs	r2, #255
+ 334 0130 4C4B     		ldr	r3, .L48+24
+ 335 0132 9A70     		strb	r2, [r3, #2]
+ 120:main.c        ****             case 3:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 12
 
 
- 339              		.loc 1 119 0
- 340 013e 32E0     		b	.L18
- 341              	.L23:
- 121:main.c        ****             break;
- 342              		.loc 1 121 0
- 343 0140 FF22     		movs	r2, #255
- 344 0142 484B     		ldr	r3, .L48+24
- 345 0144 9A70     		strb	r2, [r3, #2]
- 122:main.c        ****             case 4:
- 346              		.loc 1 122 0
- 347 0146 2EE0     		b	.L18
- 348              	.L24:
- 124:main.c        ****                 LowF_OnePWM_Sleep();
- 349              		.loc 1 124 0
- 350 0148 0022     		movs	r2, #0
- 351 014a 464B     		ldr	r3, .L48+24
- 352 014c 9A70     		strb	r2, [r3, #2]
- 125:main.c        ****                 LowF_ZeroPWM_Start();
- 353              		.loc 1 125 0
- 354 014e FFF7FEFF 		bl	LowF_OnePWM_Sleep
- 355              	.LVL13:
- 126:main.c        ****                 
- 356              		.loc 1 126 0
- 357 0152 FFF7FEFF 		bl	LowF_ZeroPWM_Start
- 358              	.LVL14:
- 128:main.c        ****             case 5:
- 359              		.loc 1 128 0
- 360 0156 26E0     		b	.L18
- 361              	.L25:
- 130:main.c        ****               
- 362              		.loc 1 130 0
- 363 0158 0022     		movs	r2, #0
- 364 015a 424B     		ldr	r3, .L48+24
- 365 015c 9A70     		strb	r2, [r3, #2]
- 132:main.c        ****             case 6:
- 366              		.loc 1 132 0
- 367 015e 22E0     		b	.L18
- 368              	.L26:
- 134:main.c        ****                 LowF_ZeroPWM_Sleep();
- 369              		.loc 1 134 0
- 370 0160 FF22     		movs	r2, #255
- 371 0162 404B     		ldr	r3, .L48+24
- 372 0164 9A70     		strb	r2, [r3, #2]
- 135:main.c        ****                 LowF_OnePWM_Start();
- 373              		.loc 1 135 0
- 374 0166 FFF7FEFF 		bl	LowF_ZeroPWM_Sleep
- 375              	.LVL15:
- 136:main.c        ****             break; 
- 376              		.loc 1 136 0
- 377 016a FFF7FEFF 		bl	LowF_OnePWM_Start
- 378              	.LVL16:
- 137:main.c        ****             case 7:
- 379              		.loc 1 137 0
- 380 016e 1AE0     		b	.L18
- 381              	.L27:
- 139:main.c        ****                 LowF_OnePWM_Sleep();
- 382              		.loc 1 139 0
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 13
+ 336              		.loc 1 120 0
+ 337 0134 34E0     		b	.L18
+ 338              	.L23:
+ 122:main.c        ****             break;
+ 339              		.loc 1 122 0
+ 340 0136 FF22     		movs	r2, #255
+ 341 0138 4A4B     		ldr	r3, .L48+24
+ 342 013a 9A70     		strb	r2, [r3, #2]
+ 123:main.c        ****             case 4:
+ 343              		.loc 1 123 0
+ 344 013c 30E0     		b	.L18
+ 345              	.L24:
+ 125:main.c        ****                 LowF_OnePWM_Sleep();
+ 346              		.loc 1 125 0
+ 347 013e 0022     		movs	r2, #0
+ 348 0140 484B     		ldr	r3, .L48+24
+ 349 0142 9A70     		strb	r2, [r3, #2]
+ 126:main.c        ****                 LowF_ZeroPWM_Start();
+ 350              		.loc 1 126 0
+ 351 0144 FFF7FEFF 		bl	LowF_OnePWM_Sleep
+ 352              	.LVL13:
+ 127:main.c        ****                 
+ 353              		.loc 1 127 0
+ 354 0148 FFF7FEFF 		bl	LowF_ZeroPWM_Start
+ 355              	.LVL14:
+ 129:main.c        ****             case 5:
+ 356              		.loc 1 129 0
+ 357 014c 28E0     		b	.L18
+ 358              	.L25:
+ 131:main.c        ****               
+ 359              		.loc 1 131 0
+ 360 014e 0022     		movs	r2, #0
+ 361 0150 444B     		ldr	r3, .L48+24
+ 362 0152 9A70     		strb	r2, [r3, #2]
+ 133:main.c        ****             case 6:
+ 363              		.loc 1 133 0
+ 364 0154 24E0     		b	.L18
+ 365              	.L26:
+ 135:main.c        ****                 LowF_ZeroPWM_Sleep();
+ 366              		.loc 1 135 0
+ 367 0156 FF22     		movs	r2, #255
+ 368 0158 424B     		ldr	r3, .L48+24
+ 369 015a 9A70     		strb	r2, [r3, #2]
+ 136:main.c        ****                 LowF_OnePWM_Start();
+ 370              		.loc 1 136 0
+ 371 015c FFF7FEFF 		bl	LowF_ZeroPWM_Sleep
+ 372              	.LVL15:
+ 137:main.c        ****             break; 
+ 373              		.loc 1 137 0
+ 374 0160 FFF7FEFF 		bl	LowF_OnePWM_Start
+ 375              	.LVL16:
+ 138:main.c        ****             case 7:
+ 376              		.loc 1 138 0
+ 377 0164 1CE0     		b	.L18
+ 378              	.L27:
+ 140:main.c        ****                 LowF_OnePWM_Sleep();
+ 379              		.loc 1 140 0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 13
 
 
- 383 0170 0022     		movs	r2, #0
- 384 0172 3C4B     		ldr	r3, .L48+24
- 385 0174 9A70     		strb	r2, [r3, #2]
- 140:main.c        ****                 LowF_ZeroPWM_Start();
- 386              		.loc 1 140 0
- 387 0176 FFF7FEFF 		bl	LowF_OnePWM_Sleep
- 388              	.LVL17:
- 141:main.c        ****             break; 
- 389              		.loc 1 141 0
- 390 017a FFF7FEFF 		bl	LowF_ZeroPWM_Start
- 391              	.LVL18:
- 142:main.c        ****             case 8:
- 392              		.loc 1 142 0
- 393 017e 12E0     		b	.L18
- 394              	.L28:
- 144:main.c        ****                 LowF_ZeroPWM_Sleep();
- 395              		.loc 1 144 0
- 396 0180 FF22     		movs	r2, #255
- 397 0182 384B     		ldr	r3, .L48+24
- 398 0184 9A70     		strb	r2, [r3, #2]
- 145:main.c        ****                 LowF_OnePWM_Start();
- 399              		.loc 1 145 0
- 400 0186 FFF7FEFF 		bl	LowF_ZeroPWM_Sleep
- 401              	.LVL19:
- 146:main.c        ****             break;     
- 402              		.loc 1 146 0
- 403 018a FFF7FEFF 		bl	LowF_OnePWM_Start
- 404              	.LVL20:
- 147:main.c        ****             case 9:
- 405              		.loc 1 147 0
- 406 018e 0AE0     		b	.L18
- 407              	.L29:
- 149:main.c        ****             break;
- 408              		.loc 1 149 0
- 409 0190 FF22     		movs	r2, #255
- 410 0192 344B     		ldr	r3, .L48+24
- 411 0194 9A70     		strb	r2, [r3, #2]
- 150:main.c        ****             case 10:
- 412              		.loc 1 150 0
- 413 0196 06E0     		b	.L18
- 414              	.L30:
- 152:main.c        ****                 
- 415              		.loc 1 152 0
- 416 0198 FF22     		movs	r2, #255
- 417 019a 324B     		ldr	r3, .L48+24
- 418 019c 9A70     		strb	r2, [r3, #2]
- 154:main.c        ****             case 11:
- 419              		.loc 1 154 0
- 420 019e 02E0     		b	.L18
- 421              	.L31:
- 156:main.c        ****                 
- 422              		.loc 1 156 0
- 423 01a0 FF22     		movs	r2, #255
- 424 01a2 304B     		ldr	r3, .L48+24
- 425 01a4 9A70     		strb	r2, [r3, #2]
+ 380 0166 0022     		movs	r2, #0
+ 381 0168 3E4B     		ldr	r3, .L48+24
+ 382 016a 9A70     		strb	r2, [r3, #2]
+ 141:main.c        ****                 LowF_ZeroPWM_Start();
+ 383              		.loc 1 141 0
+ 384 016c FFF7FEFF 		bl	LowF_OnePWM_Sleep
+ 385              	.LVL17:
+ 142:main.c        ****             break; 
+ 386              		.loc 1 142 0
+ 387 0170 FFF7FEFF 		bl	LowF_ZeroPWM_Start
+ 388              	.LVL18:
+ 143:main.c        ****             case 8:
+ 389              		.loc 1 143 0
+ 390 0174 14E0     		b	.L18
+ 391              	.L28:
+ 145:main.c        ****                 LowF_ZeroPWM_Sleep();
+ 392              		.loc 1 145 0
+ 393 0176 FF22     		movs	r2, #255
+ 394 0178 3A4B     		ldr	r3, .L48+24
+ 395 017a 9A70     		strb	r2, [r3, #2]
+ 146:main.c        ****                 LowF_OnePWM_Start();
+ 396              		.loc 1 146 0
+ 397 017c FFF7FEFF 		bl	LowF_ZeroPWM_Sleep
+ 398              	.LVL19:
+ 147:main.c        ****             break;     
+ 399              		.loc 1 147 0
+ 400 0180 FFF7FEFF 		bl	LowF_OnePWM_Start
+ 401              	.LVL20:
+ 148:main.c        ****             case 9:
+ 402              		.loc 1 148 0
+ 403 0184 0CE0     		b	.L18
+ 404              	.L29:
+ 150:main.c        ****             break;
+ 405              		.loc 1 150 0
+ 406 0186 FF22     		movs	r2, #255
+ 407 0188 364B     		ldr	r3, .L48+24
+ 408 018a 9A70     		strb	r2, [r3, #2]
+ 151:main.c        ****             case 10:
+ 409              		.loc 1 151 0
+ 410 018c 08E0     		b	.L18
+ 411              	.L30:
+ 153:main.c        ****                 
+ 412              		.loc 1 153 0
+ 413 018e FF22     		movs	r2, #255
+ 414 0190 344B     		ldr	r3, .L48+24
+ 415 0192 9A70     		strb	r2, [r3, #2]
+ 155:main.c        ****             case 11:
+ 416              		.loc 1 155 0
+ 417 0194 04E0     		b	.L18
+ 418              	.L31:
+ 157:main.c        ****                 L_messageBit = 0;
+ 419              		.loc 1 157 0
+ 420 0196 334B     		ldr	r3, .L48+24
+ 421 0198 FF22     		movs	r2, #255
+ 422 019a 9A70     		strb	r2, [r3, #2]
+ 158:main.c        ****                 
+ 423              		.loc 1 158 0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 14
+
+
+ 424 019c 0022     		movs	r2, #0
+ 425 019e 1A70     		strb	r2, [r3]
  426              	.L18:
- 167:main.c        ****         
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 14
-
-
- 427              		.loc 1 167 0
- 428 01a6 2F4B     		ldr	r3, .L48+24
- 429 01a8 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
- 430 01aa 0B2B     		cmp	r3, #11
- 431 01ac 46D8     		bhi	.L32
- 432 01ae DFE803F0 		tbb	[pc, r3]
+ 169:main.c        ****         
+ 427              		.loc 1 169 0
+ 428 01a0 304B     		ldr	r3, .L48+24
+ 429 01a2 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 430 01a4 0B2B     		cmp	r3, #11
+ 431 01a6 48D8     		bhi	.L32
+ 432 01a8 DFE803F0 		tbb	[pc, r3]
  433              	.L34:
- 434 01b2 06       		.byte	(.L33-.L34)/2
- 435 01b3 0A       		.byte	(.L35-.L34)/2
- 436 01b4 0E       		.byte	(.L36-.L34)/2
- 437 01b5 12       		.byte	(.L37-.L34)/2
- 438 01b6 16       		.byte	(.L38-.L34)/2
- 439 01b7 1E       		.byte	(.L39-.L34)/2
- 440 01b8 22       		.byte	(.L40-.L34)/2
- 441 01b9 2A       		.byte	(.L41-.L34)/2
- 442 01ba 32       		.byte	(.L42-.L34)/2
- 443 01bb 3A       		.byte	(.L43-.L34)/2
- 444 01bc 3E       		.byte	(.L44-.L34)/2
- 445 01bd 42       		.byte	(.L45-.L34)/2
+ 434 01ac 06       		.byte	(.L33-.L34)/2
+ 435 01ad 0A       		.byte	(.L35-.L34)/2
+ 436 01ae 0E       		.byte	(.L36-.L34)/2
+ 437 01af 12       		.byte	(.L37-.L34)/2
+ 438 01b0 16       		.byte	(.L38-.L34)/2
+ 439 01b1 1E       		.byte	(.L39-.L34)/2
+ 440 01b2 22       		.byte	(.L40-.L34)/2
+ 441 01b3 2A       		.byte	(.L41-.L34)/2
+ 442 01b4 32       		.byte	(.L42-.L34)/2
+ 443 01b5 3A       		.byte	(.L43-.L34)/2
+ 444 01b6 3E       		.byte	(.L44-.L34)/2
+ 445 01b7 42       		.byte	(.L45-.L34)/2
  446              		.p2align 1
  447              	.L33:
- 170:main.c        ****             
- 448              		.loc 1 170 0
- 449 01be FF22     		movs	r2, #255
- 450 01c0 284B     		ldr	r3, .L48+24
- 451 01c2 9A70     		strb	r2, [r3, #2]
- 172:main.c        ****             case 1:
- 452              		.loc 1 172 0
- 453 01c4 3AE0     		b	.L32
+ 172:main.c        ****             
+ 448              		.loc 1 172 0
+ 449 01b8 FF22     		movs	r2, #255
+ 450 01ba 2A4B     		ldr	r3, .L48+24
+ 451 01bc 9A70     		strb	r2, [r3, #2]
+ 174:main.c        ****             case 1:
+ 452              		.loc 1 174 0
+ 453 01be 3CE0     		b	.L32
  454              	.L35:
- 174:main.c        ****             break;
- 455              		.loc 1 174 0
- 456 01c6 FF22     		movs	r2, #255
- 457 01c8 264B     		ldr	r3, .L48+24
- 458 01ca 9A70     		strb	r2, [r3, #2]
- 175:main.c        ****             case 2:
- 459              		.loc 1 175 0
- 460 01cc 36E0     		b	.L32
+ 176:main.c        ****             break;
+ 455              		.loc 1 176 0
+ 456 01c0 FF22     		movs	r2, #255
+ 457 01c2 284B     		ldr	r3, .L48+24
+ 458 01c4 9A70     		strb	r2, [r3, #2]
+ 177:main.c        ****             case 2:
+ 459              		.loc 1 177 0
+ 460 01c6 38E0     		b	.L32
  461              	.L36:
- 177:main.c        ****             break;
- 462              		.loc 1 177 0
- 463 01ce FF22     		movs	r2, #255
- 464 01d0 244B     		ldr	r3, .L48+24
- 465 01d2 9A70     		strb	r2, [r3, #2]
- 178:main.c        ****             case 3:
- 466              		.loc 1 178 0
- 467 01d4 32E0     		b	.L32
+ 179:main.c        ****             break;
+ 462              		.loc 1 179 0
+ 463 01c8 FF22     		movs	r2, #255
+ 464 01ca 264B     		ldr	r3, .L48+24
+ 465 01cc 9A70     		strb	r2, [r3, #2]
+ 180:main.c        ****             case 3:
+ 466              		.loc 1 180 0
+ 467 01ce 34E0     		b	.L32
  468              	.L37:
- 180:main.c        ****             break;
- 469              		.loc 1 180 0
- 470 01d6 FF22     		movs	r2, #255
- 471 01d8 224B     		ldr	r3, .L48+24
- 472 01da 9A70     		strb	r2, [r3, #2]
- 181:main.c        ****             case 4:
- 473              		.loc 1 181 0
- 474 01dc 2EE0     		b	.L32
+ 182:main.c        ****             break;
+ 469              		.loc 1 182 0
+ 470 01d0 FF22     		movs	r2, #255
+ 471 01d2 244B     		ldr	r3, .L48+24
+ 472 01d4 9A70     		strb	r2, [r3, #2]
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 15
+
+
+ 183:main.c        ****             case 4:
+ 473              		.loc 1 183 0
+ 474 01d6 30E0     		b	.L32
  475              	.L38:
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 15
-
-
- 183:main.c        ****                 HighF_OnePWM_Sleep();
- 476              		.loc 1 183 0
- 477 01de 0022     		movs	r2, #0
- 478 01e0 204B     		ldr	r3, .L48+24
- 479 01e2 9A70     		strb	r2, [r3, #2]
- 184:main.c        ****                 HighF_ZeroPWM_Start();
- 480              		.loc 1 184 0
- 481 01e4 FFF7FEFF 		bl	HighF_OnePWM_Sleep
+ 185:main.c        ****                 HighF_OnePWM_Sleep();
+ 476              		.loc 1 185 0
+ 477 01d8 0022     		movs	r2, #0
+ 478 01da 224B     		ldr	r3, .L48+24
+ 479 01dc 9A70     		strb	r2, [r3, #2]
+ 186:main.c        ****                 HighF_ZeroPWM_Start();
+ 480              		.loc 1 186 0
+ 481 01de FFF7FEFF 		bl	HighF_OnePWM_Sleep
  482              	.LVL21:
- 185:main.c        ****                 
- 483              		.loc 1 185 0
- 484 01e8 FFF7FEFF 		bl	HighF_ZeroPWM_Start
+ 187:main.c        ****                 
+ 483              		.loc 1 187 0
+ 484 01e2 FFF7FEFF 		bl	HighF_ZeroPWM_Start
  485              	.LVL22:
- 187:main.c        ****             case 5:
- 486              		.loc 1 187 0
- 487 01ec 26E0     		b	.L32
+ 189:main.c        ****             case 5:
+ 486              		.loc 1 189 0
+ 487 01e6 28E0     		b	.L32
  488              	.L39:
- 189:main.c        ****               
- 489              		.loc 1 189 0
- 490 01ee 0022     		movs	r2, #0
- 491 01f0 1C4B     		ldr	r3, .L48+24
- 492 01f2 9A70     		strb	r2, [r3, #2]
- 191:main.c        ****             case 6:
- 493              		.loc 1 191 0
- 494 01f4 22E0     		b	.L32
+ 191:main.c        ****               
+ 489              		.loc 1 191 0
+ 490 01e8 0022     		movs	r2, #0
+ 491 01ea 1E4B     		ldr	r3, .L48+24
+ 492 01ec 9A70     		strb	r2, [r3, #2]
+ 193:main.c        ****             case 6:
+ 493              		.loc 1 193 0
+ 494 01ee 24E0     		b	.L32
  495              	.L40:
- 193:main.c        ****                 HighF_ZeroPWM_Sleep();
- 496              		.loc 1 193 0
- 497 01f6 FF22     		movs	r2, #255
- 498 01f8 1A4B     		ldr	r3, .L48+24
- 499 01fa 9A70     		strb	r2, [r3, #2]
- 194:main.c        ****                 HighF_OnePWM_Start();
- 500              		.loc 1 194 0
- 501 01fc FFF7FEFF 		bl	HighF_ZeroPWM_Sleep
+ 195:main.c        ****                 HighF_ZeroPWM_Sleep();
+ 496              		.loc 1 195 0
+ 497 01f0 FF22     		movs	r2, #255
+ 498 01f2 1C4B     		ldr	r3, .L48+24
+ 499 01f4 9A70     		strb	r2, [r3, #2]
+ 196:main.c        ****                 HighF_OnePWM_Start();
+ 500              		.loc 1 196 0
+ 501 01f6 FFF7FEFF 		bl	HighF_ZeroPWM_Sleep
  502              	.LVL23:
- 195:main.c        ****             break; 
- 503              		.loc 1 195 0
- 504 0200 FFF7FEFF 		bl	HighF_OnePWM_Start
+ 197:main.c        ****             break; 
+ 503              		.loc 1 197 0
+ 504 01fa FFF7FEFF 		bl	HighF_OnePWM_Start
  505              	.LVL24:
- 196:main.c        ****             case 7:
- 506              		.loc 1 196 0
- 507 0204 1AE0     		b	.L32
+ 198:main.c        ****             case 7:
+ 506              		.loc 1 198 0
+ 507 01fe 1CE0     		b	.L32
  508              	.L41:
- 198:main.c        ****                 HighF_OnePWM_Sleep();
- 509              		.loc 1 198 0
- 510 0206 0022     		movs	r2, #0
- 511 0208 164B     		ldr	r3, .L48+24
- 512 020a 9A70     		strb	r2, [r3, #2]
- 199:main.c        ****                 HighF_ZeroPWM_Start();
- 513              		.loc 1 199 0
- 514 020c FFF7FEFF 		bl	HighF_OnePWM_Sleep
+ 200:main.c        ****                 HighF_OnePWM_Sleep();
+ 509              		.loc 1 200 0
+ 510 0200 0022     		movs	r2, #0
+ 511 0202 184B     		ldr	r3, .L48+24
+ 512 0204 9A70     		strb	r2, [r3, #2]
+ 201:main.c        ****                 HighF_ZeroPWM_Start();
+ 513              		.loc 1 201 0
+ 514 0206 FFF7FEFF 		bl	HighF_OnePWM_Sleep
  515              	.LVL25:
- 200:main.c        ****             break; 
- 516              		.loc 1 200 0
- 517 0210 FFF7FEFF 		bl	HighF_ZeroPWM_Start
+ 202:main.c        ****             break; 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 16
+
+
+ 516              		.loc 1 202 0
+ 517 020a FFF7FEFF 		bl	HighF_ZeroPWM_Start
  518              	.LVL26:
- 201:main.c        ****             case 8:
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 16
-
-
- 519              		.loc 1 201 0
- 520 0214 12E0     		b	.L32
+ 203:main.c        ****             case 8:
+ 519              		.loc 1 203 0
+ 520 020e 14E0     		b	.L32
  521              	.L42:
- 203:main.c        ****                 HighF_ZeroPWM_Sleep();
- 522              		.loc 1 203 0
- 523 0216 FF22     		movs	r2, #255
- 524 0218 124B     		ldr	r3, .L48+24
- 525 021a 9A70     		strb	r2, [r3, #2]
- 204:main.c        ****                 HighF_OnePWM_Start();
- 526              		.loc 1 204 0
- 527 021c FFF7FEFF 		bl	HighF_ZeroPWM_Sleep
+ 205:main.c        ****                 HighF_ZeroPWM_Sleep();
+ 522              		.loc 1 205 0
+ 523 0210 FF22     		movs	r2, #255
+ 524 0212 144B     		ldr	r3, .L48+24
+ 525 0214 9A70     		strb	r2, [r3, #2]
+ 206:main.c        ****                 HighF_OnePWM_Start();
+ 526              		.loc 1 206 0
+ 527 0216 FFF7FEFF 		bl	HighF_ZeroPWM_Sleep
  528              	.LVL27:
- 205:main.c        ****             break;     
- 529              		.loc 1 205 0
- 530 0220 FFF7FEFF 		bl	HighF_OnePWM_Start
+ 207:main.c        ****             break;     
+ 529              		.loc 1 207 0
+ 530 021a FFF7FEFF 		bl	HighF_OnePWM_Start
  531              	.LVL28:
- 206:main.c        ****             case 9:
- 532              		.loc 1 206 0
- 533 0224 0AE0     		b	.L32
+ 208:main.c        ****             case 9:
+ 532              		.loc 1 208 0
+ 533 021e 0CE0     		b	.L32
  534              	.L43:
- 208:main.c        ****             break;
- 535              		.loc 1 208 0
- 536 0226 FF22     		movs	r2, #255
- 537 0228 0E4B     		ldr	r3, .L48+24
- 538 022a 9A70     		strb	r2, [r3, #2]
- 209:main.c        ****             case 10:
- 539              		.loc 1 209 0
- 540 022c 06E0     		b	.L32
+ 210:main.c        ****             break;
+ 535              		.loc 1 210 0
+ 536 0220 FF22     		movs	r2, #255
+ 537 0222 104B     		ldr	r3, .L48+24
+ 538 0224 9A70     		strb	r2, [r3, #2]
+ 211:main.c        ****             case 10:
+ 539              		.loc 1 211 0
+ 540 0226 08E0     		b	.L32
  541              	.L44:
- 211:main.c        ****                 
- 542              		.loc 1 211 0
- 543 022e FF22     		movs	r2, #255
- 544 0230 0C4B     		ldr	r3, .L48+24
- 545 0232 9A70     		strb	r2, [r3, #2]
- 213:main.c        ****             case 11:
- 546              		.loc 1 213 0
- 547 0234 02E0     		b	.L32
+ 213:main.c        ****                 
+ 542              		.loc 1 213 0
+ 543 0228 FF22     		movs	r2, #255
+ 544 022a 0E4B     		ldr	r3, .L48+24
+ 545 022c 9A70     		strb	r2, [r3, #2]
+ 215:main.c        ****             case 11:
+ 546              		.loc 1 215 0
+ 547 022e 04E0     		b	.L32
  548              	.L45:
- 215:main.c        ****                 
- 549              		.loc 1 215 0
- 550 0236 FF22     		movs	r2, #255
- 551 0238 0A4B     		ldr	r3, .L48+24
- 552 023a 9A70     		strb	r2, [r3, #2]
- 553              	.L32:
- 224:main.c        ****         HighF_MuxSelOut_Write(bitCase);
- 554              		.loc 1 224 0
- 555 023c 094C     		ldr	r4, .L48+24
- 556 023e A078     		ldrb	r0, [r4, #2]	@ zero_extendqisi2
- 557 0240 FFF7FEFF 		bl	LowF_MuxSelOut_Write
- 558              	.LVL29:
- 225:main.c        ****     }
- 559              		.loc 1 225 0
- 560 0244 A078     		ldrb	r0, [r4, #2]	@ zero_extendqisi2
- 561 0246 FFF7FEFF 		bl	HighF_MuxSelOut_Write
- 562              	.LVL30:
- 226:main.c        **** }
- 563              		.loc 1 226 0
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 17
+ 217:main.c        ****                 H_messageBit = 0;
+ 549              		.loc 1 217 0
+ 550 0230 0C4B     		ldr	r3, .L48+24
+ 551 0232 FF22     		movs	r2, #255
+ 552 0234 9A70     		strb	r2, [r3, #2]
+ 218:main.c        ****                 
+ 553              		.loc 1 218 0
+ 554 0236 0022     		movs	r2, #0
+ 555 0238 5A70     		strb	r2, [r3, #1]
+ 556              	.L32:
+ 227:main.c        ****         HighF_MuxSelOut_Write(bitCase);
+ 557              		.loc 1 227 0
+ 558 023a 0A4C     		ldr	r4, .L48+24
+ 559 023c A078     		ldrb	r0, [r4, #2]	@ zero_extendqisi2
+ 560 023e FFF7FEFF 		bl	LowF_MuxSelOut_Write
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 17
 
 
- 564 024a F3E6     		b	.L46
- 565              	.L49:
- 566              		.align	2
- 567              	.L48:
- 568 024c 00000000 		.word	.LANCHOR0
- 569 0250 00000000 		.word	LowF_Zero_Int
- 570 0254 00000000 		.word	LowF_One_Int
- 571 0258 00000000 		.word	HighF_Zero_Int
- 572 025c 00000000 		.word	HighF_One_Int
- 573 0260 95204F09 		.word	156180629
- 574 0264 00000000 		.word	.LANCHOR1
- 575 0268 B7600BB6 		.word	-1240768329
- 576              		.cfi_endproc
- 577              	.LFE63:
- 578              		.size	main, .-main
- 579              		.data
- 580              		.align	2
- 581              		.set	.LANCHOR0,. + 0
- 582              		.type	L_zeroCounter, %object
- 583              		.size	L_zeroCounter, 4
- 584              	L_zeroCounter:
- 585 0000 01000000 		.word	1
- 586              		.type	L_oneCounter, %object
- 587              		.size	L_oneCounter, 4
- 588              	L_oneCounter:
- 589 0004 01000000 		.word	1
- 590              		.type	H_zeroCounter, %object
- 591              		.size	H_zeroCounter, 4
- 592              	H_zeroCounter:
- 593 0008 01000000 		.word	1
- 594              		.type	H_oneCounter, %object
- 595              		.size	H_oneCounter, 4
- 596              	H_oneCounter:
- 597 000c 01000000 		.word	1
- 598              		.type	testLEDStatus, %object
- 599              		.size	testLEDStatus, 1
- 600              	testLEDStatus:
- 601 0010 FF       		.byte	-1
- 602              		.bss
- 603              		.set	.LANCHOR1,. + 0
- 604              		.type	L_messageBit, %object
- 605              		.size	L_messageBit, 1
- 606              	L_messageBit:
- 607 0000 00       		.space	1
- 608              		.type	H_messageBit, %object
- 609              		.size	H_messageBit, 1
- 610              	H_messageBit:
- 611 0001 00       		.space	1
- 612              		.type	bitCase, %object
- 613              		.size	bitCase, 1
- 614              	bitCase:
- 615 0002 00       		.space	1
- 616              		.text
- 617              	.Letext0:
- 618              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
- 619              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
- 620              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 18
+ 561              	.LVL29:
+ 228:main.c        ****     }
+ 562              		.loc 1 228 0
+ 563 0242 A078     		ldrb	r0, [r4, #2]	@ zero_extendqisi2
+ 564 0244 FFF7FEFF 		bl	HighF_MuxSelOut_Write
+ 565              	.LVL30:
+ 229:main.c        **** }
+ 566              		.loc 1 229 0
+ 567 0248 F4E6     		b	.L46
+ 568              	.L49:
+ 569 024a 00BF     		.align	2
+ 570              	.L48:
+ 571 024c 00000000 		.word	.LANCHOR0
+ 572 0250 00000000 		.word	LowF_Zero_Int
+ 573 0254 00000000 		.word	LowF_One_Int
+ 574 0258 00000000 		.word	HighF_Zero_Int
+ 575 025c 00000000 		.word	HighF_One_Int
+ 576 0260 1F85EB51 		.word	1374389535
+ 577 0264 00000000 		.word	.LANCHOR1
+ 578 0268 83BEA02F 		.word	799063683
+ 579 026c 95204F09 		.word	156180629
+ 580 0270 B7600BB6 		.word	-1240768329
+ 581              		.cfi_endproc
+ 582              	.LFE63:
+ 583              		.size	main, .-main
+ 584              		.data
+ 585              		.align	2
+ 586              		.set	.LANCHOR0,. + 0
+ 587              		.type	L_zeroCounter, %object
+ 588              		.size	L_zeroCounter, 4
+ 589              	L_zeroCounter:
+ 590 0000 01000000 		.word	1
+ 591              		.type	L_oneCounter, %object
+ 592              		.size	L_oneCounter, 4
+ 593              	L_oneCounter:
+ 594 0004 01000000 		.word	1
+ 595              		.type	H_zeroCounter, %object
+ 596              		.size	H_zeroCounter, 4
+ 597              	H_zeroCounter:
+ 598 0008 01000000 		.word	1
+ 599              		.type	H_oneCounter, %object
+ 600              		.size	H_oneCounter, 4
+ 601              	H_oneCounter:
+ 602 000c 01000000 		.word	1
+ 603              		.type	testLEDStatus, %object
+ 604              		.size	testLEDStatus, 1
+ 605              	testLEDStatus:
+ 606 0010 FF       		.byte	-1
+ 607              		.bss
+ 608              		.set	.LANCHOR1,. + 0
+ 609              		.type	L_messageBit, %object
+ 610              		.size	L_messageBit, 1
+ 611              	L_messageBit:
+ 612 0000 00       		.space	1
+ 613              		.type	H_messageBit, %object
+ 614              		.size	H_messageBit, 1
+ 615              	H_messageBit:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 18
 
 
- 621              		.file 5 "Generated_Source\\PSoC5/LowF_OnePWM.h"
- 622              		.file 6 "Generated_Source\\PSoC5/LowF_ZeroPWM.h"
- 623              		.file 7 "Generated_Source\\PSoC5/HighF_OnePWM.h"
- 624              		.file 8 "Generated_Source\\PSoC5/HighF_ZeroPWM.h"
- 625              		.file 9 "Generated_Source\\PSoC5/LEDTest.h"
- 626              		.file 10 "Generated_Source\\PSoC5/LowF_OneInt.h"
- 627              		.file 11 "Generated_Source\\PSoC5/LowF_ZeroInt.h"
- 628              		.file 12 "Generated_Source\\PSoC5/HighF_OneInt.h"
- 629              		.file 13 "Generated_Source\\PSoC5/HighF_ZeroInt.h"
- 630              		.file 14 "Generated_Source\\PSoC5/LowF_MuxSelOut.h"
- 631              		.file 15 "Generated_Source\\PSoC5/HighF_MuxSelOut.h"
- 632              		.file 16 "Generated_Source\\PSoC5/core_cm3.h"
- 633              		.section	.debug_info,"",%progbits
- 634              	.Ldebug_info0:
- 635 0000 98030000 		.4byte	0x398
- 636 0004 0400     		.2byte	0x4
- 637 0006 00000000 		.4byte	.Ldebug_abbrev0
- 638 000a 04       		.byte	0x4
- 639 000b 01       		.uleb128 0x1
- 640 000c B7000000 		.4byte	.LASF44
- 641 0010 0C       		.byte	0xc
- 642 0011 DA020000 		.4byte	.LASF45
- 643 0015 90010000 		.4byte	.LASF46
- 644 0019 00000000 		.4byte	.Ldebug_ranges0+0
- 645 001d 00000000 		.4byte	0
- 646 0021 00000000 		.4byte	.Ldebug_line0
- 647 0025 02       		.uleb128 0x2
- 648 0026 01       		.byte	0x1
- 649 0027 06       		.byte	0x6
- 650 0028 3A030000 		.4byte	.LASF0
- 651 002c 02       		.uleb128 0x2
- 652 002d 01       		.byte	0x1
- 653 002e 08       		.byte	0x8
- 654 002f A9000000 		.4byte	.LASF1
- 655 0033 02       		.uleb128 0x2
- 656 0034 02       		.byte	0x2
- 657 0035 05       		.byte	0x5
- 658 0036 F5020000 		.4byte	.LASF2
- 659 003a 02       		.uleb128 0x2
- 660 003b 02       		.byte	0x2
- 661 003c 07       		.byte	0x7
- 662 003d 46030000 		.4byte	.LASF3
- 663 0041 03       		.uleb128 0x3
- 664 0042 45000000 		.4byte	.LASF9
- 665 0046 02       		.byte	0x2
- 666 0047 3F       		.byte	0x3f
- 667 0048 4C000000 		.4byte	0x4c
- 668 004c 02       		.uleb128 0x2
- 669 004d 04       		.byte	0x4
- 670 004e 05       		.byte	0x5
- 671 004f 17030000 		.4byte	.LASF4
- 672 0053 02       		.uleb128 0x2
- 673 0054 04       		.byte	0x4
- 674 0055 07       		.byte	0x7
- 675 0056 45010000 		.4byte	.LASF5
- 676 005a 02       		.uleb128 0x2
- 677 005b 08       		.byte	0x8
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 19
+ 616 0001 00       		.space	1
+ 617              		.type	bitCase, %object
+ 618              		.size	bitCase, 1
+ 619              	bitCase:
+ 620 0002 00       		.space	1
+ 621              		.text
+ 622              	.Letext0:
+ 623              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 624              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 625              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 626              		.file 5 "Generated_Source\\PSoC5/LowF_OnePWM.h"
+ 627              		.file 6 "Generated_Source\\PSoC5/LowF_ZeroPWM.h"
+ 628              		.file 7 "Generated_Source\\PSoC5/HighF_OnePWM.h"
+ 629              		.file 8 "Generated_Source\\PSoC5/HighF_ZeroPWM.h"
+ 630              		.file 9 "Generated_Source\\PSoC5/LEDTest.h"
+ 631              		.file 10 "Generated_Source\\PSoC5/LowF_OneInt.h"
+ 632              		.file 11 "Generated_Source\\PSoC5/LowF_ZeroInt.h"
+ 633              		.file 12 "Generated_Source\\PSoC5/HighF_OneInt.h"
+ 634              		.file 13 "Generated_Source\\PSoC5/HighF_ZeroInt.h"
+ 635              		.file 14 "Generated_Source\\PSoC5/LowF_MuxSelOut.h"
+ 636              		.file 15 "Generated_Source\\PSoC5/HighF_MuxSelOut.h"
+ 637              		.file 16 "Generated_Source\\PSoC5/core_cm3.h"
+ 638              		.section	.debug_info,"",%progbits
+ 639              	.Ldebug_info0:
+ 640 0000 98030000 		.4byte	0x398
+ 641 0004 0400     		.2byte	0x4
+ 642 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 643 000a 04       		.byte	0x4
+ 644 000b 01       		.uleb128 0x1
+ 645 000c EC000000 		.4byte	.LASF44
+ 646 0010 0C       		.byte	0xc
+ 647 0011 D6020000 		.4byte	.LASF45
+ 648 0015 00000000 		.4byte	.LASF46
+ 649 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 650 001d 00000000 		.4byte	0
+ 651 0021 00000000 		.4byte	.Ldebug_line0
+ 652 0025 02       		.uleb128 0x2
+ 653 0026 01       		.byte	0x1
+ 654 0027 06       		.byte	0x6
+ 655 0028 36030000 		.4byte	.LASF0
+ 656 002c 02       		.uleb128 0x2
+ 657 002d 01       		.byte	0x1
+ 658 002e 08       		.byte	0x8
+ 659 002f DE000000 		.4byte	.LASF1
+ 660 0033 02       		.uleb128 0x2
+ 661 0034 02       		.byte	0x2
+ 662 0035 05       		.byte	0x5
+ 663 0036 F1020000 		.4byte	.LASF2
+ 664 003a 02       		.uleb128 0x2
+ 665 003b 02       		.byte	0x2
+ 666 003c 07       		.byte	0x7
+ 667 003d 42030000 		.4byte	.LASF3
+ 668 0041 03       		.uleb128 0x3
+ 669 0042 7A000000 		.4byte	.LASF9
+ 670 0046 02       		.byte	0x2
+ 671 0047 3F       		.byte	0x3f
+ 672 0048 4C000000 		.4byte	0x4c
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 19
 
 
- 678 005c 05       		.byte	0x5
- 679 005d B9020000 		.4byte	.LASF6
- 680 0061 02       		.uleb128 0x2
- 681 0062 08       		.byte	0x8
- 682 0063 07       		.byte	0x7
- 683 0064 84000000 		.4byte	.LASF7
- 684 0068 04       		.uleb128 0x4
- 685 0069 04       		.byte	0x4
- 686 006a 05       		.byte	0x5
- 687 006b 696E7400 		.ascii	"int\000"
- 688 006f 02       		.uleb128 0x2
- 689 0070 04       		.byte	0x4
- 690 0071 07       		.byte	0x7
- 691 0072 29020000 		.4byte	.LASF8
- 692 0076 03       		.uleb128 0x3
- 693 0077 85020000 		.4byte	.LASF10
- 694 007b 03       		.byte	0x3
- 695 007c 2C       		.byte	0x2c
- 696 007d 41000000 		.4byte	0x41
- 697 0081 05       		.uleb128 0x5
- 698 0082 FF020000 		.4byte	.LASF11
- 699 0086 04       		.byte	0x4
- 700 0087 9201     		.2byte	0x192
- 701 0089 2C000000 		.4byte	0x2c
- 702 008d 02       		.uleb128 0x2
- 703 008e 04       		.byte	0x4
- 704 008f 04       		.byte	0x4
- 705 0090 7E000000 		.4byte	.LASF12
- 706 0094 02       		.uleb128 0x2
- 707 0095 08       		.byte	0x8
- 708 0096 04       		.byte	0x4
- 709 0097 84010000 		.4byte	.LASF13
- 710 009b 02       		.uleb128 0x2
- 711 009c 01       		.byte	0x1
- 712 009d 08       		.byte	0x8
- 713 009e E1020000 		.4byte	.LASF14
- 714 00a2 02       		.uleb128 0x2
- 715 00a3 08       		.byte	0x8
- 716 00a4 04       		.byte	0x4
- 717 00a5 20030000 		.4byte	.LASF15
- 718 00a9 02       		.uleb128 0x2
- 719 00aa 04       		.byte	0x4
- 720 00ab 07       		.byte	0x7
- 721 00ac 8D020000 		.4byte	.LASF16
- 722 00b0 06       		.uleb128 0x6
- 723 00b1 37000000 		.4byte	.LASF17
- 724 00b5 01       		.byte	0x1
- 725 00b6 E8       		.byte	0xe8
- 726 00b7 00000000 		.4byte	.LFB64
- 727 00bb 10000000 		.4byte	.LFE64-.LFB64
- 728 00bf 01       		.uleb128 0x1
- 729 00c0 9C       		.byte	0x9c
- 730 00c1 06       		.uleb128 0x6
- 731 00c2 4F000000 		.4byte	.LASF18
- 732 00c6 01       		.byte	0x1
- 733 00c7 EE       		.byte	0xee
- 734 00c8 00000000 		.4byte	.LFB65
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 20
+ 673 004c 02       		.uleb128 0x2
+ 674 004d 04       		.byte	0x4
+ 675 004e 05       		.byte	0x5
+ 676 004f 13030000 		.4byte	.LASF4
+ 677 0053 02       		.uleb128 0x2
+ 678 0054 04       		.byte	0x4
+ 679 0055 07       		.byte	0x7
+ 680 0056 7A010000 		.4byte	.LASF5
+ 681 005a 02       		.uleb128 0x2
+ 682 005b 08       		.byte	0x8
+ 683 005c 05       		.byte	0x5
+ 684 005d B5020000 		.4byte	.LASF6
+ 685 0061 02       		.uleb128 0x2
+ 686 0062 08       		.byte	0x8
+ 687 0063 07       		.byte	0x7
+ 688 0064 B9000000 		.4byte	.LASF7
+ 689 0068 04       		.uleb128 0x4
+ 690 0069 04       		.byte	0x4
+ 691 006a 05       		.byte	0x5
+ 692 006b 696E7400 		.ascii	"int\000"
+ 693 006f 02       		.uleb128 0x2
+ 694 0070 04       		.byte	0x4
+ 695 0071 07       		.byte	0x7
+ 696 0072 25020000 		.4byte	.LASF8
+ 697 0076 03       		.uleb128 0x3
+ 698 0077 81020000 		.4byte	.LASF10
+ 699 007b 03       		.byte	0x3
+ 700 007c 2C       		.byte	0x2c
+ 701 007d 41000000 		.4byte	0x41
+ 702 0081 05       		.uleb128 0x5
+ 703 0082 FB020000 		.4byte	.LASF11
+ 704 0086 04       		.byte	0x4
+ 705 0087 9201     		.2byte	0x192
+ 706 0089 2C000000 		.4byte	0x2c
+ 707 008d 02       		.uleb128 0x2
+ 708 008e 04       		.byte	0x4
+ 709 008f 04       		.byte	0x4
+ 710 0090 B3000000 		.4byte	.LASF12
+ 711 0094 02       		.uleb128 0x2
+ 712 0095 08       		.byte	0x8
+ 713 0096 04       		.byte	0x4
+ 714 0097 B9010000 		.4byte	.LASF13
+ 715 009b 02       		.uleb128 0x2
+ 716 009c 01       		.byte	0x1
+ 717 009d 08       		.byte	0x8
+ 718 009e DD020000 		.4byte	.LASF14
+ 719 00a2 02       		.uleb128 0x2
+ 720 00a3 08       		.byte	0x8
+ 721 00a4 04       		.byte	0x4
+ 722 00a5 1C030000 		.4byte	.LASF15
+ 723 00a9 02       		.uleb128 0x2
+ 724 00aa 04       		.byte	0x4
+ 725 00ab 07       		.byte	0x7
+ 726 00ac 89020000 		.4byte	.LASF16
+ 727 00b0 06       		.uleb128 0x6
+ 728 00b1 6C000000 		.4byte	.LASF17
+ 729 00b5 01       		.byte	0x1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 20
 
 
- 735 00cc 10000000 		.4byte	.LFE65-.LFB65
- 736 00d0 01       		.uleb128 0x1
- 737 00d1 9C       		.byte	0x9c
- 738 00d2 06       		.uleb128 0x6
- 739 00d3 E6020000 		.4byte	.LASF19
- 740 00d7 01       		.byte	0x1
- 741 00d8 F4       		.byte	0xf4
- 742 00d9 00000000 		.4byte	.LFB66
- 743 00dd 10000000 		.4byte	.LFE66-.LFB66
- 744 00e1 01       		.uleb128 0x1
- 745 00e2 9C       		.byte	0x9c
- 746 00e3 06       		.uleb128 0x6
- 747 00e4 AB020000 		.4byte	.LASF20
- 748 00e8 01       		.byte	0x1
- 749 00e9 F9       		.byte	0xf9
- 750 00ea 00000000 		.4byte	.LFB67
- 751 00ee 10000000 		.4byte	.LFE67-.LFB67
- 752 00f2 01       		.uleb128 0x1
- 753 00f3 9C       		.byte	0x9c
- 754 00f4 07       		.uleb128 0x7
- 755 00f5 8B010000 		.4byte	.LASF47
- 756 00f9 01       		.byte	0x1
- 757 00fa 2E       		.byte	0x2e
- 758 00fb 68000000 		.4byte	0x68
- 759 00ff 00000000 		.4byte	.LFB63
- 760 0103 6C020000 		.4byte	.LFE63-.LFB63
- 761 0107 01       		.uleb128 0x1
- 762 0108 9C       		.byte	0x9c
- 763 0109 5D020000 		.4byte	0x25d
- 764 010d 08       		.uleb128 0x8
- 765 010e 08000000 		.4byte	.LVL0
- 766 0112 F6020000 		.4byte	0x2f6
- 767 0116 08       		.uleb128 0x8
- 768 0117 0C000000 		.4byte	.LVL1
- 769 011b 01030000 		.4byte	0x301
- 770 011f 08       		.uleb128 0x8
- 771 0120 10000000 		.4byte	.LVL2
- 772 0124 0C030000 		.4byte	0x30c
- 773 0128 08       		.uleb128 0x8
- 774 0129 14000000 		.4byte	.LVL3
- 775 012d 17030000 		.4byte	0x317
- 776 0131 08       		.uleb128 0x8
- 777 0132 1C000000 		.4byte	.LVL4
- 778 0136 22030000 		.4byte	0x322
- 779 013a 09       		.uleb128 0x9
- 780 013b 22000000 		.4byte	.LVL5
- 781 013f 2D030000 		.4byte	0x32d
- 782 0143 51010000 		.4byte	0x151
- 783 0147 0A       		.uleb128 0xa
- 784 0148 01       		.uleb128 0x1
- 785 0149 50       		.byte	0x50
- 786 014a 05       		.uleb128 0x5
- 787 014b 03       		.byte	0x3
- 788 014c 00000000 		.4byte	LowF_Zero_Int
- 789 0150 00       		.byte	0
- 790 0151 09       		.uleb128 0x9
- 791 0152 28000000 		.4byte	.LVL6
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 21
+ 730 00b6 EB       		.byte	0xeb
+ 731 00b7 00000000 		.4byte	.LFB64
+ 732 00bb 10000000 		.4byte	.LFE64-.LFB64
+ 733 00bf 01       		.uleb128 0x1
+ 734 00c0 9C       		.byte	0x9c
+ 735 00c1 06       		.uleb128 0x6
+ 736 00c2 84000000 		.4byte	.LASF18
+ 737 00c6 01       		.byte	0x1
+ 738 00c7 F1       		.byte	0xf1
+ 739 00c8 00000000 		.4byte	.LFB65
+ 740 00cc 10000000 		.4byte	.LFE65-.LFB65
+ 741 00d0 01       		.uleb128 0x1
+ 742 00d1 9C       		.byte	0x9c
+ 743 00d2 06       		.uleb128 0x6
+ 744 00d3 E2020000 		.4byte	.LASF19
+ 745 00d7 01       		.byte	0x1
+ 746 00d8 F7       		.byte	0xf7
+ 747 00d9 00000000 		.4byte	.LFB66
+ 748 00dd 10000000 		.4byte	.LFE66-.LFB66
+ 749 00e1 01       		.uleb128 0x1
+ 750 00e2 9C       		.byte	0x9c
+ 751 00e3 06       		.uleb128 0x6
+ 752 00e4 A7020000 		.4byte	.LASF20
+ 753 00e8 01       		.byte	0x1
+ 754 00e9 FC       		.byte	0xfc
+ 755 00ea 00000000 		.4byte	.LFB67
+ 756 00ee 10000000 		.4byte	.LFE67-.LFB67
+ 757 00f2 01       		.uleb128 0x1
+ 758 00f3 9C       		.byte	0x9c
+ 759 00f4 07       		.uleb128 0x7
+ 760 00f5 C0010000 		.4byte	.LASF47
+ 761 00f9 01       		.byte	0x1
+ 762 00fa 2E       		.byte	0x2e
+ 763 00fb 68000000 		.4byte	0x68
+ 764 00ff 00000000 		.4byte	.LFB63
+ 765 0103 74020000 		.4byte	.LFE63-.LFB63
+ 766 0107 01       		.uleb128 0x1
+ 767 0108 9C       		.byte	0x9c
+ 768 0109 5D020000 		.4byte	0x25d
+ 769 010d 08       		.uleb128 0x8
+ 770 010e 08000000 		.4byte	.LVL0
+ 771 0112 F6020000 		.4byte	0x2f6
+ 772 0116 08       		.uleb128 0x8
+ 773 0117 0C000000 		.4byte	.LVL1
+ 774 011b 01030000 		.4byte	0x301
+ 775 011f 08       		.uleb128 0x8
+ 776 0120 10000000 		.4byte	.LVL2
+ 777 0124 0C030000 		.4byte	0x30c
+ 778 0128 08       		.uleb128 0x8
+ 779 0129 14000000 		.4byte	.LVL3
+ 780 012d 17030000 		.4byte	0x317
+ 781 0131 08       		.uleb128 0x8
+ 782 0132 1C000000 		.4byte	.LVL4
+ 783 0136 22030000 		.4byte	0x322
+ 784 013a 09       		.uleb128 0x9
+ 785 013b 22000000 		.4byte	.LVL5
+ 786 013f 2D030000 		.4byte	0x32d
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 21
 
 
- 792 0156 38030000 		.4byte	0x338
- 793 015a 68010000 		.4byte	0x168
- 794 015e 0A       		.uleb128 0xa
- 795 015f 01       		.uleb128 0x1
- 796 0160 50       		.byte	0x50
- 797 0161 05       		.uleb128 0x5
- 798 0162 03       		.byte	0x3
- 799 0163 00000000 		.4byte	LowF_One_Int
- 800 0167 00       		.byte	0
- 801 0168 09       		.uleb128 0x9
- 802 0169 2E000000 		.4byte	.LVL7
- 803 016d 43030000 		.4byte	0x343
- 804 0171 7F010000 		.4byte	0x17f
- 805 0175 0A       		.uleb128 0xa
- 806 0176 01       		.uleb128 0x1
- 807 0177 50       		.byte	0x50
- 808 0178 05       		.uleb128 0x5
- 809 0179 03       		.byte	0x3
- 810 017a 00000000 		.4byte	HighF_Zero_Int
- 811 017e 00       		.byte	0
- 812 017f 09       		.uleb128 0x9
- 813 0180 34000000 		.4byte	.LVL8
- 814 0184 4E030000 		.4byte	0x34e
- 815 0188 96010000 		.4byte	0x196
- 816 018c 0A       		.uleb128 0xa
- 817 018d 01       		.uleb128 0x1
- 818 018e 50       		.byte	0x50
- 819 018f 05       		.uleb128 0x5
- 820 0190 03       		.byte	0x3
- 821 0191 00000000 		.4byte	HighF_One_Int
- 822 0195 00       		.byte	0
- 823 0196 08       		.uleb128 0x8
- 824 0197 5E000000 		.4byte	.LVL9
- 825 019b 22030000 		.4byte	0x322
- 826 019f 08       		.uleb128 0x8
- 827 01a0 96000000 		.4byte	.LVL10
- 828 01a4 22030000 		.4byte	0x322
- 829 01a8 08       		.uleb128 0x8
- 830 01a9 CC000000 		.4byte	.LVL11
- 831 01ad 22030000 		.4byte	0x322
- 832 01b1 08       		.uleb128 0x8
- 833 01b2 04010000 		.4byte	.LVL12
- 834 01b6 22030000 		.4byte	0x322
- 835 01ba 08       		.uleb128 0x8
- 836 01bb 52010000 		.4byte	.LVL13
- 837 01bf 59030000 		.4byte	0x359
- 838 01c3 08       		.uleb128 0x8
- 839 01c4 56010000 		.4byte	.LVL14
- 840 01c8 64030000 		.4byte	0x364
- 841 01cc 08       		.uleb128 0x8
- 842 01cd 6A010000 		.4byte	.LVL15
- 843 01d1 01030000 		.4byte	0x301
- 844 01d5 08       		.uleb128 0x8
- 845 01d6 6E010000 		.4byte	.LVL16
- 846 01da F6020000 		.4byte	0x2f6
- 847 01de 08       		.uleb128 0x8
- 848 01df 7A010000 		.4byte	.LVL17
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 22
+ 787 0143 51010000 		.4byte	0x151
+ 788 0147 0A       		.uleb128 0xa
+ 789 0148 01       		.uleb128 0x1
+ 790 0149 50       		.byte	0x50
+ 791 014a 05       		.uleb128 0x5
+ 792 014b 03       		.byte	0x3
+ 793 014c 00000000 		.4byte	LowF_Zero_Int
+ 794 0150 00       		.byte	0
+ 795 0151 09       		.uleb128 0x9
+ 796 0152 28000000 		.4byte	.LVL6
+ 797 0156 38030000 		.4byte	0x338
+ 798 015a 68010000 		.4byte	0x168
+ 799 015e 0A       		.uleb128 0xa
+ 800 015f 01       		.uleb128 0x1
+ 801 0160 50       		.byte	0x50
+ 802 0161 05       		.uleb128 0x5
+ 803 0162 03       		.byte	0x3
+ 804 0163 00000000 		.4byte	LowF_One_Int
+ 805 0167 00       		.byte	0
+ 806 0168 09       		.uleb128 0x9
+ 807 0169 2E000000 		.4byte	.LVL7
+ 808 016d 43030000 		.4byte	0x343
+ 809 0171 7F010000 		.4byte	0x17f
+ 810 0175 0A       		.uleb128 0xa
+ 811 0176 01       		.uleb128 0x1
+ 812 0177 50       		.byte	0x50
+ 813 0178 05       		.uleb128 0x5
+ 814 0179 03       		.byte	0x3
+ 815 017a 00000000 		.4byte	HighF_Zero_Int
+ 816 017e 00       		.byte	0
+ 817 017f 09       		.uleb128 0x9
+ 818 0180 34000000 		.4byte	.LVL8
+ 819 0184 4E030000 		.4byte	0x34e
+ 820 0188 96010000 		.4byte	0x196
+ 821 018c 0A       		.uleb128 0xa
+ 822 018d 01       		.uleb128 0x1
+ 823 018e 50       		.byte	0x50
+ 824 018f 05       		.uleb128 0x5
+ 825 0190 03       		.byte	0x3
+ 826 0191 00000000 		.4byte	HighF_One_Int
+ 827 0195 00       		.byte	0
+ 828 0196 08       		.uleb128 0x8
+ 829 0197 5A000000 		.4byte	.LVL9
+ 830 019b 22030000 		.4byte	0x322
+ 831 019f 08       		.uleb128 0x8
+ 832 01a0 8C000000 		.4byte	.LVL10
+ 833 01a4 22030000 		.4byte	0x322
+ 834 01a8 08       		.uleb128 0x8
+ 835 01a9 C2000000 		.4byte	.LVL11
+ 836 01ad 22030000 		.4byte	0x322
+ 837 01b1 08       		.uleb128 0x8
+ 838 01b2 FA000000 		.4byte	.LVL12
+ 839 01b6 22030000 		.4byte	0x322
+ 840 01ba 08       		.uleb128 0x8
+ 841 01bb 48010000 		.4byte	.LVL13
+ 842 01bf 59030000 		.4byte	0x359
+ 843 01c3 08       		.uleb128 0x8
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 22
 
 
- 849 01e3 59030000 		.4byte	0x359
- 850 01e7 08       		.uleb128 0x8
- 851 01e8 7E010000 		.4byte	.LVL18
- 852 01ec 64030000 		.4byte	0x364
- 853 01f0 08       		.uleb128 0x8
- 854 01f1 8A010000 		.4byte	.LVL19
- 855 01f5 01030000 		.4byte	0x301
- 856 01f9 08       		.uleb128 0x8
- 857 01fa 8E010000 		.4byte	.LVL20
- 858 01fe F6020000 		.4byte	0x2f6
- 859 0202 08       		.uleb128 0x8
- 860 0203 E8010000 		.4byte	.LVL21
- 861 0207 6F030000 		.4byte	0x36f
- 862 020b 08       		.uleb128 0x8
- 863 020c EC010000 		.4byte	.LVL22
- 864 0210 7A030000 		.4byte	0x37a
- 865 0214 08       		.uleb128 0x8
- 866 0215 00020000 		.4byte	.LVL23
- 867 0219 17030000 		.4byte	0x317
- 868 021d 08       		.uleb128 0x8
- 869 021e 04020000 		.4byte	.LVL24
- 870 0222 0C030000 		.4byte	0x30c
- 871 0226 08       		.uleb128 0x8
- 872 0227 10020000 		.4byte	.LVL25
- 873 022b 6F030000 		.4byte	0x36f
- 874 022f 08       		.uleb128 0x8
- 875 0230 14020000 		.4byte	.LVL26
- 876 0234 7A030000 		.4byte	0x37a
- 877 0238 08       		.uleb128 0x8
- 878 0239 20020000 		.4byte	.LVL27
- 879 023d 17030000 		.4byte	0x317
- 880 0241 08       		.uleb128 0x8
- 881 0242 24020000 		.4byte	.LVL28
- 882 0246 0C030000 		.4byte	0x30c
- 883 024a 08       		.uleb128 0x8
- 884 024b 44020000 		.4byte	.LVL29
- 885 024f 85030000 		.4byte	0x385
- 886 0253 08       		.uleb128 0x8
- 887 0254 4A020000 		.4byte	.LVL30
- 888 0258 90030000 		.4byte	0x390
- 889 025c 00       		.byte	0
- 890 025d 0B       		.uleb128 0xb
- 891 025e 59030000 		.4byte	.LASF21
- 892 0262 01       		.byte	0x1
- 893 0263 25       		.byte	0x25
- 894 0264 68000000 		.4byte	0x68
- 895 0268 05       		.uleb128 0x5
- 896 0269 03       		.byte	0x3
- 897 026a 04000000 		.4byte	L_oneCounter
- 898 026e 0B       		.uleb128 0xb
- 899 026f 14000000 		.4byte	.LASF22
- 900 0273 01       		.byte	0x1
- 901 0274 26       		.byte	0x26
- 902 0275 68000000 		.4byte	0x68
- 903 0279 05       		.uleb128 0x5
- 904 027a 03       		.byte	0x3
- 905 027b 00000000 		.4byte	L_zeroCounter
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 23
+ 844 01c4 4C010000 		.4byte	.LVL14
+ 845 01c8 64030000 		.4byte	0x364
+ 846 01cc 08       		.uleb128 0x8
+ 847 01cd 60010000 		.4byte	.LVL15
+ 848 01d1 01030000 		.4byte	0x301
+ 849 01d5 08       		.uleb128 0x8
+ 850 01d6 64010000 		.4byte	.LVL16
+ 851 01da F6020000 		.4byte	0x2f6
+ 852 01de 08       		.uleb128 0x8
+ 853 01df 70010000 		.4byte	.LVL17
+ 854 01e3 59030000 		.4byte	0x359
+ 855 01e7 08       		.uleb128 0x8
+ 856 01e8 74010000 		.4byte	.LVL18
+ 857 01ec 64030000 		.4byte	0x364
+ 858 01f0 08       		.uleb128 0x8
+ 859 01f1 80010000 		.4byte	.LVL19
+ 860 01f5 01030000 		.4byte	0x301
+ 861 01f9 08       		.uleb128 0x8
+ 862 01fa 84010000 		.4byte	.LVL20
+ 863 01fe F6020000 		.4byte	0x2f6
+ 864 0202 08       		.uleb128 0x8
+ 865 0203 E2010000 		.4byte	.LVL21
+ 866 0207 6F030000 		.4byte	0x36f
+ 867 020b 08       		.uleb128 0x8
+ 868 020c E6010000 		.4byte	.LVL22
+ 869 0210 7A030000 		.4byte	0x37a
+ 870 0214 08       		.uleb128 0x8
+ 871 0215 FA010000 		.4byte	.LVL23
+ 872 0219 17030000 		.4byte	0x317
+ 873 021d 08       		.uleb128 0x8
+ 874 021e FE010000 		.4byte	.LVL24
+ 875 0222 0C030000 		.4byte	0x30c
+ 876 0226 08       		.uleb128 0x8
+ 877 0227 0A020000 		.4byte	.LVL25
+ 878 022b 6F030000 		.4byte	0x36f
+ 879 022f 08       		.uleb128 0x8
+ 880 0230 0E020000 		.4byte	.LVL26
+ 881 0234 7A030000 		.4byte	0x37a
+ 882 0238 08       		.uleb128 0x8
+ 883 0239 1A020000 		.4byte	.LVL27
+ 884 023d 17030000 		.4byte	0x317
+ 885 0241 08       		.uleb128 0x8
+ 886 0242 1E020000 		.4byte	.LVL28
+ 887 0246 0C030000 		.4byte	0x30c
+ 888 024a 08       		.uleb128 0x8
+ 889 024b 42020000 		.4byte	.LVL29
+ 890 024f 85030000 		.4byte	0x385
+ 891 0253 08       		.uleb128 0x8
+ 892 0254 48020000 		.4byte	.LVL30
+ 893 0258 90030000 		.4byte	0x390
+ 894 025c 00       		.byte	0
+ 895 025d 0B       		.uleb128 0xb
+ 896 025e 55030000 		.4byte	.LASF21
+ 897 0262 01       		.byte	0x1
+ 898 0263 25       		.byte	0x25
+ 899 0264 68000000 		.4byte	0x68
+ 900 0268 05       		.uleb128 0x5
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 23
 
 
- 906 027f 0B       		.uleb128 0xb
- 907 0280 5C000000 		.4byte	.LASF23
- 908 0284 01       		.byte	0x1
- 909 0285 27       		.byte	0x27
- 910 0286 68000000 		.4byte	0x68
- 911 028a 05       		.uleb128 0x5
- 912 028b 03       		.byte	0x3
- 913 028c 0C000000 		.4byte	H_oneCounter
- 914 0290 0B       		.uleb128 0xb
- 915 0291 9B000000 		.4byte	.LASF24
- 916 0295 01       		.byte	0x1
- 917 0296 28       		.byte	0x28
- 918 0297 68000000 		.4byte	0x68
- 919 029b 05       		.uleb128 0x5
- 920 029c 03       		.byte	0x3
- 921 029d 08000000 		.4byte	H_zeroCounter
- 922 02a1 0B       		.uleb128 0xb
- 923 02a2 77010000 		.4byte	.LASF25
- 924 02a6 01       		.byte	0x1
- 925 02a7 29       		.byte	0x29
- 926 02a8 81000000 		.4byte	0x81
- 927 02ac 05       		.uleb128 0x5
- 928 02ad 03       		.byte	0x3
- 929 02ae 00000000 		.4byte	L_messageBit
- 930 02b2 0B       		.uleb128 0xb
- 931 02b3 64020000 		.4byte	.LASF26
- 932 02b7 01       		.byte	0x1
- 933 02b8 2A       		.byte	0x2a
- 934 02b9 81000000 		.4byte	0x81
- 935 02bd 05       		.uleb128 0x5
- 936 02be 03       		.byte	0x3
- 937 02bf 01000000 		.4byte	H_messageBit
- 938 02c3 0B       		.uleb128 0xb
- 939 02c4 5C020000 		.4byte	.LASF27
- 940 02c8 01       		.byte	0x1
- 941 02c9 2B       		.byte	0x2b
- 942 02ca 81000000 		.4byte	0x81
- 943 02ce 05       		.uleb128 0x5
- 944 02cf 03       		.byte	0x3
- 945 02d0 02000000 		.4byte	bitCase
- 946 02d4 0B       		.uleb128 0xb
- 947 02d5 2C030000 		.4byte	.LASF28
- 948 02d9 01       		.byte	0x1
- 949 02da 2C       		.byte	0x2c
- 950 02db 81000000 		.4byte	0x81
- 951 02df 05       		.uleb128 0x5
- 952 02e0 03       		.byte	0x3
- 953 02e1 10000000 		.4byte	testLEDStatus
- 954 02e5 0C       		.uleb128 0xc
- 955 02e6 6A010000 		.4byte	.LASF48
- 956 02ea 10       		.byte	0x10
- 957 02eb 1207     		.2byte	0x712
- 958 02ed F1020000 		.4byte	0x2f1
- 959 02f1 0D       		.uleb128 0xd
- 960 02f2 76000000 		.4byte	0x76
- 961 02f6 0E       		.uleb128 0xe
- 962 02f7 ED010000 		.4byte	.LASF29
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 24
+ 901 0269 03       		.byte	0x3
+ 902 026a 04000000 		.4byte	L_oneCounter
+ 903 026e 0B       		.uleb128 0xb
+ 904 026f 49000000 		.4byte	.LASF22
+ 905 0273 01       		.byte	0x1
+ 906 0274 26       		.byte	0x26
+ 907 0275 68000000 		.4byte	0x68
+ 908 0279 05       		.uleb128 0x5
+ 909 027a 03       		.byte	0x3
+ 910 027b 00000000 		.4byte	L_zeroCounter
+ 911 027f 0B       		.uleb128 0xb
+ 912 0280 91000000 		.4byte	.LASF23
+ 913 0284 01       		.byte	0x1
+ 914 0285 27       		.byte	0x27
+ 915 0286 68000000 		.4byte	0x68
+ 916 028a 05       		.uleb128 0x5
+ 917 028b 03       		.byte	0x3
+ 918 028c 0C000000 		.4byte	H_oneCounter
+ 919 0290 0B       		.uleb128 0xb
+ 920 0291 D0000000 		.4byte	.LASF24
+ 921 0295 01       		.byte	0x1
+ 922 0296 28       		.byte	0x28
+ 923 0297 68000000 		.4byte	0x68
+ 924 029b 05       		.uleb128 0x5
+ 925 029c 03       		.byte	0x3
+ 926 029d 08000000 		.4byte	H_zeroCounter
+ 927 02a1 0B       		.uleb128 0xb
+ 928 02a2 AC010000 		.4byte	.LASF25
+ 929 02a6 01       		.byte	0x1
+ 930 02a7 29       		.byte	0x29
+ 931 02a8 81000000 		.4byte	0x81
+ 932 02ac 05       		.uleb128 0x5
+ 933 02ad 03       		.byte	0x3
+ 934 02ae 00000000 		.4byte	L_messageBit
+ 935 02b2 0B       		.uleb128 0xb
+ 936 02b3 60020000 		.4byte	.LASF26
+ 937 02b7 01       		.byte	0x1
+ 938 02b8 2A       		.byte	0x2a
+ 939 02b9 81000000 		.4byte	0x81
+ 940 02bd 05       		.uleb128 0x5
+ 941 02be 03       		.byte	0x3
+ 942 02bf 01000000 		.4byte	H_messageBit
+ 943 02c3 0B       		.uleb128 0xb
+ 944 02c4 58020000 		.4byte	.LASF27
+ 945 02c8 01       		.byte	0x1
+ 946 02c9 2B       		.byte	0x2b
+ 947 02ca 81000000 		.4byte	0x81
+ 948 02ce 05       		.uleb128 0x5
+ 949 02cf 03       		.byte	0x3
+ 950 02d0 02000000 		.4byte	bitCase
+ 951 02d4 0B       		.uleb128 0xb
+ 952 02d5 28030000 		.4byte	.LASF28
+ 953 02d9 01       		.byte	0x1
+ 954 02da 2C       		.byte	0x2c
+ 955 02db 81000000 		.4byte	0x81
+ 956 02df 05       		.uleb128 0x5
+ 957 02e0 03       		.byte	0x3
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 24
 
 
- 963 02fb ED010000 		.4byte	.LASF29
- 964 02ff 05       		.byte	0x5
- 965 0300 92       		.byte	0x92
- 966 0301 0E       		.uleb128 0xe
- 967 0302 49020000 		.4byte	.LASF30
- 968 0306 49020000 		.4byte	.LASF30
- 969 030a 06       		.byte	0x6
- 970 030b DC       		.byte	0xdc
- 971 030c 0E       		.uleb128 0xe
- 972 030d 36020000 		.4byte	.LASF31
- 973 0311 36020000 		.4byte	.LASF31
- 974 0315 07       		.byte	0x7
- 975 0316 92       		.byte	0x92
- 976 0317 0E       		.uleb128 0xe
- 977 0318 FF010000 		.4byte	.LASF32
- 978 031c FF010000 		.4byte	.LASF32
- 979 0320 08       		.byte	0x8
- 980 0321 DC       		.byte	0xdc
- 981 0322 0E       		.uleb128 0xe
- 982 0323 C9010000 		.4byte	.LASF33
- 983 0327 C9010000 		.4byte	.LASF33
- 984 032b 09       		.byte	0x9
- 985 032c 26       		.byte	0x26
- 986 032d 0E       		.uleb128 0xe
- 987 032e 00000000 		.4byte	.LASF34
- 988 0332 00000000 		.4byte	.LASF34
- 989 0336 0A       		.byte	0xa
- 990 0337 18       		.byte	0x18
- 991 0338 0E       		.uleb128 0xe
- 992 0339 22000000 		.4byte	.LASF35
- 993 033d 22000000 		.4byte	.LASF35
- 994 0341 0B       		.byte	0xb
- 995 0342 18       		.byte	0x18
- 996 0343 0E       		.uleb128 0xe
- 997 0344 96020000 		.4byte	.LASF36
- 998 0348 96020000 		.4byte	.LASF36
- 999 034c 0C       		.byte	0xc
- 1000 034d 18       		.byte	0x18
- 1001 034e 0E       		.uleb128 0xe
- 1002 034f D7010000 		.4byte	.LASF37
- 1003 0353 D7010000 		.4byte	.LASF37
- 1004 0357 0D       		.byte	0xd
- 1005 0358 18       		.byte	0x18
- 1006 0359 0E       		.uleb128 0xe
- 1007 035a 05030000 		.4byte	.LASF38
- 1008 035e 05030000 		.4byte	.LASF38
- 1009 0362 05       		.byte	0x5
- 1010 0363 DC       		.byte	0xdc
- 1011 0364 0E       		.uleb128 0xe
- 1012 0365 C7020000 		.4byte	.LASF39
- 1013 0369 C7020000 		.4byte	.LASF39
- 1014 036d 06       		.byte	0x6
- 1015 036e 92       		.byte	0x92
- 1016 036f 0E       		.uleb128 0xe
- 1017 0370 57010000 		.4byte	.LASF40
- 1018 0374 57010000 		.4byte	.LASF40
- 1019 0378 07       		.byte	0x7
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 25
+ 958 02e1 10000000 		.4byte	testLEDStatus
+ 959 02e5 0C       		.uleb128 0xc
+ 960 02e6 9F010000 		.4byte	.LASF48
+ 961 02ea 10       		.byte	0x10
+ 962 02eb 1207     		.2byte	0x712
+ 963 02ed F1020000 		.4byte	0x2f1
+ 964 02f1 0D       		.uleb128 0xd
+ 965 02f2 76000000 		.4byte	0x76
+ 966 02f6 0E       		.uleb128 0xe
+ 967 02f7 E9010000 		.4byte	.LASF29
+ 968 02fb E9010000 		.4byte	.LASF29
+ 969 02ff 05       		.byte	0x5
+ 970 0300 92       		.byte	0x92
+ 971 0301 0E       		.uleb128 0xe
+ 972 0302 45020000 		.4byte	.LASF30
+ 973 0306 45020000 		.4byte	.LASF30
+ 974 030a 06       		.byte	0x6
+ 975 030b DC       		.byte	0xdc
+ 976 030c 0E       		.uleb128 0xe
+ 977 030d 32020000 		.4byte	.LASF31
+ 978 0311 32020000 		.4byte	.LASF31
+ 979 0315 07       		.byte	0x7
+ 980 0316 92       		.byte	0x92
+ 981 0317 0E       		.uleb128 0xe
+ 982 0318 FB010000 		.4byte	.LASF32
+ 983 031c FB010000 		.4byte	.LASF32
+ 984 0320 08       		.byte	0x8
+ 985 0321 DC       		.byte	0xdc
+ 986 0322 0E       		.uleb128 0xe
+ 987 0323 C5010000 		.4byte	.LASF33
+ 988 0327 C5010000 		.4byte	.LASF33
+ 989 032b 09       		.byte	0x9
+ 990 032c 26       		.byte	0x26
+ 991 032d 0E       		.uleb128 0xe
+ 992 032e 35000000 		.4byte	.LASF34
+ 993 0332 35000000 		.4byte	.LASF34
+ 994 0336 0A       		.byte	0xa
+ 995 0337 18       		.byte	0x18
+ 996 0338 0E       		.uleb128 0xe
+ 997 0339 57000000 		.4byte	.LASF35
+ 998 033d 57000000 		.4byte	.LASF35
+ 999 0341 0B       		.byte	0xb
+ 1000 0342 18       		.byte	0x18
+ 1001 0343 0E       		.uleb128 0xe
+ 1002 0344 92020000 		.4byte	.LASF36
+ 1003 0348 92020000 		.4byte	.LASF36
+ 1004 034c 0C       		.byte	0xc
+ 1005 034d 18       		.byte	0x18
+ 1006 034e 0E       		.uleb128 0xe
+ 1007 034f D3010000 		.4byte	.LASF37
+ 1008 0353 D3010000 		.4byte	.LASF37
+ 1009 0357 0D       		.byte	0xd
+ 1010 0358 18       		.byte	0x18
+ 1011 0359 0E       		.uleb128 0xe
+ 1012 035a 01030000 		.4byte	.LASF38
+ 1013 035e 01030000 		.4byte	.LASF38
+ 1014 0362 05       		.byte	0x5
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 25
 
 
- 1020 0379 DC       		.byte	0xdc
- 1021 037a 0E       		.uleb128 0xe
- 1022 037b 71020000 		.4byte	.LASF41
- 1023 037f 71020000 		.4byte	.LASF41
- 1024 0383 08       		.byte	0x8
- 1025 0384 92       		.byte	0x92
- 1026 0385 0E       		.uleb128 0xe
- 1027 0386 69000000 		.4byte	.LASF42
- 1028 038a 69000000 		.4byte	.LASF42
- 1029 038e 0E       		.byte	0xe
- 1030 038f 26       		.byte	0x26
- 1031 0390 0E       		.uleb128 0xe
- 1032 0391 13020000 		.4byte	.LASF43
- 1033 0395 13020000 		.4byte	.LASF43
- 1034 0399 0F       		.byte	0xf
- 1035 039a 26       		.byte	0x26
- 1036 039b 00       		.byte	0
- 1037              		.section	.debug_abbrev,"",%progbits
- 1038              	.Ldebug_abbrev0:
- 1039 0000 01       		.uleb128 0x1
- 1040 0001 11       		.uleb128 0x11
- 1041 0002 01       		.byte	0x1
- 1042 0003 25       		.uleb128 0x25
- 1043 0004 0E       		.uleb128 0xe
- 1044 0005 13       		.uleb128 0x13
- 1045 0006 0B       		.uleb128 0xb
- 1046 0007 03       		.uleb128 0x3
- 1047 0008 0E       		.uleb128 0xe
- 1048 0009 1B       		.uleb128 0x1b
- 1049 000a 0E       		.uleb128 0xe
- 1050 000b 55       		.uleb128 0x55
- 1051 000c 17       		.uleb128 0x17
- 1052 000d 11       		.uleb128 0x11
- 1053 000e 01       		.uleb128 0x1
- 1054 000f 10       		.uleb128 0x10
- 1055 0010 17       		.uleb128 0x17
- 1056 0011 00       		.byte	0
- 1057 0012 00       		.byte	0
- 1058 0013 02       		.uleb128 0x2
- 1059 0014 24       		.uleb128 0x24
- 1060 0015 00       		.byte	0
- 1061 0016 0B       		.uleb128 0xb
- 1062 0017 0B       		.uleb128 0xb
- 1063 0018 3E       		.uleb128 0x3e
- 1064 0019 0B       		.uleb128 0xb
- 1065 001a 03       		.uleb128 0x3
- 1066 001b 0E       		.uleb128 0xe
- 1067 001c 00       		.byte	0
- 1068 001d 00       		.byte	0
- 1069 001e 03       		.uleb128 0x3
- 1070 001f 16       		.uleb128 0x16
- 1071 0020 00       		.byte	0
- 1072 0021 03       		.uleb128 0x3
- 1073 0022 0E       		.uleb128 0xe
- 1074 0023 3A       		.uleb128 0x3a
- 1075 0024 0B       		.uleb128 0xb
- 1076 0025 3B       		.uleb128 0x3b
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 26
+ 1015 0363 DC       		.byte	0xdc
+ 1016 0364 0E       		.uleb128 0xe
+ 1017 0365 C3020000 		.4byte	.LASF39
+ 1018 0369 C3020000 		.4byte	.LASF39
+ 1019 036d 06       		.byte	0x6
+ 1020 036e 92       		.byte	0x92
+ 1021 036f 0E       		.uleb128 0xe
+ 1022 0370 8C010000 		.4byte	.LASF40
+ 1023 0374 8C010000 		.4byte	.LASF40
+ 1024 0378 07       		.byte	0x7
+ 1025 0379 DC       		.byte	0xdc
+ 1026 037a 0E       		.uleb128 0xe
+ 1027 037b 6D020000 		.4byte	.LASF41
+ 1028 037f 6D020000 		.4byte	.LASF41
+ 1029 0383 08       		.byte	0x8
+ 1030 0384 92       		.byte	0x92
+ 1031 0385 0E       		.uleb128 0xe
+ 1032 0386 9E000000 		.4byte	.LASF42
+ 1033 038a 9E000000 		.4byte	.LASF42
+ 1034 038e 0E       		.byte	0xe
+ 1035 038f 26       		.byte	0x26
+ 1036 0390 0E       		.uleb128 0xe
+ 1037 0391 0F020000 		.4byte	.LASF43
+ 1038 0395 0F020000 		.4byte	.LASF43
+ 1039 0399 0F       		.byte	0xf
+ 1040 039a 26       		.byte	0x26
+ 1041 039b 00       		.byte	0
+ 1042              		.section	.debug_abbrev,"",%progbits
+ 1043              	.Ldebug_abbrev0:
+ 1044 0000 01       		.uleb128 0x1
+ 1045 0001 11       		.uleb128 0x11
+ 1046 0002 01       		.byte	0x1
+ 1047 0003 25       		.uleb128 0x25
+ 1048 0004 0E       		.uleb128 0xe
+ 1049 0005 13       		.uleb128 0x13
+ 1050 0006 0B       		.uleb128 0xb
+ 1051 0007 03       		.uleb128 0x3
+ 1052 0008 0E       		.uleb128 0xe
+ 1053 0009 1B       		.uleb128 0x1b
+ 1054 000a 0E       		.uleb128 0xe
+ 1055 000b 55       		.uleb128 0x55
+ 1056 000c 17       		.uleb128 0x17
+ 1057 000d 11       		.uleb128 0x11
+ 1058 000e 01       		.uleb128 0x1
+ 1059 000f 10       		.uleb128 0x10
+ 1060 0010 17       		.uleb128 0x17
+ 1061 0011 00       		.byte	0
+ 1062 0012 00       		.byte	0
+ 1063 0013 02       		.uleb128 0x2
+ 1064 0014 24       		.uleb128 0x24
+ 1065 0015 00       		.byte	0
+ 1066 0016 0B       		.uleb128 0xb
+ 1067 0017 0B       		.uleb128 0xb
+ 1068 0018 3E       		.uleb128 0x3e
+ 1069 0019 0B       		.uleb128 0xb
+ 1070 001a 03       		.uleb128 0x3
+ 1071 001b 0E       		.uleb128 0xe
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 26
 
 
- 1077 0026 0B       		.uleb128 0xb
- 1078 0027 49       		.uleb128 0x49
- 1079 0028 13       		.uleb128 0x13
- 1080 0029 00       		.byte	0
- 1081 002a 00       		.byte	0
- 1082 002b 04       		.uleb128 0x4
- 1083 002c 24       		.uleb128 0x24
- 1084 002d 00       		.byte	0
- 1085 002e 0B       		.uleb128 0xb
- 1086 002f 0B       		.uleb128 0xb
- 1087 0030 3E       		.uleb128 0x3e
- 1088 0031 0B       		.uleb128 0xb
- 1089 0032 03       		.uleb128 0x3
- 1090 0033 08       		.uleb128 0x8
- 1091 0034 00       		.byte	0
- 1092 0035 00       		.byte	0
- 1093 0036 05       		.uleb128 0x5
- 1094 0037 16       		.uleb128 0x16
- 1095 0038 00       		.byte	0
- 1096 0039 03       		.uleb128 0x3
- 1097 003a 0E       		.uleb128 0xe
- 1098 003b 3A       		.uleb128 0x3a
- 1099 003c 0B       		.uleb128 0xb
- 1100 003d 3B       		.uleb128 0x3b
- 1101 003e 05       		.uleb128 0x5
- 1102 003f 49       		.uleb128 0x49
- 1103 0040 13       		.uleb128 0x13
- 1104 0041 00       		.byte	0
- 1105 0042 00       		.byte	0
- 1106 0043 06       		.uleb128 0x6
- 1107 0044 2E       		.uleb128 0x2e
- 1108 0045 00       		.byte	0
- 1109 0046 3F       		.uleb128 0x3f
- 1110 0047 19       		.uleb128 0x19
- 1111 0048 03       		.uleb128 0x3
- 1112 0049 0E       		.uleb128 0xe
- 1113 004a 3A       		.uleb128 0x3a
- 1114 004b 0B       		.uleb128 0xb
- 1115 004c 3B       		.uleb128 0x3b
- 1116 004d 0B       		.uleb128 0xb
- 1117 004e 27       		.uleb128 0x27
- 1118 004f 19       		.uleb128 0x19
- 1119 0050 11       		.uleb128 0x11
- 1120 0051 01       		.uleb128 0x1
- 1121 0052 12       		.uleb128 0x12
- 1122 0053 06       		.uleb128 0x6
- 1123 0054 40       		.uleb128 0x40
- 1124 0055 18       		.uleb128 0x18
- 1125 0056 9742     		.uleb128 0x2117
- 1126 0058 19       		.uleb128 0x19
- 1127 0059 00       		.byte	0
- 1128 005a 00       		.byte	0
- 1129 005b 07       		.uleb128 0x7
- 1130 005c 2E       		.uleb128 0x2e
- 1131 005d 01       		.byte	0x1
- 1132 005e 3F       		.uleb128 0x3f
- 1133 005f 19       		.uleb128 0x19
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 27
+ 1072 001c 00       		.byte	0
+ 1073 001d 00       		.byte	0
+ 1074 001e 03       		.uleb128 0x3
+ 1075 001f 16       		.uleb128 0x16
+ 1076 0020 00       		.byte	0
+ 1077 0021 03       		.uleb128 0x3
+ 1078 0022 0E       		.uleb128 0xe
+ 1079 0023 3A       		.uleb128 0x3a
+ 1080 0024 0B       		.uleb128 0xb
+ 1081 0025 3B       		.uleb128 0x3b
+ 1082 0026 0B       		.uleb128 0xb
+ 1083 0027 49       		.uleb128 0x49
+ 1084 0028 13       		.uleb128 0x13
+ 1085 0029 00       		.byte	0
+ 1086 002a 00       		.byte	0
+ 1087 002b 04       		.uleb128 0x4
+ 1088 002c 24       		.uleb128 0x24
+ 1089 002d 00       		.byte	0
+ 1090 002e 0B       		.uleb128 0xb
+ 1091 002f 0B       		.uleb128 0xb
+ 1092 0030 3E       		.uleb128 0x3e
+ 1093 0031 0B       		.uleb128 0xb
+ 1094 0032 03       		.uleb128 0x3
+ 1095 0033 08       		.uleb128 0x8
+ 1096 0034 00       		.byte	0
+ 1097 0035 00       		.byte	0
+ 1098 0036 05       		.uleb128 0x5
+ 1099 0037 16       		.uleb128 0x16
+ 1100 0038 00       		.byte	0
+ 1101 0039 03       		.uleb128 0x3
+ 1102 003a 0E       		.uleb128 0xe
+ 1103 003b 3A       		.uleb128 0x3a
+ 1104 003c 0B       		.uleb128 0xb
+ 1105 003d 3B       		.uleb128 0x3b
+ 1106 003e 05       		.uleb128 0x5
+ 1107 003f 49       		.uleb128 0x49
+ 1108 0040 13       		.uleb128 0x13
+ 1109 0041 00       		.byte	0
+ 1110 0042 00       		.byte	0
+ 1111 0043 06       		.uleb128 0x6
+ 1112 0044 2E       		.uleb128 0x2e
+ 1113 0045 00       		.byte	0
+ 1114 0046 3F       		.uleb128 0x3f
+ 1115 0047 19       		.uleb128 0x19
+ 1116 0048 03       		.uleb128 0x3
+ 1117 0049 0E       		.uleb128 0xe
+ 1118 004a 3A       		.uleb128 0x3a
+ 1119 004b 0B       		.uleb128 0xb
+ 1120 004c 3B       		.uleb128 0x3b
+ 1121 004d 0B       		.uleb128 0xb
+ 1122 004e 27       		.uleb128 0x27
+ 1123 004f 19       		.uleb128 0x19
+ 1124 0050 11       		.uleb128 0x11
+ 1125 0051 01       		.uleb128 0x1
+ 1126 0052 12       		.uleb128 0x12
+ 1127 0053 06       		.uleb128 0x6
+ 1128 0054 40       		.uleb128 0x40
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 27
 
 
- 1134 0060 03       		.uleb128 0x3
- 1135 0061 0E       		.uleb128 0xe
- 1136 0062 3A       		.uleb128 0x3a
- 1137 0063 0B       		.uleb128 0xb
- 1138 0064 3B       		.uleb128 0x3b
- 1139 0065 0B       		.uleb128 0xb
- 1140 0066 27       		.uleb128 0x27
- 1141 0067 19       		.uleb128 0x19
- 1142 0068 49       		.uleb128 0x49
- 1143 0069 13       		.uleb128 0x13
- 1144 006a 8701     		.uleb128 0x87
- 1145 006c 19       		.uleb128 0x19
- 1146 006d 11       		.uleb128 0x11
- 1147 006e 01       		.uleb128 0x1
- 1148 006f 12       		.uleb128 0x12
- 1149 0070 06       		.uleb128 0x6
- 1150 0071 40       		.uleb128 0x40
- 1151 0072 18       		.uleb128 0x18
- 1152 0073 9742     		.uleb128 0x2117
- 1153 0075 19       		.uleb128 0x19
- 1154 0076 01       		.uleb128 0x1
- 1155 0077 13       		.uleb128 0x13
- 1156 0078 00       		.byte	0
- 1157 0079 00       		.byte	0
- 1158 007a 08       		.uleb128 0x8
- 1159 007b 898201   		.uleb128 0x4109
- 1160 007e 00       		.byte	0
- 1161 007f 11       		.uleb128 0x11
- 1162 0080 01       		.uleb128 0x1
- 1163 0081 31       		.uleb128 0x31
- 1164 0082 13       		.uleb128 0x13
- 1165 0083 00       		.byte	0
- 1166 0084 00       		.byte	0
- 1167 0085 09       		.uleb128 0x9
- 1168 0086 898201   		.uleb128 0x4109
- 1169 0089 01       		.byte	0x1
- 1170 008a 11       		.uleb128 0x11
- 1171 008b 01       		.uleb128 0x1
- 1172 008c 31       		.uleb128 0x31
- 1173 008d 13       		.uleb128 0x13
- 1174 008e 01       		.uleb128 0x1
- 1175 008f 13       		.uleb128 0x13
- 1176 0090 00       		.byte	0
- 1177 0091 00       		.byte	0
- 1178 0092 0A       		.uleb128 0xa
- 1179 0093 8A8201   		.uleb128 0x410a
- 1180 0096 00       		.byte	0
- 1181 0097 02       		.uleb128 0x2
- 1182 0098 18       		.uleb128 0x18
- 1183 0099 9142     		.uleb128 0x2111
- 1184 009b 18       		.uleb128 0x18
- 1185 009c 00       		.byte	0
- 1186 009d 00       		.byte	0
- 1187 009e 0B       		.uleb128 0xb
- 1188 009f 34       		.uleb128 0x34
- 1189 00a0 00       		.byte	0
- 1190 00a1 03       		.uleb128 0x3
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 28
+ 1129 0055 18       		.uleb128 0x18
+ 1130 0056 9742     		.uleb128 0x2117
+ 1131 0058 19       		.uleb128 0x19
+ 1132 0059 00       		.byte	0
+ 1133 005a 00       		.byte	0
+ 1134 005b 07       		.uleb128 0x7
+ 1135 005c 2E       		.uleb128 0x2e
+ 1136 005d 01       		.byte	0x1
+ 1137 005e 3F       		.uleb128 0x3f
+ 1138 005f 19       		.uleb128 0x19
+ 1139 0060 03       		.uleb128 0x3
+ 1140 0061 0E       		.uleb128 0xe
+ 1141 0062 3A       		.uleb128 0x3a
+ 1142 0063 0B       		.uleb128 0xb
+ 1143 0064 3B       		.uleb128 0x3b
+ 1144 0065 0B       		.uleb128 0xb
+ 1145 0066 27       		.uleb128 0x27
+ 1146 0067 19       		.uleb128 0x19
+ 1147 0068 49       		.uleb128 0x49
+ 1148 0069 13       		.uleb128 0x13
+ 1149 006a 8701     		.uleb128 0x87
+ 1150 006c 19       		.uleb128 0x19
+ 1151 006d 11       		.uleb128 0x11
+ 1152 006e 01       		.uleb128 0x1
+ 1153 006f 12       		.uleb128 0x12
+ 1154 0070 06       		.uleb128 0x6
+ 1155 0071 40       		.uleb128 0x40
+ 1156 0072 18       		.uleb128 0x18
+ 1157 0073 9742     		.uleb128 0x2117
+ 1158 0075 19       		.uleb128 0x19
+ 1159 0076 01       		.uleb128 0x1
+ 1160 0077 13       		.uleb128 0x13
+ 1161 0078 00       		.byte	0
+ 1162 0079 00       		.byte	0
+ 1163 007a 08       		.uleb128 0x8
+ 1164 007b 898201   		.uleb128 0x4109
+ 1165 007e 00       		.byte	0
+ 1166 007f 11       		.uleb128 0x11
+ 1167 0080 01       		.uleb128 0x1
+ 1168 0081 31       		.uleb128 0x31
+ 1169 0082 13       		.uleb128 0x13
+ 1170 0083 00       		.byte	0
+ 1171 0084 00       		.byte	0
+ 1172 0085 09       		.uleb128 0x9
+ 1173 0086 898201   		.uleb128 0x4109
+ 1174 0089 01       		.byte	0x1
+ 1175 008a 11       		.uleb128 0x11
+ 1176 008b 01       		.uleb128 0x1
+ 1177 008c 31       		.uleb128 0x31
+ 1178 008d 13       		.uleb128 0x13
+ 1179 008e 01       		.uleb128 0x1
+ 1180 008f 13       		.uleb128 0x13
+ 1181 0090 00       		.byte	0
+ 1182 0091 00       		.byte	0
+ 1183 0092 0A       		.uleb128 0xa
+ 1184 0093 8A8201   		.uleb128 0x410a
+ 1185 0096 00       		.byte	0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 28
 
 
- 1191 00a2 0E       		.uleb128 0xe
- 1192 00a3 3A       		.uleb128 0x3a
- 1193 00a4 0B       		.uleb128 0xb
- 1194 00a5 3B       		.uleb128 0x3b
- 1195 00a6 0B       		.uleb128 0xb
- 1196 00a7 49       		.uleb128 0x49
- 1197 00a8 13       		.uleb128 0x13
- 1198 00a9 02       		.uleb128 0x2
- 1199 00aa 18       		.uleb128 0x18
- 1200 00ab 00       		.byte	0
- 1201 00ac 00       		.byte	0
- 1202 00ad 0C       		.uleb128 0xc
- 1203 00ae 34       		.uleb128 0x34
- 1204 00af 00       		.byte	0
- 1205 00b0 03       		.uleb128 0x3
- 1206 00b1 0E       		.uleb128 0xe
- 1207 00b2 3A       		.uleb128 0x3a
- 1208 00b3 0B       		.uleb128 0xb
- 1209 00b4 3B       		.uleb128 0x3b
- 1210 00b5 05       		.uleb128 0x5
- 1211 00b6 49       		.uleb128 0x49
- 1212 00b7 13       		.uleb128 0x13
- 1213 00b8 3F       		.uleb128 0x3f
- 1214 00b9 19       		.uleb128 0x19
- 1215 00ba 3C       		.uleb128 0x3c
- 1216 00bb 19       		.uleb128 0x19
- 1217 00bc 00       		.byte	0
- 1218 00bd 00       		.byte	0
- 1219 00be 0D       		.uleb128 0xd
- 1220 00bf 35       		.uleb128 0x35
- 1221 00c0 00       		.byte	0
- 1222 00c1 49       		.uleb128 0x49
- 1223 00c2 13       		.uleb128 0x13
- 1224 00c3 00       		.byte	0
- 1225 00c4 00       		.byte	0
- 1226 00c5 0E       		.uleb128 0xe
- 1227 00c6 2E       		.uleb128 0x2e
- 1228 00c7 00       		.byte	0
- 1229 00c8 3F       		.uleb128 0x3f
- 1230 00c9 19       		.uleb128 0x19
- 1231 00ca 3C       		.uleb128 0x3c
- 1232 00cb 19       		.uleb128 0x19
- 1233 00cc 6E       		.uleb128 0x6e
- 1234 00cd 0E       		.uleb128 0xe
- 1235 00ce 03       		.uleb128 0x3
- 1236 00cf 0E       		.uleb128 0xe
- 1237 00d0 3A       		.uleb128 0x3a
- 1238 00d1 0B       		.uleb128 0xb
- 1239 00d2 3B       		.uleb128 0x3b
- 1240 00d3 0B       		.uleb128 0xb
- 1241 00d4 00       		.byte	0
- 1242 00d5 00       		.byte	0
- 1243 00d6 00       		.byte	0
- 1244              		.section	.debug_aranges,"",%progbits
- 1245 0000 3C000000 		.4byte	0x3c
- 1246 0004 0200     		.2byte	0x2
- 1247 0006 00000000 		.4byte	.Ldebug_info0
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 29
+ 1186 0097 02       		.uleb128 0x2
+ 1187 0098 18       		.uleb128 0x18
+ 1188 0099 9142     		.uleb128 0x2111
+ 1189 009b 18       		.uleb128 0x18
+ 1190 009c 00       		.byte	0
+ 1191 009d 00       		.byte	0
+ 1192 009e 0B       		.uleb128 0xb
+ 1193 009f 34       		.uleb128 0x34
+ 1194 00a0 00       		.byte	0
+ 1195 00a1 03       		.uleb128 0x3
+ 1196 00a2 0E       		.uleb128 0xe
+ 1197 00a3 3A       		.uleb128 0x3a
+ 1198 00a4 0B       		.uleb128 0xb
+ 1199 00a5 3B       		.uleb128 0x3b
+ 1200 00a6 0B       		.uleb128 0xb
+ 1201 00a7 49       		.uleb128 0x49
+ 1202 00a8 13       		.uleb128 0x13
+ 1203 00a9 02       		.uleb128 0x2
+ 1204 00aa 18       		.uleb128 0x18
+ 1205 00ab 00       		.byte	0
+ 1206 00ac 00       		.byte	0
+ 1207 00ad 0C       		.uleb128 0xc
+ 1208 00ae 34       		.uleb128 0x34
+ 1209 00af 00       		.byte	0
+ 1210 00b0 03       		.uleb128 0x3
+ 1211 00b1 0E       		.uleb128 0xe
+ 1212 00b2 3A       		.uleb128 0x3a
+ 1213 00b3 0B       		.uleb128 0xb
+ 1214 00b4 3B       		.uleb128 0x3b
+ 1215 00b5 05       		.uleb128 0x5
+ 1216 00b6 49       		.uleb128 0x49
+ 1217 00b7 13       		.uleb128 0x13
+ 1218 00b8 3F       		.uleb128 0x3f
+ 1219 00b9 19       		.uleb128 0x19
+ 1220 00ba 3C       		.uleb128 0x3c
+ 1221 00bb 19       		.uleb128 0x19
+ 1222 00bc 00       		.byte	0
+ 1223 00bd 00       		.byte	0
+ 1224 00be 0D       		.uleb128 0xd
+ 1225 00bf 35       		.uleb128 0x35
+ 1226 00c0 00       		.byte	0
+ 1227 00c1 49       		.uleb128 0x49
+ 1228 00c2 13       		.uleb128 0x13
+ 1229 00c3 00       		.byte	0
+ 1230 00c4 00       		.byte	0
+ 1231 00c5 0E       		.uleb128 0xe
+ 1232 00c6 2E       		.uleb128 0x2e
+ 1233 00c7 00       		.byte	0
+ 1234 00c8 3F       		.uleb128 0x3f
+ 1235 00c9 19       		.uleb128 0x19
+ 1236 00ca 3C       		.uleb128 0x3c
+ 1237 00cb 19       		.uleb128 0x19
+ 1238 00cc 6E       		.uleb128 0x6e
+ 1239 00cd 0E       		.uleb128 0xe
+ 1240 00ce 03       		.uleb128 0x3
+ 1241 00cf 0E       		.uleb128 0xe
+ 1242 00d0 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 29
 
 
- 1248 000a 04       		.byte	0x4
- 1249 000b 00       		.byte	0
- 1250 000c 0000     		.2byte	0
- 1251 000e 0000     		.2byte	0
- 1252 0010 00000000 		.4byte	.LFB64
- 1253 0014 10000000 		.4byte	.LFE64-.LFB64
- 1254 0018 00000000 		.4byte	.LFB65
- 1255 001c 10000000 		.4byte	.LFE65-.LFB65
- 1256 0020 00000000 		.4byte	.LFB66
- 1257 0024 10000000 		.4byte	.LFE66-.LFB66
- 1258 0028 00000000 		.4byte	.LFB67
- 1259 002c 10000000 		.4byte	.LFE67-.LFB67
- 1260 0030 00000000 		.4byte	.LFB63
- 1261 0034 6C020000 		.4byte	.LFE63-.LFB63
- 1262 0038 00000000 		.4byte	0
- 1263 003c 00000000 		.4byte	0
- 1264              		.section	.debug_ranges,"",%progbits
- 1265              	.Ldebug_ranges0:
- 1266 0000 00000000 		.4byte	.LFB64
- 1267 0004 10000000 		.4byte	.LFE64
- 1268 0008 00000000 		.4byte	.LFB65
- 1269 000c 10000000 		.4byte	.LFE65
- 1270 0010 00000000 		.4byte	.LFB66
- 1271 0014 10000000 		.4byte	.LFE66
- 1272 0018 00000000 		.4byte	.LFB67
- 1273 001c 10000000 		.4byte	.LFE67
- 1274 0020 00000000 		.4byte	.LFB63
- 1275 0024 6C020000 		.4byte	.LFE63
- 1276 0028 00000000 		.4byte	0
- 1277 002c 00000000 		.4byte	0
- 1278              		.section	.debug_line,"",%progbits
- 1279              	.Ldebug_line0:
- 1280 0000 CF020000 		.section	.debug_str,"MS",%progbits,1
- 1280      02001202 
- 1280      00000201 
- 1280      FB0E0D00 
- 1280      01010101 
- 1281              	.LASF34:
- 1282 0000 4C6F7746 		.ascii	"LowF_OneInt_StartEx\000"
- 1282      5F4F6E65 
- 1282      496E745F 
- 1282      53746172 
- 1282      74457800 
- 1283              	.LASF22:
- 1284 0014 4C5F7A65 		.ascii	"L_zeroCounter\000"
- 1284      726F436F 
- 1284      756E7465 
- 1284      7200
- 1285              	.LASF35:
- 1286 0022 4C6F7746 		.ascii	"LowF_ZeroInt_StartEx\000"
- 1286      5F5A6572 
- 1286      6F496E74 
- 1286      5F537461 
- 1286      72744578 
- 1287              	.LASF17:
- 1288 0037 4C6F7746 		.ascii	"LowF_Zero_Int\000"
- 1288      5F5A6572 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 30
+ 1243 00d1 0B       		.uleb128 0xb
+ 1244 00d2 3B       		.uleb128 0x3b
+ 1245 00d3 0B       		.uleb128 0xb
+ 1246 00d4 00       		.byte	0
+ 1247 00d5 00       		.byte	0
+ 1248 00d6 00       		.byte	0
+ 1249              		.section	.debug_aranges,"",%progbits
+ 1250 0000 3C000000 		.4byte	0x3c
+ 1251 0004 0200     		.2byte	0x2
+ 1252 0006 00000000 		.4byte	.Ldebug_info0
+ 1253 000a 04       		.byte	0x4
+ 1254 000b 00       		.byte	0
+ 1255 000c 0000     		.2byte	0
+ 1256 000e 0000     		.2byte	0
+ 1257 0010 00000000 		.4byte	.LFB64
+ 1258 0014 10000000 		.4byte	.LFE64-.LFB64
+ 1259 0018 00000000 		.4byte	.LFB65
+ 1260 001c 10000000 		.4byte	.LFE65-.LFB65
+ 1261 0020 00000000 		.4byte	.LFB66
+ 1262 0024 10000000 		.4byte	.LFE66-.LFB66
+ 1263 0028 00000000 		.4byte	.LFB67
+ 1264 002c 10000000 		.4byte	.LFE67-.LFB67
+ 1265 0030 00000000 		.4byte	.LFB63
+ 1266 0034 74020000 		.4byte	.LFE63-.LFB63
+ 1267 0038 00000000 		.4byte	0
+ 1268 003c 00000000 		.4byte	0
+ 1269              		.section	.debug_ranges,"",%progbits
+ 1270              	.Ldebug_ranges0:
+ 1271 0000 00000000 		.4byte	.LFB64
+ 1272 0004 10000000 		.4byte	.LFE64
+ 1273 0008 00000000 		.4byte	.LFB65
+ 1274 000c 10000000 		.4byte	.LFE65
+ 1275 0010 00000000 		.4byte	.LFB66
+ 1276 0014 10000000 		.4byte	.LFE66
+ 1277 0018 00000000 		.4byte	.LFB67
+ 1278 001c 10000000 		.4byte	.LFE67
+ 1279 0020 00000000 		.4byte	.LFB63
+ 1280 0024 74020000 		.4byte	.LFE63
+ 1281 0028 00000000 		.4byte	0
+ 1282 002c 00000000 		.4byte	0
+ 1283              		.section	.debug_line,"",%progbits
+ 1284              	.Ldebug_line0:
+ 1285 0000 D4020000 		.section	.debug_str,"MS",%progbits,1
+ 1285      02001202 
+ 1285      00000201 
+ 1285      FB0E0D00 
+ 1285      01010101 
+ 1286              	.LASF46:
+ 1287 0000 433A5C55 		.ascii	"C:\\Users\\sdysart\\Documents\\UACS\\UACS\\FSK\\FSK"
+ 1287      73657273 
+ 1287      5C736479 
+ 1287      73617274 
+ 1287      5C446F63 
+ 1288 002c 54782E63 		.ascii	"Tx.cydsn\000"
+ 1288      7964736E 
+ 1288      00
+ 1289              	.LASF34:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 30
 
 
- 1288      6F5F496E 
- 1288      7400
- 1289              	.LASF9:
- 1290 0045 5F5F696E 		.ascii	"__int32_t\000"
- 1290      7433325F 
- 1290      7400
- 1291              	.LASF18:
- 1292 004f 4C6F7746 		.ascii	"LowF_One_Int\000"
- 1292      5F4F6E65 
- 1292      5F496E74 
- 1292      00
- 1293              	.LASF23:
- 1294 005c 485F6F6E 		.ascii	"H_oneCounter\000"
- 1294      65436F75 
- 1294      6E746572 
- 1294      00
- 1295              	.LASF42:
- 1296 0069 4C6F7746 		.ascii	"LowF_MuxSelOut_Write\000"
- 1296      5F4D7578 
- 1296      53656C4F 
- 1296      75745F57 
- 1296      72697465 
- 1297              	.LASF12:
- 1298 007e 666C6F61 		.ascii	"float\000"
+ 1290 0035 4C6F7746 		.ascii	"LowF_OneInt_StartEx\000"
+ 1290      5F4F6E65 
+ 1290      496E745F 
+ 1290      53746172 
+ 1290      74457800 
+ 1291              	.LASF22:
+ 1292 0049 4C5F7A65 		.ascii	"L_zeroCounter\000"
+ 1292      726F436F 
+ 1292      756E7465 
+ 1292      7200
+ 1293              	.LASF35:
+ 1294 0057 4C6F7746 		.ascii	"LowF_ZeroInt_StartEx\000"
+ 1294      5F5A6572 
+ 1294      6F496E74 
+ 1294      5F537461 
+ 1294      72744578 
+ 1295              	.LASF17:
+ 1296 006c 4C6F7746 		.ascii	"LowF_Zero_Int\000"
+ 1296      5F5A6572 
+ 1296      6F5F496E 
+ 1296      7400
+ 1297              	.LASF9:
+ 1298 007a 5F5F696E 		.ascii	"__int32_t\000"
+ 1298      7433325F 
  1298      7400
- 1299              	.LASF7:
- 1300 0084 6C6F6E67 		.ascii	"long long unsigned int\000"
- 1300      206C6F6E 
- 1300      6720756E 
- 1300      7369676E 
- 1300      65642069 
- 1301              	.LASF24:
- 1302 009b 485F7A65 		.ascii	"H_zeroCounter\000"
- 1302      726F436F 
- 1302      756E7465 
- 1302      7200
- 1303              	.LASF1:
- 1304 00a9 756E7369 		.ascii	"unsigned char\000"
- 1304      676E6564 
- 1304      20636861 
- 1304      7200
- 1305              	.LASF44:
- 1306 00b7 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
- 1306      43313120 
- 1306      352E342E 
- 1306      31203230 
- 1306      31363036 
- 1307 00ea 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
- 1307      20726576 
- 1307      6973696F 
- 1307      6E203233 
- 1307      37373135 
- 1308 011d 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
- 1308      66756E63 
- 1308      74696F6E 
- 1308      2D736563 
- 1308      74696F6E 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 31
+ 1299              	.LASF18:
+ 1300 0084 4C6F7746 		.ascii	"LowF_One_Int\000"
+ 1300      5F4F6E65 
+ 1300      5F496E74 
+ 1300      00
+ 1301              	.LASF23:
+ 1302 0091 485F6F6E 		.ascii	"H_oneCounter\000"
+ 1302      65436F75 
+ 1302      6E746572 
+ 1302      00
+ 1303              	.LASF42:
+ 1304 009e 4C6F7746 		.ascii	"LowF_MuxSelOut_Write\000"
+ 1304      5F4D7578 
+ 1304      53656C4F 
+ 1304      75745F57 
+ 1304      72697465 
+ 1305              	.LASF12:
+ 1306 00b3 666C6F61 		.ascii	"float\000"
+ 1306      7400
+ 1307              	.LASF7:
+ 1308 00b9 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1308      206C6F6E 
+ 1308      6720756E 
+ 1308      7369676E 
+ 1308      65642069 
+ 1309              	.LASF24:
+ 1310 00d0 485F7A65 		.ascii	"H_zeroCounter\000"
+ 1310      726F436F 
+ 1310      756E7465 
+ 1310      7200
+ 1311              	.LASF1:
+ 1312 00de 756E7369 		.ascii	"unsigned char\000"
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 31
 
 
- 1309              	.LASF5:
- 1310 0145 6C6F6E67 		.ascii	"long unsigned int\000"
- 1310      20756E73 
- 1310      69676E65 
- 1310      6420696E 
- 1310      7400
- 1311              	.LASF40:
- 1312 0157 48696768 		.ascii	"HighF_OnePWM_Sleep\000"
- 1312      465F4F6E 
- 1312      6550574D 
- 1312      5F536C65 
- 1312      657000
- 1313              	.LASF48:
- 1314 016a 49544D5F 		.ascii	"ITM_RxBuffer\000"
- 1314      52784275 
- 1314      66666572 
- 1314      00
- 1315              	.LASF25:
- 1316 0177 4C5F6D65 		.ascii	"L_messageBit\000"
- 1316      73736167 
- 1316      65426974 
- 1316      00
- 1317              	.LASF13:
- 1318 0184 646F7562 		.ascii	"double\000"
- 1318      6C6500
- 1319              	.LASF47:
- 1320 018b 6D61696E 		.ascii	"main\000"
- 1320      00
- 1321              	.LASF46:
- 1322 0190 433A5C55 		.ascii	"C:\\Users\\ipfajard\\Documents\\PSoC Creator\\FSK\\"
- 1322      73657273 
- 1322      5C697066 
- 1322      616A6172 
- 1322      645C446F 
- 1323 01bd 46534B54 		.ascii	"FSKTx.cydsn\000"
- 1323      782E6379 
- 1323      64736E00 
- 1324              	.LASF33:
- 1325 01c9 4C454454 		.ascii	"LEDTest_Write\000"
- 1325      6573745F 
- 1325      57726974 
- 1325      6500
- 1326              	.LASF37:
- 1327 01d7 48696768 		.ascii	"HighF_ZeroInt_StartEx\000"
- 1327      465F5A65 
- 1327      726F496E 
- 1327      745F5374 
- 1327      61727445 
- 1328              	.LASF29:
- 1329 01ed 4C6F7746 		.ascii	"LowF_OnePWM_Start\000"
- 1329      5F4F6E65 
- 1329      50574D5F 
- 1329      53746172 
- 1329      7400
- 1330              	.LASF32:
- 1331 01ff 48696768 		.ascii	"HighF_ZeroPWM_Sleep\000"
- 1331      465F5A65 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 32
+ 1312      676E6564 
+ 1312      20636861 
+ 1312      7200
+ 1313              	.LASF44:
+ 1314 00ec 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1314      43313120 
+ 1314      352E342E 
+ 1314      31203230 
+ 1314      31363036 
+ 1315 011f 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 1315      20726576 
+ 1315      6973696F 
+ 1315      6E203233 
+ 1315      37373135 
+ 1316 0152 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 1316      66756E63 
+ 1316      74696F6E 
+ 1316      2D736563 
+ 1316      74696F6E 
+ 1317              	.LASF5:
+ 1318 017a 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1318      20756E73 
+ 1318      69676E65 
+ 1318      6420696E 
+ 1318      7400
+ 1319              	.LASF40:
+ 1320 018c 48696768 		.ascii	"HighF_OnePWM_Sleep\000"
+ 1320      465F4F6E 
+ 1320      6550574D 
+ 1320      5F536C65 
+ 1320      657000
+ 1321              	.LASF48:
+ 1322 019f 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1322      52784275 
+ 1322      66666572 
+ 1322      00
+ 1323              	.LASF25:
+ 1324 01ac 4C5F6D65 		.ascii	"L_messageBit\000"
+ 1324      73736167 
+ 1324      65426974 
+ 1324      00
+ 1325              	.LASF13:
+ 1326 01b9 646F7562 		.ascii	"double\000"
+ 1326      6C6500
+ 1327              	.LASF47:
+ 1328 01c0 6D61696E 		.ascii	"main\000"
+ 1328      00
+ 1329              	.LASF33:
+ 1330 01c5 4C454454 		.ascii	"LEDTest_Write\000"
+ 1330      6573745F 
+ 1330      57726974 
+ 1330      6500
+ 1331              	.LASF37:
+ 1332 01d3 48696768 		.ascii	"HighF_ZeroInt_StartEx\000"
+ 1332      465F5A65 
+ 1332      726F496E 
+ 1332      745F5374 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 32
 
 
- 1331      726F5057 
- 1331      4D5F536C 
- 1331      65657000 
- 1332              	.LASF43:
- 1333 0213 48696768 		.ascii	"HighF_MuxSelOut_Write\000"
- 1333      465F4D75 
- 1333      7853656C 
- 1333      4F75745F 
- 1333      57726974 
- 1334              	.LASF8:
- 1335 0229 756E7369 		.ascii	"unsigned int\000"
- 1335      676E6564 
- 1335      20696E74 
- 1335      00
- 1336              	.LASF31:
- 1337 0236 48696768 		.ascii	"HighF_OnePWM_Start\000"
- 1337      465F4F6E 
- 1337      6550574D 
- 1337      5F537461 
- 1337      727400
- 1338              	.LASF30:
- 1339 0249 4C6F7746 		.ascii	"LowF_ZeroPWM_Sleep\000"
- 1339      5F5A6572 
- 1339      6F50574D 
- 1339      5F536C65 
- 1339      657000
- 1340              	.LASF27:
- 1341 025c 62697443 		.ascii	"bitCase\000"
- 1341      61736500 
- 1342              	.LASF26:
- 1343 0264 485F6D65 		.ascii	"H_messageBit\000"
- 1343      73736167 
- 1343      65426974 
- 1343      00
- 1344              	.LASF41:
- 1345 0271 48696768 		.ascii	"HighF_ZeroPWM_Start\000"
- 1345      465F5A65 
- 1345      726F5057 
- 1345      4D5F5374 
- 1345      61727400 
- 1346              	.LASF10:
- 1347 0285 696E7433 		.ascii	"int32_t\000"
- 1347      325F7400 
- 1348              	.LASF16:
- 1349 028d 73697A65 		.ascii	"sizetype\000"
- 1349      74797065 
- 1349      00
- 1350              	.LASF36:
- 1351 0296 48696768 		.ascii	"HighF_OneInt_StartEx\000"
- 1351      465F4F6E 
- 1351      65496E74 
- 1351      5F537461 
- 1351      72744578 
- 1352              	.LASF20:
- 1353 02ab 48696768 		.ascii	"HighF_One_Int\000"
- 1353      465F4F6E 
- 1353      655F496E 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 33
+ 1332      61727445 
+ 1333              	.LASF29:
+ 1334 01e9 4C6F7746 		.ascii	"LowF_OnePWM_Start\000"
+ 1334      5F4F6E65 
+ 1334      50574D5F 
+ 1334      53746172 
+ 1334      7400
+ 1335              	.LASF32:
+ 1336 01fb 48696768 		.ascii	"HighF_ZeroPWM_Sleep\000"
+ 1336      465F5A65 
+ 1336      726F5057 
+ 1336      4D5F536C 
+ 1336      65657000 
+ 1337              	.LASF43:
+ 1338 020f 48696768 		.ascii	"HighF_MuxSelOut_Write\000"
+ 1338      465F4D75 
+ 1338      7853656C 
+ 1338      4F75745F 
+ 1338      57726974 
+ 1339              	.LASF8:
+ 1340 0225 756E7369 		.ascii	"unsigned int\000"
+ 1340      676E6564 
+ 1340      20696E74 
+ 1340      00
+ 1341              	.LASF31:
+ 1342 0232 48696768 		.ascii	"HighF_OnePWM_Start\000"
+ 1342      465F4F6E 
+ 1342      6550574D 
+ 1342      5F537461 
+ 1342      727400
+ 1343              	.LASF30:
+ 1344 0245 4C6F7746 		.ascii	"LowF_ZeroPWM_Sleep\000"
+ 1344      5F5A6572 
+ 1344      6F50574D 
+ 1344      5F536C65 
+ 1344      657000
+ 1345              	.LASF27:
+ 1346 0258 62697443 		.ascii	"bitCase\000"
+ 1346      61736500 
+ 1347              	.LASF26:
+ 1348 0260 485F6D65 		.ascii	"H_messageBit\000"
+ 1348      73736167 
+ 1348      65426974 
+ 1348      00
+ 1349              	.LASF41:
+ 1350 026d 48696768 		.ascii	"HighF_ZeroPWM_Start\000"
+ 1350      465F5A65 
+ 1350      726F5057 
+ 1350      4D5F5374 
+ 1350      61727400 
+ 1351              	.LASF10:
+ 1352 0281 696E7433 		.ascii	"int32_t\000"
+ 1352      325F7400 
+ 1353              	.LASF16:
+ 1354 0289 73697A65 		.ascii	"sizetype\000"
+ 1354      74797065 
+ 1354      00
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 33
 
 
- 1353      7400
- 1354              	.LASF6:
- 1355 02b9 6C6F6E67 		.ascii	"long long int\000"
- 1355      206C6F6E 
- 1355      6720696E 
- 1355      7400
- 1356              	.LASF39:
- 1357 02c7 4C6F7746 		.ascii	"LowF_ZeroPWM_Start\000"
- 1357      5F5A6572 
- 1357      6F50574D 
- 1357      5F537461 
- 1357      727400
- 1358              	.LASF45:
- 1359 02da 6D61696E 		.ascii	"main.c\000"
- 1359      2E6300
- 1360              	.LASF14:
- 1361 02e1 63686172 		.ascii	"char\000"
- 1361      00
- 1362              	.LASF19:
- 1363 02e6 48696768 		.ascii	"HighF_Zero_Int\000"
- 1363      465F5A65 
- 1363      726F5F49 
- 1363      6E7400
- 1364              	.LASF2:
- 1365 02f5 73686F72 		.ascii	"short int\000"
- 1365      7420696E 
- 1365      7400
- 1366              	.LASF11:
- 1367 02ff 75696E74 		.ascii	"uint8\000"
- 1367      3800
- 1368              	.LASF38:
- 1369 0305 4C6F7746 		.ascii	"LowF_OnePWM_Sleep\000"
- 1369      5F4F6E65 
- 1369      50574D5F 
- 1369      536C6565 
- 1369      7000
- 1370              	.LASF4:
- 1371 0317 6C6F6E67 		.ascii	"long int\000"
- 1371      20696E74 
- 1371      00
- 1372              	.LASF15:
- 1373 0320 6C6F6E67 		.ascii	"long double\000"
- 1373      20646F75 
- 1373      626C6500 
- 1374              	.LASF28:
- 1375 032c 74657374 		.ascii	"testLEDStatus\000"
- 1375      4C454453 
- 1375      74617475 
- 1375      7300
- 1376              	.LASF0:
- 1377 033a 7369676E 		.ascii	"signed char\000"
- 1377      65642063 
- 1377      68617200 
- 1378              	.LASF3:
- 1379 0346 73686F72 		.ascii	"short unsigned int\000"
- 1379      7420756E 
- 1379      7369676E 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cct4g6Gl.s 			page 34
+ 1355              	.LASF36:
+ 1356 0292 48696768 		.ascii	"HighF_OneInt_StartEx\000"
+ 1356      465F4F6E 
+ 1356      65496E74 
+ 1356      5F537461 
+ 1356      72744578 
+ 1357              	.LASF20:
+ 1358 02a7 48696768 		.ascii	"HighF_One_Int\000"
+ 1358      465F4F6E 
+ 1358      655F496E 
+ 1358      7400
+ 1359              	.LASF6:
+ 1360 02b5 6C6F6E67 		.ascii	"long long int\000"
+ 1360      206C6F6E 
+ 1360      6720696E 
+ 1360      7400
+ 1361              	.LASF39:
+ 1362 02c3 4C6F7746 		.ascii	"LowF_ZeroPWM_Start\000"
+ 1362      5F5A6572 
+ 1362      6F50574D 
+ 1362      5F537461 
+ 1362      727400
+ 1363              	.LASF45:
+ 1364 02d6 6D61696E 		.ascii	"main.c\000"
+ 1364      2E6300
+ 1365              	.LASF14:
+ 1366 02dd 63686172 		.ascii	"char\000"
+ 1366      00
+ 1367              	.LASF19:
+ 1368 02e2 48696768 		.ascii	"HighF_Zero_Int\000"
+ 1368      465F5A65 
+ 1368      726F5F49 
+ 1368      6E7400
+ 1369              	.LASF2:
+ 1370 02f1 73686F72 		.ascii	"short int\000"
+ 1370      7420696E 
+ 1370      7400
+ 1371              	.LASF11:
+ 1372 02fb 75696E74 		.ascii	"uint8\000"
+ 1372      3800
+ 1373              	.LASF38:
+ 1374 0301 4C6F7746 		.ascii	"LowF_OnePWM_Sleep\000"
+ 1374      5F4F6E65 
+ 1374      50574D5F 
+ 1374      536C6565 
+ 1374      7000
+ 1375              	.LASF4:
+ 1376 0313 6C6F6E67 		.ascii	"long int\000"
+ 1376      20696E74 
+ 1376      00
+ 1377              	.LASF15:
+ 1378 031c 6C6F6E67 		.ascii	"long double\000"
+ 1378      20646F75 
+ 1378      626C6500 
+ 1379              	.LASF28:
+ 1380 0328 74657374 		.ascii	"testLEDStatus\000"
+ 1380      4C454453 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccINz8Yb.s 			page 34
 
 
- 1379      65642069 
- 1379      6E7400
- 1380              	.LASF21:
- 1381 0359 4C5F6F6E 		.ascii	"L_oneCounter\000"
- 1381      65436F75 
- 1381      6E746572 
- 1381      00
- 1382              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
+ 1380      74617475 
+ 1380      7300
+ 1381              	.LASF0:
+ 1382 0336 7369676E 		.ascii	"signed char\000"
+ 1382      65642063 
+ 1382      68617200 
+ 1383              	.LASF3:
+ 1384 0342 73686F72 		.ascii	"short unsigned int\000"
+ 1384      7420756E 
+ 1384      7369676E 
+ 1384      65642069 
+ 1384      6E7400
+ 1385              	.LASF21:
+ 1386 0355 4C5F6F6E 		.ascii	"L_oneCounter\000"
+ 1386      65436F75 
+ 1386      6E746572 
+ 1386      00
+ 1387              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

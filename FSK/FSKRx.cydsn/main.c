@@ -67,7 +67,6 @@ CY_ISR(LevelCheck){
             currentBit = 0; 
             zeroCount = 0; 
         }
-    
     }
 
 }

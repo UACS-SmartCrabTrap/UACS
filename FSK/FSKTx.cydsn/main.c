@@ -12,8 +12,8 @@
 #include "project.h"
 //LowF Counts for 0.5s bit time
 //count = 0.5s / T
-#define L_OneHalf_Second 55
-#define L_ZeroHalf_Second 45
+#define L_OneHalf_Second 50
+#define L_ZeroHalf_Second 43
 
 #define H_OneHalf_Second 55
 #define H_ZeroHalf_Second 45
@@ -67,12 +67,13 @@ int main(void)
     HighF_OneInt_StartEx(HighF_Zero_Int);
     HighF_ZeroInt_StartEx(HighF_One_Int);
 
+    
     for(;;)
     {
         /* Place your application code here. */
         
         //When the counters are such that the bit has been held for 0.5s
-        //Move all counters such that next bitis being transmitted 
+        //Move all counters such that next bit is being transmitted 
         if((L_oneCounter % L_OneHalf_Second) == 0){
             testLEDStatus = testLEDStatus ^ 0xFF; 
             LEDTest_Write(testLEDStatus); 
@@ -154,6 +155,7 @@ int main(void)
             break;
             case 11:
                 bitCase = ONE; 
+                L_messageBit = 0;
                 
             break;    
             
@@ -213,6 +215,7 @@ int main(void)
             break;
             case 11:
                 bitCase = ONE; 
+                H_messageBit = 0;
                 
             break;    
             

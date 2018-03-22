@@ -1,0 +1,736 @@
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.main,"ax",%progbits
+  20              		.align	2
+  21              		.global	main
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	main, %function
+  25              	main:
+  26              	.LFB63:
+  27              		.file 1 "main.c"
+   1:main.c        **** /*Included header files*/
+   2:main.c        **** #include "project.h"
+   3:main.c        **** 
+   4:main.c        **** /*Definitions*/
+   5:main.c        **** #define CLOCK_FREQ 500000
+   6:main.c        **** #define FREQ(x) CLOCK_FREQ/x
+   7:main.c        **** #define MAX_FREQ 1000
+   8:main.c        **** #define MIN_FREQ 100
+   9:main.c        **** #define DEFAULT_FREQ MIN_FREQ
+  10:main.c        **** #define INCREMENTATION 300
+  11:main.c        **** 
+  12:main.c        **** /*Function Prototypes*/
+  13:main.c        **** //CY_ISR_PROTO(Increment_Button_ISR);
+  14:main.c        **** //CY_ISR_PROTO(Decrement_Button_ISR);
+  15:main.c        **** //CY_ISR_PROTO(Reset_Button_ISR);
+  16:main.c        **** 
+  17:main.c        **** /*Global Variables*/
+  18:main.c        **** unsigned int Freq = DEFAULT_FREQ;
+  19:main.c        **** 
+  20:main.c        **** int main(void)
+  21:main.c        **** {
+  28              		.loc 1 21 0
+  29              		.cfi_startproc
+  30              		@ Volatile: function does not return.
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33 0000 08B5     		push	{r3, lr}
+  34              		.cfi_def_cfa_offset 8
+  35              		.cfi_offset 3, -8
+  36              		.cfi_offset 14, -4
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 2
+
+
+  22:main.c        ****     CyGlobalIntEnable;
+  37              		.loc 1 22 0
+  38              		.syntax unified
+  39              	@ 22 "main.c" 1
+  40 0002 62B6     		CPSIE   i
+  41              	@ 0 "" 2
+  23:main.c        ****     
+  24:main.c        ****     PWM_1_Start();
+  42              		.loc 1 24 0
+  43              		.thumb
+  44              		.syntax unified
+  45 0004 FFF7FEFF 		bl	PWM_1_Start
+  46              	.LVL0:
+  25:main.c        ****     PWM_2_Start();
+  47              		.loc 1 25 0
+  48 0008 FFF7FEFF 		bl	PWM_2_Start
+  49              	.LVL1:
+  26:main.c        ****     PWM_3_Start();
+  50              		.loc 1 26 0
+  51 000c FFF7FEFF 		bl	PWM_3_Start
+  52              	.LVL2:
+  53              	.L2:
+  27:main.c        ****     
+  28:main.c        ****     //Increment_Button_ISR_StartEx(Increment_Button_ISR);
+  29:main.c        ****     //Decrement_Button_ISR_StartEx(Decrement_Button_ISR);
+  30:main.c        ****     //Reset_Button_ISR_StartEx(Reset_Button_ISR);
+  31:main.c        ****     
+  32:main.c        ****     //unsigned int ADCValue;
+  33:main.c        ****     while (1) {
+  34:main.c        ****         
+  35:main.c        ****         PWM_1_WritePeriod(FREQ(100));
+  54              		.loc 1 35 0 discriminator 1
+  55 0010 41F28830 		movw	r0, #5000
+  56 0014 FFF7FEFF 		bl	PWM_1_WritePeriod
+  57              	.LVL3:
+  36:main.c        ****         PWM_1_WriteCompare((FREQ(100))/2); // Sets pulse width
+  58              		.loc 1 36 0 discriminator 1
+  59 0018 40F6C410 		movw	r0, #2500
+  60 001c FFF7FEFF 		bl	PWM_1_WriteCompare
+  61              	.LVL4:
+  37:main.c        ****         CyDelay(500);
+  62              		.loc 1 37 0 discriminator 1
+  63 0020 4FF4FA70 		mov	r0, #500
+  64 0024 FFF7FEFF 		bl	CyDelay
+  65              	.LVL5:
+  38:main.c        ****         PWM_1_WritePeriod(FREQ(85));
+  66              		.loc 1 38 0 discriminator 1
+  67 0028 41F2FA60 		movw	r0, #5882
+  68 002c FFF7FEFF 		bl	PWM_1_WritePeriod
+  69              	.LVL6:
+  39:main.c        ****         PWM_1_WriteCompare((FREQ(85))/2); // Sets pulse width
+  70              		.loc 1 39 0 discriminator 1
+  71 0030 40F67D30 		movw	r0, #2941
+  72 0034 FFF7FEFF 		bl	PWM_1_WriteCompare
+  73              	.LVL7:
+  40:main.c        ****         CyDelay(500);
+  74              		.loc 1 40 0 discriminator 1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 3
+
+
+  75 0038 4FF4FA70 		mov	r0, #500
+  76 003c FFF7FEFF 		bl	CyDelay
+  77              	.LVL8:
+  78 0040 E6E7     		b	.L2
+  79              		.cfi_endproc
+  80              	.LFE63:
+  81              		.size	main, .-main
+  82              		.global	Freq
+  83 0042 00BF     		.data
+  84              		.align	2
+  85              		.type	Freq, %object
+  86              		.size	Freq, 4
+  87              	Freq:
+  88 0000 64000000 		.word	100
+  89              		.text
+  90              	.Letext0:
+  91              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+  92              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+  93              		.file 4 "Generated_Source\\PSoC5/core_cm3.h"
+  94              		.file 5 "Generated_Source\\PSoC5/PWM_1.h"
+  95              		.file 6 "Generated_Source\\PSoC5/PWM_2.h"
+  96              		.file 7 "Generated_Source\\PSoC5/PWM_3.h"
+  97              		.file 8 "Generated_Source\\PSoC5/CyLib.h"
+  98              		.section	.debug_info,"",%progbits
+  99              	.Ldebug_info0:
+ 100 0000 B4010000 		.4byte	0x1b4
+ 101 0004 0400     		.2byte	0x4
+ 102 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 103 000a 04       		.byte	0x4
+ 104 000b 01       		.uleb128 0x1
+ 105 000c 4B000000 		.4byte	.LASF24
+ 106 0010 0C       		.byte	0xc
+ 107 0011 33000000 		.4byte	.LASF25
+ 108 0015 A9010000 		.4byte	.LASF26
+ 109 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 110 001d 00000000 		.4byte	0
+ 111 0021 00000000 		.4byte	.Ldebug_line0
+ 112 0025 02       		.uleb128 0x2
+ 113 0026 01       		.byte	0x1
+ 114 0027 06       		.byte	0x6
+ 115 0028 6E010000 		.4byte	.LASF0
+ 116 002c 02       		.uleb128 0x2
+ 117 002d 01       		.byte	0x1
+ 118 002e 08       		.byte	0x8
+ 119 002f 28010000 		.4byte	.LASF1
+ 120 0033 02       		.uleb128 0x2
+ 121 0034 02       		.byte	0x2
+ 122 0035 05       		.byte	0x5
+ 123 0036 4B010000 		.4byte	.LASF2
+ 124 003a 02       		.uleb128 0x2
+ 125 003b 02       		.byte	0x2
+ 126 003c 07       		.byte	0x7
+ 127 003d 0E000000 		.4byte	.LASF3
+ 128 0041 03       		.uleb128 0x3
+ 129 0042 86010000 		.4byte	.LASF9
+ 130 0046 02       		.byte	0x2
+ 131 0047 3F       		.byte	0x3f
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 4
+
+
+ 132 0048 4C000000 		.4byte	0x4c
+ 133 004c 02       		.uleb128 0x2
+ 134 004d 04       		.byte	0x4
+ 135 004e 05       		.byte	0x5
+ 136 004f 42010000 		.4byte	.LASF4
+ 137 0053 02       		.uleb128 0x2
+ 138 0054 04       		.byte	0x4
+ 139 0055 07       		.byte	0x7
+ 140 0056 E1000000 		.4byte	.LASF5
+ 141 005a 02       		.uleb128 0x2
+ 142 005b 08       		.byte	0x8
+ 143 005c 05       		.byte	0x5
+ 144 005d 00000000 		.4byte	.LASF6
+ 145 0061 02       		.uleb128 0x2
+ 146 0062 08       		.byte	0x8
+ 147 0063 07       		.byte	0x7
+ 148 0064 F3000000 		.4byte	.LASF7
+ 149 0068 04       		.uleb128 0x4
+ 150 0069 04       		.byte	0x4
+ 151 006a 05       		.byte	0x5
+ 152 006b 696E7400 		.ascii	"int\000"
+ 153 006f 02       		.uleb128 0x2
+ 154 0070 04       		.byte	0x4
+ 155 0071 07       		.byte	0x7
+ 156 0072 21000000 		.4byte	.LASF8
+ 157 0076 03       		.uleb128 0x3
+ 158 0077 EB010000 		.4byte	.LASF10
+ 159 007b 03       		.byte	0x3
+ 160 007c 2C       		.byte	0x2c
+ 161 007d 41000000 		.4byte	0x41
+ 162 0081 02       		.uleb128 0x2
+ 163 0082 04       		.byte	0x4
+ 164 0083 04       		.byte	0x4
+ 165 0084 A3010000 		.4byte	.LASF11
+ 166 0088 02       		.uleb128 0x2
+ 167 0089 08       		.byte	0x8
+ 168 008a 04       		.byte	0x4
+ 169 008b 3B010000 		.4byte	.LASF12
+ 170 008f 02       		.uleb128 0x2
+ 171 0090 01       		.byte	0x1
+ 172 0091 08       		.byte	0x8
+ 173 0092 36010000 		.4byte	.LASF13
+ 174 0096 02       		.uleb128 0x2
+ 175 0097 08       		.byte	0x8
+ 176 0098 04       		.byte	0x4
+ 177 0099 7A010000 		.4byte	.LASF14
+ 178 009d 02       		.uleb128 0x2
+ 179 009e 04       		.byte	0x4
+ 180 009f 07       		.byte	0x7
+ 181 00a0 F3010000 		.4byte	.LASF15
+ 182 00a4 05       		.uleb128 0x5
+ 183 00a5 3A000000 		.4byte	.LASF27
+ 184 00a9 01       		.byte	0x1
+ 185 00aa 14       		.byte	0x14
+ 186 00ab 68000000 		.4byte	0x68
+ 187 00af 00000000 		.4byte	.LFB63
+ 188 00b3 42000000 		.4byte	.LFE63-.LFB63
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 5
+
+
+ 189 00b7 01       		.uleb128 0x1
+ 190 00b8 9C       		.byte	0x9c
+ 191 00b9 53010000 		.4byte	0x153
+ 192 00bd 06       		.uleb128 0x6
+ 193 00be 08000000 		.4byte	.LVL0
+ 194 00c2 75010000 		.4byte	0x175
+ 195 00c6 06       		.uleb128 0x6
+ 196 00c7 0C000000 		.4byte	.LVL1
+ 197 00cb 80010000 		.4byte	0x180
+ 198 00cf 06       		.uleb128 0x6
+ 199 00d0 10000000 		.4byte	.LVL2
+ 200 00d4 8B010000 		.4byte	0x18b
+ 201 00d8 07       		.uleb128 0x7
+ 202 00d9 18000000 		.4byte	.LVL3
+ 203 00dd 96010000 		.4byte	0x196
+ 204 00e1 ED000000 		.4byte	0xed
+ 205 00e5 08       		.uleb128 0x8
+ 206 00e6 01       		.uleb128 0x1
+ 207 00e7 50       		.byte	0x50
+ 208 00e8 03       		.uleb128 0x3
+ 209 00e9 0A       		.byte	0xa
+ 210 00ea 8813     		.2byte	0x1388
+ 211 00ec 00       		.byte	0
+ 212 00ed 07       		.uleb128 0x7
+ 213 00ee 20000000 		.4byte	.LVL4
+ 214 00f2 A1010000 		.4byte	0x1a1
+ 215 00f6 02010000 		.4byte	0x102
+ 216 00fa 08       		.uleb128 0x8
+ 217 00fb 01       		.uleb128 0x1
+ 218 00fc 50       		.byte	0x50
+ 219 00fd 03       		.uleb128 0x3
+ 220 00fe 0A       		.byte	0xa
+ 221 00ff C409     		.2byte	0x9c4
+ 222 0101 00       		.byte	0
+ 223 0102 07       		.uleb128 0x7
+ 224 0103 28000000 		.4byte	.LVL5
+ 225 0107 AC010000 		.4byte	0x1ac
+ 226 010b 17010000 		.4byte	0x117
+ 227 010f 08       		.uleb128 0x8
+ 228 0110 01       		.uleb128 0x1
+ 229 0111 50       		.byte	0x50
+ 230 0112 03       		.uleb128 0x3
+ 231 0113 0A       		.byte	0xa
+ 232 0114 F401     		.2byte	0x1f4
+ 233 0116 00       		.byte	0
+ 234 0117 07       		.uleb128 0x7
+ 235 0118 30000000 		.4byte	.LVL6
+ 236 011c 96010000 		.4byte	0x196
+ 237 0120 2C010000 		.4byte	0x12c
+ 238 0124 08       		.uleb128 0x8
+ 239 0125 01       		.uleb128 0x1
+ 240 0126 50       		.byte	0x50
+ 241 0127 03       		.uleb128 0x3
+ 242 0128 0A       		.byte	0xa
+ 243 0129 FA16     		.2byte	0x16fa
+ 244 012b 00       		.byte	0
+ 245 012c 07       		.uleb128 0x7
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 6
+
+
+ 246 012d 38000000 		.4byte	.LVL7
+ 247 0131 A1010000 		.4byte	0x1a1
+ 248 0135 41010000 		.4byte	0x141
+ 249 0139 08       		.uleb128 0x8
+ 250 013a 01       		.uleb128 0x1
+ 251 013b 50       		.byte	0x50
+ 252 013c 03       		.uleb128 0x3
+ 253 013d 0A       		.byte	0xa
+ 254 013e 7D0B     		.2byte	0xb7d
+ 255 0140 00       		.byte	0
+ 256 0141 09       		.uleb128 0x9
+ 257 0142 40000000 		.4byte	.LVL8
+ 258 0146 AC010000 		.4byte	0x1ac
+ 259 014a 08       		.uleb128 0x8
+ 260 014b 01       		.uleb128 0x1
+ 261 014c 50       		.byte	0x50
+ 262 014d 03       		.uleb128 0x3
+ 263 014e 0A       		.byte	0xa
+ 264 014f F401     		.2byte	0x1f4
+ 265 0151 00       		.byte	0
+ 266 0152 00       		.byte	0
+ 267 0153 0A       		.uleb128 0xa
+ 268 0154 61010000 		.4byte	.LASF16
+ 269 0158 04       		.byte	0x4
+ 270 0159 1207     		.2byte	0x712
+ 271 015b 5F010000 		.4byte	0x15f
+ 272 015f 0B       		.uleb128 0xb
+ 273 0160 76000000 		.4byte	0x76
+ 274 0164 0C       		.uleb128 0xc
+ 275 0165 2E000000 		.4byte	.LASF17
+ 276 0169 01       		.byte	0x1
+ 277 016a 12       		.byte	0x12
+ 278 016b 6F000000 		.4byte	0x6f
+ 279 016f 05       		.uleb128 0x5
+ 280 0170 03       		.byte	0x3
+ 281 0171 00000000 		.4byte	Freq
+ 282 0175 0D       		.uleb128 0xd
+ 283 0176 3F000000 		.4byte	.LASF18
+ 284 017a 3F000000 		.4byte	.LASF18
+ 285 017e 05       		.byte	0x5
+ 286 017f 92       		.byte	0x92
+ 287 0180 0D       		.uleb128 0xd
+ 288 0181 1C010000 		.4byte	.LASF19
+ 289 0185 1C010000 		.4byte	.LASF19
+ 290 0189 06       		.byte	0x6
+ 291 018a 92       		.byte	0x92
+ 292 018b 0D       		.uleb128 0xd
+ 293 018c 55010000 		.4byte	.LASF20
+ 294 0190 55010000 		.4byte	.LASF20
+ 295 0194 07       		.byte	0x7
+ 296 0195 92       		.byte	0x92
+ 297 0196 0D       		.uleb128 0xd
+ 298 0197 0A010000 		.4byte	.LASF21
+ 299 019b 0A010000 		.4byte	.LASF21
+ 300 019f 05       		.byte	0x5
+ 301 01a0 BE       		.byte	0xbe
+ 302 01a1 0D       		.uleb128 0xd
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 7
+
+
+ 303 01a2 90010000 		.4byte	.LASF22
+ 304 01a6 90010000 		.4byte	.LASF22
+ 305 01aa 05       		.byte	0x5
+ 306 01ab C3       		.byte	0xc3
+ 307 01ac 0D       		.uleb128 0xd
+ 308 01ad D9000000 		.4byte	.LASF23
+ 309 01b1 D9000000 		.4byte	.LASF23
+ 310 01b5 08       		.byte	0x8
+ 311 01b6 76       		.byte	0x76
+ 312 01b7 00       		.byte	0
+ 313              		.section	.debug_abbrev,"",%progbits
+ 314              	.Ldebug_abbrev0:
+ 315 0000 01       		.uleb128 0x1
+ 316 0001 11       		.uleb128 0x11
+ 317 0002 01       		.byte	0x1
+ 318 0003 25       		.uleb128 0x25
+ 319 0004 0E       		.uleb128 0xe
+ 320 0005 13       		.uleb128 0x13
+ 321 0006 0B       		.uleb128 0xb
+ 322 0007 03       		.uleb128 0x3
+ 323 0008 0E       		.uleb128 0xe
+ 324 0009 1B       		.uleb128 0x1b
+ 325 000a 0E       		.uleb128 0xe
+ 326 000b 55       		.uleb128 0x55
+ 327 000c 17       		.uleb128 0x17
+ 328 000d 11       		.uleb128 0x11
+ 329 000e 01       		.uleb128 0x1
+ 330 000f 10       		.uleb128 0x10
+ 331 0010 17       		.uleb128 0x17
+ 332 0011 00       		.byte	0
+ 333 0012 00       		.byte	0
+ 334 0013 02       		.uleb128 0x2
+ 335 0014 24       		.uleb128 0x24
+ 336 0015 00       		.byte	0
+ 337 0016 0B       		.uleb128 0xb
+ 338 0017 0B       		.uleb128 0xb
+ 339 0018 3E       		.uleb128 0x3e
+ 340 0019 0B       		.uleb128 0xb
+ 341 001a 03       		.uleb128 0x3
+ 342 001b 0E       		.uleb128 0xe
+ 343 001c 00       		.byte	0
+ 344 001d 00       		.byte	0
+ 345 001e 03       		.uleb128 0x3
+ 346 001f 16       		.uleb128 0x16
+ 347 0020 00       		.byte	0
+ 348 0021 03       		.uleb128 0x3
+ 349 0022 0E       		.uleb128 0xe
+ 350 0023 3A       		.uleb128 0x3a
+ 351 0024 0B       		.uleb128 0xb
+ 352 0025 3B       		.uleb128 0x3b
+ 353 0026 0B       		.uleb128 0xb
+ 354 0027 49       		.uleb128 0x49
+ 355 0028 13       		.uleb128 0x13
+ 356 0029 00       		.byte	0
+ 357 002a 00       		.byte	0
+ 358 002b 04       		.uleb128 0x4
+ 359 002c 24       		.uleb128 0x24
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 8
+
+
+ 360 002d 00       		.byte	0
+ 361 002e 0B       		.uleb128 0xb
+ 362 002f 0B       		.uleb128 0xb
+ 363 0030 3E       		.uleb128 0x3e
+ 364 0031 0B       		.uleb128 0xb
+ 365 0032 03       		.uleb128 0x3
+ 366 0033 08       		.uleb128 0x8
+ 367 0034 00       		.byte	0
+ 368 0035 00       		.byte	0
+ 369 0036 05       		.uleb128 0x5
+ 370 0037 2E       		.uleb128 0x2e
+ 371 0038 01       		.byte	0x1
+ 372 0039 3F       		.uleb128 0x3f
+ 373 003a 19       		.uleb128 0x19
+ 374 003b 03       		.uleb128 0x3
+ 375 003c 0E       		.uleb128 0xe
+ 376 003d 3A       		.uleb128 0x3a
+ 377 003e 0B       		.uleb128 0xb
+ 378 003f 3B       		.uleb128 0x3b
+ 379 0040 0B       		.uleb128 0xb
+ 380 0041 27       		.uleb128 0x27
+ 381 0042 19       		.uleb128 0x19
+ 382 0043 49       		.uleb128 0x49
+ 383 0044 13       		.uleb128 0x13
+ 384 0045 8701     		.uleb128 0x87
+ 385 0047 19       		.uleb128 0x19
+ 386 0048 11       		.uleb128 0x11
+ 387 0049 01       		.uleb128 0x1
+ 388 004a 12       		.uleb128 0x12
+ 389 004b 06       		.uleb128 0x6
+ 390 004c 40       		.uleb128 0x40
+ 391 004d 18       		.uleb128 0x18
+ 392 004e 9742     		.uleb128 0x2117
+ 393 0050 19       		.uleb128 0x19
+ 394 0051 01       		.uleb128 0x1
+ 395 0052 13       		.uleb128 0x13
+ 396 0053 00       		.byte	0
+ 397 0054 00       		.byte	0
+ 398 0055 06       		.uleb128 0x6
+ 399 0056 898201   		.uleb128 0x4109
+ 400 0059 00       		.byte	0
+ 401 005a 11       		.uleb128 0x11
+ 402 005b 01       		.uleb128 0x1
+ 403 005c 31       		.uleb128 0x31
+ 404 005d 13       		.uleb128 0x13
+ 405 005e 00       		.byte	0
+ 406 005f 00       		.byte	0
+ 407 0060 07       		.uleb128 0x7
+ 408 0061 898201   		.uleb128 0x4109
+ 409 0064 01       		.byte	0x1
+ 410 0065 11       		.uleb128 0x11
+ 411 0066 01       		.uleb128 0x1
+ 412 0067 31       		.uleb128 0x31
+ 413 0068 13       		.uleb128 0x13
+ 414 0069 01       		.uleb128 0x1
+ 415 006a 13       		.uleb128 0x13
+ 416 006b 00       		.byte	0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 9
+
+
+ 417 006c 00       		.byte	0
+ 418 006d 08       		.uleb128 0x8
+ 419 006e 8A8201   		.uleb128 0x410a
+ 420 0071 00       		.byte	0
+ 421 0072 02       		.uleb128 0x2
+ 422 0073 18       		.uleb128 0x18
+ 423 0074 9142     		.uleb128 0x2111
+ 424 0076 18       		.uleb128 0x18
+ 425 0077 00       		.byte	0
+ 426 0078 00       		.byte	0
+ 427 0079 09       		.uleb128 0x9
+ 428 007a 898201   		.uleb128 0x4109
+ 429 007d 01       		.byte	0x1
+ 430 007e 11       		.uleb128 0x11
+ 431 007f 01       		.uleb128 0x1
+ 432 0080 31       		.uleb128 0x31
+ 433 0081 13       		.uleb128 0x13
+ 434 0082 00       		.byte	0
+ 435 0083 00       		.byte	0
+ 436 0084 0A       		.uleb128 0xa
+ 437 0085 34       		.uleb128 0x34
+ 438 0086 00       		.byte	0
+ 439 0087 03       		.uleb128 0x3
+ 440 0088 0E       		.uleb128 0xe
+ 441 0089 3A       		.uleb128 0x3a
+ 442 008a 0B       		.uleb128 0xb
+ 443 008b 3B       		.uleb128 0x3b
+ 444 008c 05       		.uleb128 0x5
+ 445 008d 49       		.uleb128 0x49
+ 446 008e 13       		.uleb128 0x13
+ 447 008f 3F       		.uleb128 0x3f
+ 448 0090 19       		.uleb128 0x19
+ 449 0091 3C       		.uleb128 0x3c
+ 450 0092 19       		.uleb128 0x19
+ 451 0093 00       		.byte	0
+ 452 0094 00       		.byte	0
+ 453 0095 0B       		.uleb128 0xb
+ 454 0096 35       		.uleb128 0x35
+ 455 0097 00       		.byte	0
+ 456 0098 49       		.uleb128 0x49
+ 457 0099 13       		.uleb128 0x13
+ 458 009a 00       		.byte	0
+ 459 009b 00       		.byte	0
+ 460 009c 0C       		.uleb128 0xc
+ 461 009d 34       		.uleb128 0x34
+ 462 009e 00       		.byte	0
+ 463 009f 03       		.uleb128 0x3
+ 464 00a0 0E       		.uleb128 0xe
+ 465 00a1 3A       		.uleb128 0x3a
+ 466 00a2 0B       		.uleb128 0xb
+ 467 00a3 3B       		.uleb128 0x3b
+ 468 00a4 0B       		.uleb128 0xb
+ 469 00a5 49       		.uleb128 0x49
+ 470 00a6 13       		.uleb128 0x13
+ 471 00a7 3F       		.uleb128 0x3f
+ 472 00a8 19       		.uleb128 0x19
+ 473 00a9 02       		.uleb128 0x2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 10
+
+
+ 474 00aa 18       		.uleb128 0x18
+ 475 00ab 00       		.byte	0
+ 476 00ac 00       		.byte	0
+ 477 00ad 0D       		.uleb128 0xd
+ 478 00ae 2E       		.uleb128 0x2e
+ 479 00af 00       		.byte	0
+ 480 00b0 3F       		.uleb128 0x3f
+ 481 00b1 19       		.uleb128 0x19
+ 482 00b2 3C       		.uleb128 0x3c
+ 483 00b3 19       		.uleb128 0x19
+ 484 00b4 6E       		.uleb128 0x6e
+ 485 00b5 0E       		.uleb128 0xe
+ 486 00b6 03       		.uleb128 0x3
+ 487 00b7 0E       		.uleb128 0xe
+ 488 00b8 3A       		.uleb128 0x3a
+ 489 00b9 0B       		.uleb128 0xb
+ 490 00ba 3B       		.uleb128 0x3b
+ 491 00bb 0B       		.uleb128 0xb
+ 492 00bc 00       		.byte	0
+ 493 00bd 00       		.byte	0
+ 494 00be 00       		.byte	0
+ 495              		.section	.debug_aranges,"",%progbits
+ 496 0000 1C000000 		.4byte	0x1c
+ 497 0004 0200     		.2byte	0x2
+ 498 0006 00000000 		.4byte	.Ldebug_info0
+ 499 000a 04       		.byte	0x4
+ 500 000b 00       		.byte	0
+ 501 000c 0000     		.2byte	0
+ 502 000e 0000     		.2byte	0
+ 503 0010 00000000 		.4byte	.LFB63
+ 504 0014 42000000 		.4byte	.LFE63-.LFB63
+ 505 0018 00000000 		.4byte	0
+ 506 001c 00000000 		.4byte	0
+ 507              		.section	.debug_ranges,"",%progbits
+ 508              	.Ldebug_ranges0:
+ 509 0000 00000000 		.4byte	.LFB63
+ 510 0004 42000000 		.4byte	.LFE63
+ 511 0008 00000000 		.4byte	0
+ 512 000c 00000000 		.4byte	0
+ 513              		.section	.debug_line,"",%progbits
+ 514              	.Ldebug_line0:
+ 515 0000 A4010000 		.section	.debug_str,"MS",%progbits,1
+ 515      02006B01 
+ 515      00000201 
+ 515      FB0E0D00 
+ 515      01010101 
+ 516              	.LASF6:
+ 517 0000 6C6F6E67 		.ascii	"long long int\000"
+ 517      206C6F6E 
+ 517      6720696E 
+ 517      7400
+ 518              	.LASF3:
+ 519 000e 73686F72 		.ascii	"short unsigned int\000"
+ 519      7420756E 
+ 519      7369676E 
+ 519      65642069 
+ 519      6E7400
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 11
+
+
+ 520              	.LASF8:
+ 521 0021 756E7369 		.ascii	"unsigned int\000"
+ 521      676E6564 
+ 521      20696E74 
+ 521      00
+ 522              	.LASF17:
+ 523 002e 46726571 		.ascii	"Freq\000"
+ 523      00
+ 524              	.LASF25:
+ 525 0033 6D61696E 		.ascii	"main.c\000"
+ 525      2E6300
+ 526              	.LASF27:
+ 527 003a 6D61696E 		.ascii	"main\000"
+ 527      00
+ 528              	.LASF18:
+ 529 003f 50574D5F 		.ascii	"PWM_1_Start\000"
+ 529      315F5374 
+ 529      61727400 
+ 530              	.LASF24:
+ 531 004b 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 531      43313120 
+ 531      352E342E 
+ 531      31203230 
+ 531      31363036 
+ 532 007e 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 532      20726576 
+ 532      6973696F 
+ 532      6E203233 
+ 532      37373135 
+ 533 00b1 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 533      66756E63 
+ 533      74696F6E 
+ 533      2D736563 
+ 533      74696F6E 
+ 534              	.LASF23:
+ 535 00d9 43794465 		.ascii	"CyDelay\000"
+ 535      6C617900 
+ 536              	.LASF5:
+ 537 00e1 6C6F6E67 		.ascii	"long unsigned int\000"
+ 537      20756E73 
+ 537      69676E65 
+ 537      6420696E 
+ 537      7400
+ 538              	.LASF7:
+ 539 00f3 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 539      206C6F6E 
+ 539      6720756E 
+ 539      7369676E 
+ 539      65642069 
+ 540              	.LASF21:
+ 541 010a 50574D5F 		.ascii	"PWM_1_WritePeriod\000"
+ 541      315F5772 
+ 541      69746550 
+ 541      6572696F 
+ 541      6400
+ 542              	.LASF19:
+ 543 011c 50574D5F 		.ascii	"PWM_2_Start\000"
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 12
+
+
+ 543      325F5374 
+ 543      61727400 
+ 544              	.LASF1:
+ 545 0128 756E7369 		.ascii	"unsigned char\000"
+ 545      676E6564 
+ 545      20636861 
+ 545      7200
+ 546              	.LASF13:
+ 547 0136 63686172 		.ascii	"char\000"
+ 547      00
+ 548              	.LASF12:
+ 549 013b 646F7562 		.ascii	"double\000"
+ 549      6C6500
+ 550              	.LASF4:
+ 551 0142 6C6F6E67 		.ascii	"long int\000"
+ 551      20696E74 
+ 551      00
+ 552              	.LASF2:
+ 553 014b 73686F72 		.ascii	"short int\000"
+ 553      7420696E 
+ 553      7400
+ 554              	.LASF20:
+ 555 0155 50574D5F 		.ascii	"PWM_3_Start\000"
+ 555      335F5374 
+ 555      61727400 
+ 556              	.LASF16:
+ 557 0161 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 557      52784275 
+ 557      66666572 
+ 557      00
+ 558              	.LASF0:
+ 559 016e 7369676E 		.ascii	"signed char\000"
+ 559      65642063 
+ 559      68617200 
+ 560              	.LASF14:
+ 561 017a 6C6F6E67 		.ascii	"long double\000"
+ 561      20646F75 
+ 561      626C6500 
+ 562              	.LASF9:
+ 563 0186 5F5F696E 		.ascii	"__int32_t\000"
+ 563      7433325F 
+ 563      7400
+ 564              	.LASF22:
+ 565 0190 50574D5F 		.ascii	"PWM_1_WriteCompare\000"
+ 565      315F5772 
+ 565      69746543 
+ 565      6F6D7061 
+ 565      726500
+ 566              	.LASF11:
+ 567 01a3 666C6F61 		.ascii	"float\000"
+ 567      7400
+ 568              	.LASF26:
+ 569 01a9 433A5C55 		.ascii	"C:\\Users\\sdysart\\Documents\\UACS\\UACS\\Julians_"
+ 569      73657273 
+ 569      5C736479 
+ 569      73617274 
+ 569      5C446F63 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccknaCZR.s 			page 13
+
+
+ 570 01d6 436F6465 		.ascii	"Code\\TestBench.cydsn\000"
+ 570      5C546573 
+ 570      7442656E 
+ 570      63682E63 
+ 570      7964736E 
+ 571              	.LASF10:
+ 572 01eb 696E7433 		.ascii	"int32_t\000"
+ 572      325F7400 
+ 573              	.LASF15:
+ 574 01f3 73697A65 		.ascii	"sizetype\000"
+ 574      74797065 
+ 574      00
+ 575              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

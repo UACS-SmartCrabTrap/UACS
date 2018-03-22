@@ -1,6 +1,6 @@
 // ======================================================================
 // FSKTx.v generated from TopDesign.cysch
-// 03/11/2018 at 23:33
+// 03/21/2018 at 20:38
 // This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 // ======================================================================
 
@@ -961,7 +961,7 @@ module top ;
 		#(.id("54e4ab48-026b-4220-b787-4a7cbbe30e74"),
 		  .source_clock_id(""),
 		  .divisor(0),
-		  .period("35650623885.918"),
+		  .period("39215686274.5098"),
 		  .is_direct(0),
 		  .is_digital(1))
 		LowF_OneCLK
@@ -1311,7 +1311,7 @@ module top ;
 		#(.id("ee395146-c5c6-419e-9a43-27c4ff374e51"),
 		  .source_clock_id(""),
 		  .divisor(0),
-		  .period("43572984749.4553"),
+		  .period("46136101499.4233"),
 		  .is_direct(0),
 		  .is_digital(1))
 		LowF_ZeroCLK

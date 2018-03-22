@@ -1,6 +1,6 @@
 // ======================================================================
 // FSKRx.v generated from TopDesign.cysch
-// 03/16/2018 at 11:37
+// 03/21/2018 at 20:36
 // This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 // ======================================================================
 
@@ -911,7 +911,7 @@ module top ;
 		#(.id("baef5ba5-397a-42ef-815d-0cddb0067e1b"),
 		  .source_clock_id(""),
 		  .divisor(0),
-		  .period("947867298578.199"),
+		  .period("1468428781204.11"),
 		  .is_direct(0),
 		  .is_digital(1))
 		DelayClk

@@ -74,6 +74,8 @@ int main(void)
                 break;
             case 13:
                 bitTime = 0;
+                //encode used to transmit 7 1's for the prefix 
+                //reset here to be ready for case 0 
                 encode = 0;
                 data_turn++;
                 data_to_be_sent <<= 1;
@@ -147,7 +149,7 @@ int Data(unsigned int hex_value, int bT)
 
 /*
  * function: int Decode(unsigned int hex_value, int bT)
- * parameters: hex_value - a five bit value specifying what data you want to send
+ * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
  *             bT - the current bit time
  * returns: bitCase - a high or low signal to be sent to an output pin
  * description: This function takes in a hex value and sends it out a bit at a time as a high or

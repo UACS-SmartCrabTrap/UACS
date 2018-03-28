@@ -1,0 +1,1753 @@
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.isr_halfsec,"ax",%progbits
+  20              		.align	2
+  21              		.global	isr_halfsec
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	isr_halfsec, %function
+  25              	isr_halfsec:
+  26              	.LFB64:
+  27              		.file 1 "main.c"
+   1:main.c        **** /*Included header files*/
+   2:main.c        **** #include "project.h"
+   3:main.c        **** 
+   4:main.c        **** /*Definitions*/
+   5:main.c        **** #define CLOCK_FREQ 1000000
+   6:main.c        **** #define FREQ(x) (CLOCK_FREQ/x)-1
+   7:main.c        **** #define ONE_FREQ 40000
+   8:main.c        **** #define ZERO_FREQ 30000
+   9:main.c        **** #define DEFAULT_FREQ MIN_FREQ
+  10:main.c        **** 
+  11:main.c        **** #define BIT_0_MASK 0x01
+  12:main.c        **** #define BIT_1_MASK 0x02
+  13:main.c        **** #define BIT_2_MASK 0x04
+  14:main.c        **** #define BIT_3_MASK 0x08
+  15:main.c        **** #define BIT_4_MASK 0x10
+  16:main.c        **** #define BIT_5_MASK 0x20
+  17:main.c        **** #define BIT_6_MASK 0x40
+  18:main.c        **** #define BIT_7_MASK 0x80
+  19:main.c        **** 
+  20:main.c        **** #define ZERO 0x0
+  21:main.c        **** #define ONE 0x1
+  22:main.c        **** #define DATA_LENGTH 4
+  23:main.c        **** #define DECODE_VALUE 0x01
+  24:main.c        **** 
+  25:main.c        **** /*Function Prototypes*/
+  26:main.c        **** int Data(unsigned int hex_value, int bT);
+  27:main.c        **** int Decode(unsigned int hex_value, int bT);
+  28:main.c        **** CY_ISR_PROTO(isr_halfsec); // High F Interrupts
+  29:main.c        **** 
+  30:main.c        **** /*Global Variables*/
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 2
+
+
+  31:main.c        **** static int bitTime = 0;
+  32:main.c        **** static int encode = 0;
+  33:main.c        **** 
+  34:main.c        **** int main(void)
+  35:main.c        **** {
+  36:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+  37:main.c        ****     
+  38:main.c        ****     /*Block initializations*/
+  39:main.c        ****     PWM_Modulator_Start();
+  40:main.c        ****     PWM_1_Start();
+  41:main.c        ****     PWM_2_Start();
+  42:main.c        ****     PWM_Switch_Timer_Start();
+  43:main.c        ****     isr_halfsec_StartEx(isr_halfsec);
+  44:main.c        ****     
+  45:main.c        ****     /*Variable initializations*/
+  46:main.c        ****     int bitCase = 0;
+  47:main.c        ****     int data_turn = 0;
+  48:main.c        ****     unsigned int data_to_be_sent = ONE;
+  49:main.c        ****     
+  50:main.c        ****     for(;;)
+  51:main.c        ****     {
+  52:main.c        ****         switch(bitTime){
+  53:main.c        ****             // ENCODE
+  54:main.c        ****             case 0:
+  55:main.c        ****                 bitCase = ONE;
+  56:main.c        ****                 break; 
+  57:main.c        ****             // DATA
+  58:main.c        ****             case 1:
+  59:main.c        ****             case 2:
+  60:main.c        ****             case 3:
+  61:main.c        ****             case 4:
+  62:main.c        ****                 bitCase = Data(data_to_be_sent, bitTime); 
+  63:main.c        ****                 break; 
+  64:main.c        ****             // DECODE
+  65:main.c        ****             case 5:    
+  66:main.c        ****             case 6:
+  67:main.c        ****             case 7:    
+  68:main.c        ****             case 8:
+  69:main.c        ****             case 9:
+  70:main.c        ****             case 10:
+  71:main.c        ****             case 11:
+  72:main.c        ****             case 12:
+  73:main.c        ****                 bitCase = Decode(DECODE_VALUE, bitTime);
+  74:main.c        ****                 break;
+  75:main.c        ****             case 13:
+  76:main.c        ****                 bitTime = 0;
+  77:main.c        ****                 //encode used to transmit 7 1's for the prefix 
+  78:main.c        ****                 //reset here to be ready for case 0 
+  79:main.c        ****                 encode = 0;
+  80:main.c        ****                 data_turn++;
+  81:main.c        ****                 data_to_be_sent <<= 1;
+  82:main.c        ****                 //Once data to be sent can't be contained in a nibble, reset to 0x1
+  83:main.c        ****                 if (data_turn == DATA_LENGTH) {
+  84:main.c        ****                     data_turn = 0;
+  85:main.c        ****                     data_to_be_sent = ONE;
+  86:main.c        ****                 }
+  87:main.c        ****                 PWM_Modulator_Stop();
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 3
+
+
+  88:main.c        ****                 PWM_Switch_Timer_Stop();
+  89:main.c        ****                 CyDelay(3000);
+  90:main.c        ****                 PWM_Modulator_Start();
+  91:main.c        ****                 PWM_Switch_Timer_Start();
+  92:main.c        ****                 break;
+  93:main.c        ****             default:
+  94:main.c        ****                 break; 
+  95:main.c        ****          } //end switch(bitTime) 
+  96:main.c        ****         
+  97:main.c        ****         if(bitCase == ONE){
+  98:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
+  99:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
+ 100:main.c        ****         }else if(bitCase == ZERO){
+ 101:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
+ 102:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+ 103:main.c        ****         }
+ 104:main.c        ****         
+ 105:main.c        ****     }//end for(;;)
+ 106:main.c        ****     
+ 107:main.c        **** }//end main()
+ 108:main.c        **** 
+ 109:main.c        **** CY_ISR(isr_halfsec)
+ 110:main.c        **** {
+  28              		.loc 1 110 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+ 111:main.c        ****     if((bitTime == 0) && (encode < 7)){
+  33              		.loc 1 111 0
+  34 0000 094B     		ldr	r3, .L4
+  35 0002 1B68     		ldr	r3, [r3]
+  36 0004 3BB9     		cbnz	r3, .L2
+  37              		.loc 1 111 0 is_stmt 0 discriminator 1
+  38 0006 084A     		ldr	r2, .L4
+  39 0008 5268     		ldr	r2, [r2, #4]
+  40 000a 062A     		cmp	r2, #6
+  41 000c 03DC     		bgt	.L2
+ 112:main.c        ****         encode++;
+  42              		.loc 1 112 0 is_stmt 1
+  43 000e 0132     		adds	r2, r2, #1
+  44 0010 054B     		ldr	r3, .L4
+  45 0012 5A60     		str	r2, [r3, #4]
+  46 0014 7047     		bx	lr
+  47              	.L2:
+ 113:main.c        ****     }
+ 114:main.c        ****     else if(encode > 6){
+  48              		.loc 1 114 0
+  49 0016 044A     		ldr	r2, .L4
+  50 0018 5268     		ldr	r2, [r2, #4]
+  51 001a 062A     		cmp	r2, #6
+  52 001c 02DD     		ble	.L1
+ 115:main.c        ****         bitTime++;
+  53              		.loc 1 115 0
+  54 001e 0133     		adds	r3, r3, #1
+  55 0020 014A     		ldr	r2, .L4
+  56 0022 1360     		str	r3, [r2]
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 4
+
+
+  57              	.L1:
+  58 0024 7047     		bx	lr
+  59              	.L5:
+  60 0026 00BF     		.align	2
+  61              	.L4:
+  62 0028 00000000 		.word	.LANCHOR0
+  63              		.cfi_endproc
+  64              	.LFE64:
+  65              		.size	isr_halfsec, .-isr_halfsec
+  66              		.section	.text.Data,"ax",%progbits
+  67              		.align	2
+  68              		.global	Data
+  69              		.thumb
+  70              		.thumb_func
+  71              		.type	Data, %function
+  72              	Data:
+  73              	.LFB65:
+ 116:main.c        ****     }
+ 117:main.c        **** }//end CY_ISR(isr_halfsec)
+ 118:main.c        **** 
+ 119:main.c        **** /*
+ 120:main.c        ****  * function: int Data(unsigned int hex_value, int bT)
+ 121:main.c        ****  * parameters: hex_value - a four bit value specifying what data you want to send
+ 122:main.c        ****  *             bT - the current bit time
+ 123:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
+ 124:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
+ 125:main.c        ****  *  low signal depending on the bit time. Used only to set desired data nibble.
+ 126:main.c        ****  */
+ 127:main.c        **** int Data(unsigned int hex_value, int bT)
+ 128:main.c        **** {
+  74              		.loc 1 128 0
+  75              		.cfi_startproc
+  76              		@ args = 0, pretend = 0, frame = 0
+  77              		@ frame_needed = 0, uses_anonymous_args = 0
+  78              		@ link register save eliminated.
+  79              	.LVL0:
+ 129:main.c        ****     int bitCase;
+ 130:main.c        ****     switch(bT){
+  80              		.loc 1 130 0
+  81 0000 0139     		subs	r1, r1, #1
+  82              	.LVL1:
+  83 0002 0329     		cmp	r1, #3
+  84 0004 0ED8     		bhi	.L7
+  85 0006 DFE801F0 		tbb	[pc, r1]
+  86              	.L9:
+  87 000a 02       		.byte	(.L8-.L9)/2
+  88 000b 05       		.byte	(.L10-.L9)/2
+  89 000c 08       		.byte	(.L11-.L9)/2
+  90 000d 0B       		.byte	(.L12-.L9)/2
+  91              		.p2align 1
+  92              	.L8:
+ 131:main.c        ****         case 1:
+ 132:main.c        ****             bitCase = (hex_value & BIT_3_MASK) >> 3;
+  93              		.loc 1 132 0
+  94 000e C0F3C003 		ubfx	r3, r0, #3, #1
+  95              	.LVL2:
+ 133:main.c        ****             break; 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 5
+
+
+  96              		.loc 1 133 0
+  97 0012 07E0     		b	.L7
+  98              	.LVL3:
+  99              	.L10:
+ 134:main.c        ****         case 2:
+ 135:main.c        ****             bitCase = (hex_value & BIT_2_MASK) >> 2;
+ 100              		.loc 1 135 0
+ 101 0014 C0F38003 		ubfx	r3, r0, #2, #1
+ 102              	.LVL4:
+ 136:main.c        ****             break; 
+ 103              		.loc 1 136 0
+ 104 0018 04E0     		b	.L7
+ 105              	.LVL5:
+ 106              	.L11:
+ 137:main.c        ****         case 3:
+ 138:main.c        ****             bitCase = (hex_value & BIT_1_MASK) >> 1;
+ 107              		.loc 1 138 0
+ 108 001a C0F34003 		ubfx	r3, r0, #1, #1
+ 109              	.LVL6:
+ 139:main.c        ****             break; 
+ 110              		.loc 1 139 0
+ 111 001e 01E0     		b	.L7
+ 112              	.LVL7:
+ 113              	.L12:
+ 140:main.c        ****         case 4:
+ 141:main.c        ****             bitCase = (hex_value & BIT_0_MASK);
+ 114              		.loc 1 141 0
+ 115 0020 00F00103 		and	r3, r0, #1
+ 116              	.LVL8:
+ 117              	.L7:
+ 142:main.c        ****             break;
+ 143:main.c        ****         default:
+ 144:main.c        ****             break;
+ 145:main.c        ****     } //end switch(bT)
+ 146:main.c        ****     return bitCase;
+ 147:main.c        **** }//end Data()
+ 118              		.loc 1 147 0
+ 119 0024 1846     		mov	r0, r3
+ 120              	.LVL9:
+ 121 0026 7047     		bx	lr
+ 122              		.cfi_endproc
+ 123              	.LFE65:
+ 124              		.size	Data, .-Data
+ 125              		.section	.text.Decode,"ax",%progbits
+ 126              		.align	2
+ 127              		.global	Decode
+ 128              		.thumb
+ 129              		.thumb_func
+ 130              		.type	Decode, %function
+ 131              	Decode:
+ 132              	.LFB66:
+ 148:main.c        **** 
+ 149:main.c        **** 
+ 150:main.c        **** /*
+ 151:main.c        ****  * function: int Decode(unsigned int hex_value, int bT)
+ 152:main.c        ****  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
+ 153:main.c        ****  *             bT - the current bit time
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 6
+
+
+ 154:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
+ 155:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
+ 156:main.c        ****  *  low signal depending on the bit time. Used only to set desired decode encryption.
+ 157:main.c        ****  */
+ 158:main.c        **** int Decode(unsigned int hex_value, int bT)
+ 159:main.c        **** {
+ 133              		.loc 1 159 0
+ 134              		.cfi_startproc
+ 135              		@ args = 0, pretend = 0, frame = 0
+ 136              		@ frame_needed = 0, uses_anonymous_args = 0
+ 137              		@ link register save eliminated.
+ 138              	.LVL10:
+ 160:main.c        ****     int bitCase;
+ 161:main.c        ****     switch(bT){
+ 139              		.loc 1 161 0
+ 140 0000 0539     		subs	r1, r1, #5
+ 141              	.LVL11:
+ 142 0002 0729     		cmp	r1, #7
+ 143 0004 1CD8     		bhi	.L14
+ 144 0006 DFE801F0 		tbb	[pc, r1]
+ 145              	.L16:
+ 146 000a 04       		.byte	(.L15-.L16)/2
+ 147 000b 07       		.byte	(.L17-.L16)/2
+ 148 000c 0A       		.byte	(.L18-.L16)/2
+ 149 000d 0D       		.byte	(.L19-.L16)/2
+ 150 000e 10       		.byte	(.L20-.L16)/2
+ 151 000f 13       		.byte	(.L21-.L16)/2
+ 152 0010 16       		.byte	(.L22-.L16)/2
+ 153 0011 19       		.byte	(.L23-.L16)/2
+ 154              		.p2align 1
+ 155              	.L15:
+ 162:main.c        ****         case 5:
+ 163:main.c        ****             bitCase = (hex_value & BIT_7_MASK) >> 7;
+ 156              		.loc 1 163 0
+ 157 0012 C0F3C013 		ubfx	r3, r0, #7, #1
+ 158              	.LVL12:
+ 164:main.c        ****             break;
+ 159              		.loc 1 164 0
+ 160 0016 13E0     		b	.L14
+ 161              	.LVL13:
+ 162              	.L17:
+ 165:main.c        ****         case 6:
+ 166:main.c        ****             bitCase = (hex_value & BIT_6_MASK) >> 6;
+ 163              		.loc 1 166 0
+ 164 0018 C0F38013 		ubfx	r3, r0, #6, #1
+ 165              	.LVL14:
+ 167:main.c        ****             break; 
+ 166              		.loc 1 167 0
+ 167 001c 10E0     		b	.L14
+ 168              	.LVL15:
+ 169              	.L18:
+ 168:main.c        ****         case 7:
+ 169:main.c        ****             bitCase = (hex_value & BIT_5_MASK) >> 5;
+ 170              		.loc 1 169 0
+ 171 001e C0F34013 		ubfx	r3, r0, #5, #1
+ 172              	.LVL16:
+ 170:main.c        ****             break; 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 7
+
+
+ 173              		.loc 1 170 0
+ 174 0022 0DE0     		b	.L14
+ 175              	.LVL17:
+ 176              	.L19:
+ 171:main.c        ****         case 8:
+ 172:main.c        ****             bitCase = (hex_value & BIT_4_MASK) >> 4;
+ 177              		.loc 1 172 0
+ 178 0024 C0F30013 		ubfx	r3, r0, #4, #1
+ 179              	.LVL18:
+ 173:main.c        ****             break;
+ 180              		.loc 1 173 0
+ 181 0028 0AE0     		b	.L14
+ 182              	.LVL19:
+ 183              	.L20:
+ 174:main.c        ****         case 9:
+ 175:main.c        ****             bitCase = (hex_value & BIT_3_MASK) >> 3;
+ 184              		.loc 1 175 0
+ 185 002a C0F3C003 		ubfx	r3, r0, #3, #1
+ 186              	.LVL20:
+ 176:main.c        ****             break; 
+ 187              		.loc 1 176 0
+ 188 002e 07E0     		b	.L14
+ 189              	.LVL21:
+ 190              	.L21:
+ 177:main.c        ****         case 10:
+ 178:main.c        ****             bitCase = (hex_value & BIT_2_MASK) >> 2;
+ 191              		.loc 1 178 0
+ 192 0030 C0F38003 		ubfx	r3, r0, #2, #1
+ 193              	.LVL22:
+ 179:main.c        ****             break; 
+ 194              		.loc 1 179 0
+ 195 0034 04E0     		b	.L14
+ 196              	.LVL23:
+ 197              	.L22:
+ 180:main.c        ****         case 11:
+ 181:main.c        ****             bitCase = (hex_value & BIT_1_MASK) >> 1;
+ 198              		.loc 1 181 0
+ 199 0036 C0F34003 		ubfx	r3, r0, #1, #1
+ 200              	.LVL24:
+ 182:main.c        ****             break; 
+ 201              		.loc 1 182 0
+ 202 003a 01E0     		b	.L14
+ 203              	.LVL25:
+ 204              	.L23:
+ 183:main.c        ****         case 12:
+ 184:main.c        ****             bitCase = (hex_value & BIT_0_MASK);
+ 205              		.loc 1 184 0
+ 206 003c 00F00103 		and	r3, r0, #1
+ 207              	.LVL26:
+ 208              	.L14:
+ 185:main.c        ****             break;
+ 186:main.c        ****         default:
+ 187:main.c        ****             break;
+ 188:main.c        ****     } //end switch(bT)
+ 189:main.c        ****     return bitCase;
+ 190:main.c        **** }//end Decode()...
+ 209              		.loc 1 190 0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 8
+
+
+ 210 0040 1846     		mov	r0, r3
+ 211              	.LVL27:
+ 212 0042 7047     		bx	lr
+ 213              		.cfi_endproc
+ 214              	.LFE66:
+ 215              		.size	Decode, .-Decode
+ 216              		.section	.text.main,"ax",%progbits
+ 217              		.align	2
+ 218              		.global	main
+ 219              		.thumb
+ 220              		.thumb_func
+ 221              		.type	main, %function
+ 222              	main:
+ 223              	.LFB63:
+  35:main.c        **** {
+ 224              		.loc 1 35 0
+ 225              		.cfi_startproc
+ 226              		@ args = 0, pretend = 0, frame = 0
+ 227              		@ frame_needed = 0, uses_anonymous_args = 0
+ 228 0000 70B5     		push	{r4, r5, r6, lr}
+ 229              		.cfi_def_cfa_offset 16
+ 230              		.cfi_offset 4, -16
+ 231              		.cfi_offset 5, -12
+ 232              		.cfi_offset 6, -8
+ 233              		.cfi_offset 14, -4
+  36:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+ 234              		.loc 1 36 0
+ 235              		.syntax unified
+ 236              	@ 36 "main.c" 1
+ 237 0002 62B6     		CPSIE   i
+ 238              	@ 0 "" 2
+  39:main.c        ****     PWM_Modulator_Start();
+ 239              		.loc 1 39 0
+ 240              		.thumb
+ 241              		.syntax unified
+ 242 0004 FFF7FEFF 		bl	PWM_Modulator_Start
+ 243              	.LVL28:
+  40:main.c        ****     PWM_1_Start();
+ 244              		.loc 1 40 0
+ 245 0008 FFF7FEFF 		bl	PWM_1_Start
+ 246              	.LVL29:
+  41:main.c        ****     PWM_2_Start();
+ 247              		.loc 1 41 0
+ 248 000c FFF7FEFF 		bl	PWM_2_Start
+ 249              	.LVL30:
+  42:main.c        ****     PWM_Switch_Timer_Start();
+ 250              		.loc 1 42 0
+ 251 0010 FFF7FEFF 		bl	PWM_Switch_Timer_Start
+ 252              	.LVL31:
+  43:main.c        ****     isr_halfsec_StartEx(isr_halfsec);
+ 253              		.loc 1 43 0
+ 254 0014 2348     		ldr	r0, .L38
+ 255 0016 FFF7FEFF 		bl	isr_halfsec_StartEx
+ 256              	.LVL32:
+  48:main.c        ****     unsigned int data_to_be_sent = ONE;
+ 257              		.loc 1 48 0
+ 258 001a 0126     		movs	r6, #1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 9
+
+
+  47:main.c        ****     int data_turn = 0;
+ 259              		.loc 1 47 0
+ 260 001c 0025     		movs	r5, #0
+  46:main.c        ****     int bitCase = 0;
+ 261              		.loc 1 46 0
+ 262 001e 2C46     		mov	r4, r5
+ 263              	.LVL33:
+ 264              	.L25:
+  52:main.c        ****         switch(bitTime){
+ 265              		.loc 1 52 0
+ 266 0020 214B     		ldr	r3, .L38+4
+ 267 0022 1968     		ldr	r1, [r3]
+ 268 0024 0D29     		cmp	r1, #13
+ 269 0026 2AD8     		bhi	.L27
+ 270 0028 DFE801F0 		tbb	[pc, r1]
+ 271              	.L28:
+ 272 002c 28       		.byte	(.L35-.L28)/2
+ 273 002d 07       		.byte	(.L29-.L28)/2
+ 274 002e 07       		.byte	(.L29-.L28)/2
+ 275 002f 07       		.byte	(.L29-.L28)/2
+ 276 0030 07       		.byte	(.L29-.L28)/2
+ 277 0031 0C       		.byte	(.L30-.L28)/2
+ 278 0032 0C       		.byte	(.L30-.L28)/2
+ 279 0033 0C       		.byte	(.L30-.L28)/2
+ 280 0034 0C       		.byte	(.L30-.L28)/2
+ 281 0035 0C       		.byte	(.L30-.L28)/2
+ 282 0036 0C       		.byte	(.L30-.L28)/2
+ 283 0037 0C       		.byte	(.L30-.L28)/2
+ 284 0038 0C       		.byte	(.L30-.L28)/2
+ 285 0039 11       		.byte	(.L31-.L28)/2
+ 286              		.p2align 1
+ 287              	.L29:
+  62:main.c        ****                 bitCase = Data(data_to_be_sent, bitTime); 
+ 288              		.loc 1 62 0
+ 289 003a 3046     		mov	r0, r6
+ 290 003c FFF7FEFF 		bl	Data
+ 291              	.LVL34:
+ 292 0040 0446     		mov	r4, r0
+ 293              	.LVL35:
+  63:main.c        ****                 break; 
+ 294              		.loc 1 63 0
+ 295 0042 1CE0     		b	.L27
+ 296              	.LVL36:
+ 297              	.L30:
+  73:main.c        ****                 bitCase = Decode(DECODE_VALUE, bitTime);
+ 298              		.loc 1 73 0
+ 299 0044 0120     		movs	r0, #1
+ 300 0046 FFF7FEFF 		bl	Decode
+ 301              	.LVL37:
+ 302 004a 0446     		mov	r4, r0
+ 303              	.LVL38:
+  74:main.c        ****                 break;
+ 304              		.loc 1 74 0
+ 305 004c 17E0     		b	.L27
+ 306              	.LVL39:
+ 307              	.L31:
+  76:main.c        ****                 bitTime = 0;
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 10
+
+
+ 308              		.loc 1 76 0
+ 309 004e 164B     		ldr	r3, .L38+4
+ 310 0050 0022     		movs	r2, #0
+ 311 0052 1A60     		str	r2, [r3]
+  79:main.c        ****                 encode = 0;
+ 312              		.loc 1 79 0
+ 313 0054 5A60     		str	r2, [r3, #4]
+  80:main.c        ****                 data_turn++;
+ 314              		.loc 1 80 0
+ 315 0056 0135     		adds	r5, r5, #1
+ 316              	.LVL40:
+  81:main.c        ****                 data_to_be_sent <<= 1;
+ 317              		.loc 1 81 0
+ 318 0058 7600     		lsls	r6, r6, #1
+ 319              	.LVL41:
+  83:main.c        ****                 if (data_turn == DATA_LENGTH) {
+ 320              		.loc 1 83 0
+ 321 005a 042D     		cmp	r5, #4
+ 322 005c 01D1     		bne	.L32
+  85:main.c        ****                     data_to_be_sent = ONE;
+ 323              		.loc 1 85 0
+ 324 005e 0126     		movs	r6, #1
+ 325              	.LVL42:
+  84:main.c        ****                     data_turn = 0;
+ 326              		.loc 1 84 0
+ 327 0060 1546     		mov	r5, r2
+ 328              	.LVL43:
+ 329              	.L32:
+  87:main.c        ****                 PWM_Modulator_Stop();
+ 330              		.loc 1 87 0
+ 331 0062 FFF7FEFF 		bl	PWM_Modulator_Stop
+ 332              	.LVL44:
+  88:main.c        ****                 PWM_Switch_Timer_Stop();
+ 333              		.loc 1 88 0
+ 334 0066 FFF7FEFF 		bl	PWM_Switch_Timer_Stop
+ 335              	.LVL45:
+  89:main.c        ****                 CyDelay(3000);
+ 336              		.loc 1 89 0
+ 337 006a 40F6B830 		movw	r0, #3000
+ 338 006e FFF7FEFF 		bl	CyDelay
+ 339              	.LVL46:
+  90:main.c        ****                 PWM_Modulator_Start();
+ 340              		.loc 1 90 0
+ 341 0072 FFF7FEFF 		bl	PWM_Modulator_Start
+ 342              	.LVL47:
+  91:main.c        ****                 PWM_Switch_Timer_Start();
+ 343              		.loc 1 91 0
+ 344 0076 FFF7FEFF 		bl	PWM_Switch_Timer_Start
+ 345              	.LVL48:
+  92:main.c        ****                 break;
+ 346              		.loc 1 92 0
+ 347 007a 00E0     		b	.L27
+ 348              	.L35:
+  55:main.c        ****                 bitCase = ONE;
+ 349              		.loc 1 55 0
+ 350 007c 0124     		movs	r4, #1
+ 351              	.LVL49:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 11
+
+
+ 352              	.L27:
+  97:main.c        ****         if(bitCase == ONE){
+ 353              		.loc 1 97 0
+ 354 007e 012C     		cmp	r4, #1
+ 355 0080 06D1     		bne	.L33
+  98:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
+ 356              		.loc 1 98 0
+ 357 0082 1820     		movs	r0, #24
+ 358 0084 FFF7FEFF 		bl	PWM_Modulator_WritePeriod
+ 359              	.LVL50:
+  99:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
+ 360              		.loc 1 99 0
+ 361 0088 0C20     		movs	r0, #12
+ 362 008a FFF7FEFF 		bl	PWM_Modulator_WriteCompare
+ 363              	.LVL51:
+ 364 008e C7E7     		b	.L25
+ 365              	.L33:
+ 100:main.c        ****         }else if(bitCase == ZERO){
+ 366              		.loc 1 100 0
+ 367 0090 002C     		cmp	r4, #0
+ 368 0092 C5D1     		bne	.L25
+ 101:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
+ 369              		.loc 1 101 0
+ 370 0094 2020     		movs	r0, #32
+ 371 0096 FFF7FEFF 		bl	PWM_Modulator_WritePeriod
+ 372              	.LVL52:
+ 102:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+ 373              		.loc 1 102 0
+ 374 009a 1020     		movs	r0, #16
+ 375 009c FFF7FEFF 		bl	PWM_Modulator_WriteCompare
+ 376              	.LVL53:
+ 377 00a0 BEE7     		b	.L25
+ 378              	.L39:
+ 379 00a2 00BF     		.align	2
+ 380              	.L38:
+ 381 00a4 00000000 		.word	isr_halfsec
+ 382 00a8 00000000 		.word	.LANCHOR0
+ 383              		.cfi_endproc
+ 384              	.LFE63:
+ 385              		.size	main, .-main
+ 386              		.bss
+ 387              		.align	2
+ 388              		.set	.LANCHOR0,. + 0
+ 389              		.type	bitTime, %object
+ 390              		.size	bitTime, 4
+ 391              	bitTime:
+ 392 0000 00000000 		.space	4
+ 393              		.type	encode, %object
+ 394              		.size	encode, 4
+ 395              	encode:
+ 396 0004 00000000 		.space	4
+ 397              		.text
+ 398              	.Letext0:
+ 399              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 400              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 401              		.file 4 "Generated_Source\\PSoC5/PWM_Modulator.h"
+ 402              		.file 5 "Generated_Source\\PSoC5/PWM_1.h"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 12
+
+
+ 403              		.file 6 "Generated_Source\\PSoC5/PWM_2.h"
+ 404              		.file 7 "Generated_Source\\PSoC5/PWM_Switch_Timer.h"
+ 405              		.file 8 "Generated_Source\\PSoC5/isr_halfsec.h"
+ 406              		.file 9 "Generated_Source\\PSoC5/CyLib.h"
+ 407              		.file 10 "Generated_Source\\PSoC5/core_cm3.h"
+ 408              		.section	.debug_info,"",%progbits
+ 409              	.Ldebug_info0:
+ 410 0000 0A030000 		.4byte	0x30a
+ 411 0004 0400     		.2byte	0x4
+ 412 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 413 000a 04       		.byte	0x4
+ 414 000b 01       		.uleb128 0x1
+ 415 000c 96000000 		.4byte	.LASF34
+ 416 0010 0C       		.byte	0xc
+ 417 0011 4E020000 		.4byte	.LASF35
+ 418 0015 EB010000 		.4byte	.LASF36
+ 419 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 420 001d 00000000 		.4byte	0
+ 421 0021 00000000 		.4byte	.Ldebug_line0
+ 422 0025 02       		.uleb128 0x2
+ 423 0026 01       		.byte	0x1
+ 424 0027 06       		.byte	0x6
+ 425 0028 A0020000 		.4byte	.LASF0
+ 426 002c 02       		.uleb128 0x2
+ 427 002d 01       		.byte	0x1
+ 428 002e 08       		.byte	0x8
+ 429 002f 88000000 		.4byte	.LASF1
+ 430 0033 02       		.uleb128 0x2
+ 431 0034 02       		.byte	0x2
+ 432 0035 05       		.byte	0x5
+ 433 0036 71020000 		.4byte	.LASF2
+ 434 003a 02       		.uleb128 0x2
+ 435 003b 02       		.byte	0x2
+ 436 003c 07       		.byte	0x7
+ 437 003d 26000000 		.4byte	.LASF3
+ 438 0041 03       		.uleb128 0x3
+ 439 0042 13000000 		.4byte	.LASF9
+ 440 0046 02       		.byte	0x2
+ 441 0047 3F       		.byte	0x3f
+ 442 0048 4C000000 		.4byte	0x4c
+ 443 004c 02       		.uleb128 0x2
+ 444 004d 04       		.byte	0x4
+ 445 004e 05       		.byte	0x5
+ 446 004f 1D000000 		.4byte	.LASF4
+ 447 0053 02       		.uleb128 0x2
+ 448 0054 04       		.byte	0x4
+ 449 0055 07       		.byte	0x7
+ 450 0056 34010000 		.4byte	.LASF5
+ 451 005a 02       		.uleb128 0x2
+ 452 005b 08       		.byte	0x8
+ 453 005c 05       		.byte	0x5
+ 454 005d 40020000 		.4byte	.LASF6
+ 455 0061 02       		.uleb128 0x2
+ 456 0062 08       		.byte	0x8
+ 457 0063 07       		.byte	0x7
+ 458 0064 71000000 		.4byte	.LASF7
+ 459 0068 04       		.uleb128 0x4
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 13
+
+
+ 460 0069 04       		.byte	0x4
+ 461 006a 05       		.byte	0x5
+ 462 006b 696E7400 		.ascii	"int\000"
+ 463 006f 02       		.uleb128 0x2
+ 464 0070 04       		.byte	0x4
+ 465 0071 07       		.byte	0x7
+ 466 0072 BB010000 		.4byte	.LASF8
+ 467 0076 03       		.uleb128 0x3
+ 468 0077 63000000 		.4byte	.LASF10
+ 469 007b 03       		.byte	0x3
+ 470 007c 2C       		.byte	0x2c
+ 471 007d 41000000 		.4byte	0x41
+ 472 0081 02       		.uleb128 0x2
+ 473 0082 04       		.byte	0x4
+ 474 0083 04       		.byte	0x4
+ 475 0084 6B000000 		.4byte	.LASF11
+ 476 0088 02       		.uleb128 0x2
+ 477 0089 08       		.byte	0x8
+ 478 008a 04       		.byte	0x4
+ 479 008b 8A010000 		.4byte	.LASF12
+ 480 008f 02       		.uleb128 0x2
+ 481 0090 01       		.byte	0x1
+ 482 0091 08       		.byte	0x8
+ 483 0092 55020000 		.4byte	.LASF13
+ 484 0096 02       		.uleb128 0x2
+ 485 0097 08       		.byte	0x8
+ 486 0098 04       		.byte	0x4
+ 487 0099 2B020000 		.4byte	.LASF14
+ 488 009d 02       		.uleb128 0x2
+ 489 009e 04       		.byte	0x4
+ 490 009f 07       		.byte	0x7
+ 491 00a0 37020000 		.4byte	.LASF15
+ 492 00a4 05       		.uleb128 0x5
+ 493 00a5 94020000 		.4byte	.LASF37
+ 494 00a9 01       		.byte	0x1
+ 495 00aa 6D       		.byte	0x6d
+ 496 00ab 00000000 		.4byte	.LFB64
+ 497 00af 2C000000 		.4byte	.LFE64-.LFB64
+ 498 00b3 01       		.uleb128 0x1
+ 499 00b4 9C       		.byte	0x9c
+ 500 00b5 06       		.uleb128 0x6
+ 501 00b6 9D010000 		.4byte	.LASF17
+ 502 00ba 01       		.byte	0x1
+ 503 00bb 7F       		.byte	0x7f
+ 504 00bc 68000000 		.4byte	0x68
+ 505 00c0 00000000 		.4byte	.LFB65
+ 506 00c4 28000000 		.4byte	.LFE65-.LFB65
+ 507 00c8 01       		.uleb128 0x1
+ 508 00c9 9C       		.byte	0x9c
+ 509 00ca FB000000 		.4byte	0xfb
+ 510 00ce 07       		.uleb128 0x7
+ 511 00cf 83020000 		.4byte	.LASF16
+ 512 00d3 01       		.byte	0x1
+ 513 00d4 7F       		.byte	0x7f
+ 514 00d5 6F000000 		.4byte	0x6f
+ 515 00d9 00000000 		.4byte	.LLST0
+ 516 00dd 08       		.uleb128 0x8
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 14
+
+
+ 517 00de 625400   		.ascii	"bT\000"
+ 518 00e1 01       		.byte	0x1
+ 519 00e2 7F       		.byte	0x7f
+ 520 00e3 68000000 		.4byte	0x68
+ 521 00e7 21000000 		.4byte	.LLST1
+ 522 00eb 09       		.uleb128 0x9
+ 523 00ec E3010000 		.4byte	.LASF19
+ 524 00f0 01       		.byte	0x1
+ 525 00f1 81       		.byte	0x81
+ 526 00f2 68000000 		.4byte	0x68
+ 527 00f6 41000000 		.4byte	.LLST2
+ 528 00fa 00       		.byte	0
+ 529 00fb 06       		.uleb128 0x6
+ 530 00fc 5C010000 		.4byte	.LASF18
+ 531 0100 01       		.byte	0x1
+ 532 0101 9E       		.byte	0x9e
+ 533 0102 68000000 		.4byte	0x68
+ 534 0106 00000000 		.4byte	.LFB66
+ 535 010a 44000000 		.4byte	.LFE66-.LFB66
+ 536 010e 01       		.uleb128 0x1
+ 537 010f 9C       		.byte	0x9c
+ 538 0110 41010000 		.4byte	0x141
+ 539 0114 07       		.uleb128 0x7
+ 540 0115 83020000 		.4byte	.LASF16
+ 541 0119 01       		.byte	0x1
+ 542 011a 9E       		.byte	0x9e
+ 543 011b 6F000000 		.4byte	0x6f
+ 544 011f 75000000 		.4byte	.LLST3
+ 545 0123 08       		.uleb128 0x8
+ 546 0124 625400   		.ascii	"bT\000"
+ 547 0127 01       		.byte	0x1
+ 548 0128 9E       		.byte	0x9e
+ 549 0129 68000000 		.4byte	0x68
+ 550 012d 96000000 		.4byte	.LLST4
+ 551 0131 09       		.uleb128 0x9
+ 552 0132 E3010000 		.4byte	.LASF19
+ 553 0136 01       		.byte	0x1
+ 554 0137 A0       		.byte	0xa0
+ 555 0138 68000000 		.4byte	0x68
+ 556 013c B6000000 		.4byte	.LLST5
+ 557 0140 00       		.byte	0
+ 558 0141 0A       		.uleb128 0xa
+ 559 0142 A2010000 		.4byte	.LASF38
+ 560 0146 01       		.byte	0x1
+ 561 0147 22       		.byte	0x22
+ 562 0148 68000000 		.4byte	0x68
+ 563 014c 00000000 		.4byte	.LFB63
+ 564 0150 AC000000 		.4byte	.LFE63-.LFB63
+ 565 0154 01       		.uleb128 0x1
+ 566 0155 9C       		.byte	0x9c
+ 567 0156 6C020000 		.4byte	0x26c
+ 568 015a 09       		.uleb128 0x9
+ 569 015b E3010000 		.4byte	.LASF19
+ 570 015f 01       		.byte	0x1
+ 571 0160 2E       		.byte	0x2e
+ 572 0161 68000000 		.4byte	0x68
+ 573 0165 16010000 		.4byte	.LLST6
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 15
+
+
+ 574 0169 09       		.uleb128 0x9
+ 575 016a 52010000 		.4byte	.LASF20
+ 576 016e 01       		.byte	0x1
+ 577 016f 2F       		.byte	0x2f
+ 578 0170 68000000 		.4byte	0x68
+ 579 0174 61010000 		.4byte	.LLST7
+ 580 0178 09       		.uleb128 0x9
+ 581 0179 24010000 		.4byte	.LASF21
+ 582 017d 01       		.byte	0x1
+ 583 017e 30       		.byte	0x30
+ 584 017f 6F000000 		.4byte	0x6f
+ 585 0183 80010000 		.4byte	.LLST8
+ 586 0187 0B       		.uleb128 0xb
+ 587 0188 08000000 		.4byte	.LVL28
+ 588 018c 9F020000 		.4byte	0x29f
+ 589 0190 0B       		.uleb128 0xb
+ 590 0191 0C000000 		.4byte	.LVL29
+ 591 0195 AA020000 		.4byte	0x2aa
+ 592 0199 0B       		.uleb128 0xb
+ 593 019a 10000000 		.4byte	.LVL30
+ 594 019e B5020000 		.4byte	0x2b5
+ 595 01a2 0B       		.uleb128 0xb
+ 596 01a3 14000000 		.4byte	.LVL31
+ 597 01a7 C0020000 		.4byte	0x2c0
+ 598 01ab 0C       		.uleb128 0xc
+ 599 01ac 1A000000 		.4byte	.LVL32
+ 600 01b0 CB020000 		.4byte	0x2cb
+ 601 01b4 C2010000 		.4byte	0x1c2
+ 602 01b8 0D       		.uleb128 0xd
+ 603 01b9 01       		.uleb128 0x1
+ 604 01ba 50       		.byte	0x50
+ 605 01bb 05       		.uleb128 0x5
+ 606 01bc 03       		.byte	0x3
+ 607 01bd 00000000 		.4byte	isr_halfsec
+ 608 01c1 00       		.byte	0
+ 609 01c2 0C       		.uleb128 0xc
+ 610 01c3 40000000 		.4byte	.LVL34
+ 611 01c7 B5000000 		.4byte	0xb5
+ 612 01cb D6010000 		.4byte	0x1d6
+ 613 01cf 0D       		.uleb128 0xd
+ 614 01d0 01       		.uleb128 0x1
+ 615 01d1 50       		.byte	0x50
+ 616 01d2 02       		.uleb128 0x2
+ 617 01d3 76       		.byte	0x76
+ 618 01d4 00       		.sleb128 0
+ 619 01d5 00       		.byte	0
+ 620 01d6 0C       		.uleb128 0xc
+ 621 01d7 4A000000 		.4byte	.LVL37
+ 622 01db FB000000 		.4byte	0xfb
+ 623 01df E9010000 		.4byte	0x1e9
+ 624 01e3 0D       		.uleb128 0xd
+ 625 01e4 01       		.uleb128 0x1
+ 626 01e5 50       		.byte	0x50
+ 627 01e6 01       		.uleb128 0x1
+ 628 01e7 31       		.byte	0x31
+ 629 01e8 00       		.byte	0
+ 630 01e9 0B       		.uleb128 0xb
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 16
+
+
+ 631 01ea 66000000 		.4byte	.LVL44
+ 632 01ee D6020000 		.4byte	0x2d6
+ 633 01f2 0B       		.uleb128 0xb
+ 634 01f3 6A000000 		.4byte	.LVL45
+ 635 01f7 E1020000 		.4byte	0x2e1
+ 636 01fb 0C       		.uleb128 0xc
+ 637 01fc 72000000 		.4byte	.LVL46
+ 638 0200 EC020000 		.4byte	0x2ec
+ 639 0204 10020000 		.4byte	0x210
+ 640 0208 0D       		.uleb128 0xd
+ 641 0209 01       		.uleb128 0x1
+ 642 020a 50       		.byte	0x50
+ 643 020b 03       		.uleb128 0x3
+ 644 020c 0A       		.byte	0xa
+ 645 020d B80B     		.2byte	0xbb8
+ 646 020f 00       		.byte	0
+ 647 0210 0B       		.uleb128 0xb
+ 648 0211 76000000 		.4byte	.LVL47
+ 649 0215 9F020000 		.4byte	0x29f
+ 650 0219 0B       		.uleb128 0xb
+ 651 021a 7A000000 		.4byte	.LVL48
+ 652 021e C0020000 		.4byte	0x2c0
+ 653 0222 0C       		.uleb128 0xc
+ 654 0223 88000000 		.4byte	.LVL50
+ 655 0227 F7020000 		.4byte	0x2f7
+ 656 022b 35020000 		.4byte	0x235
+ 657 022f 0D       		.uleb128 0xd
+ 658 0230 01       		.uleb128 0x1
+ 659 0231 50       		.byte	0x50
+ 660 0232 01       		.uleb128 0x1
+ 661 0233 48       		.byte	0x48
+ 662 0234 00       		.byte	0
+ 663 0235 0C       		.uleb128 0xc
+ 664 0236 8E000000 		.4byte	.LVL51
+ 665 023a 02030000 		.4byte	0x302
+ 666 023e 48020000 		.4byte	0x248
+ 667 0242 0D       		.uleb128 0xd
+ 668 0243 01       		.uleb128 0x1
+ 669 0244 50       		.byte	0x50
+ 670 0245 01       		.uleb128 0x1
+ 671 0246 3C       		.byte	0x3c
+ 672 0247 00       		.byte	0
+ 673 0248 0C       		.uleb128 0xc
+ 674 0249 9A000000 		.4byte	.LVL52
+ 675 024d F7020000 		.4byte	0x2f7
+ 676 0251 5C020000 		.4byte	0x25c
+ 677 0255 0D       		.uleb128 0xd
+ 678 0256 01       		.uleb128 0x1
+ 679 0257 50       		.byte	0x50
+ 680 0258 02       		.uleb128 0x2
+ 681 0259 08       		.byte	0x8
+ 682 025a 20       		.byte	0x20
+ 683 025b 00       		.byte	0
+ 684 025c 0E       		.uleb128 0xe
+ 685 025d A0000000 		.4byte	.LVL53
+ 686 0261 02030000 		.4byte	0x302
+ 687 0265 0D       		.uleb128 0xd
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 17
+
+
+ 688 0266 01       		.uleb128 0x1
+ 689 0267 50       		.byte	0x50
+ 690 0268 01       		.uleb128 0x1
+ 691 0269 40       		.byte	0x40
+ 692 026a 00       		.byte	0
+ 693 026b 00       		.byte	0
+ 694 026c 0F       		.uleb128 0xf
+ 695 026d 7B020000 		.4byte	.LASF22
+ 696 0271 01       		.byte	0x1
+ 697 0272 1F       		.byte	0x1f
+ 698 0273 68000000 		.4byte	0x68
+ 699 0277 05       		.uleb128 0x5
+ 700 0278 03       		.byte	0x3
+ 701 0279 00000000 		.4byte	bitTime
+ 702 027d 0F       		.uleb128 0xf
+ 703 027e 8D020000 		.4byte	.LASF23
+ 704 0282 01       		.byte	0x1
+ 705 0283 20       		.byte	0x20
+ 706 0284 68000000 		.4byte	0x68
+ 707 0288 05       		.uleb128 0x5
+ 708 0289 03       		.byte	0x3
+ 709 028a 04000000 		.4byte	encode
+ 710 028e 10       		.uleb128 0x10
+ 711 028f 63010000 		.4byte	.LASF39
+ 712 0293 0A       		.byte	0xa
+ 713 0294 1207     		.2byte	0x712
+ 714 0296 9A020000 		.4byte	0x29a
+ 715 029a 11       		.uleb128 0x11
+ 716 029b 76000000 		.4byte	0x76
+ 717 029f 12       		.uleb128 0x12
+ 718 02a0 A7010000 		.4byte	.LASF24
+ 719 02a4 A7010000 		.4byte	.LASF24
+ 720 02a8 04       		.byte	0x4
+ 721 02a9 92       		.byte	0x92
+ 722 02aa 12       		.uleb128 0x12
+ 723 02ab 46010000 		.4byte	.LASF25
+ 724 02af 46010000 		.4byte	.LASF25
+ 725 02b3 05       		.byte	0x5
+ 726 02b4 92       		.byte	0x92
+ 727 02b5 12       		.uleb128 0x12
+ 728 02b6 91010000 		.4byte	.LASF26
+ 729 02ba 91010000 		.4byte	.LASF26
+ 730 02be 06       		.byte	0x6
+ 731 02bf 92       		.byte	0x92
+ 732 02c0 12       		.uleb128 0x12
+ 733 02c1 5A020000 		.4byte	.LASF27
+ 734 02c5 5A020000 		.4byte	.LASF27
+ 735 02c9 07       		.byte	0x7
+ 736 02ca 5A       		.byte	0x5a
+ 737 02cb 12       		.uleb128 0x12
+ 738 02cc 4F000000 		.4byte	.LASF28
+ 739 02d0 4F000000 		.4byte	.LASF28
+ 740 02d4 08       		.byte	0x8
+ 741 02d5 18       		.byte	0x18
+ 742 02d6 12       		.uleb128 0x12
+ 743 02d7 00000000 		.4byte	.LASF29
+ 744 02db 00000000 		.4byte	.LASF29
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 18
+
+
+ 745 02df 04       		.byte	0x4
+ 746 02e0 93       		.byte	0x93
+ 747 02e1 12       		.uleb128 0x12
+ 748 02e2 39000000 		.4byte	.LASF30
+ 749 02e6 39000000 		.4byte	.LASF30
+ 750 02ea 07       		.byte	0x7
+ 751 02eb 5B       		.byte	0x5b
+ 752 02ec 12       		.uleb128 0x12
+ 753 02ed AC020000 		.4byte	.LASF31
+ 754 02f1 AC020000 		.4byte	.LASF31
+ 755 02f5 09       		.byte	0x9
+ 756 02f6 76       		.byte	0x76
+ 757 02f7 12       		.uleb128 0x12
+ 758 02f8 70010000 		.4byte	.LASF32
+ 759 02fc 70010000 		.4byte	.LASF32
+ 760 0300 04       		.byte	0x4
+ 761 0301 BE       		.byte	0xbe
+ 762 0302 12       		.uleb128 0x12
+ 763 0303 C8010000 		.4byte	.LASF33
+ 764 0307 C8010000 		.4byte	.LASF33
+ 765 030b 04       		.byte	0x4
+ 766 030c C3       		.byte	0xc3
+ 767 030d 00       		.byte	0
+ 768              		.section	.debug_abbrev,"",%progbits
+ 769              	.Ldebug_abbrev0:
+ 770 0000 01       		.uleb128 0x1
+ 771 0001 11       		.uleb128 0x11
+ 772 0002 01       		.byte	0x1
+ 773 0003 25       		.uleb128 0x25
+ 774 0004 0E       		.uleb128 0xe
+ 775 0005 13       		.uleb128 0x13
+ 776 0006 0B       		.uleb128 0xb
+ 777 0007 03       		.uleb128 0x3
+ 778 0008 0E       		.uleb128 0xe
+ 779 0009 1B       		.uleb128 0x1b
+ 780 000a 0E       		.uleb128 0xe
+ 781 000b 55       		.uleb128 0x55
+ 782 000c 17       		.uleb128 0x17
+ 783 000d 11       		.uleb128 0x11
+ 784 000e 01       		.uleb128 0x1
+ 785 000f 10       		.uleb128 0x10
+ 786 0010 17       		.uleb128 0x17
+ 787 0011 00       		.byte	0
+ 788 0012 00       		.byte	0
+ 789 0013 02       		.uleb128 0x2
+ 790 0014 24       		.uleb128 0x24
+ 791 0015 00       		.byte	0
+ 792 0016 0B       		.uleb128 0xb
+ 793 0017 0B       		.uleb128 0xb
+ 794 0018 3E       		.uleb128 0x3e
+ 795 0019 0B       		.uleb128 0xb
+ 796 001a 03       		.uleb128 0x3
+ 797 001b 0E       		.uleb128 0xe
+ 798 001c 00       		.byte	0
+ 799 001d 00       		.byte	0
+ 800 001e 03       		.uleb128 0x3
+ 801 001f 16       		.uleb128 0x16
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 19
+
+
+ 802 0020 00       		.byte	0
+ 803 0021 03       		.uleb128 0x3
+ 804 0022 0E       		.uleb128 0xe
+ 805 0023 3A       		.uleb128 0x3a
+ 806 0024 0B       		.uleb128 0xb
+ 807 0025 3B       		.uleb128 0x3b
+ 808 0026 0B       		.uleb128 0xb
+ 809 0027 49       		.uleb128 0x49
+ 810 0028 13       		.uleb128 0x13
+ 811 0029 00       		.byte	0
+ 812 002a 00       		.byte	0
+ 813 002b 04       		.uleb128 0x4
+ 814 002c 24       		.uleb128 0x24
+ 815 002d 00       		.byte	0
+ 816 002e 0B       		.uleb128 0xb
+ 817 002f 0B       		.uleb128 0xb
+ 818 0030 3E       		.uleb128 0x3e
+ 819 0031 0B       		.uleb128 0xb
+ 820 0032 03       		.uleb128 0x3
+ 821 0033 08       		.uleb128 0x8
+ 822 0034 00       		.byte	0
+ 823 0035 00       		.byte	0
+ 824 0036 05       		.uleb128 0x5
+ 825 0037 2E       		.uleb128 0x2e
+ 826 0038 00       		.byte	0
+ 827 0039 3F       		.uleb128 0x3f
+ 828 003a 19       		.uleb128 0x19
+ 829 003b 03       		.uleb128 0x3
+ 830 003c 0E       		.uleb128 0xe
+ 831 003d 3A       		.uleb128 0x3a
+ 832 003e 0B       		.uleb128 0xb
+ 833 003f 3B       		.uleb128 0x3b
+ 834 0040 0B       		.uleb128 0xb
+ 835 0041 27       		.uleb128 0x27
+ 836 0042 19       		.uleb128 0x19
+ 837 0043 11       		.uleb128 0x11
+ 838 0044 01       		.uleb128 0x1
+ 839 0045 12       		.uleb128 0x12
+ 840 0046 06       		.uleb128 0x6
+ 841 0047 40       		.uleb128 0x40
+ 842 0048 18       		.uleb128 0x18
+ 843 0049 9742     		.uleb128 0x2117
+ 844 004b 19       		.uleb128 0x19
+ 845 004c 00       		.byte	0
+ 846 004d 00       		.byte	0
+ 847 004e 06       		.uleb128 0x6
+ 848 004f 2E       		.uleb128 0x2e
+ 849 0050 01       		.byte	0x1
+ 850 0051 3F       		.uleb128 0x3f
+ 851 0052 19       		.uleb128 0x19
+ 852 0053 03       		.uleb128 0x3
+ 853 0054 0E       		.uleb128 0xe
+ 854 0055 3A       		.uleb128 0x3a
+ 855 0056 0B       		.uleb128 0xb
+ 856 0057 3B       		.uleb128 0x3b
+ 857 0058 0B       		.uleb128 0xb
+ 858 0059 27       		.uleb128 0x27
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 20
+
+
+ 859 005a 19       		.uleb128 0x19
+ 860 005b 49       		.uleb128 0x49
+ 861 005c 13       		.uleb128 0x13
+ 862 005d 11       		.uleb128 0x11
+ 863 005e 01       		.uleb128 0x1
+ 864 005f 12       		.uleb128 0x12
+ 865 0060 06       		.uleb128 0x6
+ 866 0061 40       		.uleb128 0x40
+ 867 0062 18       		.uleb128 0x18
+ 868 0063 9742     		.uleb128 0x2117
+ 869 0065 19       		.uleb128 0x19
+ 870 0066 01       		.uleb128 0x1
+ 871 0067 13       		.uleb128 0x13
+ 872 0068 00       		.byte	0
+ 873 0069 00       		.byte	0
+ 874 006a 07       		.uleb128 0x7
+ 875 006b 05       		.uleb128 0x5
+ 876 006c 00       		.byte	0
+ 877 006d 03       		.uleb128 0x3
+ 878 006e 0E       		.uleb128 0xe
+ 879 006f 3A       		.uleb128 0x3a
+ 880 0070 0B       		.uleb128 0xb
+ 881 0071 3B       		.uleb128 0x3b
+ 882 0072 0B       		.uleb128 0xb
+ 883 0073 49       		.uleb128 0x49
+ 884 0074 13       		.uleb128 0x13
+ 885 0075 02       		.uleb128 0x2
+ 886 0076 17       		.uleb128 0x17
+ 887 0077 00       		.byte	0
+ 888 0078 00       		.byte	0
+ 889 0079 08       		.uleb128 0x8
+ 890 007a 05       		.uleb128 0x5
+ 891 007b 00       		.byte	0
+ 892 007c 03       		.uleb128 0x3
+ 893 007d 08       		.uleb128 0x8
+ 894 007e 3A       		.uleb128 0x3a
+ 895 007f 0B       		.uleb128 0xb
+ 896 0080 3B       		.uleb128 0x3b
+ 897 0081 0B       		.uleb128 0xb
+ 898 0082 49       		.uleb128 0x49
+ 899 0083 13       		.uleb128 0x13
+ 900 0084 02       		.uleb128 0x2
+ 901 0085 17       		.uleb128 0x17
+ 902 0086 00       		.byte	0
+ 903 0087 00       		.byte	0
+ 904 0088 09       		.uleb128 0x9
+ 905 0089 34       		.uleb128 0x34
+ 906 008a 00       		.byte	0
+ 907 008b 03       		.uleb128 0x3
+ 908 008c 0E       		.uleb128 0xe
+ 909 008d 3A       		.uleb128 0x3a
+ 910 008e 0B       		.uleb128 0xb
+ 911 008f 3B       		.uleb128 0x3b
+ 912 0090 0B       		.uleb128 0xb
+ 913 0091 49       		.uleb128 0x49
+ 914 0092 13       		.uleb128 0x13
+ 915 0093 02       		.uleb128 0x2
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 21
+
+
+ 916 0094 17       		.uleb128 0x17
+ 917 0095 00       		.byte	0
+ 918 0096 00       		.byte	0
+ 919 0097 0A       		.uleb128 0xa
+ 920 0098 2E       		.uleb128 0x2e
+ 921 0099 01       		.byte	0x1
+ 922 009a 3F       		.uleb128 0x3f
+ 923 009b 19       		.uleb128 0x19
+ 924 009c 03       		.uleb128 0x3
+ 925 009d 0E       		.uleb128 0xe
+ 926 009e 3A       		.uleb128 0x3a
+ 927 009f 0B       		.uleb128 0xb
+ 928 00a0 3B       		.uleb128 0x3b
+ 929 00a1 0B       		.uleb128 0xb
+ 930 00a2 27       		.uleb128 0x27
+ 931 00a3 19       		.uleb128 0x19
+ 932 00a4 49       		.uleb128 0x49
+ 933 00a5 13       		.uleb128 0x13
+ 934 00a6 8701     		.uleb128 0x87
+ 935 00a8 19       		.uleb128 0x19
+ 936 00a9 11       		.uleb128 0x11
+ 937 00aa 01       		.uleb128 0x1
+ 938 00ab 12       		.uleb128 0x12
+ 939 00ac 06       		.uleb128 0x6
+ 940 00ad 40       		.uleb128 0x40
+ 941 00ae 18       		.uleb128 0x18
+ 942 00af 9742     		.uleb128 0x2117
+ 943 00b1 19       		.uleb128 0x19
+ 944 00b2 01       		.uleb128 0x1
+ 945 00b3 13       		.uleb128 0x13
+ 946 00b4 00       		.byte	0
+ 947 00b5 00       		.byte	0
+ 948 00b6 0B       		.uleb128 0xb
+ 949 00b7 898201   		.uleb128 0x4109
+ 950 00ba 00       		.byte	0
+ 951 00bb 11       		.uleb128 0x11
+ 952 00bc 01       		.uleb128 0x1
+ 953 00bd 31       		.uleb128 0x31
+ 954 00be 13       		.uleb128 0x13
+ 955 00bf 00       		.byte	0
+ 956 00c0 00       		.byte	0
+ 957 00c1 0C       		.uleb128 0xc
+ 958 00c2 898201   		.uleb128 0x4109
+ 959 00c5 01       		.byte	0x1
+ 960 00c6 11       		.uleb128 0x11
+ 961 00c7 01       		.uleb128 0x1
+ 962 00c8 31       		.uleb128 0x31
+ 963 00c9 13       		.uleb128 0x13
+ 964 00ca 01       		.uleb128 0x1
+ 965 00cb 13       		.uleb128 0x13
+ 966 00cc 00       		.byte	0
+ 967 00cd 00       		.byte	0
+ 968 00ce 0D       		.uleb128 0xd
+ 969 00cf 8A8201   		.uleb128 0x410a
+ 970 00d2 00       		.byte	0
+ 971 00d3 02       		.uleb128 0x2
+ 972 00d4 18       		.uleb128 0x18
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 22
+
+
+ 973 00d5 9142     		.uleb128 0x2111
+ 974 00d7 18       		.uleb128 0x18
+ 975 00d8 00       		.byte	0
+ 976 00d9 00       		.byte	0
+ 977 00da 0E       		.uleb128 0xe
+ 978 00db 898201   		.uleb128 0x4109
+ 979 00de 01       		.byte	0x1
+ 980 00df 11       		.uleb128 0x11
+ 981 00e0 01       		.uleb128 0x1
+ 982 00e1 31       		.uleb128 0x31
+ 983 00e2 13       		.uleb128 0x13
+ 984 00e3 00       		.byte	0
+ 985 00e4 00       		.byte	0
+ 986 00e5 0F       		.uleb128 0xf
+ 987 00e6 34       		.uleb128 0x34
+ 988 00e7 00       		.byte	0
+ 989 00e8 03       		.uleb128 0x3
+ 990 00e9 0E       		.uleb128 0xe
+ 991 00ea 3A       		.uleb128 0x3a
+ 992 00eb 0B       		.uleb128 0xb
+ 993 00ec 3B       		.uleb128 0x3b
+ 994 00ed 0B       		.uleb128 0xb
+ 995 00ee 49       		.uleb128 0x49
+ 996 00ef 13       		.uleb128 0x13
+ 997 00f0 02       		.uleb128 0x2
+ 998 00f1 18       		.uleb128 0x18
+ 999 00f2 00       		.byte	0
+ 1000 00f3 00       		.byte	0
+ 1001 00f4 10       		.uleb128 0x10
+ 1002 00f5 34       		.uleb128 0x34
+ 1003 00f6 00       		.byte	0
+ 1004 00f7 03       		.uleb128 0x3
+ 1005 00f8 0E       		.uleb128 0xe
+ 1006 00f9 3A       		.uleb128 0x3a
+ 1007 00fa 0B       		.uleb128 0xb
+ 1008 00fb 3B       		.uleb128 0x3b
+ 1009 00fc 05       		.uleb128 0x5
+ 1010 00fd 49       		.uleb128 0x49
+ 1011 00fe 13       		.uleb128 0x13
+ 1012 00ff 3F       		.uleb128 0x3f
+ 1013 0100 19       		.uleb128 0x19
+ 1014 0101 3C       		.uleb128 0x3c
+ 1015 0102 19       		.uleb128 0x19
+ 1016 0103 00       		.byte	0
+ 1017 0104 00       		.byte	0
+ 1018 0105 11       		.uleb128 0x11
+ 1019 0106 35       		.uleb128 0x35
+ 1020 0107 00       		.byte	0
+ 1021 0108 49       		.uleb128 0x49
+ 1022 0109 13       		.uleb128 0x13
+ 1023 010a 00       		.byte	0
+ 1024 010b 00       		.byte	0
+ 1025 010c 12       		.uleb128 0x12
+ 1026 010d 2E       		.uleb128 0x2e
+ 1027 010e 00       		.byte	0
+ 1028 010f 3F       		.uleb128 0x3f
+ 1029 0110 19       		.uleb128 0x19
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 23
+
+
+ 1030 0111 3C       		.uleb128 0x3c
+ 1031 0112 19       		.uleb128 0x19
+ 1032 0113 6E       		.uleb128 0x6e
+ 1033 0114 0E       		.uleb128 0xe
+ 1034 0115 03       		.uleb128 0x3
+ 1035 0116 0E       		.uleb128 0xe
+ 1036 0117 3A       		.uleb128 0x3a
+ 1037 0118 0B       		.uleb128 0xb
+ 1038 0119 3B       		.uleb128 0x3b
+ 1039 011a 0B       		.uleb128 0xb
+ 1040 011b 00       		.byte	0
+ 1041 011c 00       		.byte	0
+ 1042 011d 00       		.byte	0
+ 1043              		.section	.debug_loc,"",%progbits
+ 1044              	.Ldebug_loc0:
+ 1045              	.LLST0:
+ 1046 0000 00000000 		.4byte	.LVL0
+ 1047 0004 26000000 		.4byte	.LVL9
+ 1048 0008 0100     		.2byte	0x1
+ 1049 000a 50       		.byte	0x50
+ 1050 000b 26000000 		.4byte	.LVL9
+ 1051 000f 28000000 		.4byte	.LFE65
+ 1052 0013 0400     		.2byte	0x4
+ 1053 0015 F3       		.byte	0xf3
+ 1054 0016 01       		.uleb128 0x1
+ 1055 0017 50       		.byte	0x50
+ 1056 0018 9F       		.byte	0x9f
+ 1057 0019 00000000 		.4byte	0
+ 1058 001d 00000000 		.4byte	0
+ 1059              	.LLST1:
+ 1060 0021 00000000 		.4byte	.LVL0
+ 1061 0025 02000000 		.4byte	.LVL1
+ 1062 0029 0100     		.2byte	0x1
+ 1063 002b 51       		.byte	0x51
+ 1064 002c 02000000 		.4byte	.LVL1
+ 1065 0030 28000000 		.4byte	.LFE65
+ 1066 0034 0300     		.2byte	0x3
+ 1067 0036 71       		.byte	0x71
+ 1068 0037 01       		.sleb128 1
+ 1069 0038 9F       		.byte	0x9f
+ 1070 0039 00000000 		.4byte	0
+ 1071 003d 00000000 		.4byte	0
+ 1072              	.LLST2:
+ 1073 0041 12000000 		.4byte	.LVL2
+ 1074 0045 14000000 		.4byte	.LVL3
+ 1075 0049 0100     		.2byte	0x1
+ 1076 004b 53       		.byte	0x53
+ 1077 004c 18000000 		.4byte	.LVL4
+ 1078 0050 1A000000 		.4byte	.LVL5
+ 1079 0054 0100     		.2byte	0x1
+ 1080 0056 53       		.byte	0x53
+ 1081 0057 1E000000 		.4byte	.LVL6
+ 1082 005b 20000000 		.4byte	.LVL7
+ 1083 005f 0100     		.2byte	0x1
+ 1084 0061 53       		.byte	0x53
+ 1085 0062 24000000 		.4byte	.LVL8
+ 1086 0066 28000000 		.4byte	.LFE65
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 24
+
+
+ 1087 006a 0100     		.2byte	0x1
+ 1088 006c 53       		.byte	0x53
+ 1089 006d 00000000 		.4byte	0
+ 1090 0071 00000000 		.4byte	0
+ 1091              	.LLST3:
+ 1092 0075 00000000 		.4byte	.LVL10
+ 1093 0079 42000000 		.4byte	.LVL27
+ 1094 007d 0100     		.2byte	0x1
+ 1095 007f 50       		.byte	0x50
+ 1096 0080 42000000 		.4byte	.LVL27
+ 1097 0084 44000000 		.4byte	.LFE66
+ 1098 0088 0400     		.2byte	0x4
+ 1099 008a F3       		.byte	0xf3
+ 1100 008b 01       		.uleb128 0x1
+ 1101 008c 50       		.byte	0x50
+ 1102 008d 9F       		.byte	0x9f
+ 1103 008e 00000000 		.4byte	0
+ 1104 0092 00000000 		.4byte	0
+ 1105              	.LLST4:
+ 1106 0096 00000000 		.4byte	.LVL10
+ 1107 009a 02000000 		.4byte	.LVL11
+ 1108 009e 0100     		.2byte	0x1
+ 1109 00a0 51       		.byte	0x51
+ 1110 00a1 02000000 		.4byte	.LVL11
+ 1111 00a5 44000000 		.4byte	.LFE66
+ 1112 00a9 0300     		.2byte	0x3
+ 1113 00ab 71       		.byte	0x71
+ 1114 00ac 05       		.sleb128 5
+ 1115 00ad 9F       		.byte	0x9f
+ 1116 00ae 00000000 		.4byte	0
+ 1117 00b2 00000000 		.4byte	0
+ 1118              	.LLST5:
+ 1119 00b6 16000000 		.4byte	.LVL12
+ 1120 00ba 18000000 		.4byte	.LVL13
+ 1121 00be 0100     		.2byte	0x1
+ 1122 00c0 53       		.byte	0x53
+ 1123 00c1 1C000000 		.4byte	.LVL14
+ 1124 00c5 1E000000 		.4byte	.LVL15
+ 1125 00c9 0100     		.2byte	0x1
+ 1126 00cb 53       		.byte	0x53
+ 1127 00cc 22000000 		.4byte	.LVL16
+ 1128 00d0 24000000 		.4byte	.LVL17
+ 1129 00d4 0100     		.2byte	0x1
+ 1130 00d6 53       		.byte	0x53
+ 1131 00d7 28000000 		.4byte	.LVL18
+ 1132 00db 2A000000 		.4byte	.LVL19
+ 1133 00df 0100     		.2byte	0x1
+ 1134 00e1 53       		.byte	0x53
+ 1135 00e2 2E000000 		.4byte	.LVL20
+ 1136 00e6 30000000 		.4byte	.LVL21
+ 1137 00ea 0100     		.2byte	0x1
+ 1138 00ec 53       		.byte	0x53
+ 1139 00ed 34000000 		.4byte	.LVL22
+ 1140 00f1 36000000 		.4byte	.LVL23
+ 1141 00f5 0100     		.2byte	0x1
+ 1142 00f7 53       		.byte	0x53
+ 1143 00f8 3A000000 		.4byte	.LVL24
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 25
+
+
+ 1144 00fc 3C000000 		.4byte	.LVL25
+ 1145 0100 0100     		.2byte	0x1
+ 1146 0102 53       		.byte	0x53
+ 1147 0103 40000000 		.4byte	.LVL26
+ 1148 0107 44000000 		.4byte	.LFE66
+ 1149 010b 0100     		.2byte	0x1
+ 1150 010d 53       		.byte	0x53
+ 1151 010e 00000000 		.4byte	0
+ 1152 0112 00000000 		.4byte	0
+ 1153              	.LLST6:
+ 1154 0116 1A000000 		.4byte	.LVL32
+ 1155 011a 20000000 		.4byte	.LVL33
+ 1156 011e 0200     		.2byte	0x2
+ 1157 0120 30       		.byte	0x30
+ 1158 0121 9F       		.byte	0x9f
+ 1159 0122 20000000 		.4byte	.LVL33
+ 1160 0126 42000000 		.4byte	.LVL35
+ 1161 012a 0100     		.2byte	0x1
+ 1162 012c 54       		.byte	0x54
+ 1163 012d 42000000 		.4byte	.LVL35
+ 1164 0131 44000000 		.4byte	.LVL36
+ 1165 0135 0100     		.2byte	0x1
+ 1166 0137 50       		.byte	0x50
+ 1167 0138 44000000 		.4byte	.LVL36
+ 1168 013c 4C000000 		.4byte	.LVL38
+ 1169 0140 0100     		.2byte	0x1
+ 1170 0142 54       		.byte	0x54
+ 1171 0143 4C000000 		.4byte	.LVL38
+ 1172 0147 4E000000 		.4byte	.LVL39
+ 1173 014b 0100     		.2byte	0x1
+ 1174 014d 50       		.byte	0x50
+ 1175 014e 4E000000 		.4byte	.LVL39
+ 1176 0152 AC000000 		.4byte	.LFE63
+ 1177 0156 0100     		.2byte	0x1
+ 1178 0158 54       		.byte	0x54
+ 1179 0159 00000000 		.4byte	0
+ 1180 015d 00000000 		.4byte	0
+ 1181              	.LLST7:
+ 1182 0161 1A000000 		.4byte	.LVL32
+ 1183 0165 20000000 		.4byte	.LVL33
+ 1184 0169 0200     		.2byte	0x2
+ 1185 016b 30       		.byte	0x30
+ 1186 016c 9F       		.byte	0x9f
+ 1187 016d 20000000 		.4byte	.LVL33
+ 1188 0171 AC000000 		.4byte	.LFE63
+ 1189 0175 0100     		.2byte	0x1
+ 1190 0177 55       		.byte	0x55
+ 1191 0178 00000000 		.4byte	0
+ 1192 017c 00000000 		.4byte	0
+ 1193              	.LLST8:
+ 1194 0180 1A000000 		.4byte	.LVL32
+ 1195 0184 20000000 		.4byte	.LVL33
+ 1196 0188 0200     		.2byte	0x2
+ 1197 018a 31       		.byte	0x31
+ 1198 018b 9F       		.byte	0x9f
+ 1199 018c 20000000 		.4byte	.LVL33
+ 1200 0190 60000000 		.4byte	.LVL42
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 26
+
+
+ 1201 0194 0100     		.2byte	0x1
+ 1202 0196 56       		.byte	0x56
+ 1203 0197 62000000 		.4byte	.LVL43
+ 1204 019b AC000000 		.4byte	.LFE63
+ 1205 019f 0100     		.2byte	0x1
+ 1206 01a1 56       		.byte	0x56
+ 1207 01a2 00000000 		.4byte	0
+ 1208 01a6 00000000 		.4byte	0
+ 1209              		.section	.debug_aranges,"",%progbits
+ 1210 0000 34000000 		.4byte	0x34
+ 1211 0004 0200     		.2byte	0x2
+ 1212 0006 00000000 		.4byte	.Ldebug_info0
+ 1213 000a 04       		.byte	0x4
+ 1214 000b 00       		.byte	0
+ 1215 000c 0000     		.2byte	0
+ 1216 000e 0000     		.2byte	0
+ 1217 0010 00000000 		.4byte	.LFB64
+ 1218 0014 2C000000 		.4byte	.LFE64-.LFB64
+ 1219 0018 00000000 		.4byte	.LFB65
+ 1220 001c 28000000 		.4byte	.LFE65-.LFB65
+ 1221 0020 00000000 		.4byte	.LFB66
+ 1222 0024 44000000 		.4byte	.LFE66-.LFB66
+ 1223 0028 00000000 		.4byte	.LFB63
+ 1224 002c AC000000 		.4byte	.LFE63-.LFB63
+ 1225 0030 00000000 		.4byte	0
+ 1226 0034 00000000 		.4byte	0
+ 1227              		.section	.debug_ranges,"",%progbits
+ 1228              	.Ldebug_ranges0:
+ 1229 0000 00000000 		.4byte	.LFB64
+ 1230 0004 2C000000 		.4byte	.LFE64
+ 1231 0008 00000000 		.4byte	.LFB65
+ 1232 000c 28000000 		.4byte	.LFE65
+ 1233 0010 00000000 		.4byte	.LFB66
+ 1234 0014 44000000 		.4byte	.LFE66
+ 1235 0018 00000000 		.4byte	.LFB63
+ 1236 001c AC000000 		.4byte	.LFE63
+ 1237 0020 00000000 		.4byte	0
+ 1238 0024 00000000 		.4byte	0
+ 1239              		.section	.debug_line,"",%progbits
+ 1240              	.Ldebug_line0:
+ 1241 0000 2E020000 		.section	.debug_str,"MS",%progbits,1
+ 1241      02009A01 
+ 1241      00000201 
+ 1241      FB0E0D00 
+ 1241      01010101 
+ 1242              	.LASF29:
+ 1243 0000 50574D5F 		.ascii	"PWM_Modulator_Stop\000"
+ 1243      4D6F6475 
+ 1243      6C61746F 
+ 1243      725F5374 
+ 1243      6F7000
+ 1244              	.LASF9:
+ 1245 0013 5F5F696E 		.ascii	"__int32_t\000"
+ 1245      7433325F 
+ 1245      7400
+ 1246              	.LASF4:
+ 1247 001d 6C6F6E67 		.ascii	"long int\000"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 27
+
+
+ 1247      20696E74 
+ 1247      00
+ 1248              	.LASF3:
+ 1249 0026 73686F72 		.ascii	"short unsigned int\000"
+ 1249      7420756E 
+ 1249      7369676E 
+ 1249      65642069 
+ 1249      6E7400
+ 1250              	.LASF30:
+ 1251 0039 50574D5F 		.ascii	"PWM_Switch_Timer_Stop\000"
+ 1251      53776974 
+ 1251      63685F54 
+ 1251      696D6572 
+ 1251      5F53746F 
+ 1252              	.LASF28:
+ 1253 004f 6973725F 		.ascii	"isr_halfsec_StartEx\000"
+ 1253      68616C66 
+ 1253      7365635F 
+ 1253      53746172 
+ 1253      74457800 
+ 1254              	.LASF10:
+ 1255 0063 696E7433 		.ascii	"int32_t\000"
+ 1255      325F7400 
+ 1256              	.LASF11:
+ 1257 006b 666C6F61 		.ascii	"float\000"
+ 1257      7400
+ 1258              	.LASF7:
+ 1259 0071 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1259      206C6F6E 
+ 1259      6720756E 
+ 1259      7369676E 
+ 1259      65642069 
+ 1260              	.LASF1:
+ 1261 0088 756E7369 		.ascii	"unsigned char\000"
+ 1261      676E6564 
+ 1261      20636861 
+ 1261      7200
+ 1262              	.LASF34:
+ 1263 0096 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1263      43313120 
+ 1263      352E342E 
+ 1263      31203230 
+ 1263      31363036 
+ 1264 00c9 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 1264      20726576 
+ 1264      6973696F 
+ 1264      6E203233 
+ 1264      37373135 
+ 1265 00fc 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 1265      66756E63 
+ 1265      74696F6E 
+ 1265      2D736563 
+ 1265      74696F6E 
+ 1266              	.LASF21:
+ 1267 0124 64617461 		.ascii	"data_to_be_sent\000"
+ 1267      5F746F5F 
+ 1267      62655F73 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 28
+
+
+ 1267      656E7400 
+ 1268              	.LASF5:
+ 1269 0134 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1269      20756E73 
+ 1269      69676E65 
+ 1269      6420696E 
+ 1269      7400
+ 1270              	.LASF25:
+ 1271 0146 50574D5F 		.ascii	"PWM_1_Start\000"
+ 1271      315F5374 
+ 1271      61727400 
+ 1272              	.LASF20:
+ 1273 0152 64617461 		.ascii	"data_turn\000"
+ 1273      5F747572 
+ 1273      6E00
+ 1274              	.LASF18:
+ 1275 015c 4465636F 		.ascii	"Decode\000"
+ 1275      646500
+ 1276              	.LASF39:
+ 1277 0163 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1277      52784275 
+ 1277      66666572 
+ 1277      00
+ 1278              	.LASF32:
+ 1279 0170 50574D5F 		.ascii	"PWM_Modulator_WritePeriod\000"
+ 1279      4D6F6475 
+ 1279      6C61746F 
+ 1279      725F5772 
+ 1279      69746550 
+ 1280              	.LASF12:
+ 1281 018a 646F7562 		.ascii	"double\000"
+ 1281      6C6500
+ 1282              	.LASF26:
+ 1283 0191 50574D5F 		.ascii	"PWM_2_Start\000"
+ 1283      325F5374 
+ 1283      61727400 
+ 1284              	.LASF17:
+ 1285 019d 44617461 		.ascii	"Data\000"
+ 1285      00
+ 1286              	.LASF38:
+ 1287 01a2 6D61696E 		.ascii	"main\000"
+ 1287      00
+ 1288              	.LASF24:
+ 1289 01a7 50574D5F 		.ascii	"PWM_Modulator_Start\000"
+ 1289      4D6F6475 
+ 1289      6C61746F 
+ 1289      725F5374 
+ 1289      61727400 
+ 1290              	.LASF8:
+ 1291 01bb 756E7369 		.ascii	"unsigned int\000"
+ 1291      676E6564 
+ 1291      20696E74 
+ 1291      00
+ 1292              	.LASF33:
+ 1293 01c8 50574D5F 		.ascii	"PWM_Modulator_WriteCompare\000"
+ 1293      4D6F6475 
+ 1293      6C61746F 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 29
+
+
+ 1293      725F5772 
+ 1293      69746543 
+ 1294              	.LASF19:
+ 1295 01e3 62697443 		.ascii	"bitCase\000"
+ 1295      61736500 
+ 1296              	.LASF36:
+ 1297 01eb 433A5C53 		.ascii	"C:\\SPB_Data\\Documents\\UACSCode\\UACS\\HighFreqFS"
+ 1297      50425F44 
+ 1297      6174615C 
+ 1297      446F6375 
+ 1297      6D656E74 
+ 1298 0219 4B5C4869 		.ascii	"K\\HighFSKTx.cydsn\000"
+ 1298      67684653 
+ 1298      4B54782E 
+ 1298      63796473 
+ 1298      6E00
+ 1299              	.LASF14:
+ 1300 022b 6C6F6E67 		.ascii	"long double\000"
+ 1300      20646F75 
+ 1300      626C6500 
+ 1301              	.LASF15:
+ 1302 0237 73697A65 		.ascii	"sizetype\000"
+ 1302      74797065 
+ 1302      00
+ 1303              	.LASF6:
+ 1304 0240 6C6F6E67 		.ascii	"long long int\000"
+ 1304      206C6F6E 
+ 1304      6720696E 
+ 1304      7400
+ 1305              	.LASF35:
+ 1306 024e 6D61696E 		.ascii	"main.c\000"
+ 1306      2E6300
+ 1307              	.LASF13:
+ 1308 0255 63686172 		.ascii	"char\000"
+ 1308      00
+ 1309              	.LASF27:
+ 1310 025a 50574D5F 		.ascii	"PWM_Switch_Timer_Start\000"
+ 1310      53776974 
+ 1310      63685F54 
+ 1310      696D6572 
+ 1310      5F537461 
+ 1311              	.LASF2:
+ 1312 0271 73686F72 		.ascii	"short int\000"
+ 1312      7420696E 
+ 1312      7400
+ 1313              	.LASF22:
+ 1314 027b 62697454 		.ascii	"bitTime\000"
+ 1314      696D6500 
+ 1315              	.LASF16:
+ 1316 0283 6865785F 		.ascii	"hex_value\000"
+ 1316      76616C75 
+ 1316      6500
+ 1317              	.LASF23:
+ 1318 028d 656E636F 		.ascii	"encode\000"
+ 1318      646500
+ 1319              	.LASF37:
+ 1320 0294 6973725F 		.ascii	"isr_halfsec\000"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\ccv4LAVx.s 			page 30
+
+
+ 1320      68616C66 
+ 1320      73656300 
+ 1321              	.LASF0:
+ 1322 02a0 7369676E 		.ascii	"signed char\000"
+ 1322      65642063 
+ 1322      68617200 
+ 1323              	.LASF31:
+ 1324 02ac 43794465 		.ascii	"CyDelay\000"
+ 1324      6C617900 
+ 1325              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

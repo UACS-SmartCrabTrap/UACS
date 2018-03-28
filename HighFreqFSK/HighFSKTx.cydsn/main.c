@@ -21,15 +21,19 @@
 #define ONE 0x1
 #define DATA_LENGTH 4
 #define DECODE_VALUE 0x01
+//
+#define PREFIX_BIT_LENGTH 6
+#define PREFIX_MESSAGE 0x11111111
 
 /*Function Prototypes*/
 int Data(unsigned int hex_value, int bT);
 int Decode(unsigned int hex_value, int bT);
+int PreFix(unsigned int hex_value, int prefixCount);
 CY_ISR_PROTO(isr_halfsec); // High F Interrupts
 
 /*Global Variables*/
 static int bitTime = 0;
-static int encode = 0;
+static int prefixTime = 0;
 
 int main(void)
 {
@@ -52,7 +56,8 @@ int main(void)
         switch(bitTime){
             // ENCODE
             case 0:
-                bitCase = ONE;
+                data_to_be_sent = PREFIX_MESSAGE; 
+                bitCase = PreFix(data_to_be_sent , prefixTime);
                 break; 
             // DATA
             case 1:
@@ -74,7 +79,9 @@ int main(void)
                 break;
             case 13:
                 bitTime = 0;
-                encode = 0;
+                //encode used to transmit 7 1's for the prefix 
+                //reset here to be ready for case 0 
+                prefixTime = 0;
                 data_turn++;
                 data_to_be_sent <<= 1;
                 //Once data to be sent can't be contained in a nibble, reset to 0x1
@@ -104,12 +111,16 @@ int main(void)
     
 }//end main()
 
+
+// Interrupt triggered on a 0.5s timer timeout
+// Will increment prefixTime counter for the 1st 8 bits
+// Then move on to incrementing the message bit counter
 CY_ISR(isr_halfsec)
 {
-    if((bitTime == 0) && (encode < 7)){
-        encode++;
+    if((bitTime == 0) && (prefixTime <= PREFIX_BIT_LENGTH)){
+        prefixTime++;
     }
-    else if(encode > 6){
+    else if(prefixTime > PREFIX_BIT_LENGTH){
         bitTime++;
     }
 }//end CY_ISR(isr_halfsec)
@@ -147,7 +158,7 @@ int Data(unsigned int hex_value, int bT)
 
 /*
  * function: int Decode(unsigned int hex_value, int bT)
- * parameters: hex_value - a five bit value specifying what data you want to send
+ * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
  *             bT - the current bit time
  * returns: bitCase - a high or low signal to be sent to an output pin
  * description: This function takes in a hex value and sends it out a bit at a time as a high or
@@ -186,3 +197,50 @@ int Decode(unsigned int hex_value, int bT)
     } //end switch(bT)
     return bitCase;
 }//end Decode()
+
+
+/*
+ * function: int PreFix(unsigned int hex_value, int bT)
+ * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
+ *             bT - the current bit time
+ * returns: bitCase - a high or low signal to be sent to an output pin
+ * description: This function takes in a hex value and sends it out a bit at a time as a high or
+ *  low signal depending on the bit time. Used only to set desired decode encryption.
+ */
+int PreFix(unsigned int hex_value, int prefixCount)
+{   
+    int prefixBit;
+    
+    switch(prefixCount){
+        case 0:
+           prefixBit = (hex_value & BIT_7_MASK) >> 7;
+            break;
+        case 1:
+            prefixBit = (hex_value & BIT_6_MASK) >> 6;
+            break; 
+        case 2:
+            prefixBit = (hex_value & BIT_5_MASK) >> 5;
+            break; 
+        case 3:
+            prefixBit = (hex_value & BIT_4_MASK) >> 4;
+            break;
+        case 4:
+            prefixBit = (hex_value & BIT_3_MASK) >> 3;
+            break; 
+        case 5:
+            prefixBit = (hex_value & BIT_2_MASK) >> 2;
+            break; 
+        case 6:
+            prefixBit = (hex_value & BIT_1_MASK) >> 1;
+            break; 
+        case 7:
+            prefixBit = (hex_value & BIT_0_MASK);
+            break;
+        default:
+            break;
+ 
+    }
+    
+    return prefixBit; 
+
+}

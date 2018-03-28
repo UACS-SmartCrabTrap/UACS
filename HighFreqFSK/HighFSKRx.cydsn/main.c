@@ -14,7 +14,7 @@
 #include "LCD_Char.h"
 
 //isr prototype
-CY_ISR_PROTO(LevelCount);
+CY_ISR_PROTO(HighF_LevelCount);
 
 static uint16 levelCounter = 0;
 static uint8 zeroCount = 0; 
@@ -43,6 +43,7 @@ int main(void)
     HighF_Ref_OpAmp_Start();
     HighF_PGA_Start() ; 
     HighF_OutComp_Start();
+    HighF_LevelCount_Start();
     HighF_LevelCountISR_StartEx(HighF_LevelCount);
     LCD_Char_Start();
     
@@ -67,7 +68,7 @@ int main(void)
 CY_ISR(HighF_LevelCount){
     levelCounter++;
     
-    if(OutComp_GetCompare() != 0){
+    if(HighF_OutComp_GetCompare() != 0){
         oneCount++;
     }else{
         zeroCount++;

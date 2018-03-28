@@ -1,0 +1,905 @@
+##################################################################### 
+                    Table of Contents
+===================================================================== 
+	1::Clock Frequency Summary
+	2::Clock Relationship Summary
+	3::Datasheet Report
+		3.1::Setup to Clock
+		3.2::Clock to Out
+		3.3::Pad to Pad
+	4::Path Details for Clock Frequency Summary
+		4.1::Critical Path Report for HighF_DelayClk
+		4.2::Critical Path Report for HighF_LevelCountClk
+	5::Path Details for Clock Relationship Summary
+		5.1::Critical Path Report for (HighF_DelayClk:R vs. HighF_DelayClk:R)
+		5.2::Critical Path Report for (HighF_LevelCountClk:R vs. HighF_LevelCountClk:R)
+===================================================================== 
+                    End of Table of Contents
+##################################################################### 
+
+##################################################################### 
+                    1::Clock Frequency Summary
+===================================================================== 
+Number of clocks: 7
+Clock: CyBUS_CLK            | N/A                   | Target: 24.00 MHz  | 
+Clock: CyILO                | N/A                   | Target: 0.00 MHz   | 
+Clock: CyIMO                | N/A                   | Target: 3.00 MHz   | 
+Clock: CyMASTER_CLK         | N/A                   | Target: 24.00 MHz  | 
+Clock: CyPLL_OUT            | N/A                   | Target: 24.00 MHz  | 
+Clock: HighF_DelayClk       | Frequency: 92.30 MHz  | Target: 0.00 MHz   | 
+Clock: HighF_LevelCountClk  | Frequency: 63.44 MHz  | Target: 0.00 MHz   | 
+
+ =====================================================================
+                    End of Clock Frequency Summary
+ #####################################################################
+
+
+ #####################################################################
+                    2::Clock Relationship Summary
+ =====================================================================
+
+Launch Clock         Capture Clock        Constraint(R-R)  Slack(R-R)  Constraint(R-F)  Slack(R-F)  Constraint(F-F)  Slack(F-F)  Constraint(F-R)  Slack(F-R)  
+-------------------  -------------------  ---------------  ----------  ---------------  ----------  ---------------  ----------  ---------------  ----------  
+HighF_DelayClk       HighF_DelayClk       5.50042e+008     550030832   N/A              N/A         N/A              N/A         N/A              N/A         
+HighF_LevelCountClk  HighF_LevelCountClk  1e+009           999984238   N/A              N/A         N/A              N/A         N/A              N/A         
+
+ =====================================================================
+                    End of Clock Relationship Summary
+ #####################################################################
+
+
+ #####################################################################
+                    3::Datasheet Report
+
+All values are in Picoseconds
+ =====================================================================
+
+3.1::Setup to Clock                     
+-------------------                     
+
+Port Name  Setup to Clk  Clock Name:Phase  
+---------  ------------  ----------------  
+
+
+-----------------------3.2::Clock to Out
+----------------------------------------
+
+Port Name              Clock to Out  Clock Name:Phase  
+---------------------  ------------  ----------------  
+HighF_ShiftOut(0)_PAD  24958         HighF_DelayClk:R  
+HighF_XOR_Out(0)_PAD   33712         HighF_DelayClk:R  
+
+
+                         3.3::Pad to Pad
+                         ---------------
+
+Port Name (Source)  Port Name (Destination)  Delay  
+------------------  -----------------------  -----  
+
+===================================================================== 
+                    End of Datasheet Report
+##################################################################### 
+##################################################################### 
+                    4::Path Details for Clock Frequency Summary
+===================================================================== 
+4.1::Critical Path Report for HighF_DelayClk
+********************************************
+Clock: HighF_DelayClk
+Frequency: 92.30 MHz | Target: 0.00 MHz
+
+++++ Path 1 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0
+Path End       : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/cs_addr_2
+Capture Clock  : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/clock
+Path slack     : 550030832p
+
+Capture Clock Arrival Time                                           0
++ Clock path delay                                                   0
++ Cycle adjust (HighF_DelayClk:R#1 vs. HighF_DelayClk:R#2)   550041667
+- Setup time                                                     -6010
+----------------------------------------------------------   --------- 
+End-of-path required time (ps)                               550035657
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       4825
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           4825
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/clock                 controlcell1        0      0  RISE       1
+
+Data path
+pin name                                            model name     delay     AT      slack  edge  Fanout
+--------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0      controlcell1    1210   1210  550030832  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/cs_addr_2  datapathcell3   3615   4825  550030832  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/clock             datapathcell3       0      0  RISE       1
+
+
+===================================================================== 
+4.2::Critical Path Report for HighF_LevelCountClk
+*************************************************
+Clock: HighF_LevelCountClk
+Frequency: 63.44 MHz | Target: 0.00 MHz
+
+++++ Path 1 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0
+Path End       : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/ci
+Capture Clock  : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock
+Path slack     : 999984238p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                -4230
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999995770
+
+Launch Clock Arrival Time                       0
++ Clock path delay                          0
++ Data path delay                       11532
+-------------------------------------   ----- 
+End-of-path arrival time (ps)           11532
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock          datapathcell5       0      0  RISE       1
+
+Data path
+pin name                                               model name     delay     AT      slack  edge  Fanout
+-----------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0         datapathcell5    760    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0i        datapathcell6      0    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0_comb    datapathcell6   2740   3500  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/cs_addr_0  datapathcell5   2902   6402  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/co_msb     datapathcell5   5130  11532  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/ci         datapathcell6      0  11532  999984238  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock          datapathcell6       0      0  RISE       1
+
+
+
+===================================================================== 
+                    End of Path Details for Clock Frequency Summary
+##################################################################### 
+
+
+##################################################################### 
+                    5::Path Details for Clock Relationship Summary
+===================================================================== 
+
+5.1::Critical Path Report for (HighF_DelayClk:R vs. HighF_DelayClk:R)
+*********************************************************************
+
+++++ Path 1 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0
+Path End       : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/cs_addr_2
+Capture Clock  : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/clock
+Path slack     : 550030832p
+
+Capture Clock Arrival Time                                           0
++ Clock path delay                                                   0
++ Cycle adjust (HighF_DelayClk:R#1 vs. HighF_DelayClk:R#2)   550041667
+- Setup time                                                     -6010
+----------------------------------------------------------   --------- 
+End-of-path required time (ps)                               550035657
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       4825
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           4825
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/clock                 controlcell1        0      0  RISE       1
+
+Data path
+pin name                                            model name     delay     AT      slack  edge  Fanout
+--------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0      controlcell1    1210   1210  550030832  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/cs_addr_2  datapathcell3   3615   4825  550030832  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/clock             datapathcell3       0      0  RISE       1
+
+
+5.2::Critical Path Report for (HighF_LevelCountClk:R vs. HighF_LevelCountClk:R)
+*******************************************************************************
+
+++++ Path 2 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0
+Path End       : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/ci
+Capture Clock  : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock
+Path slack     : 999984238p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                -4230
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999995770
+
+Launch Clock Arrival Time                       0
++ Clock path delay                          0
++ Data path delay                       11532
+-------------------------------------   ----- 
+End-of-path arrival time (ps)           11532
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock          datapathcell5       0      0  RISE       1
+
+Data path
+pin name                                               model name     delay     AT      slack  edge  Fanout
+-----------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0         datapathcell5    760    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0i        datapathcell6      0    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0_comb    datapathcell6   2740   3500  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/cs_addr_0  datapathcell5   2902   6402  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/co_msb     datapathcell5   5130  11532  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/ci         datapathcell6      0  11532  999984238  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock          datapathcell6       0      0  RISE       1
+
+
+
+===================================================================== 
+                    End of Path Details for Clock Relationship Summary
+##################################################################### 
+
+##################################################################### 
+                    Detailed Report for all timing paths 
+===================================================================== 
+
+++++ Path 1 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0
+Path End       : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/cs_addr_2
+Capture Clock  : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/clock
+Path slack     : 550030832p
+
+Capture Clock Arrival Time                                           0
++ Clock path delay                                                   0
++ Cycle adjust (HighF_DelayClk:R#1 vs. HighF_DelayClk:R#2)   550041667
+- Setup time                                                     -6010
+----------------------------------------------------------   --------- 
+End-of-path required time (ps)                               550035657
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       4825
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           4825
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/clock                 controlcell1        0      0  RISE       1
+
+Data path
+pin name                                            model name     delay     AT      slack  edge  Fanout
+--------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0      controlcell1    1210   1210  550030832  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/cs_addr_2  datapathcell3   3615   4825  550030832  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/clock             datapathcell3       0      0  RISE       1
+
+
+
+++++ Path 2 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0
+Path End       : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u3\/cs_addr_2
+Capture Clock  : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u3\/clock
+Path slack     : 550030843p
+
+Capture Clock Arrival Time                                           0
++ Clock path delay                                                   0
++ Cycle adjust (HighF_DelayClk:R#1 vs. HighF_DelayClk:R#2)   550041667
+- Setup time                                                     -6010
+----------------------------------------------------------   --------- 
+End-of-path required time (ps)                               550035657
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       4814
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           4814
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/clock                 controlcell1        0      0  RISE       1
+
+Data path
+pin name                                            model name     delay     AT      slack  edge  Fanout
+--------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0      controlcell1    1210   1210  550030832  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u3\/cs_addr_2  datapathcell4   3604   4814  550030843  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u3\/clock             datapathcell4       0      0  RISE       1
+
+
+
+++++ Path 3 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0
+Path End       : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/cs_addr_2
+Capture Clock  : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/clock
+Path slack     : 550031735p
+
+Capture Clock Arrival Time                                           0
++ Clock path delay                                                   0
++ Cycle adjust (HighF_DelayClk:R#1 vs. HighF_DelayClk:R#2)   550041667
+- Setup time                                                     -6010
+----------------------------------------------------------   --------- 
+End-of-path required time (ps)                               550035657
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       3922
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           3922
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/clock                 controlcell1        0      0  RISE       1
+
+Data path
+pin name                                            model name     delay     AT      slack  edge  Fanout
+--------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0      controlcell1    1210   1210  550030832  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/cs_addr_2  datapathcell2   2712   3922  550031735  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/clock             datapathcell2       0      0  RISE       1
+
+
+
+++++ Path 4 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0
+Path End       : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u0\/cs_addr_2
+Capture Clock  : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u0\/clock
+Path slack     : 550031741p
+
+Capture Clock Arrival Time                                           0
++ Clock path delay                                                   0
++ Cycle adjust (HighF_DelayClk:R#1 vs. HighF_DelayClk:R#2)   550041667
+- Setup time                                                     -6010
+----------------------------------------------------------   --------- 
+End-of-path required time (ps)                               550035657
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       3915
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           3915
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/clock                 controlcell1        0      0  RISE       1
+
+Data path
+pin name                                            model name     delay     AT      slack  edge  Fanout
+--------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_ShiftReg:bSR:SyncCtl:CtrlReg\/control_0      controlcell1    1210   1210  550030832  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u0\/cs_addr_2  datapathcell1   2705   3915  550031741  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u0\/clock             datapathcell1       0      0  RISE       1
+
+
+
+++++ Path 5 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u3\/sor
+Path End       : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/sil
+Capture Clock  : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/clock
+Path slack     : 550035987p
+
+Capture Clock Arrival Time                                           0
++ Clock path delay                                                   0
++ Cycle adjust (HighF_DelayClk:R#1 vs. HighF_DelayClk:R#2)   550041667
+- Setup time                                                     -3200
+----------------------------------------------------------   --------- 
+End-of-path required time (ps)                               550038467
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       2480
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           2480
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u3\/clock             datapathcell4       0      0  RISE       1
+
+Data path
+pin name                                      model name     delay     AT      slack  edge  Fanout
+--------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u3\/sor  datapathcell4   2480   2480  550035987  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/sil  datapathcell3      0   2480  550035987  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/clock             datapathcell3       0      0  RISE       1
+
+
+
+++++ Path 6 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/sor
+Path End       : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u0\/sil
+Capture Clock  : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u0\/clock
+Path slack     : 550037947p
+
+Capture Clock Arrival Time                                           0
++ Clock path delay                                                   0
++ Cycle adjust (HighF_DelayClk:R#1 vs. HighF_DelayClk:R#2)   550041667
+- Setup time                                                     -3200
+----------------------------------------------------------   --------- 
+End-of-path required time (ps)                               550038467
+
+Launch Clock Arrival Time                     0
++ Clock path delay                        0
++ Data path delay                       520
+-------------------------------------   --- 
+End-of-path arrival time (ps)           520
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/clock             datapathcell2       0      0  RISE       1
+
+Data path
+pin name                                      model name     delay     AT      slack  edge  Fanout
+--------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/sor  datapathcell2    520    520  550037947  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u0\/sil  datapathcell1      0    520  550037947  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u0\/clock             datapathcell1       0      0  RISE       1
+
+
+
+++++ Path 7 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/sor
+Path End       : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/sil
+Capture Clock  : \HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/clock
+Path slack     : 550037947p
+
+Capture Clock Arrival Time                                           0
++ Clock path delay                                                   0
++ Cycle adjust (HighF_DelayClk:R#1 vs. HighF_DelayClk:R#2)   550041667
+- Setup time                                                     -3200
+----------------------------------------------------------   --------- 
+End-of-path required time (ps)                               550038467
+
+Launch Clock Arrival Time                     0
++ Clock path delay                        0
++ Data path delay                       520
+-------------------------------------   --- 
+End-of-path arrival time (ps)           520
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/clock             datapathcell3       0      0  RISE       1
+
+Data path
+pin name                                      model name     delay     AT      slack  edge  Fanout
+--------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u2\/sor  datapathcell3    520    520  550037947  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/sil  datapathcell2      0    520  550037947  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_0                                      clockblockcell      0      0  RISE       1
+\HighF_ShiftReg:bSR:sC32:BShiftRegDp:u1\/clock             datapathcell2       0      0  RISE       1
+
+
+
+++++ Path 8 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0
+Path End       : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/ci
+Capture Clock  : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock
+Path slack     : 999984238p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                -4230
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999995770
+
+Launch Clock Arrival Time                       0
++ Clock path delay                          0
++ Data path delay                       11532
+-------------------------------------   ----- 
+End-of-path arrival time (ps)           11532
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock          datapathcell5       0      0  RISE       1
+
+Data path
+pin name                                               model name     delay     AT      slack  edge  Fanout
+-----------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0         datapathcell5    760    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0i        datapathcell6      0    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0_comb    datapathcell6   2740   3500  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/cs_addr_0  datapathcell5   2902   6402  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/co_msb     datapathcell5   5130  11532  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/ci         datapathcell6      0  11532  999984238  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock          datapathcell6       0      0  RISE       1
+
+
+
+++++ Path 9 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0
+Path End       : \HighF_LevelCount:TimerUDB:rstSts:stsreg\/status_0
+Capture Clock  : \HighF_LevelCount:TimerUDB:rstSts:stsreg\/clock
+Path slack     : 999987423p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                 -500
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999999500
+
+Launch Clock Arrival Time                       0
++ Clock path delay                          0
++ Data path delay                       12077
+-------------------------------------   ----- 
+End-of-path arrival time (ps)           12077
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock          datapathcell5       0      0  RISE       1
+
+Data path
+pin name                                             model name     delay     AT      slack  edge  Fanout
+---------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0       datapathcell5    760    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0i      datapathcell6      0    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0_comb  datapathcell6   2740   3500  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:status_tc\/main_1         macrocell2      2916   6416  999987423  RISE       1
+\HighF_LevelCount:TimerUDB:status_tc\/q              macrocell2      3350   9766  999987423  RISE       1
+\HighF_LevelCount:TimerUDB:rstSts:stsreg\/status_0   statusicell2    2311  12077  999987423  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:rstSts:stsreg\/clock            statusicell2        0      0  RISE       1
+
+
+
+++++ Path 10 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0
+Path End       : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/cs_addr_0
+Capture Clock  : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock
+Path slack     : 999987538p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                -6060
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999993940
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       6402
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           6402
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock          datapathcell5       0      0  RISE       1
+
+Data path
+pin name                                               model name     delay     AT      slack  edge  Fanout
+-----------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0         datapathcell5    760    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0i        datapathcell6      0    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0_comb    datapathcell6   2740   3500  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/cs_addr_0  datapathcell5   2902   6402  999987538  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock          datapathcell5       0      0  RISE       1
+
+
+
+++++ Path 11 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0
+Path End       : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/cs_addr_0
+Capture Clock  : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock
+Path slack     : 999987538p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                -6060
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999993940
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       6402
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           6402
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock          datapathcell5       0      0  RISE       1
+
+Data path
+pin name                                               model name     delay     AT      slack  edge  Fanout
+-----------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0         datapathcell5    760    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0i        datapathcell6      0    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0_comb    datapathcell6   2740   3500  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/cs_addr_0  datapathcell6   2902   6402  999987538  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock          datapathcell6       0      0  RISE       1
+
+
+
+++++ Path 12 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\/control_7
+Path End       : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/cs_addr_1
+Capture Clock  : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock
+Path slack     : 999989440p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                -6060
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999993940
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       4500
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           4500
+ 
+Launch Clock Path
+pin name                                                    model name      delay     AT  edge  Fanout
+----------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                       clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\/clock  controlcell2        0      0  RISE       1
+
+Data path
+pin name                                                        model name     delay     AT      slack  edge  Fanout
+--------------------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\/control_7  controlcell2    1210   1210  999986140  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/cs_addr_1           datapathcell5   3290   4500  999989440  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock          datapathcell5       0      0  RISE       1
+
+
+
+++++ Path 13 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\/control_7
+Path End       : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/cs_addr_1
+Capture Clock  : \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock
+Path slack     : 999989460p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                -6060
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999993940
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       4480
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           4480
+ 
+Launch Clock Path
+pin name                                                    model name      delay     AT  edge  Fanout
+----------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                       clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\/clock  controlcell2        0      0  RISE       1
+
+Data path
+pin name                                                        model name     delay     AT      slack  edge  Fanout
+--------------------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\/control_7  controlcell2    1210   1210  999986140  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/cs_addr_1           datapathcell6   3270   4480  999989460  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/clock          datapathcell6       0      0  RISE       1
+
+
+
+++++ Path 14 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0
+Path End       : Net_145/main_1
+Capture Clock  : Net_145/clock_0
+Path slack     : 999990074p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                -3510
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999996490
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       6416
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           6416
+ 
+Launch Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/clock          datapathcell5       0      0  RISE       1
+
+Data path
+pin name                                             model name     delay     AT      slack  edge  Fanout
+---------------------------------------------------  -------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u0\/z0       datapathcell5    760    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0i      datapathcell6      0    760  999984238  RISE       1
+\HighF_LevelCount:TimerUDB:sT16:timerdp:u1\/z0_comb  datapathcell6   2740   3500  999984238  RISE       1
+Net_145/main_1                                       macrocell3      2916   6416  999990074  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+Net_145/clock_0                                            macrocell3          0      0  RISE       1
+
+
+
+++++ Path 15 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+Path Begin     : \HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\/control_7
+Path End       : Net_145/main_0
+Capture Clock  : Net_145/clock_0
+Path slack     : 999992013p
+
+Capture Clock Arrival Time                                                      0
++ Clock path delay                                                              0
++ Cycle adjust (HighF_LevelCountClk:R#1 vs. HighF_LevelCountClk:R#2)   1000000000
+- Setup time                                                                -3510
+--------------------------------------------------------------------   ---------- 
+End-of-path required time (ps)                                          999996490
+
+Launch Clock Arrival Time                      0
++ Clock path delay                         0
++ Data path delay                       4477
+-------------------------------------   ---- 
+End-of-path arrival time (ps)           4477
+ 
+Launch Clock Path
+pin name                                                    model name      delay     AT  edge  Fanout
+----------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                       clockblockcell      0      0  RISE       1
+\HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\/clock  controlcell2        0      0  RISE       1
+
+Data path
+pin name                                                        model name    delay     AT      slack  edge  Fanout
+--------------------------------------------------------------  ------------  -----  -----  ---------  ----  ------
+\HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\/control_7  controlcell2   1210   1210  999986140  RISE       1
+Net_145/main_0                                                  macrocell3     3267   4477  999992013  RISE       1
+
+Capture Clock Path
+pin name                                                   model name      delay     AT  edge  Fanout
+---------------------------------------------------------  --------------  -----  -----  ----  ------
+ClockBlock/dclk_glb_1                                      clockblockcell      0      0  RISE       1
+Net_145/clock_0                                            macrocell3          0      0  RISE       1
+
+
+===================================================================== 
+                    End of Detailed Report for all timing paths 
+##################################################################### 
+
+##################################################################### 
+                    End of Timing Report 
+##################################################################### 
+

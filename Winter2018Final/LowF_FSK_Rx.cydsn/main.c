@@ -1,19 +1,21 @@
-/* ========================================
- *
- * Copyright YOUR COMPANY, THE YEAR
- * All Rights Reserved
- * UNPUBLISHED, LICENSED SOFTWARE.
- *
- * CONFIDENTIAL AND PROPRIETARY INFORMATION
- * WHICH IS THE PROPERTY OF your company.
- *
- * ========================================
-*/
+/*included files*/
 #include "project.h"
 #include <stdio.h>
 #include "LCD_Char.h"
 
+/*definitions*/
+#define TX_ENCODING 0xFFFF
+#define TX_DECODING 0x0001
+
+#define ONE_THRESHOLD 7
+#define LEVEL_COUNTER_CHECK_BIT_TIME 10
+#define DATA_LENGTH 7
+#define DECODE_LENGTH 15
+
+/*function prototypes*/
 CY_ISR_PROTO(LevelCount);
+
+/*global variables*/
 static uint16 levelCounter = 0;
 static uint8 zeroCount = 0; 
 static uint8 oneCount = 0; 
@@ -31,7 +33,12 @@ static uint8 lcdFlagEncode = 0;
 static uint8 lcdFlagData = 0;
 static uint8 lcdFlagDecode = 0;
 
-
+/*
+ * function: main()
+ * parameters: none
+ * returns: should never return
+ * description:
+ */
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
@@ -51,7 +58,7 @@ int main(void)
     HighF_LevelCount_Start();
     LCD_Char_Start();
     //LeveCountISR_StartEx(LevelCheck);
-    /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+    
     char OutputString[12];
     char display[12];
     sprintf(display, "counting crabs...");
@@ -60,11 +67,9 @@ int main(void)
 
     for(;;)
     {
-        
-        /* Place your application code here. */
         if(lcdFlagEncode == 1){
             LCD_Char_ClearDisplay();
-            LCD_Char_PrintString("0xFF pre-fix");
+            LCD_Char_PrintString("0xFFFF pre-fix");
             lcdFlagEncode = 0;
         }else if(lcdFlagData == 1){
             sprintf(OutputString, "%i", crabs);
@@ -86,8 +91,8 @@ int main(void)
             LCD_Char_PrintString(displayB);
             decodeWrong = 0;
         }
-    }
-}
+    } //end for(;;)
+} //end main()
     
 
 //Bit length = 0.5s
@@ -104,11 +109,10 @@ CY_ISR(LevelCount){
     }
     
     //debouncing every 0.4s, with a check of 7/8 hits 
-    if(levelCounter == 10){
-        if(oneCount >= 7){
+    if(levelCounter == LEVEL_COUNTER_CHECK_BIT_TIME){
+        if(oneCount >= ONE_THRESHOLD){
             currentBit = 0x01;
             oneCount = 0;
-        
         }else{
             currentBit = 0x00; 
             zeroCount = 0; 
@@ -120,7 +124,7 @@ CY_ISR(LevelCount){
         //Look for pre-fix
         data = data << 1;
         data = data | currentBit;
-        if((data == 0xff) && (dataFlag == 0) && (decodeFlag == 0)){
+        if((data == TX_ENCODING) && (dataFlag == 0) && (decodeFlag == 0)){
             CountOut_Write(1);
             dataCount = 0;
             data = 0x00;
@@ -129,7 +133,7 @@ CY_ISR(LevelCount){
 
         
         // Look for data
-        }else if((dataFlag == 1) && (dataCount > 3)){
+        }else if((dataFlag == 1) && (dataCount > DATA_LENGTH)){
             crabs = data;
             data = 0; //Restart data for decode
             dataCount = 0; 
@@ -138,8 +142,8 @@ CY_ISR(LevelCount){
             decodeFlag = 1; //Now go to decode stage
         }
         
-        if(decodeFlag == 1 && (dataCount > 7)){
-            if(data == 0x01){
+        if(decodeFlag == 1 && (dataCount > DECODE_LENGTH)){
+            if(data == TX_DECODING){
              lcdFlagDecode = 1;
             }else{
                 decodeWrong = 1;
@@ -148,6 +152,4 @@ CY_ISR(LevelCount){
             dataFlag = 0; //Don't want to check for data anymore
         }
     }
-}
-
-/* [] END OF FILE */
+} //end CY_ISR(LevelCount)

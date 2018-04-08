@@ -7,7 +7,7 @@
   <width>32</width>
   <peripherals>
     <peripheral>
-      <name>HighF_OutComp</name>
+      <name>HighF_LevelCount</name>
       <description>No description available</description>
       <baseAddress>0x0</baseAddress>
       <addressBlock>
@@ -17,7 +17,247 @@
       </addressBlock>
       <registers>
         <register>
-          <name>HighF_OutComp_Comp_PM_ACT_CFG</name>
+          <name>HighF_LevelCount_COUNTER</name>
+          <description>UDB.A0 - Current Down Counter Value</description>
+          <addressOffset>0x40006404</addressOffset>
+          <size>16</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+        </register>
+        <register>
+          <name>HighF_LevelCount_PERIOD</name>
+          <description>UDB.D0 - Assigned Period</description>
+          <addressOffset>0x40006424</addressOffset>
+          <size>16</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+        </register>
+        <register>
+          <name>HighF_LevelCount_Control_Reg</name>
+          <description>UDB Control Register - Assigned Control Register Value</description>
+          <addressOffset>0x40006475</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>CTRL_ENABLE</name>
+              <description>Enable the Timer</description>
+              <lsb>7</lsb>
+              <msb>7</msb>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>CTRL_CMODE</name>
+              <description>Capture Mode</description>
+              <lsb>5</lsb>
+              <msb>6</msb>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>CTRL_TEN</name>
+              <description>Trigger Enable Bit</description>
+              <lsb>4</lsb>
+              <msb>4</msb>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>CTRL_TMODE</name>
+              <description>Trigger Mode</description>
+              <lsb>2</lsb>
+              <msb>3</msb>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>CTRL_IC</name>
+              <description>Interrupt Count</description>
+              <lsb>0</lsb>
+              <msb>1</msb>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HighF_LevelCount_STATUS_MASK</name>
+          <description>UDB Status bits Interrupt Mask Enable Register</description>
+          <addressOffset>0x40006485</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>TIMER_STS_TC</name>
+              <description>Enables the Interrupt on TC</description>
+              <lsb>0</lsb>
+              <msb>0</msb>
+              <access>read-only</access>
+            </field>
+            <field>
+              <name>TIMER_STS_CAPT</name>
+              <description>Enables the Interrupt on Capture</description>
+              <lsb>1</lsb>
+              <msb>1</msb>
+              <access>read-only</access>
+            </field>
+            <field>
+              <name>TIMER_STS_FIFO_FULL</name>
+              <description>FIFO Full Status </description>
+              <lsb>2</lsb>
+              <msb>2</msb>
+              <access>read-only</access>
+            </field>
+            <field>
+              <name>TIMER_STS_FIFO_NEMPTY</name>
+              <description>FIFO Empty status </description>
+              <lsb>3</lsb>
+              <msb>3</msb>
+              <access>read-only</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>HighF_LevelCount_STATUS_AUX_CTRL</name>
+          <description>UDB Auxilliary Control Register</description>
+          <addressOffset>0x40006495</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>FIFO0_CLR</name>
+              <description>FIFO0 clear</description>
+              <lsb>0</lsb>
+              <msb>0</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_FIFO_CLR_0</name>
+                  <description>Normal FIFO operation</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_FIFO_CLR_1</name>
+                  <description>Clear FIFO state</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>FIFO1_CLR</name>
+              <description>FIFO1 clear</description>
+              <lsb>1</lsb>
+              <msb>1</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_FIFO_CLR_0</name>
+                  <description>Normal FIFO operation</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_FIFO_CLR_1</name>
+                  <description>Clear FIFO state</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>FIFO0_LVL</name>
+              <description>FIFO level</description>
+              <lsb>2</lsb>
+              <msb>2</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_FIFO_LVL_0</name>
+                  <description>FIFO LVL: input mode: FIFO not full; output mode: FIFO not empty</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_FIFO_LVL_1</name>
+                  <description>FIFO LVL: input mode: FIFO at least 1/2 empty; output mode: FIFO at least 1/2 full</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>FIFO1_LVL</name>
+              <description>FIFO level</description>
+              <lsb>3</lsb>
+              <msb>3</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_FIFO_LVL_0</name>
+                  <description>FIFO LVL: input mode: FIFO not full; output mode: FIFO not empty</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_FIFO_LVL_1</name>
+                  <description>FIFO LVL: input mode: FIFO at least 1/2 empty; output mode: FIFO at least 1/2 full</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>INT_EN</name>
+              <description>No description available</description>
+              <lsb>4</lsb>
+              <msb>4</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_INT_EN0</name>
+                  <description>Interrupt disabled</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_INT_EN1</name>
+                  <description>Interrupt enabled</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>CNT_START</name>
+              <description>FIFO0 clear</description>
+              <lsb>5</lsb>
+              <msb>5</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_CNT_START0</name>
+                  <description>Disable counter</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_CNT_START1</name>
+                  <description>Enable counter</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>HighF_BPF_Comp</name>
+      <description>No description available</description>
+      <baseAddress>0x0</baseAddress>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x0</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <registers>
+        <register>
+          <name>HighF_BPF_Comp_Comp_PM_ACT_CFG</name>
           <description>Active Power Mode Configuration Register 7</description>
           <addressOffset>0x400043A7</addressOffset>
           <size>8</size>
@@ -35,7 +275,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_PM_STBY_CFG</name>
+          <name>HighF_BPF_Comp_Comp_PM_STBY_CFG</name>
           <description>Standby Power Mode Configuration Register 7</description>
           <addressOffset>0x400043B7</addressOffset>
           <size>8</size>
@@ -53,7 +293,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_TR0</name>
+          <name>HighF_BPF_Comp_Comp_TR0</name>
           <description>Comparator Trim Register_TR0</description>
           <addressOffset>0x40004636</addressOffset>
           <size>8</size>
@@ -163,7 +403,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_TR1</name>
+          <name>HighF_BPF_Comp_Comp_TR1</name>
           <description>Comparator Trim Register_TR1</description>
           <addressOffset>0x40004637</addressOffset>
           <size>8</size>
@@ -273,7 +513,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_CR</name>
+          <name>HighF_BPF_Comp_Comp_CR</name>
           <description>Comparator Control Register</description>
           <addressOffset>0x40005843</addressOffset>
           <size>8</size>
@@ -408,7 +648,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_SW0</name>
+          <name>HighF_BPF_Comp_Comp_SW0</name>
           <description>Comparator Analog Routing Register 0</description>
           <addressOffset>0x40005AD8</addressOffset>
           <size>8</size>
@@ -571,7 +811,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_SW2</name>
+          <name>HighF_BPF_Comp_Comp_SW2</name>
           <description>Comparator Analog Routing Register 2</description>
           <addressOffset>0x40005ADA</addressOffset>
           <size>8</size>
@@ -620,7 +860,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_SW3</name>
+          <name>HighF_BPF_Comp_Comp_SW3</name>
           <description>Comparator Analog Routing Register 3</description>
           <addressOffset>0x40005ADB</addressOffset>
           <size>8</size>
@@ -726,7 +966,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_SW4</name>
+          <name>HighF_BPF_Comp_Comp_SW4</name>
           <description>Comparator Analog Routing Register 4</description>
           <addressOffset>0x40005ADC</addressOffset>
           <size>8</size>
@@ -813,7 +1053,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_SW6</name>
+          <name>HighF_BPF_Comp_Comp_SW6</name>
           <description>Comparator Analog Routing Register 6</description>
           <addressOffset>0x40005ADE</addressOffset>
           <size>8</size>
@@ -862,7 +1102,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_CLK</name>
+          <name>HighF_BPF_Comp_Comp_CLK</name>
           <description>Comparator Clock Control Register</description>
           <addressOffset>0x40005ADF</addressOffset>
           <size>8</size>
@@ -960,7 +1200,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_OutComp_Comp_WRK</name>
+          <name>HighF_BPF_Comp_Comp_WRK</name>
           <description>Comparator output working register</description>
           <addressOffset>0x40005B96</addressOffset>
           <size>8</size>
@@ -1001,7 +1241,7 @@
       </registers>
     </peripheral>
     <peripheral>
-      <name>HighF_LevelCount</name>
+      <name>PWM_Recon</name>
       <description>No description available</description>
       <baseAddress>0x0</baseAddress>
       <addressBlock>
@@ -1011,27 +1251,18 @@
       </addressBlock>
       <registers>
         <register>
-          <name>HighF_LevelCount_COUNTER</name>
-          <description>UDB.A0 - Current Down Counter Value</description>
-          <addressOffset>0x4000640A</addressOffset>
+          <name>PWM_Recon_COMPARE_Reg</name>
+          <description>UDB.D0 - Assigned Compare Value</description>
+          <addressOffset>0x40006428</addressOffset>
           <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
           <resetMask>0</resetMask>
         </register>
         <register>
-          <name>HighF_LevelCount_PERIOD</name>
-          <description>UDB.D0 - Assigned Period</description>
-          <addressOffset>0x4000642A</addressOffset>
-          <size>16</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-        </register>
-        <register>
-          <name>HighF_LevelCount_Control_Reg</name>
+          <name>PWM_Recon_Control_Reg</name>
           <description>UDB Control Register - Assigned Control Register Value</description>
-          <addressOffset>0x4000647B</addressOffset>
+          <addressOffset>0x40006478</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1039,84 +1270,202 @@
           <fields>
             <field>
               <name>CTRL_ENABLE</name>
-              <description>Enable the Timer</description>
+              <description>Enable the PWM</description>
               <lsb>7</lsb>
               <msb>7</msb>
               <access>read-write</access>
             </field>
             <field>
-              <name>CTRL_CMODE</name>
-              <description>Capture Mode</description>
-              <lsb>5</lsb>
-              <msb>6</msb>
+              <name>CTRL_CMPMODE2</name>
+              <description>Compare mode 2</description>
+              <lsb>3</lsb>
+              <msb>5</msb>
               <access>read-write</access>
             </field>
             <field>
-              <name>CTRL_TEN</name>
-              <description>Trigger Enable Bit</description>
-              <lsb>4</lsb>
-              <msb>4</msb>
-              <access>read-write</access>
-            </field>
-            <field>
-              <name>CTRL_TMODE</name>
-              <description>Trigger Mode</description>
-              <lsb>2</lsb>
-              <msb>3</msb>
-              <access>read-write</access>
-            </field>
-            <field>
-              <name>CTRL_IC</name>
-              <description>Interrupt Count</description>
+              <name>CTRL_CMPMODE1</name>
+              <description>Compare mode 1</description>
               <lsb>0</lsb>
-              <msb>1</msb>
+              <msb>2</msb>
               <access>read-write</access>
             </field>
           </fields>
         </register>
         <register>
-          <name>HighF_LevelCount_STATUS_MASK</name>
+          <name>PWM_Recon_STATUS_MASK</name>
           <description>UDB Status bits Interrupt Mask Enable Register</description>
-          <addressOffset>0x4000648B</addressOffset>
+          <addressOffset>0x40006489</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
           <resetMask>0</resetMask>
           <fields>
             <field>
-              <name>TIMER_STS_TC</name>
-              <description>Enables the Interrupt on TC</description>
+              <name>PWM_STS_CMP1</name>
+              <description>Enables the Interrupt on Compare 1</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <access>read-only</access>
             </field>
             <field>
-              <name>TIMER_STS_CAPT</name>
-              <description>Enables the Interrupt on Capture</description>
+              <name>PWM_STS_CMP2</name>
+              <description>Enables the Interrupt on Compare 2</description>
               <lsb>1</lsb>
               <msb>1</msb>
               <access>read-only</access>
             </field>
             <field>
-              <name>TIMER_STS_FIFO_FULL</name>
-              <description>FIFO Full Status </description>
+              <name>PWM_STS_TC</name>
+              <description>Enables the Interrupt on Terminal Count</description>
               <lsb>2</lsb>
               <msb>2</msb>
               <access>read-only</access>
             </field>
             <field>
-              <name>TIMER_STS_FIFO_NEMPTY</name>
-              <description>FIFO Empty status </description>
+              <name>PWM_STS_FIFO_FULL</name>
+              <description>FIFO Full Status Mask </description>
               <lsb>3</lsb>
               <msb>3</msb>
+              <access>read-only</access>
+            </field>
+            <field>
+              <name>PWM_STS_KILL</name>
+              <description>Enables the Interrupt on Kill</description>
+              <lsb>5</lsb>
+              <msb>5</msb>
               <access>read-only</access>
             </field>
           </fields>
         </register>
         <register>
-          <name>HighF_LevelCount_STATUS_AUX_CTRL</name>
+          <name>PWM_Recon_STATUS_AUX_CTRLDP0</name>
           <description>UDB Auxilliary Control Register</description>
-          <addressOffset>0x4000649B</addressOffset>
+          <addressOffset>0x40006498</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>FIFO0_CLR</name>
+              <description>FIFO0 clear</description>
+              <lsb>0</lsb>
+              <msb>0</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_FIFO_CLR_0</name>
+                  <description>Normal FIFO operation</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_FIFO_CLR_1</name>
+                  <description>Clear FIFO state</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>FIFO1_CLR</name>
+              <description>FIFO1 clear</description>
+              <lsb>1</lsb>
+              <msb>1</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_FIFO_CLR_0</name>
+                  <description>Normal FIFO operation</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_FIFO_CLR_1</name>
+                  <description>Clear FIFO state</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>FIFO0_LVL</name>
+              <description>FIFO level</description>
+              <lsb>2</lsb>
+              <msb>2</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_FIFO_LVL_0</name>
+                  <description>FIFO LVL: input mode: FIFO not full; output mode: FIFO not empty</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_FIFO_LVL_1</name>
+                  <description>FIFO LVL: input mode: FIFO at least 1/2 empty; output mode: FIFO at least 1/2 full</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>FIFO1_LVL</name>
+              <description>FIFO level</description>
+              <lsb>3</lsb>
+              <msb>3</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_FIFO_LVL_0</name>
+                  <description>FIFO LVL: input mode: FIFO not full; output mode: FIFO not empty</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_FIFO_LVL_1</name>
+                  <description>FIFO LVL: input mode: FIFO at least 1/2 empty; output mode: FIFO at least 1/2 full</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>INT_EN</name>
+              <description>No description available</description>
+              <lsb>4</lsb>
+              <msb>4</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_INT_EN0</name>
+                  <description>Interrupt disabled</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_INT_EN1</name>
+                  <description>Interrupt enabled</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>CNT_START</name>
+              <description>FIFO0 clear</description>
+              <lsb>5</lsb>
+              <msb>5</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>E_CNT_START0</name>
+                  <description>Disable counter</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>E_CNT_START1</name>
+                  <description>Enable counter</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PWM_Recon_STATUS_AUX_CTRLDP1</name>
+          <description>UDB Auxilliary Control Register</description>
+          <addressOffset>0x40006499</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1333,7 +1682,7 @@
         <register>
           <name>SC_CR0</name>
           <description>Switched Capacitor Control Register 0</description>
-          <addressOffset>0x4000580C</addressOffset>
+          <addressOffset>0x40005804</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1422,7 +1771,7 @@
         <register>
           <name>SC_CR1</name>
           <description>Switched Capacitor Control Register 1</description>
-          <addressOffset>0x4000580D</addressOffset>
+          <addressOffset>0x40005805</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1529,7 +1878,7 @@
         <register>
           <name>SC_CR2</name>
           <description>Switched Capacitor Control Register 2</description>
-          <addressOffset>0x4000580E</addressOffset>
+          <addressOffset>0x40005806</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1743,7 +2092,7 @@
         <register>
           <name>SC__BST</name>
           <description>Switched Capacitor Boost Clock Selection Register</description>
-          <addressOffset>0x40005A3C</addressOffset>
+          <addressOffset>0x40005A1C</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1871,7 +2220,7 @@
       </registers>
     </peripheral>
     <peripheral>
-      <name>HighF_BPF_Comp</name>
+      <name>HighF_Ref_OpAmp</name>
       <description>No description available</description>
       <baseAddress>0x0</baseAddress>
       <addressBlock>
@@ -1881,7 +2230,336 @@
       </addressBlock>
       <registers>
         <register>
-          <name>HighF_BPF_Comp_Comp_PM_ACT_CFG</name>
+          <name>PM_ACT_CFG4</name>
+          <description>Active Power Mode Configuration Register 4</description>
+          <addressOffset>0x400043A4</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>EN_OPAMP</name>
+              <description>Enables subsystems during active power mode</description>
+              <lsb>0</lsb>
+              <msb>3</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>Blk_0</name>
+                  <description>Enables analog linear output buffer for Opamp block 0</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Blk_1</name>
+                  <description>Enables analog linear output buffer for Opamp block 1</description>
+                  <value>2</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Blk_2</name>
+                  <description>Enables analog linear output buffer for Opamp block 2</description>
+                  <value>4</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Blk_3</name>
+                  <description>Enables analog linear output buffer for Opamp block 3</description>
+                  <value>8</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PM_STBY_CFG4</name>
+          <description>Standby Power Mode Configuration Register 4</description>
+          <addressOffset>0x400043B4</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>EN_OPAMP</name>
+              <description>Enables subsystems during standby power mode</description>
+              <lsb>0</lsb>
+              <msb>3</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>Blk_0</name>
+                  <description>Enables analog linear output buffer for Opamp block 0</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Blk_1</name>
+                  <description>Enables analog linear output buffer for Opamp block 1</description>
+                  <value>2</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Blk_2</name>
+                  <description>Enables analog linear output buffer for Opamp block 2</description>
+                  <value>4</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Blk_3</name>
+                  <description>Enables analog linear output buffer for Opamp block 3</description>
+                  <value>8</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>OPAMP__TR0</name>
+          <description>Analog Output Buffer Trim Register 0</description>
+          <addressOffset>0x40004626</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>offset_trim</name>
+              <description>Offset Trim: 420uV typical step size; +/- 6.8mV offset trimmable range</description>
+              <lsb>0</lsb>
+              <msb>4</msb>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>OPAMP__TR1</name>
+          <description>Analog Output Buffer Trim Register 1</description>
+          <addressOffset>0x40004627</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>RSVD</name>
+              <description>RSVD</description>
+              <lsb>0</lsb>
+              <msb>7</msb>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>OPAMP__CR</name>
+          <description>Analog Output Buffer Configuration Register</description>
+          <addressOffset>0x4000585E</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>pwr_mode</name>
+              <description>Power Mode</description>
+              <lsb>0</lsb>
+              <msb>1</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>Default_Fast</name>
+                  <description>Default Power mode Fast</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Slow</name>
+                  <description>Power Mode Slow</description>
+                  <value>1</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Medium</name>
+                  <description>Power Mode Medium</description>
+                  <value>2</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Fast</name>
+                  <description>Power Mode Fast</description>
+                  <value>3</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>OPAMP__MX</name>
+          <description>Analog Buffer Input Selection Register</description>
+          <addressOffset>0x40005B46</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>MX_VP_ENUM</name>
+              <description>MUX select VP (Positive terminal input)</description>
+              <lsb>0</lsb>
+              <msb>3</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_DEFAULT</name>
+                  <description>Default - Not Connected (NC)</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_AG4</name>
+                  <description>MUX Selection AGL(4)</description>
+                  <value>1</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_AG5</name>
+                  <description>MUX Selection AGL(5)</description>
+                  <value>2</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_AG6</name>
+                  <description>MUX Selection AGL(6)</description>
+                  <value>3</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_AG7</name>
+                  <description>MUX Selection AGL(7)</description>
+                  <value>4</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_ABUS0</name>
+                  <description>MUX Selection ABUSL(0)</description>
+                  <value>5</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_ABUS1</name>
+                  <description>MUX Selection ABUSL(1)</description>
+                  <value>6</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_ABUS2</name>
+                  <description>MUX Selection ABUSL(2)</description>
+                  <value>7</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_ABUS3</name>
+                  <description>MUX Selection ABUSL(3)</description>
+                  <value>8</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_VREF</name>
+                  <description>MUX Selection: OPAMP Voltage Reference</description>
+                  <value>9</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_H_0xA</name>
+                  <description>Reserved (NC)</description>
+                  <value>10</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_H_0xB</name>
+                  <description>Reserved (NC)</description>
+                  <value>11</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_H_0xC</name>
+                  <description>Reserved (NC)</description>
+                  <value>12</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_H_0xD</name>
+                  <description>Reserved (NC)</description>
+                  <value>13</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_H_0xE</name>
+                  <description>Reserved (NC)</description>
+                  <value>14</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VP_H_0xF</name>
+                  <description>Reserved (NC)</description>
+                  <value>15</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>MX_VN_ENUM</name>
+              <description>MUX select VN (Negative terminal input)</description>
+              <lsb>4</lsb>
+              <msb>5</msb>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VN_DEFAULT</name>
+                  <description>Default - Not Connected (NC)</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VN_AG4</name>
+                  <description>MUX Selection AGL(4)</description>
+                  <value>1</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VN_AG6</name>
+                  <description>MUX Selection AGL(6)</description>
+                  <value>2</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>OPAMP0_MX_VN_0x3</name>
+                  <description>Reserved (NC)</description>
+                  <value>3</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>OPAMP__SW</name>
+          <description>Analog Buffer Routing Switch Register</description>
+          <addressOffset>0x40005B47</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+          <fields>
+            <field>
+              <name>swfol</name>
+              <description>Switch Enable Follow</description>
+              <lsb>0</lsb>
+              <msb>0</msb>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>swinn</name>
+              <description>Switch Enable Negative Input</description>
+              <lsb>1</lsb>
+              <msb>1</msb>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>swinp</name>
+              <description>Switch Enable Positive Input</description>
+              <lsb>2</lsb>
+              <msb>2</msb>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>HighF_OutComp</name>
+      <description>No description available</description>
+      <baseAddress>0x0</baseAddress>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x0</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <registers>
+        <register>
+          <name>HighF_OutComp_Comp_PM_ACT_CFG</name>
           <description>Active Power Mode Configuration Register 7</description>
           <addressOffset>0x400043A7</addressOffset>
           <size>8</size>
@@ -1899,7 +2577,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_PM_STBY_CFG</name>
+          <name>HighF_OutComp_Comp_PM_STBY_CFG</name>
           <description>Standby Power Mode Configuration Register 7</description>
           <addressOffset>0x400043B7</addressOffset>
           <size>8</size>
@@ -1917,7 +2595,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_TR0</name>
+          <name>HighF_OutComp_Comp_TR0</name>
           <description>Comparator Trim Register_TR0</description>
           <addressOffset>0x40004632</addressOffset>
           <size>8</size>
@@ -2027,7 +2705,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_TR1</name>
+          <name>HighF_OutComp_Comp_TR1</name>
           <description>Comparator Trim Register_TR1</description>
           <addressOffset>0x40004633</addressOffset>
           <size>8</size>
@@ -2137,7 +2815,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_CR</name>
+          <name>HighF_OutComp_Comp_CR</name>
           <description>Comparator Control Register</description>
           <addressOffset>0x40005841</addressOffset>
           <size>8</size>
@@ -2272,7 +2950,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_SW0</name>
+          <name>HighF_OutComp_Comp_SW0</name>
           <description>Comparator Analog Routing Register 0</description>
           <addressOffset>0x40005AC8</addressOffset>
           <size>8</size>
@@ -2435,7 +3113,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_SW2</name>
+          <name>HighF_OutComp_Comp_SW2</name>
           <description>Comparator Analog Routing Register 2</description>
           <addressOffset>0x40005ACA</addressOffset>
           <size>8</size>
@@ -2484,7 +3162,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_SW3</name>
+          <name>HighF_OutComp_Comp_SW3</name>
           <description>Comparator Analog Routing Register 3</description>
           <addressOffset>0x40005ACB</addressOffset>
           <size>8</size>
@@ -2590,7 +3268,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_SW4</name>
+          <name>HighF_OutComp_Comp_SW4</name>
           <description>Comparator Analog Routing Register 4</description>
           <addressOffset>0x40005ACC</addressOffset>
           <size>8</size>
@@ -2677,7 +3355,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_SW6</name>
+          <name>HighF_OutComp_Comp_SW6</name>
           <description>Comparator Analog Routing Register 6</description>
           <addressOffset>0x40005ACE</addressOffset>
           <size>8</size>
@@ -2726,7 +3404,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_CLK</name>
+          <name>HighF_OutComp_Comp_CLK</name>
           <description>Comparator Clock Control Register</description>
           <addressOffset>0x40005ACF</addressOffset>
           <size>8</size>
@@ -2824,7 +3502,7 @@
           </fields>
         </register>
         <register>
-          <name>HighF_BPF_Comp_Comp_WRK</name>
+          <name>HighF_OutComp_Comp_WRK</name>
           <description>Comparator output working register</description>
           <addressOffset>0x40005B96</addressOffset>
           <size>8</size>
@@ -2859,335 +3537,6 @@
               <lsb>0</lsb>
               <msb>0</msb>
               <access>read-only</access>
-            </field>
-          </fields>
-        </register>
-      </registers>
-    </peripheral>
-    <peripheral>
-      <name>HighF_Ref_OpAmp</name>
-      <description>No description available</description>
-      <baseAddress>0x0</baseAddress>
-      <addressBlock>
-        <offset>0</offset>
-        <size>0x0</size>
-        <usage>registers</usage>
-      </addressBlock>
-      <registers>
-        <register>
-          <name>PM_ACT_CFG4</name>
-          <description>Active Power Mode Configuration Register 4</description>
-          <addressOffset>0x400043A4</addressOffset>
-          <size>8</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-          <fields>
-            <field>
-              <name>EN_OPAMP</name>
-              <description>Enables subsystems during active power mode</description>
-              <lsb>0</lsb>
-              <msb>3</msb>
-              <access>read-write</access>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>Blk_0</name>
-                  <description>Enables analog linear output buffer for Opamp block 0</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Blk_1</name>
-                  <description>Enables analog linear output buffer for Opamp block 1</description>
-                  <value>2</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Blk_2</name>
-                  <description>Enables analog linear output buffer for Opamp block 2</description>
-                  <value>4</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Blk_3</name>
-                  <description>Enables analog linear output buffer for Opamp block 3</description>
-                  <value>8</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>PM_STBY_CFG4</name>
-          <description>Standby Power Mode Configuration Register 4</description>
-          <addressOffset>0x400043B4</addressOffset>
-          <size>8</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-          <fields>
-            <field>
-              <name>EN_OPAMP</name>
-              <description>Enables subsystems during standby power mode</description>
-              <lsb>0</lsb>
-              <msb>3</msb>
-              <access>read-write</access>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>Blk_0</name>
-                  <description>Enables analog linear output buffer for Opamp block 0</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Blk_1</name>
-                  <description>Enables analog linear output buffer for Opamp block 1</description>
-                  <value>2</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Blk_2</name>
-                  <description>Enables analog linear output buffer for Opamp block 2</description>
-                  <value>4</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Blk_3</name>
-                  <description>Enables analog linear output buffer for Opamp block 3</description>
-                  <value>8</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>OPAMP__TR0</name>
-          <description>Analog Output Buffer Trim Register 0</description>
-          <addressOffset>0x40004620</addressOffset>
-          <size>8</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-          <fields>
-            <field>
-              <name>offset_trim</name>
-              <description>Offset Trim: 420uV typical step size; +/- 6.8mV offset trimmable range</description>
-              <lsb>0</lsb>
-              <msb>4</msb>
-              <access>read-write</access>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>OPAMP__TR1</name>
-          <description>Analog Output Buffer Trim Register 1</description>
-          <addressOffset>0x40004621</addressOffset>
-          <size>8</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-          <fields>
-            <field>
-              <name>RSVD</name>
-              <description>RSVD</description>
-              <lsb>0</lsb>
-              <msb>7</msb>
-              <access>read-write</access>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>OPAMP__CR</name>
-          <description>Analog Output Buffer Configuration Register</description>
-          <addressOffset>0x40005858</addressOffset>
-          <size>8</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-          <fields>
-            <field>
-              <name>pwr_mode</name>
-              <description>Power Mode</description>
-              <lsb>0</lsb>
-              <msb>1</msb>
-              <access>read-write</access>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>Default_Fast</name>
-                  <description>Default Power mode Fast</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Slow</name>
-                  <description>Power Mode Slow</description>
-                  <value>1</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Medium</name>
-                  <description>Power Mode Medium</description>
-                  <value>2</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>Fast</name>
-                  <description>Power Mode Fast</description>
-                  <value>3</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>OPAMP__MX</name>
-          <description>Analog Buffer Input Selection Register</description>
-          <addressOffset>0x40005B40</addressOffset>
-          <size>8</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-          <fields>
-            <field>
-              <name>MX_VP_ENUM</name>
-              <description>MUX select VP (Positive terminal input)</description>
-              <lsb>0</lsb>
-              <msb>3</msb>
-              <access>read-write</access>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_DEFAULT</name>
-                  <description>Default - Not Connected (NC)</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_AG4</name>
-                  <description>MUX Selection AGL(4)</description>
-                  <value>1</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_AG5</name>
-                  <description>MUX Selection AGL(5)</description>
-                  <value>2</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_AG6</name>
-                  <description>MUX Selection AGL(6)</description>
-                  <value>3</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_AG7</name>
-                  <description>MUX Selection AGL(7)</description>
-                  <value>4</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_ABUS0</name>
-                  <description>MUX Selection ABUSL(0)</description>
-                  <value>5</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_ABUS1</name>
-                  <description>MUX Selection ABUSL(1)</description>
-                  <value>6</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_ABUS2</name>
-                  <description>MUX Selection ABUSL(2)</description>
-                  <value>7</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_ABUS3</name>
-                  <description>MUX Selection ABUSL(3)</description>
-                  <value>8</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_VREF</name>
-                  <description>MUX Selection: OPAMP Voltage Reference</description>
-                  <value>9</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_H_0xA</name>
-                  <description>Reserved (NC)</description>
-                  <value>10</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_H_0xB</name>
-                  <description>Reserved (NC)</description>
-                  <value>11</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_H_0xC</name>
-                  <description>Reserved (NC)</description>
-                  <value>12</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_H_0xD</name>
-                  <description>Reserved (NC)</description>
-                  <value>13</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_H_0xE</name>
-                  <description>Reserved (NC)</description>
-                  <value>14</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VP_H_0xF</name>
-                  <description>Reserved (NC)</description>
-                  <value>15</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-            <field>
-              <name>MX_VN_ENUM</name>
-              <description>MUX select VN (Negative terminal input)</description>
-              <lsb>4</lsb>
-              <msb>5</msb>
-              <access>read-write</access>
-              <enumeratedValues>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VN_DEFAULT</name>
-                  <description>Default - Not Connected (NC)</description>
-                  <value>0</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VN_AG4</name>
-                  <description>MUX Selection AGL(4)</description>
-                  <value>1</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VN_AG6</name>
-                  <description>MUX Selection AGL(6)</description>
-                  <value>2</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>OPAMP0_MX_VN_0x3</name>
-                  <description>Reserved (NC)</description>
-                  <value>3</value>
-                </enumeratedValue>
-              </enumeratedValues>
-            </field>
-          </fields>
-        </register>
-        <register>
-          <name>OPAMP__SW</name>
-          <description>Analog Buffer Routing Switch Register</description>
-          <addressOffset>0x40005B41</addressOffset>
-          <size>8</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-          <fields>
-            <field>
-              <name>swfol</name>
-              <description>Switch Enable Follow</description>
-              <lsb>0</lsb>
-              <msb>0</msb>
-              <access>read-write</access>
-            </field>
-            <field>
-              <name>swinn</name>
-              <description>Switch Enable Negative Input</description>
-              <lsb>1</lsb>
-              <msb>1</msb>
-              <access>read-write</access>
-            </field>
-            <field>
-              <name>swinp</name>
-              <description>Switch Enable Positive Input</description>
-              <lsb>2</lsb>
-              <msb>2</msb>
-              <access>read-write</access>
             </field>
           </fields>
         </register>

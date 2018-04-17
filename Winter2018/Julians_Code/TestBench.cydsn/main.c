@@ -32,15 +32,6 @@ int main(void)
     //unsigned int ADCValue;
     while (1) {
         
-        PWM_1_WritePeriod(FREQ(100));
-        PWM_1_WriteCompare((FREQ(100))/2); // Sets pulse width
-        CyDelay(500);
-        PWM_1_WritePeriod(FREQ(85));
-        PWM_1_WriteCompare((FREQ(85))/2); // Sets pulse width
-        CyDelay(500);
-//        PWM_2_WritePeriod(74);
-//        PWM_2_WriteCompare(37);
-        
     }//end while(1)
     
 }//end main()

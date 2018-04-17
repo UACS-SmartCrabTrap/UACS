@@ -48,6 +48,7 @@ static int currentByte = Encoding_Byte1;
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
+    CyDelay(2000);
     
     /*Block initializations*/
     PWM_Modulator_Start();

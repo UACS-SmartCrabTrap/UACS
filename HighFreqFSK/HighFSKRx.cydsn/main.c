@@ -84,10 +84,9 @@ int main(void)
 }
     
 
-//Bit length = 0.5s
-//timer period = 0.05s
+//Bit length = 0.001 s
+//timer period = 0.0001 s
 //will check bit 10 times, to debounce
-//will set bit after 0.4s (8 checks) 
 CY_ISR(HighF_LevelCount){
     levelCounter++;
     
@@ -97,7 +96,7 @@ CY_ISR(HighF_LevelCount){
         zeroCount++;
     }
     
-    //debouncing every 0.4s, with a check of 7/8 hits 
+    //debouncing 
     if(levelCounter == 10){
         if(oneCount >= 7){
             currentBit = 0x01;

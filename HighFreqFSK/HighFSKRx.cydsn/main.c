@@ -38,7 +38,6 @@ int main(void)
     PWM_Recon_Start();
     HighF_BPF_Comp_Start();
     HighF_ShiftReg2_Start();
-    HighF_Ref_OpAmp_Start();
     HighF_PGA_Start() ; 
     HighF_OutComp_Start();
     HighF_LevelCount_Start();

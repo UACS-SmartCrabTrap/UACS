@@ -1,3 +1,10 @@
+/******************************************************************************
+ * File: main.c
+ * Author: Julian Salazar & Stephanie Salazar
+ * Date:
+ * Edits: - Added titling (J.S. 4/18/18)
+******************************************************************************/
+ 
 /*included files*/
 #include "project.h"
 #include <stdio.h>

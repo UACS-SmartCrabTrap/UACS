@@ -30,10 +30,12 @@ int Data(unsigned int hex_value, int bT);
 int Decode(unsigned int hex_value, int bT);
 int PreFix(unsigned int hex_value, int prefixCount);
 CY_ISR_PROTO(isr_halfsec); // High F Interrupts
+CY_ISR_PROTO(isr_msec); // High F  Alternating Interrupts
 
 /*Global Variables*/
 static int bitTime = 0;
 static int prefixTime = 0;
+static int alternating = 0;
 
 int main(void)
 {
@@ -41,11 +43,14 @@ int main(void)
     
     /*Block initializations*/
     PWM_Modulator_Start();
+    PWM_Alternating_Start();
+    PWM_Alternating_Timer_Start();
     PWM_1_Start();
     PWM_2_Start();
     PWM_3_Start();
     PWM_Switch_Timer_Start();
     isr_halfsec_StartEx(isr_halfsec);
+    isr_msec_StartEx(isr_msec);
     
     /*Variable initializations*/
     int bitCase = 0;
@@ -124,6 +129,21 @@ CY_ISR(isr_halfsec)
         bitTime++;
     }
 }//end CY_ISR(isr_halfsec)
+
+
+// Interrupt triggered on a 1 ms timer timeout
+// Will change between 30k and 45k every 1 ms
+CY_ISR(isr_msec)
+{
+    alternating = alternating^1;
+    if(alternating == ONE){
+        PWM_Alternating_WritePeriod(FREQ(ONE_FREQ));
+        PWM_Alternating_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
+    }else if(alternating == ZERO){
+        PWM_Alternating_WritePeriod(FREQ(ZERO_FREQ));
+        PWM_Alternating_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+    }
+}//end CY_ISR(isr_msec)
 
 /*
  * function: int Data(unsigned int hex_value, int bT)

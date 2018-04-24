@@ -1,3 +1,12 @@
+/* ========================================
+ * Smart Crab Trap
+ * FSK RX 
+ * Edited by: Stephanie Salazar
+ * Revision: 4/23/18
+ *
+ * ========================================
+*/
+
 /*Included header files*/
 #include "project.h"
 
@@ -11,8 +20,8 @@
 
 #define ZERO 0x0
 #define ONE  0x1
-#define DELAY_TIME  1000 //Change this value to adjust delay time between signal
-                         //transmissions. Currently set to 5 seconds.
+#define DELAY_TIME  10 //Change this value to adjust delay time between signal
+                         //transmissions. Currently set to 10ms seconds.
 
 /*Global Variables*/
 static int bitTime = 0;
@@ -23,21 +32,39 @@ int main(void)
     CyGlobalIntEnable; 
     
     /*Block initializations*/
-    PWM_Modulator_Start();
-    PWM_1_Start();
-    PWM_2_Start();
-    PWM_Switch_Timer_Start();
+    PWM_Alternating_1_Start();
+    PWM_Alternating_2_Start();
+    PWM_Alternating_3_Start();
+    Audible_Frequency_Start();
    
     
     for(;;)
     {
         /*Alternate between high and low frequency for 1 ms*/
-        PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
-        PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
-        CyDelay(1);
-        PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
-        PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
-        CyDelay(1);
+        // Pin 1.2 PWM
+        PWM_Alternating_1_WritePeriod(FREQ(ONE_FREQ));
+        PWM_Alternating_1_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+        // Pin 1.4 PWM
+        PWM_Alternating_2_WritePeriod(FREQ(ONE_FREQ));
+        PWM_Alternating_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+        // Pin 1.6 PWM
+        PWM_Alternating_3_WritePeriod(FREQ(ONE_FREQ));
+        PWM_Alternating_3_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+        
+        // Delay frequency 
+        CyDelay(DELAY_TIME);
+        
+        // Pin 1.2 PWM
+        PWM_Alternating_1_WritePeriod(FREQ(ZERO_FREQ));
+        PWM_Alternating_1_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
+        // Pin 1.4 PWM
+        PWM_Alternating_2_WritePeriod(FREQ(ZERO_FREQ));
+        PWM_Alternating_2_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
+        // Pin 1.6 PWM
+        PWM_Alternating_3_WritePeriod(FREQ(ZERO_FREQ));
+        PWM_Alternating_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
+        
+        CyDelay(DELAY_TIME);
         
         
     }//end for(;;)

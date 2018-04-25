@@ -6,7 +6,7 @@
 %========================================
 
 %read the number data only
-data = csvread('3_gain1_gain2 (1).csv', 11, 0); 
+data = csvread('35_gain1_gain2.csv', 11, 0); 
 
 %r = number of rows, c = number of columns 
 [r,c] = size(data);

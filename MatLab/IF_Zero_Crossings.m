@@ -20,11 +20,11 @@ end
 %will pick the positive point
 j = 1;
 for i = 2:length(unBaised)
-    if (Level == 0 && (unBaised(i) >= 0.00095))
+    if (Level == 0 && (unBaised(i) >= 0.00001))
         ZerosOut(j) = i;
         Level = 1;
         j = j+1;
-    elseif (Level == 1 && (unBaised(i) <= -0.0095))
+    elseif (Level == 1 && (unBaised(i) <= -0.00001))
         ZerosOut(j) = i-1;
         Level = 0;
         j = j+1;

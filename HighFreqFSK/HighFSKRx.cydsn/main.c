@@ -89,8 +89,8 @@ int main(void)
 } // end of main()
     
 
-//Bit length = 500 ms
-//timer period = 50 ms
+//Bit length = 10 ms
+//timer period = 1 ms
 //will check bit 10 times, to debounce
 CY_ISR(HighF_LevelCount){
     levelCounter++;

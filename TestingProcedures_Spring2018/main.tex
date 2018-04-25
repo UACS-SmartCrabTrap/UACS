@@ -1,0 +1,85 @@
+\documentclass[11pt]{article} %change size of text as needed
+\usepackage[margin=0.8in]{geometry} %Changes margins on all sides, adjust as needed
+\usepackage[utf8]{inputenc}
+\usepackage{indentfirst}
+\usepackage{mathtools}
+\usepackage{caption}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+%\usepackage{subfig}
+\usepackage{hyperref}
+\begin{document}
+
+%Title information
+\title{Underwater Acoustic Communication System (UACS) \\
+		Testing Procedures\\
+		UCSC Spring 2018\\
+}
+
+\author{Stephanie Salazar\\
+        Ivonne Fajardo\\
+        Zili Wu\\
+        Julian Salazar}
+\date{\today} 
+\maketitle %writes title, author, and date in format shown
+
+%--------------------------------------------------------------------------------------------------------------
+\newpage
+\section{Overview}
+
+The following document is an explanation of the planned testing testing procedures for the under water communication system. Prior to starting these technical tests, proper water proof verification will occur following the procedure outlined in \textit{Blue Robotics Watertight Enclosure}. 
+\\
+Last Edit: April 13, 2018 
+
+%--------------------------------------------------------------------------------------------------------------
+\section{Transmission (Tx) Module}
+
+The transmission is controlled by a Cypress PSoC5 microcontroller and powered by 2 9V batteries. For more information reference the \textit{UACS Power Consumption Document} \\
+
+Both the low and high frequency modules will be emitting 3 different types of signals:
+\begin{itemize}
+\item Constant frequency PWM signals set at the same frequencies utilized in their FSK modulation
+	\begin{itemize}
+	\item Low Frequencies: 90 Hz, 100 Hz
+    \item High Frequencies: 30kHz, 43 kHz 
+	\end{itemize}
+\item A PWM signal alternating between the 2 frequencies chosen for FSK modulation 
+\item An PWM wave encoded using FSK transmitting the following bit patter: 
+\begin{itemize}
+\item  2 bytes pre-fix, 1 byte message, 2 bytes post-fix. 
+\end{itemize}
+\end{itemize}
+
+
+%--------------------------------------------------------------------------------------------------------------
+\section{Receiving (Rx) Circuits and Test Points}
+\subsection{Analog Circuits}
+The low and high frequency modules take in the acoustic signals via hydrophones that function well in their frequency range. That hydrophone input then goes to a band-pass filter and gain stages ultimately being passed into another PSoC5 for digital conditioning. Data will be taken at the following points:
+
+\begin{enumerate}
+\item Raw data input
+\item After the low pass filter (LPF)
+\item After the high pass filter (HPF)
+\item After the gain stages
+\end{enumerate}
+% will add circuit diagrams in a bit
+[CIRCUIT DIAGRAMS]
+
+\subsection{Digital Conditioning}
+
+After being filtered and amplified the signal will go through digital conditioning to demodulated the FSK encoding and read the data. This is all being done with a PSoC5 microcontroller. Data will be taken at the following points:
+
+\begin{enumerate}
+\item After comparator conditioning 
+\item High frequency only: after the PWM reconstruction with slower frequency (frequency slowed for better conditioning)
+\item Output of the shift register 
+\item Output of the correlator (XOR gate output)
+\item Demodulation output 
+\end{enumerate}
+ %--------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+\end{document}

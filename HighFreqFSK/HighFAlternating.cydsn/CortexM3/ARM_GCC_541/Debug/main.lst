@@ -1,0 +1,1139 @@
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.isr_msec,"ax",%progbits
+  20              		.align	2
+  21              		.global	isr_msec
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	isr_msec, %function
+  25              	isr_msec:
+  26              	.LFB64:
+  27              		.file 1 "main.c"
+   1:main.c        **** /* ========================================
+   2:main.c        ****  * Smart Crab Trap
+   3:main.c        ****  * FSK RX 
+   4:main.c        ****  * Edited by: Stephanie Salazar
+   5:main.c        ****  * Revision: 4/23/18
+   6:main.c        ****  *
+   7:main.c        ****  * ========================================
+   8:main.c        **** */
+   9:main.c        **** 
+  10:main.c        **** /*Included header files*/
+  11:main.c        **** #include "project.h"
+  12:main.c        **** 
+  13:main.c        **** /*Definitions*/
+  14:main.c        **** #define CLOCK_FREQ 1000000 //Adjust this to match PWM_Clock in top design
+  15:main.c        **** #define ONE_FREQ 45000 //Frequency sent to give logic 1 (in Hz)
+  16:main.c        **** #define ZERO_FREQ_1 3000 //Frequency sent to give logic 0 (in Hz)
+  17:main.c        **** #define ZERO_FREQ_2 30000 //Frequency sent to give logic 0 (in Hz)
+  18:main.c        **** #define ZERO_FREQ_3 38000 //Frequency sent to give logic 0 (in Hz)
+  19:main.c        **** #define FREQ(x) (CLOCK_FREQ/x)-1 //Converts frequency x to value needed by pwm
+  20:main.c        ****                                  //block to output at frequency x
+  21:main.c        **** 
+  22:main.c        **** 
+  23:main.c        **** #define ZERO 0x0
+  24:main.c        **** #define ONE  0x1
+  25:main.c        **** #define DELAY_TIME  10 //Change this value to adjust delay time between signal
+  26:main.c        ****                          //transmissions. Currently set to 10ms seconds.
+  27:main.c        **** 
+  28:main.c        **** CY_ISR_PROTO(isr_msec); // High F  Alternating Interrupts
+  29:main.c        **** 
+  30:main.c        **** // Set alternating frequency
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 2
+
+
+  31:main.c        **** static int alternating = 1;
+  32:main.c        **** 
+  33:main.c        **** int main(void)
+  34:main.c        **** {
+  35:main.c        ****     /* Enable global interrupts. */
+  36:main.c        ****     CyGlobalIntEnable; 
+  37:main.c        ****     
+  38:main.c        ****     /*Block initializations*/
+  39:main.c        ****     PWM_Alternating_1_Start();
+  40:main.c        ****     PWM_Alternating_2_Start();
+  41:main.c        ****     PWM_Alternating_3_Start();
+  42:main.c        ****     Audible_Frequency_Start();
+  43:main.c        ****     PWM_Alternating_Timer_Start();
+  44:main.c        ****     
+  45:main.c        ****     isr_msec_StartEx(isr_msec);
+  46:main.c        ****     
+  47:main.c        ****     // Pin 1.6 PWM
+  48:main.c        ****     PWM_Alternating_3_WritePeriod(FREQ(ONE_FREQ));
+  49:main.c        ****     PWM_Alternating_3_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+  50:main.c        ****     
+  51:main.c        ****     for(;;)
+  52:main.c        ****     {
+  53:main.c        ****         if(alternating == 1){
+  54:main.c        ****             /*Alternate between high and low frequency for 10 ms*/
+  55:main.c        ****             // Pin 1.2 PWM
+  56:main.c        ****             PWM_Alternating_1_WritePeriod(FREQ(ONE_FREQ));
+  57:main.c        ****             PWM_Alternating_1_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+  58:main.c        ****             // Pin 1.4 PWM
+  59:main.c        ****             PWM_Alternating_2_Start();
+  60:main.c        ****             PWM_Alternating_2_WritePeriod(FREQ(ONE_FREQ));
+  61:main.c        ****             PWM_Alternating_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+  62:main.c        ****             
+  63:main.c        **** 
+  64:main.c        ****         }else if(alternating == 2 || alternating == 4){
+  65:main.c        ****             PWM_Alternating_2_Stop();
+  66:main.c        ****         }else if(alternating == 3){
+  67:main.c        ****             // Pin 1.2 PWM
+  68:main.c        ****             PWM_Alternating_1_WritePeriod(FREQ(ZERO_FREQ_1));
+  69:main.c        ****             PWM_Alternating_1_WriteCompare((FREQ(ZERO_FREQ_1))/2); // Sets pulse width to half
+  70:main.c        ****             // Pin 1.4 PWM
+  71:main.c        ****             PWM_Alternating_2_Start();
+  72:main.c        ****             PWM_Alternating_2_WritePeriod(FREQ(ZERO_FREQ_2));
+  73:main.c        ****             PWM_Alternating_2_WriteCompare((FREQ(ZERO_FREQ_2))/2); // Sets pulse width to half
+  74:main.c        ****             // Pin 1.6 PWM
+  75:main.c        **** //            PWM_Alternating_3_WritePeriod(FREQ(ZERO_FREQ_3));
+  76:main.c        **** //            PWM_Alternating_3_WriteCompare((FREQ(ZERO_FREQ_3))/2); // Sets pulse width to half
+  77:main.c        ****         }
+  78:main.c        ****             
+  79:main.c        ****     }//end for(;;)
+  80:main.c        ****     
+  81:main.c        **** }//end main()
+  82:main.c        **** 
+  83:main.c        **** // Interrupt triggered on a 10 ms timer timeout
+  84:main.c        **** // Will change between 30k and 45k every 10 ms
+  85:main.c        **** CY_ISR(isr_msec)
+  86:main.c        **** {
+  28              		.loc 1 86 0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 3
+
+
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+  87:main.c        ****     if(alternating == 1){
+  33              		.loc 1 87 0
+  34 0000 0C4B     		ldr	r3, .L6
+  35 0002 1B68     		ldr	r3, [r3]
+  36 0004 012B     		cmp	r3, #1
+  37 0006 03D1     		bne	.L2
+  88:main.c        ****         alternating++;
+  38              		.loc 1 88 0
+  39 0008 0133     		adds	r3, r3, #1
+  40 000a 0A4A     		ldr	r2, .L6
+  41 000c 1360     		str	r3, [r2]
+  42 000e 7047     		bx	lr
+  43              	.L2:
+  89:main.c        ****     }else if(alternating == 2){
+  44              		.loc 1 89 0
+  45 0010 022B     		cmp	r3, #2
+  46 0012 03D1     		bne	.L4
+  90:main.c        ****         alternating++;
+  47              		.loc 1 90 0
+  48 0014 0133     		adds	r3, r3, #1
+  49 0016 074A     		ldr	r2, .L6
+  50 0018 1360     		str	r3, [r2]
+  51 001a 7047     		bx	lr
+  52              	.L4:
+  91:main.c        ****     }else if(alternating == 3){
+  53              		.loc 1 91 0
+  54 001c 032B     		cmp	r3, #3
+  55 001e 03D1     		bne	.L5
+  92:main.c        ****         alternating++;
+  56              		.loc 1 92 0
+  57 0020 0133     		adds	r3, r3, #1
+  58 0022 044A     		ldr	r2, .L6
+  59 0024 1360     		str	r3, [r2]
+  60 0026 7047     		bx	lr
+  61              	.L5:
+  93:main.c        ****     }else if(alternating == 4){
+  62              		.loc 1 93 0
+  63 0028 042B     		cmp	r3, #4
+  64 002a 02D1     		bne	.L1
+  94:main.c        ****         alternating = 1;
+  65              		.loc 1 94 0
+  66 002c 0122     		movs	r2, #1
+  67 002e 014B     		ldr	r3, .L6
+  68 0030 1A60     		str	r2, [r3]
+  69              	.L1:
+  70 0032 7047     		bx	lr
+  71              	.L7:
+  72              		.align	2
+  73              	.L6:
+  74 0034 00000000 		.word	.LANCHOR0
+  75              		.cfi_endproc
+  76              	.LFE64:
+  77              		.size	isr_msec, .-isr_msec
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 4
+
+
+  78              		.section	.text.main,"ax",%progbits
+  79              		.align	2
+  80              		.global	main
+  81              		.thumb
+  82              		.thumb_func
+  83              		.type	main, %function
+  84              	main:
+  85              	.LFB63:
+  34:main.c        ****     /* Enable global interrupts. */
+  86              		.loc 1 34 0
+  87              		.cfi_startproc
+  88              		@ Volatile: function does not return.
+  89              		@ args = 0, pretend = 0, frame = 0
+  90              		@ frame_needed = 0, uses_anonymous_args = 0
+  91 0000 08B5     		push	{r3, lr}
+  92              		.cfi_def_cfa_offset 8
+  93              		.cfi_offset 3, -8
+  94              		.cfi_offset 14, -4
+  36:main.c        ****     
+  95              		.loc 1 36 0
+  96              		.syntax unified
+  97              	@ 36 "main.c" 1
+  98 0002 62B6     		CPSIE   i
+  99              	@ 0 "" 2
+  39:main.c        ****     PWM_Alternating_2_Start();
+ 100              		.loc 1 39 0
+ 101              		.thumb
+ 102              		.syntax unified
+ 103 0004 FFF7FEFF 		bl	PWM_Alternating_1_Start
+ 104              	.LVL0:
+  40:main.c        ****     PWM_Alternating_3_Start();
+ 105              		.loc 1 40 0
+ 106 0008 FFF7FEFF 		bl	PWM_Alternating_2_Start
+ 107              	.LVL1:
+  41:main.c        ****     Audible_Frequency_Start();
+ 108              		.loc 1 41 0
+ 109 000c FFF7FEFF 		bl	PWM_Alternating_3_Start
+ 110              	.LVL2:
+  42:main.c        ****     PWM_Alternating_Timer_Start();
+ 111              		.loc 1 42 0
+ 112 0010 FFF7FEFF 		bl	Audible_Frequency_Start
+ 113              	.LVL3:
+  43:main.c        ****     
+ 114              		.loc 1 43 0
+ 115 0014 FFF7FEFF 		bl	PWM_Alternating_Timer_Start
+ 116              	.LVL4:
+  45:main.c        ****     
+ 117              		.loc 1 45 0
+ 118 0018 1948     		ldr	r0, .L15
+ 119 001a FFF7FEFF 		bl	isr_msec_StartEx
+ 120              	.LVL5:
+  48:main.c        ****     PWM_Alternating_3_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+ 121              		.loc 1 48 0
+ 122 001e 1520     		movs	r0, #21
+ 123 0020 FFF7FEFF 		bl	PWM_Alternating_3_WritePeriod
+ 124              	.LVL6:
+  49:main.c        ****     
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 5
+
+
+ 125              		.loc 1 49 0
+ 126 0024 0A20     		movs	r0, #10
+ 127 0026 FFF7FEFF 		bl	PWM_Alternating_3_WriteCompare
+ 128              	.LVL7:
+ 129              	.L9:
+  53:main.c        ****             /*Alternate between high and low frequency for 10 ms*/
+ 130              		.loc 1 53 0
+ 131 002a 164B     		ldr	r3, .L15+4
+ 132 002c 1B68     		ldr	r3, [r3]
+ 133 002e 012B     		cmp	r3, #1
+ 134 0030 0ED1     		bne	.L10
+  56:main.c        ****             PWM_Alternating_1_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+ 135              		.loc 1 56 0
+ 136 0032 1520     		movs	r0, #21
+ 137 0034 FFF7FEFF 		bl	PWM_Alternating_1_WritePeriod
+ 138              	.LVL8:
+  57:main.c        ****             // Pin 1.4 PWM
+ 139              		.loc 1 57 0
+ 140 0038 0A20     		movs	r0, #10
+ 141 003a FFF7FEFF 		bl	PWM_Alternating_1_WriteCompare
+ 142              	.LVL9:
+  59:main.c        ****             PWM_Alternating_2_WritePeriod(FREQ(ONE_FREQ));
+ 143              		.loc 1 59 0
+ 144 003e FFF7FEFF 		bl	PWM_Alternating_2_Start
+ 145              	.LVL10:
+  60:main.c        ****             PWM_Alternating_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+ 146              		.loc 1 60 0
+ 147 0042 1520     		movs	r0, #21
+ 148 0044 FFF7FEFF 		bl	PWM_Alternating_2_WritePeriod
+ 149              	.LVL11:
+  61:main.c        ****             
+ 150              		.loc 1 61 0
+ 151 0048 0A20     		movs	r0, #10
+ 152 004a FFF7FEFF 		bl	PWM_Alternating_2_WriteCompare
+ 153              	.LVL12:
+ 154 004e ECE7     		b	.L9
+ 155              	.L10:
+  64:main.c        ****             PWM_Alternating_2_Stop();
+ 156              		.loc 1 64 0
+ 157 0050 022B     		cmp	r3, #2
+ 158 0052 01D0     		beq	.L12
+  64:main.c        ****             PWM_Alternating_2_Stop();
+ 159              		.loc 1 64 0 is_stmt 0 discriminator 1
+ 160 0054 042B     		cmp	r3, #4
+ 161 0056 02D1     		bne	.L13
+ 162              	.L12:
+  65:main.c        ****         }else if(alternating == 3){
+ 163              		.loc 1 65 0 is_stmt 1
+ 164 0058 FFF7FEFF 		bl	PWM_Alternating_2_Stop
+ 165              	.LVL13:
+ 166 005c E5E7     		b	.L9
+ 167              	.L13:
+  66:main.c        ****             // Pin 1.2 PWM
+ 168              		.loc 1 66 0
+ 169 005e 032B     		cmp	r3, #3
+ 170 0060 E3D1     		bne	.L9
+  68:main.c        ****             PWM_Alternating_1_WriteCompare((FREQ(ZERO_FREQ_1))/2); // Sets pulse width to half
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 6
+
+
+ 171              		.loc 1 68 0
+ 172 0062 4C20     		movs	r0, #76
+ 173 0064 FFF7FEFF 		bl	PWM_Alternating_1_WritePeriod
+ 174              	.LVL14:
+  69:main.c        ****             // Pin 1.4 PWM
+ 175              		.loc 1 69 0
+ 176 0068 A620     		movs	r0, #166
+ 177 006a FFF7FEFF 		bl	PWM_Alternating_1_WriteCompare
+ 178              	.LVL15:
+  71:main.c        ****             PWM_Alternating_2_WritePeriod(FREQ(ZERO_FREQ_2));
+ 179              		.loc 1 71 0
+ 180 006e FFF7FEFF 		bl	PWM_Alternating_2_Start
+ 181              	.LVL16:
+  72:main.c        ****             PWM_Alternating_2_WriteCompare((FREQ(ZERO_FREQ_2))/2); // Sets pulse width to half
+ 182              		.loc 1 72 0
+ 183 0072 2020     		movs	r0, #32
+ 184 0074 FFF7FEFF 		bl	PWM_Alternating_2_WritePeriod
+ 185              	.LVL17:
+  73:main.c        ****             // Pin 1.6 PWM
+ 186              		.loc 1 73 0
+ 187 0078 1020     		movs	r0, #16
+ 188 007a FFF7FEFF 		bl	PWM_Alternating_2_WriteCompare
+ 189              	.LVL18:
+ 190 007e D4E7     		b	.L9
+ 191              	.L16:
+ 192              		.align	2
+ 193              	.L15:
+ 194 0080 00000000 		.word	isr_msec
+ 195 0084 00000000 		.word	.LANCHOR0
+ 196              		.cfi_endproc
+ 197              	.LFE63:
+ 198              		.size	main, .-main
+ 199              		.data
+ 200              		.align	2
+ 201              		.set	.LANCHOR0,. + 0
+ 202              		.type	alternating, %object
+ 203              		.size	alternating, 4
+ 204              	alternating:
+ 205 0000 01000000 		.word	1
+ 206              		.text
+ 207              	.Letext0:
+ 208              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 209              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 210              		.file 4 "Generated_Source\\PSoC5/PWM_Alternating_1.h"
+ 211              		.file 5 "Generated_Source\\PSoC5/PWM_Alternating_2.h"
+ 212              		.file 6 "Generated_Source\\PSoC5/PWM_Alternating_3.h"
+ 213              		.file 7 "Generated_Source\\PSoC5/Audible_Frequency.h"
+ 214              		.file 8 "Generated_Source\\PSoC5/PWM_Alternating_Timer.h"
+ 215              		.file 9 "Generated_Source\\PSoC5/isr_msec.h"
+ 216              		.file 10 "Generated_Source\\PSoC5/core_cm3.h"
+ 217              		.section	.debug_info,"",%progbits
+ 218              	.Ldebug_info0:
+ 219 0000 99020000 		.4byte	0x299
+ 220 0004 0400     		.2byte	0x4
+ 221 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 222 000a 04       		.byte	0x4
+ 223 000b 01       		.uleb128 0x1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 7
+
+
+ 224 000c DC000000 		.4byte	.LASF29
+ 225 0010 0C       		.byte	0xc
+ 226 0011 92020000 		.4byte	.LASF30
+ 227 0015 A5010000 		.4byte	.LASF31
+ 228 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 229 001d 00000000 		.4byte	0
+ 230 0021 00000000 		.4byte	.Ldebug_line0
+ 231 0025 02       		.uleb128 0x2
+ 232 0026 01       		.byte	0x1
+ 233 0027 06       		.byte	0x6
+ 234 0028 F8020000 		.4byte	.LASF0
+ 235 002c 02       		.uleb128 0x2
+ 236 002d 01       		.byte	0x1
+ 237 002e 08       		.byte	0x8
+ 238 002f CE000000 		.4byte	.LASF1
+ 239 0033 02       		.uleb128 0x2
+ 240 0034 02       		.byte	0x2
+ 241 0035 05       		.byte	0x5
+ 242 0036 BD020000 		.4byte	.LASF2
+ 243 003a 02       		.uleb128 0x2
+ 244 003b 02       		.byte	0x2
+ 245 003c 07       		.byte	0x7
+ 246 003d 48000000 		.4byte	.LASF3
+ 247 0041 03       		.uleb128 0x3
+ 248 0042 3E000000 		.4byte	.LASF9
+ 249 0046 02       		.byte	0x2
+ 250 0047 3F       		.byte	0x3f
+ 251 0048 4C000000 		.4byte	0x4c
+ 252 004c 02       		.uleb128 0x2
+ 253 004d 04       		.byte	0x4
+ 254 004e 05       		.byte	0x5
+ 255 004f E3020000 		.4byte	.LASF4
+ 256 0053 02       		.uleb128 0x2
+ 257 0054 04       		.byte	0x4
+ 258 0055 07       		.byte	0x7
+ 259 0056 6A010000 		.4byte	.LASF5
+ 260 005a 02       		.uleb128 0x2
+ 261 005b 08       		.byte	0x8
+ 262 005c 05       		.byte	0x5
+ 263 005d 84020000 		.4byte	.LASF6
+ 264 0061 02       		.uleb128 0x2
+ 265 0062 08       		.byte	0x8
+ 266 0063 07       		.byte	0x7
+ 267 0064 1F020000 		.4byte	.LASF7
+ 268 0068 04       		.uleb128 0x4
+ 269 0069 04       		.byte	0x4
+ 270 006a 05       		.byte	0x5
+ 271 006b 696E7400 		.ascii	"int\000"
+ 272 006f 02       		.uleb128 0x2
+ 273 0070 04       		.byte	0x4
+ 274 0071 07       		.byte	0x7
+ 275 0072 12020000 		.4byte	.LASF8
+ 276 0076 03       		.uleb128 0x3
+ 277 0077 73020000 		.4byte	.LASF10
+ 278 007b 03       		.byte	0x3
+ 279 007c 2C       		.byte	0x2c
+ 280 007d 41000000 		.4byte	0x41
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 8
+
+
+ 281 0081 02       		.uleb128 0x2
+ 282 0082 04       		.byte	0x4
+ 283 0083 04       		.byte	0x4
+ 284 0084 8B000000 		.4byte	.LASF11
+ 285 0088 02       		.uleb128 0x2
+ 286 0089 08       		.byte	0x8
+ 287 008a 04       		.byte	0x4
+ 288 008b ED010000 		.4byte	.LASF12
+ 289 008f 02       		.uleb128 0x2
+ 290 0090 01       		.byte	0x1
+ 291 0091 08       		.byte	0x8
+ 292 0092 99020000 		.4byte	.LASF13
+ 293 0096 02       		.uleb128 0x2
+ 294 0097 08       		.byte	0x8
+ 295 0098 04       		.byte	0x4
+ 296 0099 EC020000 		.4byte	.LASF14
+ 297 009d 02       		.uleb128 0x2
+ 298 009e 04       		.byte	0x4
+ 299 009f 07       		.byte	0x7
+ 300 00a0 7B020000 		.4byte	.LASF15
+ 301 00a4 05       		.uleb128 0x5
+ 302 00a5 35000000 		.4byte	.LASF32
+ 303 00a9 01       		.byte	0x1
+ 304 00aa 55       		.byte	0x55
+ 305 00ab 00000000 		.4byte	.LFB64
+ 306 00af 38000000 		.4byte	.LFE64-.LFB64
+ 307 00b3 01       		.uleb128 0x1
+ 308 00b4 9C       		.byte	0x9c
+ 309 00b5 06       		.uleb128 0x6
+ 310 00b6 00020000 		.4byte	.LASF33
+ 311 00ba 01       		.byte	0x1
+ 312 00bb 21       		.byte	0x21
+ 313 00bc 68000000 		.4byte	0x68
+ 314 00c0 00000000 		.4byte	.LFB63
+ 315 00c4 88000000 		.4byte	.LFE63-.LFB63
+ 316 00c8 01       		.uleb128 0x1
+ 317 00c9 9C       		.byte	0x9c
+ 318 00ca EB010000 		.4byte	0x1eb
+ 319 00ce 07       		.uleb128 0x7
+ 320 00cf 08000000 		.4byte	.LVL0
+ 321 00d3 0D020000 		.4byte	0x20d
+ 322 00d7 07       		.uleb128 0x7
+ 323 00d8 0C000000 		.4byte	.LVL1
+ 324 00dc 18020000 		.4byte	0x218
+ 325 00e0 07       		.uleb128 0x7
+ 326 00e1 10000000 		.4byte	.LVL2
+ 327 00e5 23020000 		.4byte	0x223
+ 328 00e9 07       		.uleb128 0x7
+ 329 00ea 14000000 		.4byte	.LVL3
+ 330 00ee 2E020000 		.4byte	0x22e
+ 331 00f2 07       		.uleb128 0x7
+ 332 00f3 18000000 		.4byte	.LVL4
+ 333 00f7 39020000 		.4byte	0x239
+ 334 00fb 08       		.uleb128 0x8
+ 335 00fc 1E000000 		.4byte	.LVL5
+ 336 0100 44020000 		.4byte	0x244
+ 337 0104 12010000 		.4byte	0x112
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 9
+
+
+ 338 0108 09       		.uleb128 0x9
+ 339 0109 01       		.uleb128 0x1
+ 340 010a 50       		.byte	0x50
+ 341 010b 05       		.uleb128 0x5
+ 342 010c 03       		.byte	0x3
+ 343 010d 00000000 		.4byte	isr_msec
+ 344 0111 00       		.byte	0
+ 345 0112 08       		.uleb128 0x8
+ 346 0113 24000000 		.4byte	.LVL6
+ 347 0117 4F020000 		.4byte	0x24f
+ 348 011b 25010000 		.4byte	0x125
+ 349 011f 09       		.uleb128 0x9
+ 350 0120 01       		.uleb128 0x1
+ 351 0121 50       		.byte	0x50
+ 352 0122 01       		.uleb128 0x1
+ 353 0123 45       		.byte	0x45
+ 354 0124 00       		.byte	0
+ 355 0125 08       		.uleb128 0x8
+ 356 0126 2A000000 		.4byte	.LVL7
+ 357 012a 5A020000 		.4byte	0x25a
+ 358 012e 38010000 		.4byte	0x138
+ 359 0132 09       		.uleb128 0x9
+ 360 0133 01       		.uleb128 0x1
+ 361 0134 50       		.byte	0x50
+ 362 0135 01       		.uleb128 0x1
+ 363 0136 3A       		.byte	0x3a
+ 364 0137 00       		.byte	0
+ 365 0138 08       		.uleb128 0x8
+ 366 0139 38000000 		.4byte	.LVL8
+ 367 013d 65020000 		.4byte	0x265
+ 368 0141 4B010000 		.4byte	0x14b
+ 369 0145 09       		.uleb128 0x9
+ 370 0146 01       		.uleb128 0x1
+ 371 0147 50       		.byte	0x50
+ 372 0148 01       		.uleb128 0x1
+ 373 0149 45       		.byte	0x45
+ 374 014a 00       		.byte	0
+ 375 014b 08       		.uleb128 0x8
+ 376 014c 3E000000 		.4byte	.LVL9
+ 377 0150 70020000 		.4byte	0x270
+ 378 0154 5E010000 		.4byte	0x15e
+ 379 0158 09       		.uleb128 0x9
+ 380 0159 01       		.uleb128 0x1
+ 381 015a 50       		.byte	0x50
+ 382 015b 01       		.uleb128 0x1
+ 383 015c 3A       		.byte	0x3a
+ 384 015d 00       		.byte	0
+ 385 015e 07       		.uleb128 0x7
+ 386 015f 42000000 		.4byte	.LVL10
+ 387 0163 18020000 		.4byte	0x218
+ 388 0167 08       		.uleb128 0x8
+ 389 0168 48000000 		.4byte	.LVL11
+ 390 016c 7B020000 		.4byte	0x27b
+ 391 0170 7A010000 		.4byte	0x17a
+ 392 0174 09       		.uleb128 0x9
+ 393 0175 01       		.uleb128 0x1
+ 394 0176 50       		.byte	0x50
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 10
+
+
+ 395 0177 01       		.uleb128 0x1
+ 396 0178 45       		.byte	0x45
+ 397 0179 00       		.byte	0
+ 398 017a 08       		.uleb128 0x8
+ 399 017b 4E000000 		.4byte	.LVL12
+ 400 017f 86020000 		.4byte	0x286
+ 401 0183 8D010000 		.4byte	0x18d
+ 402 0187 09       		.uleb128 0x9
+ 403 0188 01       		.uleb128 0x1
+ 404 0189 50       		.byte	0x50
+ 405 018a 01       		.uleb128 0x1
+ 406 018b 3A       		.byte	0x3a
+ 407 018c 00       		.byte	0
+ 408 018d 07       		.uleb128 0x7
+ 409 018e 5C000000 		.4byte	.LVL13
+ 410 0192 91020000 		.4byte	0x291
+ 411 0196 08       		.uleb128 0x8
+ 412 0197 68000000 		.4byte	.LVL14
+ 413 019b 65020000 		.4byte	0x265
+ 414 019f AA010000 		.4byte	0x1aa
+ 415 01a3 09       		.uleb128 0x9
+ 416 01a4 01       		.uleb128 0x1
+ 417 01a5 50       		.byte	0x50
+ 418 01a6 02       		.uleb128 0x2
+ 419 01a7 08       		.byte	0x8
+ 420 01a8 4C       		.byte	0x4c
+ 421 01a9 00       		.byte	0
+ 422 01aa 08       		.uleb128 0x8
+ 423 01ab 6E000000 		.4byte	.LVL15
+ 424 01af 70020000 		.4byte	0x270
+ 425 01b3 BE010000 		.4byte	0x1be
+ 426 01b7 09       		.uleb128 0x9
+ 427 01b8 01       		.uleb128 0x1
+ 428 01b9 50       		.byte	0x50
+ 429 01ba 02       		.uleb128 0x2
+ 430 01bb 09       		.byte	0x9
+ 431 01bc A6       		.byte	0xa6
+ 432 01bd 00       		.byte	0
+ 433 01be 07       		.uleb128 0x7
+ 434 01bf 72000000 		.4byte	.LVL16
+ 435 01c3 18020000 		.4byte	0x218
+ 436 01c7 08       		.uleb128 0x8
+ 437 01c8 78000000 		.4byte	.LVL17
+ 438 01cc 7B020000 		.4byte	0x27b
+ 439 01d0 DB010000 		.4byte	0x1db
+ 440 01d4 09       		.uleb128 0x9
+ 441 01d5 01       		.uleb128 0x1
+ 442 01d6 50       		.byte	0x50
+ 443 01d7 02       		.uleb128 0x2
+ 444 01d8 08       		.byte	0x8
+ 445 01d9 20       		.byte	0x20
+ 446 01da 00       		.byte	0
+ 447 01db 0A       		.uleb128 0xa
+ 448 01dc 7E000000 		.4byte	.LVL18
+ 449 01e0 86020000 		.4byte	0x286
+ 450 01e4 09       		.uleb128 0x9
+ 451 01e5 01       		.uleb128 0x1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 11
+
+
+ 452 01e6 50       		.byte	0x50
+ 453 01e7 01       		.uleb128 0x1
+ 454 01e8 40       		.byte	0x40
+ 455 01e9 00       		.byte	0
+ 456 01ea 00       		.byte	0
+ 457 01eb 0B       		.uleb128 0xb
+ 458 01ec F4010000 		.4byte	.LASF34
+ 459 01f0 01       		.byte	0x1
+ 460 01f1 1F       		.byte	0x1f
+ 461 01f2 68000000 		.4byte	0x68
+ 462 01f6 05       		.uleb128 0x5
+ 463 01f7 03       		.byte	0x3
+ 464 01f8 00000000 		.4byte	alternating
+ 465 01fc 0C       		.uleb128 0xc
+ 466 01fd 05020000 		.4byte	.LASF35
+ 467 0201 0A       		.byte	0xa
+ 468 0202 1207     		.2byte	0x712
+ 469 0204 08020000 		.4byte	0x208
+ 470 0208 0D       		.uleb128 0xd
+ 471 0209 76000000 		.4byte	0x76
+ 472 020d 0E       		.uleb128 0xe
+ 473 020e 5B000000 		.4byte	.LASF16
+ 474 0212 5B000000 		.4byte	.LASF16
+ 475 0216 04       		.byte	0x4
+ 476 0217 92       		.byte	0x92
+ 477 0218 0E       		.uleb128 0xe
+ 478 0219 04030000 		.4byte	.LASF17
+ 479 021d 04030000 		.4byte	.LASF17
+ 480 0221 05       		.byte	0x5
+ 481 0222 92       		.byte	0x92
+ 482 0223 0E       		.uleb128 0xe
+ 483 0224 73000000 		.4byte	.LASF18
+ 484 0228 73000000 		.4byte	.LASF18
+ 485 022c 06       		.byte	0x6
+ 486 022d 92       		.byte	0x92
+ 487 022e 0E       		.uleb128 0xe
+ 488 022f 8D010000 		.4byte	.LASF19
+ 489 0233 8D010000 		.4byte	.LASF19
+ 490 0237 07       		.byte	0x7
+ 491 0238 92       		.byte	0x92
+ 492 0239 0E       		.uleb128 0xe
+ 493 023a C7020000 		.4byte	.LASF20
+ 494 023e C7020000 		.4byte	.LASF20
+ 495 0242 08       		.byte	0x8
+ 496 0243 5A       		.byte	0x5a
+ 497 0244 0E       		.uleb128 0xe
+ 498 0245 7C010000 		.4byte	.LASF21
+ 499 0249 7C010000 		.4byte	.LASF21
+ 500 024d 09       		.byte	0x9
+ 501 024e 18       		.byte	0x18
+ 502 024f 0E       		.uleb128 0xe
+ 503 0250 36020000 		.4byte	.LASF22
+ 504 0254 36020000 		.4byte	.LASF22
+ 505 0258 06       		.byte	0x6
+ 506 0259 BE       		.byte	0xbe
+ 507 025a 0E       		.uleb128 0xe
+ 508 025b 9E020000 		.4byte	.LASF23
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 12
+
+
+ 509 025f 9E020000 		.4byte	.LASF23
+ 510 0263 06       		.byte	0x6
+ 511 0264 C3       		.byte	0xc3
+ 512 0265 0E       		.uleb128 0xe
+ 513 0266 B0000000 		.4byte	.LASF24
+ 514 026a B0000000 		.4byte	.LASF24
+ 515 026e 04       		.byte	0x4
+ 516 026f BE       		.byte	0xbe
+ 517 0270 0E       		.uleb128 0xe
+ 518 0271 54020000 		.4byte	.LASF25
+ 519 0275 54020000 		.4byte	.LASF25
+ 520 0279 04       		.byte	0x4
+ 521 027a C3       		.byte	0xc3
+ 522 027b 0E       		.uleb128 0xe
+ 523 027c 00000000 		.4byte	.LASF26
+ 524 0280 00000000 		.4byte	.LASF26
+ 525 0284 05       		.byte	0x5
+ 526 0285 BE       		.byte	0xbe
+ 527 0286 0E       		.uleb128 0xe
+ 528 0287 91000000 		.4byte	.LASF27
+ 529 028b 91000000 		.4byte	.LASF27
+ 530 028f 05       		.byte	0x5
+ 531 0290 C3       		.byte	0xc3
+ 532 0291 0E       		.uleb128 0xe
+ 533 0292 1E000000 		.4byte	.LASF28
+ 534 0296 1E000000 		.4byte	.LASF28
+ 535 029a 05       		.byte	0x5
+ 536 029b 93       		.byte	0x93
+ 537 029c 00       		.byte	0
+ 538              		.section	.debug_abbrev,"",%progbits
+ 539              	.Ldebug_abbrev0:
+ 540 0000 01       		.uleb128 0x1
+ 541 0001 11       		.uleb128 0x11
+ 542 0002 01       		.byte	0x1
+ 543 0003 25       		.uleb128 0x25
+ 544 0004 0E       		.uleb128 0xe
+ 545 0005 13       		.uleb128 0x13
+ 546 0006 0B       		.uleb128 0xb
+ 547 0007 03       		.uleb128 0x3
+ 548 0008 0E       		.uleb128 0xe
+ 549 0009 1B       		.uleb128 0x1b
+ 550 000a 0E       		.uleb128 0xe
+ 551 000b 55       		.uleb128 0x55
+ 552 000c 17       		.uleb128 0x17
+ 553 000d 11       		.uleb128 0x11
+ 554 000e 01       		.uleb128 0x1
+ 555 000f 10       		.uleb128 0x10
+ 556 0010 17       		.uleb128 0x17
+ 557 0011 00       		.byte	0
+ 558 0012 00       		.byte	0
+ 559 0013 02       		.uleb128 0x2
+ 560 0014 24       		.uleb128 0x24
+ 561 0015 00       		.byte	0
+ 562 0016 0B       		.uleb128 0xb
+ 563 0017 0B       		.uleb128 0xb
+ 564 0018 3E       		.uleb128 0x3e
+ 565 0019 0B       		.uleb128 0xb
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 13
+
+
+ 566 001a 03       		.uleb128 0x3
+ 567 001b 0E       		.uleb128 0xe
+ 568 001c 00       		.byte	0
+ 569 001d 00       		.byte	0
+ 570 001e 03       		.uleb128 0x3
+ 571 001f 16       		.uleb128 0x16
+ 572 0020 00       		.byte	0
+ 573 0021 03       		.uleb128 0x3
+ 574 0022 0E       		.uleb128 0xe
+ 575 0023 3A       		.uleb128 0x3a
+ 576 0024 0B       		.uleb128 0xb
+ 577 0025 3B       		.uleb128 0x3b
+ 578 0026 0B       		.uleb128 0xb
+ 579 0027 49       		.uleb128 0x49
+ 580 0028 13       		.uleb128 0x13
+ 581 0029 00       		.byte	0
+ 582 002a 00       		.byte	0
+ 583 002b 04       		.uleb128 0x4
+ 584 002c 24       		.uleb128 0x24
+ 585 002d 00       		.byte	0
+ 586 002e 0B       		.uleb128 0xb
+ 587 002f 0B       		.uleb128 0xb
+ 588 0030 3E       		.uleb128 0x3e
+ 589 0031 0B       		.uleb128 0xb
+ 590 0032 03       		.uleb128 0x3
+ 591 0033 08       		.uleb128 0x8
+ 592 0034 00       		.byte	0
+ 593 0035 00       		.byte	0
+ 594 0036 05       		.uleb128 0x5
+ 595 0037 2E       		.uleb128 0x2e
+ 596 0038 00       		.byte	0
+ 597 0039 3F       		.uleb128 0x3f
+ 598 003a 19       		.uleb128 0x19
+ 599 003b 03       		.uleb128 0x3
+ 600 003c 0E       		.uleb128 0xe
+ 601 003d 3A       		.uleb128 0x3a
+ 602 003e 0B       		.uleb128 0xb
+ 603 003f 3B       		.uleb128 0x3b
+ 604 0040 0B       		.uleb128 0xb
+ 605 0041 27       		.uleb128 0x27
+ 606 0042 19       		.uleb128 0x19
+ 607 0043 11       		.uleb128 0x11
+ 608 0044 01       		.uleb128 0x1
+ 609 0045 12       		.uleb128 0x12
+ 610 0046 06       		.uleb128 0x6
+ 611 0047 40       		.uleb128 0x40
+ 612 0048 18       		.uleb128 0x18
+ 613 0049 9742     		.uleb128 0x2117
+ 614 004b 19       		.uleb128 0x19
+ 615 004c 00       		.byte	0
+ 616 004d 00       		.byte	0
+ 617 004e 06       		.uleb128 0x6
+ 618 004f 2E       		.uleb128 0x2e
+ 619 0050 01       		.byte	0x1
+ 620 0051 3F       		.uleb128 0x3f
+ 621 0052 19       		.uleb128 0x19
+ 622 0053 03       		.uleb128 0x3
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 14
+
+
+ 623 0054 0E       		.uleb128 0xe
+ 624 0055 3A       		.uleb128 0x3a
+ 625 0056 0B       		.uleb128 0xb
+ 626 0057 3B       		.uleb128 0x3b
+ 627 0058 0B       		.uleb128 0xb
+ 628 0059 27       		.uleb128 0x27
+ 629 005a 19       		.uleb128 0x19
+ 630 005b 49       		.uleb128 0x49
+ 631 005c 13       		.uleb128 0x13
+ 632 005d 8701     		.uleb128 0x87
+ 633 005f 19       		.uleb128 0x19
+ 634 0060 11       		.uleb128 0x11
+ 635 0061 01       		.uleb128 0x1
+ 636 0062 12       		.uleb128 0x12
+ 637 0063 06       		.uleb128 0x6
+ 638 0064 40       		.uleb128 0x40
+ 639 0065 18       		.uleb128 0x18
+ 640 0066 9742     		.uleb128 0x2117
+ 641 0068 19       		.uleb128 0x19
+ 642 0069 01       		.uleb128 0x1
+ 643 006a 13       		.uleb128 0x13
+ 644 006b 00       		.byte	0
+ 645 006c 00       		.byte	0
+ 646 006d 07       		.uleb128 0x7
+ 647 006e 898201   		.uleb128 0x4109
+ 648 0071 00       		.byte	0
+ 649 0072 11       		.uleb128 0x11
+ 650 0073 01       		.uleb128 0x1
+ 651 0074 31       		.uleb128 0x31
+ 652 0075 13       		.uleb128 0x13
+ 653 0076 00       		.byte	0
+ 654 0077 00       		.byte	0
+ 655 0078 08       		.uleb128 0x8
+ 656 0079 898201   		.uleb128 0x4109
+ 657 007c 01       		.byte	0x1
+ 658 007d 11       		.uleb128 0x11
+ 659 007e 01       		.uleb128 0x1
+ 660 007f 31       		.uleb128 0x31
+ 661 0080 13       		.uleb128 0x13
+ 662 0081 01       		.uleb128 0x1
+ 663 0082 13       		.uleb128 0x13
+ 664 0083 00       		.byte	0
+ 665 0084 00       		.byte	0
+ 666 0085 09       		.uleb128 0x9
+ 667 0086 8A8201   		.uleb128 0x410a
+ 668 0089 00       		.byte	0
+ 669 008a 02       		.uleb128 0x2
+ 670 008b 18       		.uleb128 0x18
+ 671 008c 9142     		.uleb128 0x2111
+ 672 008e 18       		.uleb128 0x18
+ 673 008f 00       		.byte	0
+ 674 0090 00       		.byte	0
+ 675 0091 0A       		.uleb128 0xa
+ 676 0092 898201   		.uleb128 0x4109
+ 677 0095 01       		.byte	0x1
+ 678 0096 11       		.uleb128 0x11
+ 679 0097 01       		.uleb128 0x1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 15
+
+
+ 680 0098 31       		.uleb128 0x31
+ 681 0099 13       		.uleb128 0x13
+ 682 009a 00       		.byte	0
+ 683 009b 00       		.byte	0
+ 684 009c 0B       		.uleb128 0xb
+ 685 009d 34       		.uleb128 0x34
+ 686 009e 00       		.byte	0
+ 687 009f 03       		.uleb128 0x3
+ 688 00a0 0E       		.uleb128 0xe
+ 689 00a1 3A       		.uleb128 0x3a
+ 690 00a2 0B       		.uleb128 0xb
+ 691 00a3 3B       		.uleb128 0x3b
+ 692 00a4 0B       		.uleb128 0xb
+ 693 00a5 49       		.uleb128 0x49
+ 694 00a6 13       		.uleb128 0x13
+ 695 00a7 02       		.uleb128 0x2
+ 696 00a8 18       		.uleb128 0x18
+ 697 00a9 00       		.byte	0
+ 698 00aa 00       		.byte	0
+ 699 00ab 0C       		.uleb128 0xc
+ 700 00ac 34       		.uleb128 0x34
+ 701 00ad 00       		.byte	0
+ 702 00ae 03       		.uleb128 0x3
+ 703 00af 0E       		.uleb128 0xe
+ 704 00b0 3A       		.uleb128 0x3a
+ 705 00b1 0B       		.uleb128 0xb
+ 706 00b2 3B       		.uleb128 0x3b
+ 707 00b3 05       		.uleb128 0x5
+ 708 00b4 49       		.uleb128 0x49
+ 709 00b5 13       		.uleb128 0x13
+ 710 00b6 3F       		.uleb128 0x3f
+ 711 00b7 19       		.uleb128 0x19
+ 712 00b8 3C       		.uleb128 0x3c
+ 713 00b9 19       		.uleb128 0x19
+ 714 00ba 00       		.byte	0
+ 715 00bb 00       		.byte	0
+ 716 00bc 0D       		.uleb128 0xd
+ 717 00bd 35       		.uleb128 0x35
+ 718 00be 00       		.byte	0
+ 719 00bf 49       		.uleb128 0x49
+ 720 00c0 13       		.uleb128 0x13
+ 721 00c1 00       		.byte	0
+ 722 00c2 00       		.byte	0
+ 723 00c3 0E       		.uleb128 0xe
+ 724 00c4 2E       		.uleb128 0x2e
+ 725 00c5 00       		.byte	0
+ 726 00c6 3F       		.uleb128 0x3f
+ 727 00c7 19       		.uleb128 0x19
+ 728 00c8 3C       		.uleb128 0x3c
+ 729 00c9 19       		.uleb128 0x19
+ 730 00ca 6E       		.uleb128 0x6e
+ 731 00cb 0E       		.uleb128 0xe
+ 732 00cc 03       		.uleb128 0x3
+ 733 00cd 0E       		.uleb128 0xe
+ 734 00ce 3A       		.uleb128 0x3a
+ 735 00cf 0B       		.uleb128 0xb
+ 736 00d0 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 16
+
+
+ 737 00d1 0B       		.uleb128 0xb
+ 738 00d2 00       		.byte	0
+ 739 00d3 00       		.byte	0
+ 740 00d4 00       		.byte	0
+ 741              		.section	.debug_aranges,"",%progbits
+ 742 0000 24000000 		.4byte	0x24
+ 743 0004 0200     		.2byte	0x2
+ 744 0006 00000000 		.4byte	.Ldebug_info0
+ 745 000a 04       		.byte	0x4
+ 746 000b 00       		.byte	0
+ 747 000c 0000     		.2byte	0
+ 748 000e 0000     		.2byte	0
+ 749 0010 00000000 		.4byte	.LFB64
+ 750 0014 38000000 		.4byte	.LFE64-.LFB64
+ 751 0018 00000000 		.4byte	.LFB63
+ 752 001c 88000000 		.4byte	.LFE63-.LFB63
+ 753 0020 00000000 		.4byte	0
+ 754 0024 00000000 		.4byte	0
+ 755              		.section	.debug_ranges,"",%progbits
+ 756              	.Ldebug_ranges0:
+ 757 0000 00000000 		.4byte	.LFB64
+ 758 0004 38000000 		.4byte	.LFE64
+ 759 0008 00000000 		.4byte	.LFB63
+ 760 000c 88000000 		.4byte	.LFE63
+ 761 0010 00000000 		.4byte	0
+ 762 0014 00000000 		.4byte	0
+ 763              		.section	.debug_line,"",%progbits
+ 764              	.Ldebug_line0:
+ 765 0000 0F020000 		.section	.debug_str,"MS",%progbits,1
+ 765      0200C401 
+ 765      00000201 
+ 765      FB0E0D00 
+ 765      01010101 
+ 766              	.LASF26:
+ 767 0000 50574D5F 		.ascii	"PWM_Alternating_2_WritePeriod\000"
+ 767      416C7465 
+ 767      726E6174 
+ 767      696E675F 
+ 767      325F5772 
+ 768              	.LASF28:
+ 769 001e 50574D5F 		.ascii	"PWM_Alternating_2_Stop\000"
+ 769      416C7465 
+ 769      726E6174 
+ 769      696E675F 
+ 769      325F5374 
+ 770              	.LASF32:
+ 771 0035 6973725F 		.ascii	"isr_msec\000"
+ 771      6D736563 
+ 771      00
+ 772              	.LASF9:
+ 773 003e 5F5F696E 		.ascii	"__int32_t\000"
+ 773      7433325F 
+ 773      7400
+ 774              	.LASF3:
+ 775 0048 73686F72 		.ascii	"short unsigned int\000"
+ 775      7420756E 
+ 775      7369676E 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 17
+
+
+ 775      65642069 
+ 775      6E7400
+ 776              	.LASF16:
+ 777 005b 50574D5F 		.ascii	"PWM_Alternating_1_Start\000"
+ 777      416C7465 
+ 777      726E6174 
+ 777      696E675F 
+ 777      315F5374 
+ 778              	.LASF18:
+ 779 0073 50574D5F 		.ascii	"PWM_Alternating_3_Start\000"
+ 779      416C7465 
+ 779      726E6174 
+ 779      696E675F 
+ 779      335F5374 
+ 780              	.LASF11:
+ 781 008b 666C6F61 		.ascii	"float\000"
+ 781      7400
+ 782              	.LASF27:
+ 783 0091 50574D5F 		.ascii	"PWM_Alternating_2_WriteCompare\000"
+ 783      416C7465 
+ 783      726E6174 
+ 783      696E675F 
+ 783      325F5772 
+ 784              	.LASF24:
+ 785 00b0 50574D5F 		.ascii	"PWM_Alternating_1_WritePeriod\000"
+ 785      416C7465 
+ 785      726E6174 
+ 785      696E675F 
+ 785      315F5772 
+ 786              	.LASF1:
+ 787 00ce 756E7369 		.ascii	"unsigned char\000"
+ 787      676E6564 
+ 787      20636861 
+ 787      7200
+ 788              	.LASF29:
+ 789 00dc 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 789      43313120 
+ 789      352E342E 
+ 789      31203230 
+ 789      31363036 
+ 790 010f 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 790      20726576 
+ 790      6973696F 
+ 790      6E203233 
+ 790      37373135 
+ 791 0142 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 791      66756E63 
+ 791      74696F6E 
+ 791      2D736563 
+ 791      74696F6E 
+ 792              	.LASF5:
+ 793 016a 6C6F6E67 		.ascii	"long unsigned int\000"
+ 793      20756E73 
+ 793      69676E65 
+ 793      6420696E 
+ 793      7400
+ 794              	.LASF21:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 18
+
+
+ 795 017c 6973725F 		.ascii	"isr_msec_StartEx\000"
+ 795      6D736563 
+ 795      5F537461 
+ 795      72744578 
+ 795      00
+ 796              	.LASF19:
+ 797 018d 41756469 		.ascii	"Audible_Frequency_Start\000"
+ 797      626C655F 
+ 797      46726571 
+ 797      75656E63 
+ 797      795F5374 
+ 798              	.LASF31:
+ 799 01a5 433A5C55 		.ascii	"C:\\Users\\sdysart\\Documents\\UACS\\UACS\\HighFreq"
+ 799      73657273 
+ 799      5C736479 
+ 799      73617274 
+ 799      5C446F63 
+ 800 01d2 46534B5C 		.ascii	"FSK\\HighFAlternating.cydsn\000"
+ 800      48696768 
+ 800      46416C74 
+ 800      65726E61 
+ 800      74696E67 
+ 801              	.LASF12:
+ 802 01ed 646F7562 		.ascii	"double\000"
+ 802      6C6500
+ 803              	.LASF34:
+ 804 01f4 616C7465 		.ascii	"alternating\000"
+ 804      726E6174 
+ 804      696E6700 
+ 805              	.LASF33:
+ 806 0200 6D61696E 		.ascii	"main\000"
+ 806      00
+ 807              	.LASF35:
+ 808 0205 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 808      52784275 
+ 808      66666572 
+ 808      00
+ 809              	.LASF8:
+ 810 0212 756E7369 		.ascii	"unsigned int\000"
+ 810      676E6564 
+ 810      20696E74 
+ 810      00
+ 811              	.LASF7:
+ 812 021f 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 812      206C6F6E 
+ 812      6720756E 
+ 812      7369676E 
+ 812      65642069 
+ 813              	.LASF22:
+ 814 0236 50574D5F 		.ascii	"PWM_Alternating_3_WritePeriod\000"
+ 814      416C7465 
+ 814      726E6174 
+ 814      696E675F 
+ 814      335F5772 
+ 815              	.LASF25:
+ 816 0254 50574D5F 		.ascii	"PWM_Alternating_1_WriteCompare\000"
+ 816      416C7465 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cce5JxWz.s 			page 19
+
+
+ 816      726E6174 
+ 816      696E675F 
+ 816      315F5772 
+ 817              	.LASF10:
+ 818 0273 696E7433 		.ascii	"int32_t\000"
+ 818      325F7400 
+ 819              	.LASF15:
+ 820 027b 73697A65 		.ascii	"sizetype\000"
+ 820      74797065 
+ 820      00
+ 821              	.LASF6:
+ 822 0284 6C6F6E67 		.ascii	"long long int\000"
+ 822      206C6F6E 
+ 822      6720696E 
+ 822      7400
+ 823              	.LASF30:
+ 824 0292 6D61696E 		.ascii	"main.c\000"
+ 824      2E6300
+ 825              	.LASF13:
+ 826 0299 63686172 		.ascii	"char\000"
+ 826      00
+ 827              	.LASF23:
+ 828 029e 50574D5F 		.ascii	"PWM_Alternating_3_WriteCompare\000"
+ 828      416C7465 
+ 828      726E6174 
+ 828      696E675F 
+ 828      335F5772 
+ 829              	.LASF2:
+ 830 02bd 73686F72 		.ascii	"short int\000"
+ 830      7420696E 
+ 830      7400
+ 831              	.LASF20:
+ 832 02c7 50574D5F 		.ascii	"PWM_Alternating_Timer_Start\000"
+ 832      416C7465 
+ 832      726E6174 
+ 832      696E675F 
+ 832      54696D65 
+ 833              	.LASF4:
+ 834 02e3 6C6F6E67 		.ascii	"long int\000"
+ 834      20696E74 
+ 834      00
+ 835              	.LASF14:
+ 836 02ec 6C6F6E67 		.ascii	"long double\000"
+ 836      20646F75 
+ 836      626C6500 
+ 837              	.LASF0:
+ 838 02f8 7369676E 		.ascii	"signed char\000"
+ 838      65642063 
+ 838      68617200 
+ 839              	.LASF17:
+ 840 0304 50574D5F 		.ascii	"PWM_Alternating_2_Start\000"
+ 840      416C7465 
+ 840      726E6174 
+ 840      696E675F 
+ 840      325F5374 
+ 841              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

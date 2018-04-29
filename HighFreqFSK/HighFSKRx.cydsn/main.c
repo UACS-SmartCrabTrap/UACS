@@ -47,6 +47,7 @@ int main(void)
     HighF_LevelCount_Start();
     HighF_LevelCountISR_StartEx(HighF_LevelCount);
     LCD_Char_Start();
+    PGA_1_Start();
 
     // Displays Loading Message before receiving pre-fix
     char OutputString[12];
@@ -89,8 +90,8 @@ int main(void)
 } // end of main()
     
 
-//Bit length = 10 ms
-//timer period = 1 ms
+//Bit length = 500 ms
+//timer period = 50 ms
 //will check bit 10 times, to debounce
 CY_ISR(HighF_LevelCount){
     levelCounter++;

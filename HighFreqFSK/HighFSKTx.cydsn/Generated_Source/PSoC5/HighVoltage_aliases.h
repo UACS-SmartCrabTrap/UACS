@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: Alternating_Out.h  
+* File Name: HighVoltage.h  
 * Version 2.20
 *
 * Description:
@@ -15,8 +15,8 @@
 * the software package with which this file was provided.
 *******************************************************************************/
 
-#if !defined(CY_PINS_Alternating_Out_ALIASES_H) /* Pins Alternating_Out_ALIASES_H */
-#define CY_PINS_Alternating_Out_ALIASES_H
+#if !defined(CY_PINS_HighVoltage_ALIASES_H) /* Pins HighVoltage_ALIASES_H */
+#define CY_PINS_HighVoltage_ALIASES_H
 
 #include "cytypes.h"
 #include "cyfitter.h"
@@ -25,12 +25,12 @@
 /***************************************
 *              Constants        
 ***************************************/
-#define Alternating_Out_0			(Alternating_Out__0__PC)
-#define Alternating_Out_0_INTR	((uint16)((uint16)0x0001u << Alternating_Out__0__SHIFT))
+#define HighVoltage_0			(HighVoltage__0__PC)
+#define HighVoltage_0_INTR	((uint16)((uint16)0x0001u << HighVoltage__0__SHIFT))
 
-#define Alternating_Out_INTR_ALL	 ((uint16)(Alternating_Out_0_INTR))
+#define HighVoltage_INTR_ALL	 ((uint16)(HighVoltage_0_INTR))
 
-#endif /* End Pins Alternating_Out_ALIASES_H */
+#endif /* End Pins HighVoltage_ALIASES_H */
 
 
 /* [] END OF FILE */

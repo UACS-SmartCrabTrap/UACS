@@ -168,7 +168,7 @@ void HighF_LevelCount_Wakeup(void)        ;
 *    Initialial Parameter Constants
 ***************************************/
 
-#define HighF_LevelCount_INIT_PERIOD             499u
+#define HighF_LevelCount_INIT_PERIOD             99u
 #define HighF_LevelCount_INIT_CAPTURE_MODE       ((uint8)((uint8)0u << HighF_LevelCount_CTRL_CAP_MODE_SHIFT))
 #define HighF_LevelCount_INIT_TRIGGER_MODE       ((uint8)((uint8)0u << HighF_LevelCount_CTRL_TRIG_MODE_SHIFT))
 #if (HighF_LevelCount_UsingFixedFunction)

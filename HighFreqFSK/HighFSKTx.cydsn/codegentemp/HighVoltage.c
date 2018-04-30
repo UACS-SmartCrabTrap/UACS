@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: pin_45kHz.c  
+* File Name: HighVoltage.c  
 * Version 2.20
 *
 * Description:
@@ -15,15 +15,15 @@
 *******************************************************************************/
 
 #include "cytypes.h"
-#include "pin_45kHz.h"
+#include "HighVoltage.h"
 
 /* APIs are not generated for P15[7:6] on PSoC 5 */
 #if !(CY_PSOC5A &&\
-	 pin_45kHz__PORT == 15 && ((pin_45kHz__MASK & 0xC0) != 0))
+	 HighVoltage__PORT == 15 && ((HighVoltage__MASK & 0xC0) != 0))
 
 
 /*******************************************************************************
-* Function Name: pin_45kHz_Write
+* Function Name: HighVoltage_Write
 ****************************************************************************//**
 *
 * \brief Writes the value to the physical port (data output register), masking
@@ -52,17 +52,17 @@
 *  this function.
 *
 * \funcusage
-*  \snippet pin_45kHz_SUT.c usage_pin_45kHz_Write
+*  \snippet HighVoltage_SUT.c usage_HighVoltage_Write
 *******************************************************************************/
-void pin_45kHz_Write(uint8 value)
+void HighVoltage_Write(uint8 value)
 {
-    uint8 staticBits = (pin_45kHz_DR & (uint8)(~pin_45kHz_MASK));
-    pin_45kHz_DR = staticBits | ((uint8)(value << pin_45kHz_SHIFT) & pin_45kHz_MASK);
+    uint8 staticBits = (HighVoltage_DR & (uint8)(~HighVoltage_MASK));
+    HighVoltage_DR = staticBits | ((uint8)(value << HighVoltage_SHIFT) & HighVoltage_MASK);
 }
 
 
 /*******************************************************************************
-* Function Name: pin_45kHz_SetDriveMode
+* Function Name: HighVoltage_SetDriveMode
 ****************************************************************************//**
 *
 * \brief Sets the drive mode for each of the Pins component's pins.
@@ -85,16 +85,16 @@ void pin_45kHz_Write(uint8 value)
 *  APIs (primary method) or disable interrupts around this function.
 *
 * \funcusage
-*  \snippet pin_45kHz_SUT.c usage_pin_45kHz_SetDriveMode
+*  \snippet HighVoltage_SUT.c usage_HighVoltage_SetDriveMode
 *******************************************************************************/
-void pin_45kHz_SetDriveMode(uint8 mode)
+void HighVoltage_SetDriveMode(uint8 mode)
 {
-	CyPins_SetPinDriveMode(pin_45kHz_0, mode);
+	CyPins_SetPinDriveMode(HighVoltage_0, mode);
 }
 
 
 /*******************************************************************************
-* Function Name: pin_45kHz_Read
+* Function Name: HighVoltage_Read
 ****************************************************************************//**
 *
 * \brief Reads the associated physical port (pin status register) and masks 
@@ -108,16 +108,16 @@ void pin_45kHz_SetDriveMode(uint8 mode)
 *  The current value for the pins in the component as a right justified number.
 *
 * \funcusage
-*  \snippet pin_45kHz_SUT.c usage_pin_45kHz_Read  
+*  \snippet HighVoltage_SUT.c usage_HighVoltage_Read  
 *******************************************************************************/
-uint8 pin_45kHz_Read(void)
+uint8 HighVoltage_Read(void)
 {
-    return (pin_45kHz_PS & pin_45kHz_MASK) >> pin_45kHz_SHIFT;
+    return (HighVoltage_PS & HighVoltage_MASK) >> HighVoltage_SHIFT;
 }
 
 
 /*******************************************************************************
-* Function Name: pin_45kHz_ReadDataReg
+* Function Name: HighVoltage_ReadDataReg
 ****************************************************************************//**
 *
 * \brief Reads the associated physical port's data output register and masks 
@@ -126,8 +126,8 @@ uint8 pin_45kHz_Read(void)
 *
 * The data output register controls the signal applied to the physical pin in 
 * conjunction with the drive mode parameter. This is not the same as the 
-* preferred pin_45kHz_Read() API because the 
-* pin_45kHz_ReadDataReg() reads the data register instead of the status 
+* preferred HighVoltage_Read() API because the 
+* HighVoltage_ReadDataReg() reads the data register instead of the status 
 * register. For output pins this is a useful function to determine the value 
 * just written to the pin.
 *
@@ -136,19 +136,19 @@ uint8 pin_45kHz_Read(void)
 *  justified number for the component instance.
 *
 * \funcusage
-*  \snippet pin_45kHz_SUT.c usage_pin_45kHz_ReadDataReg 
+*  \snippet HighVoltage_SUT.c usage_HighVoltage_ReadDataReg 
 *******************************************************************************/
-uint8 pin_45kHz_ReadDataReg(void)
+uint8 HighVoltage_ReadDataReg(void)
 {
-    return (pin_45kHz_DR & pin_45kHz_MASK) >> pin_45kHz_SHIFT;
+    return (HighVoltage_DR & HighVoltage_MASK) >> HighVoltage_SHIFT;
 }
 
 
 /* If interrupt is connected for this Pins component */ 
-#if defined(pin_45kHz_INTSTAT) 
+#if defined(HighVoltage_INTSTAT) 
 
     /*******************************************************************************
-    * Function Name: pin_45kHz_SetInterruptMode
+    * Function Name: HighVoltage_SetInterruptMode
     ****************************************************************************//**
     *
     * \brief Configures the interrupt mode for each of the Pins component's
@@ -161,12 +161,12 @@ uint8 pin_45kHz_ReadDataReg(void)
     * \param position
     *  The pin position as listed in the Pins component. You may OR these to be 
     *  able to configure the interrupt mode of multiple pins within a Pins 
-    *  component. Or you may use pin_45kHz_INTR_ALL to configure the
+    *  component. Or you may use HighVoltage_INTR_ALL to configure the
     *  interrupt mode of all the pins in the Pins component.       
-    *  - pin_45kHz_0_INTR       (First pin in the list)
-    *  - pin_45kHz_1_INTR       (Second pin in the list)
+    *  - HighVoltage_0_INTR       (First pin in the list)
+    *  - HighVoltage_1_INTR       (Second pin in the list)
     *  - ...
-    *  - pin_45kHz_INTR_ALL     (All pins in Pins component)
+    *  - HighVoltage_INTR_ALL     (All pins in Pins component)
     *
     * \param mode
     *  Interrupt mode for the selected pins. Valid options are documented in
@@ -182,19 +182,19 @@ uint8 pin_45kHz_ReadDataReg(void)
     *  port.
     *
     * \funcusage
-    *  \snippet pin_45kHz_SUT.c usage_pin_45kHz_SetInterruptMode
+    *  \snippet HighVoltage_SUT.c usage_HighVoltage_SetInterruptMode
     *******************************************************************************/
-    void pin_45kHz_SetInterruptMode(uint16 position, uint16 mode)
+    void HighVoltage_SetInterruptMode(uint16 position, uint16 mode)
     {
-		if((position & pin_45kHz_0_INTR) != 0u) 
+		if((position & HighVoltage_0_INTR) != 0u) 
 		{ 
-			 pin_45kHz_0_INTTYPE_REG = (uint8)mode; 
+			 HighVoltage_0_INTTYPE_REG = (uint8)mode; 
 		}
     }
     
     
     /*******************************************************************************
-    * Function Name: pin_45kHz_ClearInterrupt
+    * Function Name: HighVoltage_ClearInterrupt
     ****************************************************************************//**
     *
     * \brief Clears any active interrupts attached with the component and returns 
@@ -211,11 +211,11 @@ uint8 pin_45kHz_ReadDataReg(void)
     *  those associated with the Pins component.
     *
     * \funcusage
-    *  \snippet pin_45kHz_SUT.c usage_pin_45kHz_ClearInterrupt
+    *  \snippet HighVoltage_SUT.c usage_HighVoltage_ClearInterrupt
     *******************************************************************************/
-    uint8 pin_45kHz_ClearInterrupt(void)
+    uint8 HighVoltage_ClearInterrupt(void)
     {
-        return (pin_45kHz_INTSTAT & pin_45kHz_MASK) >> pin_45kHz_SHIFT;
+        return (HighVoltage_INTSTAT & HighVoltage_MASK) >> HighVoltage_SHIFT;
     }
 
 #endif /* If Interrupts Are Enabled for this Pins component */ 

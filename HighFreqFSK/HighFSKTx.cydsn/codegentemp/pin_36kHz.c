@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: Alternating_Out.c  
+* File Name: pin_36kHz.c  
 * Version 2.20
 *
 * Description:
@@ -15,15 +15,15 @@
 *******************************************************************************/
 
 #include "cytypes.h"
-#include "Alternating_Out.h"
+#include "pin_36kHz.h"
 
 /* APIs are not generated for P15[7:6] on PSoC 5 */
 #if !(CY_PSOC5A &&\
-	 Alternating_Out__PORT == 15 && ((Alternating_Out__MASK & 0xC0) != 0))
+	 pin_36kHz__PORT == 15 && ((pin_36kHz__MASK & 0xC0) != 0))
 
 
 /*******************************************************************************
-* Function Name: Alternating_Out_Write
+* Function Name: pin_36kHz_Write
 ****************************************************************************//**
 *
 * \brief Writes the value to the physical port (data output register), masking
@@ -52,17 +52,17 @@
 *  this function.
 *
 * \funcusage
-*  \snippet Alternating_Out_SUT.c usage_Alternating_Out_Write
+*  \snippet pin_36kHz_SUT.c usage_pin_36kHz_Write
 *******************************************************************************/
-void Alternating_Out_Write(uint8 value)
+void pin_36kHz_Write(uint8 value)
 {
-    uint8 staticBits = (Alternating_Out_DR & (uint8)(~Alternating_Out_MASK));
-    Alternating_Out_DR = staticBits | ((uint8)(value << Alternating_Out_SHIFT) & Alternating_Out_MASK);
+    uint8 staticBits = (pin_36kHz_DR & (uint8)(~pin_36kHz_MASK));
+    pin_36kHz_DR = staticBits | ((uint8)(value << pin_36kHz_SHIFT) & pin_36kHz_MASK);
 }
 
 
 /*******************************************************************************
-* Function Name: Alternating_Out_SetDriveMode
+* Function Name: pin_36kHz_SetDriveMode
 ****************************************************************************//**
 *
 * \brief Sets the drive mode for each of the Pins component's pins.
@@ -85,16 +85,16 @@ void Alternating_Out_Write(uint8 value)
 *  APIs (primary method) or disable interrupts around this function.
 *
 * \funcusage
-*  \snippet Alternating_Out_SUT.c usage_Alternating_Out_SetDriveMode
+*  \snippet pin_36kHz_SUT.c usage_pin_36kHz_SetDriveMode
 *******************************************************************************/
-void Alternating_Out_SetDriveMode(uint8 mode)
+void pin_36kHz_SetDriveMode(uint8 mode)
 {
-	CyPins_SetPinDriveMode(Alternating_Out_0, mode);
+	CyPins_SetPinDriveMode(pin_36kHz_0, mode);
 }
 
 
 /*******************************************************************************
-* Function Name: Alternating_Out_Read
+* Function Name: pin_36kHz_Read
 ****************************************************************************//**
 *
 * \brief Reads the associated physical port (pin status register) and masks 
@@ -108,16 +108,16 @@ void Alternating_Out_SetDriveMode(uint8 mode)
 *  The current value for the pins in the component as a right justified number.
 *
 * \funcusage
-*  \snippet Alternating_Out_SUT.c usage_Alternating_Out_Read  
+*  \snippet pin_36kHz_SUT.c usage_pin_36kHz_Read  
 *******************************************************************************/
-uint8 Alternating_Out_Read(void)
+uint8 pin_36kHz_Read(void)
 {
-    return (Alternating_Out_PS & Alternating_Out_MASK) >> Alternating_Out_SHIFT;
+    return (pin_36kHz_PS & pin_36kHz_MASK) >> pin_36kHz_SHIFT;
 }
 
 
 /*******************************************************************************
-* Function Name: Alternating_Out_ReadDataReg
+* Function Name: pin_36kHz_ReadDataReg
 ****************************************************************************//**
 *
 * \brief Reads the associated physical port's data output register and masks 
@@ -126,8 +126,8 @@ uint8 Alternating_Out_Read(void)
 *
 * The data output register controls the signal applied to the physical pin in 
 * conjunction with the drive mode parameter. This is not the same as the 
-* preferred Alternating_Out_Read() API because the 
-* Alternating_Out_ReadDataReg() reads the data register instead of the status 
+* preferred pin_36kHz_Read() API because the 
+* pin_36kHz_ReadDataReg() reads the data register instead of the status 
 * register. For output pins this is a useful function to determine the value 
 * just written to the pin.
 *
@@ -136,19 +136,19 @@ uint8 Alternating_Out_Read(void)
 *  justified number for the component instance.
 *
 * \funcusage
-*  \snippet Alternating_Out_SUT.c usage_Alternating_Out_ReadDataReg 
+*  \snippet pin_36kHz_SUT.c usage_pin_36kHz_ReadDataReg 
 *******************************************************************************/
-uint8 Alternating_Out_ReadDataReg(void)
+uint8 pin_36kHz_ReadDataReg(void)
 {
-    return (Alternating_Out_DR & Alternating_Out_MASK) >> Alternating_Out_SHIFT;
+    return (pin_36kHz_DR & pin_36kHz_MASK) >> pin_36kHz_SHIFT;
 }
 
 
 /* If interrupt is connected for this Pins component */ 
-#if defined(Alternating_Out_INTSTAT) 
+#if defined(pin_36kHz_INTSTAT) 
 
     /*******************************************************************************
-    * Function Name: Alternating_Out_SetInterruptMode
+    * Function Name: pin_36kHz_SetInterruptMode
     ****************************************************************************//**
     *
     * \brief Configures the interrupt mode for each of the Pins component's
@@ -161,12 +161,12 @@ uint8 Alternating_Out_ReadDataReg(void)
     * \param position
     *  The pin position as listed in the Pins component. You may OR these to be 
     *  able to configure the interrupt mode of multiple pins within a Pins 
-    *  component. Or you may use Alternating_Out_INTR_ALL to configure the
+    *  component. Or you may use pin_36kHz_INTR_ALL to configure the
     *  interrupt mode of all the pins in the Pins component.       
-    *  - Alternating_Out_0_INTR       (First pin in the list)
-    *  - Alternating_Out_1_INTR       (Second pin in the list)
+    *  - pin_36kHz_0_INTR       (First pin in the list)
+    *  - pin_36kHz_1_INTR       (Second pin in the list)
     *  - ...
-    *  - Alternating_Out_INTR_ALL     (All pins in Pins component)
+    *  - pin_36kHz_INTR_ALL     (All pins in Pins component)
     *
     * \param mode
     *  Interrupt mode for the selected pins. Valid options are documented in
@@ -182,19 +182,19 @@ uint8 Alternating_Out_ReadDataReg(void)
     *  port.
     *
     * \funcusage
-    *  \snippet Alternating_Out_SUT.c usage_Alternating_Out_SetInterruptMode
+    *  \snippet pin_36kHz_SUT.c usage_pin_36kHz_SetInterruptMode
     *******************************************************************************/
-    void Alternating_Out_SetInterruptMode(uint16 position, uint16 mode)
+    void pin_36kHz_SetInterruptMode(uint16 position, uint16 mode)
     {
-		if((position & Alternating_Out_0_INTR) != 0u) 
+		if((position & pin_36kHz_0_INTR) != 0u) 
 		{ 
-			 Alternating_Out_0_INTTYPE_REG = (uint8)mode; 
+			 pin_36kHz_0_INTTYPE_REG = (uint8)mode; 
 		}
     }
     
     
     /*******************************************************************************
-    * Function Name: Alternating_Out_ClearInterrupt
+    * Function Name: pin_36kHz_ClearInterrupt
     ****************************************************************************//**
     *
     * \brief Clears any active interrupts attached with the component and returns 
@@ -211,11 +211,11 @@ uint8 Alternating_Out_ReadDataReg(void)
     *  those associated with the Pins component.
     *
     * \funcusage
-    *  \snippet Alternating_Out_SUT.c usage_Alternating_Out_ClearInterrupt
+    *  \snippet pin_36kHz_SUT.c usage_pin_36kHz_ClearInterrupt
     *******************************************************************************/
-    uint8 Alternating_Out_ClearInterrupt(void)
+    uint8 pin_36kHz_ClearInterrupt(void)
     {
-        return (Alternating_Out_INTSTAT & Alternating_Out_MASK) >> Alternating_Out_SHIFT;
+        return (pin_36kHz_INTSTAT & pin_36kHz_MASK) >> pin_36kHz_SHIFT;
     }
 
 #endif /* If Interrupts Are Enabled for this Pins component */ 

@@ -4,8 +4,8 @@
 /*Definitions*/
 #define CLOCK_FREQ 1000000
 #define FREQ(x) (CLOCK_FREQ/x)-1
-#define ONE_FREQ 45000
-#define ZERO_FREQ 30000
+#define ONE_FREQ 42000
+#define ZERO_FREQ 36000
 #define DEFAULT_FREQ MIN_FREQ
 
 #define BIT_0_MASK 0x01
@@ -57,6 +57,12 @@ int main(void)
     int data_turn = 0;
     unsigned int data_to_be_sent = ONE;
     
+    // Create constant frequencies to ensure frequencies are being read
+//    PWM_2_WritePeriod(FREQ(12000));
+//    PWM_2_WriteCompare(FREQ(12000)/2); // Sets pulse width to half
+//    PWM_3_WritePeriod(FREQ(12000));
+//    PWM_3_WriteCompare(FREQ(12000)/2); // Sets pulse width to half
+    
     for(;;)
     {
         switch(bitTime){
@@ -95,8 +101,12 @@ int main(void)
                     data_to_be_sent = ONE;
                 }
                 PWM_Modulator_Stop();
+                // Turn High Voltage off while delaying
                 PWM_Switch_Timer_Stop();
+                // Turn High Voltage Back On
+                HighVoltage_Write(0);
                 CyDelay(3000);
+                HighVoltage_Write(1);
                 PWM_Modulator_Start();
                 PWM_Switch_Timer_Start();
                 break;

@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: pin_45kHz.h  
+* File Name: HighVoltage.h  
 * Version 2.20
 *
 * Description:
@@ -15,8 +15,8 @@
 * the software package with which this file was provided.
 *******************************************************************************/
 
-#if !defined(CY_PINS_pin_45kHz_ALIASES_H) /* Pins pin_45kHz_ALIASES_H */
-#define CY_PINS_pin_45kHz_ALIASES_H
+#if !defined(CY_PINS_HighVoltage_ALIASES_H) /* Pins HighVoltage_ALIASES_H */
+#define CY_PINS_HighVoltage_ALIASES_H
 
 #include "cytypes.h"
 #include "cyfitter.h"
@@ -25,12 +25,12 @@
 /***************************************
 *              Constants        
 ***************************************/
-#define pin_45kHz_0			(pin_45kHz__0__PC)
-#define pin_45kHz_0_INTR	((uint16)((uint16)0x0001u << pin_45kHz__0__SHIFT))
+#define HighVoltage_0			(HighVoltage__0__PC)
+#define HighVoltage_0_INTR	((uint16)((uint16)0x0001u << HighVoltage__0__SHIFT))
 
-#define pin_45kHz_INTR_ALL	 ((uint16)(pin_45kHz_0_INTR))
+#define HighVoltage_INTR_ALL	 ((uint16)(HighVoltage_0_INTR))
 
-#endif /* End Pins pin_45kHz_ALIASES_H */
+#endif /* End Pins HighVoltage_ALIASES_H */
 
 
 /* [] END OF FILE */

@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: pin_30kHz.h  
+* File Name: pin_43kHz.h  
 * Version 2.20
 *
 * Description:
@@ -15,8 +15,8 @@
 * the software package with which this file was provided.
 *******************************************************************************/
 
-#if !defined(CY_PINS_pin_30kHz_ALIASES_H) /* Pins pin_30kHz_ALIASES_H */
-#define CY_PINS_pin_30kHz_ALIASES_H
+#if !defined(CY_PINS_pin_43kHz_ALIASES_H) /* Pins pin_43kHz_ALIASES_H */
+#define CY_PINS_pin_43kHz_ALIASES_H
 
 #include "cytypes.h"
 #include "cyfitter.h"
@@ -25,12 +25,12 @@
 /***************************************
 *              Constants        
 ***************************************/
-#define pin_30kHz_0			(pin_30kHz__0__PC)
-#define pin_30kHz_0_INTR	((uint16)((uint16)0x0001u << pin_30kHz__0__SHIFT))
+#define pin_43kHz_0			(pin_43kHz__0__PC)
+#define pin_43kHz_0_INTR	((uint16)((uint16)0x0001u << pin_43kHz__0__SHIFT))
 
-#define pin_30kHz_INTR_ALL	 ((uint16)(pin_30kHz_0_INTR))
+#define pin_43kHz_INTR_ALL	 ((uint16)(pin_43kHz_0_INTR))
 
-#endif /* End Pins pin_30kHz_ALIASES_H */
+#endif /* End Pins pin_43kHz_ALIASES_H */
 
 
 /* [] END OF FILE */

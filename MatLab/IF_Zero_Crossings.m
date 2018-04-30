@@ -1,4 +1,4 @@
-function [ ZerosOut,TimeOut ] = IF_Zero_Crossings( waveIn, TimeIn )
+function [ ZerosOut,TimeOut,unBaised ] = IF_Zero_Crossings( waveIn, TimeIn )
 %Input: Csv vectors defining singals 
 %Output: Indicies of zero crossings, and times at which they occured 
 

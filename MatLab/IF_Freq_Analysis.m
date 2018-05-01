@@ -6,7 +6,7 @@
 %========================================
 
 %read the number data only
-data = csvread('36_LP_Gain.csv', 11, 0); 
+data = csvread('36_comp_recon.csv', 11, 0); 
 
 %r = number of rows, c = number of columns 
 [r,c] = size(data);

@@ -1,6 +1,6 @@
 // ======================================================================
 // HighFSKRx.v generated from TopDesign.cysch
-// 04/28/2018 at 23:58
+// 04/30/2018 at 22:37
 // This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 // ======================================================================
 
@@ -677,62 +677,8 @@ module Comp_v2_0_6 (
 
 endmodule
 
-// PGA_v2_0(Gain=0, Power=1, VddaValue=5, Vref_Input=1, CY_API_CALLBACK_HEADER_INCLUDE=#include "cyapicallbacks.h", CY_COMMENT=, CY_COMPONENT_NAME=PGA_v2_0, CY_CONST_CONFIG=true, CY_CONTROL_FILE=<:default:>, CY_DATASHEET_FILE=<:default:>, CY_FITTER_NAME=PGA_1, CY_INSTANCE_SHORT_NAME=PGA_1, CY_MAJOR_VERSION=2, CY_MINOR_VERSION=0, CY_PDL_DRIVER_NAME=, CY_PDL_DRIVER_REQ_VERSION=, CY_PDL_DRIVER_SUBGROUP=, CY_PDL_DRIVER_VARIANT=, CY_REMOVE=false, CY_SUPPRESS_API_GEN=false, CY_VERSION=PSoC Creator  4.1 Update 1, INSTANCE_NAME=PGA_1, )
-module PGA_v2_0_7 (
-    Vin,
-    Vref,
-    Vout);
-    inout       Vin;
-    electrical  Vin;
-    inout       Vref;
-    electrical  Vref;
-    inout       Vout;
-    electrical  Vout;
-
-
-    electrical  Net_75;
-          wire  Net_41;
-          wire  Net_40;
-    electrical  Net_17;
-          wire  Net_39;
-          wire  Net_38;
-          wire  Net_37;
-
-    cy_psoc3_scblock_v1_0 SC (
-        .vin(Vin),
-        .vref(Net_17),
-        .vout(Vout),
-        .modout_sync(Net_41),
-        .aclk(Net_37),
-        .clk_udb(Net_38),
-        .dyn_cntl(Net_39),
-        .bst_clk(Net_40));
-
-    ZeroTerminal ZeroTerminal_1 (
-        .z(Net_37));
-
-    ZeroTerminal ZeroTerminal_2 (
-        .z(Net_38));
-
-    ZeroTerminal ZeroTerminal_3 (
-        .z(Net_39));
-
-    ZeroTerminal ZeroTerminal_4 (
-        .z(Net_40));
-
-	// cy_analog_virtualmux_1 (cy_analog_virtualmux_v1_0)
-	cy_connect_v1_0 cy_analog_virtualmux_1_connect(Net_17, Vref);
-	defparam cy_analog_virtualmux_1_connect.sig_width = 1;
-
-    cy_analog_noconnect_v1_0 cy_analog_noconnect_2 (
-        .noconnect(Net_75));
-
-
-
-endmodule
-
 // PGA_v2_0(Gain=0, Power=1, VddaValue=5, Vref_Input=0, CY_API_CALLBACK_HEADER_INCLUDE=#include "cyapicallbacks.h", CY_COMMENT=, CY_COMPONENT_NAME=PGA_v2_0, CY_CONST_CONFIG=true, CY_CONTROL_FILE=<:default:>, CY_DATASHEET_FILE=<:default:>, CY_FITTER_NAME=PGA_2, CY_INSTANCE_SHORT_NAME=PGA_2, CY_MAJOR_VERSION=2, CY_MINOR_VERSION=0, CY_PDL_DRIVER_NAME=, CY_PDL_DRIVER_REQ_VERSION=, CY_PDL_DRIVER_SUBGROUP=, CY_PDL_DRIVER_VARIANT=, CY_REMOVE=false, CY_SUPPRESS_API_GEN=false, CY_VERSION=PSoC Creator  4.1 Update 1, INSTANCE_NAME=PGA_2, )
-module PGA_v2_0_8 (
+module PGA_v2_0_7 (
     Vin,
     Vref,
     Vout);
@@ -816,7 +762,6 @@ module top ;
           wire  Net_87;
     electrical  Net_114;
     electrical  Net_153;
-    electrical  Net_148;
     electrical  Net_151;
     electrical  Net_101;
           wire  Net_145;
@@ -826,7 +771,7 @@ module top ;
           wire  Net_185;
           wire  Net_134;
           wire  Net_128;
-    electrical  Net_156;
+    electrical  Net_158;
     electrical  Net_103;
           wire  Net_122;
           wire  Net_95;
@@ -987,7 +932,7 @@ module top ;
     Comp_v2_0_0 HighF_OutComp (
         .Vplus(Net_103),
         .CmpOut(Net_87),
-        .Vminus(Net_156),
+        .Vminus(Net_158),
         .clock(1'b0));
 
 	wire [0:0] tmpOE__HighF_DemodOut_net;
@@ -1379,7 +1324,7 @@ module top ;
 
     PGA_v2_0_5 HighF_PGA (
         .Vin(Net_101),
-        .Vref(Net_156),
+        .Vref(Net_158),
         .Vout(Net_103));
 
 	wire [0:0] tmpOE__HighF_XOR_Out_net;
@@ -1520,7 +1465,7 @@ module top ;
 		 (.oe(tmpOE__HighF_BPFIn_net),
 		  .y({1'b0}),
 		  .fb({tmpFB_0__HighF_BPFIn_net[0:0]}),
-		  .analog({Net_148}),
+		  .analog({Net_151}),
 		  .io({tmpIO_0__HighF_BPFIn_net[0:0]}),
 		  .siovref(tmpSIOVREF__HighF_BPFIn_net),
 		  .interrupt({tmpINTERRUPT_0__HighF_BPFIn_net[0:0]}),
@@ -1689,18 +1634,13 @@ module top ;
     Comp_v2_0_6 HighF_BPF_Comp (
         .Vplus(Net_151),
         .CmpOut(Net_185),
-        .Vminus(Net_156),
+        .Vminus(Net_158),
         .clock(1'b0));
 
-    PGA_v2_0_7 PGA_1 (
-        .Vin(Net_148),
-        .Vref(Net_156),
-        .Vout(Net_151));
-
-    PGA_v2_0_8 PGA_2 (
+    PGA_v2_0_7 PGA_2 (
         .Vin(Net_153),
         .Vref(Net_154),
-        .Vout(Net_156));
+        .Vout(Net_158));
 
 
 

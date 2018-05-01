@@ -1,5 +1,5 @@
 -- Project:   HighFSKRx
--- Generated: 04/28/2018 23:58:43
+-- Generated: 04/30/2018 22:37:52
 -- PSoC Creator  4.1 Update 1
 
 ENTITY HighFSKRx IS
@@ -105,7 +105,6 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     SIGNAL \\\LCD_Char:LCDPort(4)\\__PA\ : bit;
     SIGNAL \\\LCD_Char:LCDPort(5)\\__PA\ : bit;
     SIGNAL \\\LCD_Char:LCDPort(6)\\__PA\ : bit;
-    SIGNAL \PGA_1:Net_41\ : bit;
     SIGNAL \PGA_2:Net_41\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:cmp1_less\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:control_0\ : bit;
@@ -238,7 +237,7 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     ATTRIBUTE Location OF \HighF_LevelCount:TimerUDB:status_tc\ : LABEL IS "U(3,3)";
     ATTRIBUTE lib_model OF Net_84 : LABEL IS "macrocell3";
     ATTRIBUTE Location OF Net_84 : LABEL IS "U(1,1)";
-    ATTRIBUTE Location OF \HighF_OutComp:ctComp\ : LABEL IS "F(Comparator,1)";
+    ATTRIBUTE Location OF \HighF_OutComp:ctComp\ : LABEL IS "F(Comparator,0)";
     ATTRIBUTE lib_model OF \HighF_ShiftReg2:bSR:SyncCtl:CtrlReg\ : LABEL IS "controlcell1";
     ATTRIBUTE Location OF \HighF_ShiftReg2:bSR:SyncCtl:CtrlReg\ : LABEL IS "U(0,1)";
     ATTRIBUTE lib_model OF \HighF_ShiftReg2:bSR:StsReg\ : LABEL IS "statusicell1";
@@ -268,9 +267,8 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     ATTRIBUTE Location OF \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\ : LABEL IS "U(2,3)";
     ATTRIBUTE lib_model OF \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\ : LABEL IS "datapathcell8";
     ATTRIBUTE Location OF \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\ : LABEL IS "U(3,3)";
-    ATTRIBUTE Location OF \HighF_PGA:SC\ : LABEL IS "F(SC,1)";
-    ATTRIBUTE Location OF \HighF_BPF_Comp:ctComp\ : LABEL IS "F(Comparator,0)";
-    ATTRIBUTE Location OF \PGA_1:SC\ : LABEL IS "F(SC,0)";
+    ATTRIBUTE Location OF \HighF_PGA:SC\ : LABEL IS "F(SC,0)";
+    ATTRIBUTE Location OF \HighF_BPF_Comp:ctComp\ : LABEL IS "F(Comparator,3)";
     ATTRIBUTE Location OF \PGA_2:SC\ : LABEL IS "F(SC,2)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:runmode_enable\ : LABEL IS "macrocell4";
     ATTRIBUTE Location OF \PWM_Recon:PWMUDB:runmode_enable\ : LABEL IS "U(1,1)";
@@ -2314,13 +2312,6 @@ BEGIN
             cy_registers => "")
         PORT MAP(
             out => Net_185);
-
-    \PGA_1:SC\:sccell
-        GENERIC MAP(
-            cy_registers => "")
-        PORT MAP(
-            dyn_cntl_udb => open,
-            modout => \PGA_1:Net_41\);
 
     \PGA_2:SC\:sccell
         GENERIC MAP(

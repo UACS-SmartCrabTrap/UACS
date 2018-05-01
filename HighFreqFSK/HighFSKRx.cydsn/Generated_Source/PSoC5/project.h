@@ -49,7 +49,6 @@
 #include "HighF_ShiftOut_aliases.h"
 #include "HighF_ShiftOut.h"
 #include "HighF_BPF_Comp.h"
-#include "PGA_1.h"
 #include "PGA_2.h"
 #include "LCD_Char_LCDPort_aliases.h"
 #include "LCD_Char_LCDPort.h"

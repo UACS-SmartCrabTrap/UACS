@@ -47,7 +47,7 @@ int main(void)
     HighF_LevelCount_Start();
     HighF_LevelCountISR_StartEx(HighF_LevelCount);
     LCD_Char_Start();
-    PGA_1_Start();
+    //PGA_1_Start();
 
     // Displays Loading Message before receiving pre-fix
     char OutputString[12];

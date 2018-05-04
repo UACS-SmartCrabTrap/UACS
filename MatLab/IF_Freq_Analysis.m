@@ -6,7 +6,11 @@
 %========================================
 
 %read the number data only
+<<<<<<< HEAD
 data = csvread('38_3_gain1_gain2.csv', 11, 0); 
+=======
+data = csvread('3_gain1_gain2 (1).csv', 11, 0); 
+>>>>>>> b5f3578fcb7ae52303ff9f73a1f8f7fb84b6bf0e
 
 %r = number of rows, c = number of columns 
 [r,c] = size(data);
@@ -16,6 +20,7 @@ time = data(:,1);
 channel1 = data(:,2);
 channel2 = data(:,3);
 
+<<<<<<< HEAD
 figure(3) 
 plot(time, channel1)
 figure(4) 
@@ -38,6 +43,12 @@ figure(2)
 plot((w*5000000)/(2*pi),log10(abs(z))); 
 xlabel('Frequencies Hz');
 ylabel('Magnitude')
+=======
+%find zero crossings 
+%function [ ZerosOut,TimeOut ] = IF_Zero_Crossings( waveIn, TimeIn )
+[chan1_zeros, chan1_zeroTime] = IF_Zero_Crossings(channel1, time);
+[chan2_zeros, chan2_zeroTime] = IF_Zero_Crossings(channel2, time);
+>>>>>>> b5f3578fcb7ae52303ff9f73a1f8f7fb84b6bf0e
 
 %find frequencies 
 %function [ FrequencyOut, timeChange ] = IF_FrequencyCalcs( TimeIn )
@@ -52,10 +63,16 @@ ylabel('Magnitude')
 
 
 %find the changes in average frequencies 
+<<<<<<< HEAD
 [ chan1_avgFreq, chan1_avgTime ] = freqChange( chan1_freqAvg , chan1_timeAvg );
 [ chan2_avgFreq, chan2_avgTime ] = freqChange(chan2_freqAvg , chan2_timeAvg );
 
 
 %making changes to commit
+=======
+[ chan1_avgFreq, chan1_avgTime ] = freqChange( chan1_freqAvg , chan1_timeAvg )
+[ chan2_avgFreq, chan2_avgTime ] = freqChange(chan2_freqAvg , chan2_timeAvg )
+
+>>>>>>> b5f3578fcb7ae52303ff9f73a1f8f7fb84b6bf0e
 
 

@@ -57,6 +57,12 @@ int main(void)
     int data_turn = 0;
     unsigned int data_to_be_sent = ONE;
     
+    // Set PWM to ONE_FREQ
+    PWM_2_WritePeriod(FREQ(ONE_FREQ));
+    PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+
+
+    
     for(;;)
     {
         switch(bitTime){

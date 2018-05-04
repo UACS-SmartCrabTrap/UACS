@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: pin_42kHz.h  
+* File Name: Demod_Out_Test.h  
 * Version 2.20
 *
 * Description:
@@ -15,8 +15,8 @@
 * the software package with which this file was provided.
 *******************************************************************************/
 
-#if !defined(CY_PINS_pin_42kHz_ALIASES_H) /* Pins pin_42kHz_ALIASES_H */
-#define CY_PINS_pin_42kHz_ALIASES_H
+#if !defined(CY_PINS_Demod_Out_Test_ALIASES_H) /* Pins Demod_Out_Test_ALIASES_H */
+#define CY_PINS_Demod_Out_Test_ALIASES_H
 
 #include "cytypes.h"
 #include "cyfitter.h"
@@ -25,12 +25,12 @@
 /***************************************
 *              Constants        
 ***************************************/
-#define pin_42kHz_0			(pin_42kHz__0__PC)
-#define pin_42kHz_0_INTR	((uint16)((uint16)0x0001u << pin_42kHz__0__SHIFT))
+#define Demod_Out_Test_0			(Demod_Out_Test__0__PC)
+#define Demod_Out_Test_0_INTR	((uint16)((uint16)0x0001u << Demod_Out_Test__0__SHIFT))
 
-#define pin_42kHz_INTR_ALL	 ((uint16)(pin_42kHz_0_INTR))
+#define Demod_Out_Test_INTR_ALL	 ((uint16)(Demod_Out_Test_0_INTR))
 
-#endif /* End Pins pin_42kHz_ALIASES_H */
+#endif /* End Pins Demod_Out_Test_ALIASES_H */
 
 
 /* [] END OF FILE */

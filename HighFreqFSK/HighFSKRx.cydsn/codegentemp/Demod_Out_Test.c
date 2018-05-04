@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: pin_42kHz.c  
+* File Name: Demod_Out_Test.c  
 * Version 2.20
 *
 * Description:
@@ -15,15 +15,15 @@
 *******************************************************************************/
 
 #include "cytypes.h"
-#include "pin_42kHz.h"
+#include "Demod_Out_Test.h"
 
 /* APIs are not generated for P15[7:6] on PSoC 5 */
 #if !(CY_PSOC5A &&\
-	 pin_42kHz__PORT == 15 && ((pin_42kHz__MASK & 0xC0) != 0))
+	 Demod_Out_Test__PORT == 15 && ((Demod_Out_Test__MASK & 0xC0) != 0))
 
 
 /*******************************************************************************
-* Function Name: pin_42kHz_Write
+* Function Name: Demod_Out_Test_Write
 ****************************************************************************//**
 *
 * \brief Writes the value to the physical port (data output register), masking
@@ -52,17 +52,17 @@
 *  this function.
 *
 * \funcusage
-*  \snippet pin_42kHz_SUT.c usage_pin_42kHz_Write
+*  \snippet Demod_Out_Test_SUT.c usage_Demod_Out_Test_Write
 *******************************************************************************/
-void pin_42kHz_Write(uint8 value)
+void Demod_Out_Test_Write(uint8 value)
 {
-    uint8 staticBits = (pin_42kHz_DR & (uint8)(~pin_42kHz_MASK));
-    pin_42kHz_DR = staticBits | ((uint8)(value << pin_42kHz_SHIFT) & pin_42kHz_MASK);
+    uint8 staticBits = (Demod_Out_Test_DR & (uint8)(~Demod_Out_Test_MASK));
+    Demod_Out_Test_DR = staticBits | ((uint8)(value << Demod_Out_Test_SHIFT) & Demod_Out_Test_MASK);
 }
 
 
 /*******************************************************************************
-* Function Name: pin_42kHz_SetDriveMode
+* Function Name: Demod_Out_Test_SetDriveMode
 ****************************************************************************//**
 *
 * \brief Sets the drive mode for each of the Pins component's pins.
@@ -85,16 +85,16 @@ void pin_42kHz_Write(uint8 value)
 *  APIs (primary method) or disable interrupts around this function.
 *
 * \funcusage
-*  \snippet pin_42kHz_SUT.c usage_pin_42kHz_SetDriveMode
+*  \snippet Demod_Out_Test_SUT.c usage_Demod_Out_Test_SetDriveMode
 *******************************************************************************/
-void pin_42kHz_SetDriveMode(uint8 mode)
+void Demod_Out_Test_SetDriveMode(uint8 mode)
 {
-	CyPins_SetPinDriveMode(pin_42kHz_0, mode);
+	CyPins_SetPinDriveMode(Demod_Out_Test_0, mode);
 }
 
 
 /*******************************************************************************
-* Function Name: pin_42kHz_Read
+* Function Name: Demod_Out_Test_Read
 ****************************************************************************//**
 *
 * \brief Reads the associated physical port (pin status register) and masks 
@@ -108,16 +108,16 @@ void pin_42kHz_SetDriveMode(uint8 mode)
 *  The current value for the pins in the component as a right justified number.
 *
 * \funcusage
-*  \snippet pin_42kHz_SUT.c usage_pin_42kHz_Read  
+*  \snippet Demod_Out_Test_SUT.c usage_Demod_Out_Test_Read  
 *******************************************************************************/
-uint8 pin_42kHz_Read(void)
+uint8 Demod_Out_Test_Read(void)
 {
-    return (pin_42kHz_PS & pin_42kHz_MASK) >> pin_42kHz_SHIFT;
+    return (Demod_Out_Test_PS & Demod_Out_Test_MASK) >> Demod_Out_Test_SHIFT;
 }
 
 
 /*******************************************************************************
-* Function Name: pin_42kHz_ReadDataReg
+* Function Name: Demod_Out_Test_ReadDataReg
 ****************************************************************************//**
 *
 * \brief Reads the associated physical port's data output register and masks 
@@ -126,8 +126,8 @@ uint8 pin_42kHz_Read(void)
 *
 * The data output register controls the signal applied to the physical pin in 
 * conjunction with the drive mode parameter. This is not the same as the 
-* preferred pin_42kHz_Read() API because the 
-* pin_42kHz_ReadDataReg() reads the data register instead of the status 
+* preferred Demod_Out_Test_Read() API because the 
+* Demod_Out_Test_ReadDataReg() reads the data register instead of the status 
 * register. For output pins this is a useful function to determine the value 
 * just written to the pin.
 *
@@ -136,19 +136,19 @@ uint8 pin_42kHz_Read(void)
 *  justified number for the component instance.
 *
 * \funcusage
-*  \snippet pin_42kHz_SUT.c usage_pin_42kHz_ReadDataReg 
+*  \snippet Demod_Out_Test_SUT.c usage_Demod_Out_Test_ReadDataReg 
 *******************************************************************************/
-uint8 pin_42kHz_ReadDataReg(void)
+uint8 Demod_Out_Test_ReadDataReg(void)
 {
-    return (pin_42kHz_DR & pin_42kHz_MASK) >> pin_42kHz_SHIFT;
+    return (Demod_Out_Test_DR & Demod_Out_Test_MASK) >> Demod_Out_Test_SHIFT;
 }
 
 
 /* If interrupt is connected for this Pins component */ 
-#if defined(pin_42kHz_INTSTAT) 
+#if defined(Demod_Out_Test_INTSTAT) 
 
     /*******************************************************************************
-    * Function Name: pin_42kHz_SetInterruptMode
+    * Function Name: Demod_Out_Test_SetInterruptMode
     ****************************************************************************//**
     *
     * \brief Configures the interrupt mode for each of the Pins component's
@@ -161,12 +161,12 @@ uint8 pin_42kHz_ReadDataReg(void)
     * \param position
     *  The pin position as listed in the Pins component. You may OR these to be 
     *  able to configure the interrupt mode of multiple pins within a Pins 
-    *  component. Or you may use pin_42kHz_INTR_ALL to configure the
+    *  component. Or you may use Demod_Out_Test_INTR_ALL to configure the
     *  interrupt mode of all the pins in the Pins component.       
-    *  - pin_42kHz_0_INTR       (First pin in the list)
-    *  - pin_42kHz_1_INTR       (Second pin in the list)
+    *  - Demod_Out_Test_0_INTR       (First pin in the list)
+    *  - Demod_Out_Test_1_INTR       (Second pin in the list)
     *  - ...
-    *  - pin_42kHz_INTR_ALL     (All pins in Pins component)
+    *  - Demod_Out_Test_INTR_ALL     (All pins in Pins component)
     *
     * \param mode
     *  Interrupt mode for the selected pins. Valid options are documented in
@@ -182,19 +182,19 @@ uint8 pin_42kHz_ReadDataReg(void)
     *  port.
     *
     * \funcusage
-    *  \snippet pin_42kHz_SUT.c usage_pin_42kHz_SetInterruptMode
+    *  \snippet Demod_Out_Test_SUT.c usage_Demod_Out_Test_SetInterruptMode
     *******************************************************************************/
-    void pin_42kHz_SetInterruptMode(uint16 position, uint16 mode)
+    void Demod_Out_Test_SetInterruptMode(uint16 position, uint16 mode)
     {
-		if((position & pin_42kHz_0_INTR) != 0u) 
+		if((position & Demod_Out_Test_0_INTR) != 0u) 
 		{ 
-			 pin_42kHz_0_INTTYPE_REG = (uint8)mode; 
+			 Demod_Out_Test_0_INTTYPE_REG = (uint8)mode; 
 		}
     }
     
     
     /*******************************************************************************
-    * Function Name: pin_42kHz_ClearInterrupt
+    * Function Name: Demod_Out_Test_ClearInterrupt
     ****************************************************************************//**
     *
     * \brief Clears any active interrupts attached with the component and returns 
@@ -211,11 +211,11 @@ uint8 pin_42kHz_ReadDataReg(void)
     *  those associated with the Pins component.
     *
     * \funcusage
-    *  \snippet pin_42kHz_SUT.c usage_pin_42kHz_ClearInterrupt
+    *  \snippet Demod_Out_Test_SUT.c usage_Demod_Out_Test_ClearInterrupt
     *******************************************************************************/
-    uint8 pin_42kHz_ClearInterrupt(void)
+    uint8 Demod_Out_Test_ClearInterrupt(void)
     {
-        return (pin_42kHz_INTSTAT & pin_42kHz_MASK) >> pin_42kHz_SHIFT;
+        return (Demod_Out_Test_INTSTAT & Demod_Out_Test_MASK) >> Demod_Out_Test_SHIFT;
     }
 
 #endif /* If Interrupts Are Enabled for this Pins component */ 

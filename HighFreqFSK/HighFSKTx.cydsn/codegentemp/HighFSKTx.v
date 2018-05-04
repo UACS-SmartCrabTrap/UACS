@@ -1,6 +1,6 @@
 // ======================================================================
 // HighFSKTx.v generated from TopDesign.cysch
-// 05/03/2018 at 18:08
+// 05/04/2018 at 00:53
 // This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 // ======================================================================
 
@@ -982,11 +982,11 @@ module top ;
 
 	assign tmpOE__pin_12kHz_net = (`CYDEV_CHIP_MEMBER_USED == `CYDEV_CHIP_MEMBER_3A && `CYDEV_CHIP_REVISION_USED < `CYDEV_CHIP_REVISION_3A_ES3) ? ~{1'b1} : {1'b1};
 
-	wire [0:0] tmpOE__pin_42kHz_net;
-	wire [0:0] tmpFB_0__pin_42kHz_net;
-	wire [0:0] tmpIO_0__pin_42kHz_net;
-	wire [0:0] tmpINTERRUPT_0__pin_42kHz_net;
-	electrical [0:0] tmpSIOVREF__pin_42kHz_net;
+	wire [0:0] tmpOE__pin_43kHz_net;
+	wire [0:0] tmpFB_0__pin_43kHz_net;
+	wire [0:0] tmpIO_0__pin_43kHz_net;
+	wire [0:0] tmpINTERRUPT_0__pin_43kHz_net;
+	electrical [0:0] tmpSIOVREF__pin_43kHz_net;
 
 	cy_psoc3_pins_v1_10
 		#(.id("c413b066-0861-4436-8f78-1baefdb5ac2e"),
@@ -1041,13 +1041,13 @@ module top ;
 		  .ovt_needed(1'b0),
 		  .ovt_slew_control(2'b00),
 		  .input_buffer_sel(2'b00))
-		pin_42kHz
-		 (.oe(tmpOE__pin_42kHz_net),
+		pin_43kHz
+		 (.oe(tmpOE__pin_43kHz_net),
 		  .y({Net_48}),
-		  .fb({tmpFB_0__pin_42kHz_net[0:0]}),
-		  .io({tmpIO_0__pin_42kHz_net[0:0]}),
-		  .siovref(tmpSIOVREF__pin_42kHz_net),
-		  .interrupt({tmpINTERRUPT_0__pin_42kHz_net[0:0]}),
+		  .fb({tmpFB_0__pin_43kHz_net[0:0]}),
+		  .io({tmpIO_0__pin_43kHz_net[0:0]}),
+		  .siovref(tmpSIOVREF__pin_43kHz_net),
+		  .interrupt({tmpINTERRUPT_0__pin_43kHz_net[0:0]}),
 		  .in_clock({1'b0}),
 		  .in_clock_en({1'b1}),
 		  .in_reset({1'b0}),
@@ -1055,7 +1055,7 @@ module top ;
 		  .out_clock_en({1'b1}),
 		  .out_reset({1'b0}));
 
-	assign tmpOE__pin_42kHz_net = (`CYDEV_CHIP_MEMBER_USED == `CYDEV_CHIP_MEMBER_3A && `CYDEV_CHIP_REVISION_USED < `CYDEV_CHIP_REVISION_3A_ES3) ? ~{1'b1} : {1'b1};
+	assign tmpOE__pin_43kHz_net = (`CYDEV_CHIP_MEMBER_USED == `CYDEV_CHIP_MEMBER_3A && `CYDEV_CHIP_REVISION_USED < `CYDEV_CHIP_REVISION_3A_ES3) ? ~{1'b1} : {1'b1};
 
     PWM_v3_30_4 PWM_3 (
         .reset(1'b0),

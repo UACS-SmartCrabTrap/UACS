@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: shift2.c
+* File Name: shift_clk.c
 * Version 2.20
 *
 *  Description:
@@ -15,7 +15,7 @@
 *******************************************************************************/
 
 #include <cydevice_trm.h>
-#include "shift2.h"
+#include "shift_clk.h"
 
 /* Clock Distribution registers. */
 #define CLK_DIST_LD              (* (reg8 *) CYREG_CLKDIST_LD)
@@ -28,7 +28,7 @@
 
 
 /*******************************************************************************
-* Function Name: shift2_Start
+* Function Name: shift_clk_Start
 ********************************************************************************
 *
 * Summary:
@@ -42,16 +42,16 @@
 *  None
 *
 *******************************************************************************/
-void shift2_Start(void) 
+void shift_clk_Start(void) 
 {
     /* Set the bit to enable the clock. */
-    shift2_CLKEN |= shift2_CLKEN_MASK;
-	shift2_CLKSTBY |= shift2_CLKSTBY_MASK;
+    shift_clk_CLKEN |= shift_clk_CLKEN_MASK;
+	shift_clk_CLKSTBY |= shift_clk_CLKSTBY_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: shift2_Stop
+* Function Name: shift_clk_Stop
 ********************************************************************************
 *
 * Summary:
@@ -68,11 +68,11 @@ void shift2_Start(void)
 *  None
 *
 *******************************************************************************/
-void shift2_Stop(void) 
+void shift_clk_Stop(void) 
 {
     /* Clear the bit to disable the clock. */
-    shift2_CLKEN &= (uint8)(~shift2_CLKEN_MASK);
-	shift2_CLKSTBY &= (uint8)(~shift2_CLKSTBY_MASK);
+    shift_clk_CLKEN &= (uint8)(~shift_clk_CLKEN_MASK);
+	shift_clk_CLKSTBY &= (uint8)(~shift_clk_CLKSTBY_MASK);
 }
 
 
@@ -80,7 +80,7 @@ void shift2_Stop(void)
 
 
 /*******************************************************************************
-* Function Name: shift2_StopBlock
+* Function Name: shift_clk_StopBlock
 ********************************************************************************
 *
 * Summary:
@@ -97,9 +97,9 @@ void shift2_Stop(void)
 *  None
 *
 *******************************************************************************/
-void shift2_StopBlock(void) 
+void shift_clk_StopBlock(void) 
 {
-    if ((shift2_CLKEN & shift2_CLKEN_MASK) != 0u)
+    if ((shift_clk_CLKEN & shift_clk_CLKEN_MASK) != 0u)
     {
 #if HAS_CLKDIST_LD_DISABLE
         uint16 oldDivider;
@@ -107,18 +107,18 @@ void shift2_StopBlock(void)
         CLK_DIST_LD = 0u;
 
         /* Clear all the mask bits except ours. */
-#if defined(shift2__CFG3)
-        CLK_DIST_AMASK = shift2_CLKEN_MASK;
+#if defined(shift_clk__CFG3)
+        CLK_DIST_AMASK = shift_clk_CLKEN_MASK;
         CLK_DIST_DMASK = 0x00u;
 #else
-        CLK_DIST_DMASK = shift2_CLKEN_MASK;
+        CLK_DIST_DMASK = shift_clk_CLKEN_MASK;
         CLK_DIST_AMASK = 0x00u;
-#endif /* shift2__CFG3 */
+#endif /* shift_clk__CFG3 */
 
         /* Clear mask of bus clock. */
         CLK_DIST_BCFG2 &= (uint8)(~BCFG2_MASK);
 
-        oldDivider = CY_GET_REG16(shift2_DIV_PTR);
+        oldDivider = CY_GET_REG16(shift_clk_DIV_PTR);
         CY_SET_REG16(CYREG_CLKDIST_WRK0, oldDivider);
         CLK_DIST_LD = CYCLK_LD_DISABLE | CYCLK_LD_SYNC_EN | CYCLK_LD_LOAD;
 
@@ -127,13 +127,13 @@ void shift2_StopBlock(void)
 #endif /* HAS_CLKDIST_LD_DISABLE */
 
         /* Clear the bit to disable the clock. */
-        shift2_CLKEN &= (uint8)(~shift2_CLKEN_MASK);
-        shift2_CLKSTBY &= (uint8)(~shift2_CLKSTBY_MASK);
+        shift_clk_CLKEN &= (uint8)(~shift_clk_CLKEN_MASK);
+        shift_clk_CLKSTBY &= (uint8)(~shift_clk_CLKSTBY_MASK);
 
 #if HAS_CLKDIST_LD_DISABLE
         /* Clear the disable bit */
         CLK_DIST_LD = 0x00u;
-        CY_SET_REG16(shift2_DIV_PTR, oldDivider);
+        CY_SET_REG16(shift_clk_DIV_PTR, oldDivider);
 #endif /* HAS_CLKDIST_LD_DISABLE */
     }
 }
@@ -141,7 +141,7 @@ void shift2_StopBlock(void)
 
 
 /*******************************************************************************
-* Function Name: shift2_StandbyPower
+* Function Name: shift_clk_StandbyPower
 ********************************************************************************
 *
 * Summary:
@@ -154,21 +154,21 @@ void shift2_StopBlock(void)
 *  None
 *
 *******************************************************************************/
-void shift2_StandbyPower(uint8 state) 
+void shift_clk_StandbyPower(uint8 state) 
 {
     if(state == 0u)
     {
-        shift2_CLKSTBY &= (uint8)(~shift2_CLKSTBY_MASK);
+        shift_clk_CLKSTBY &= (uint8)(~shift_clk_CLKSTBY_MASK);
     }
     else
     {
-        shift2_CLKSTBY |= shift2_CLKSTBY_MASK;
+        shift_clk_CLKSTBY |= shift_clk_CLKSTBY_MASK;
     }
 }
 
 
 /*******************************************************************************
-* Function Name: shift2_SetDividerRegister
+* Function Name: shift_clk_SetDividerRegister
 ********************************************************************************
 *
 * Summary:
@@ -190,17 +190,17 @@ void shift2_StandbyPower(uint8 state)
 *  None
 *
 *******************************************************************************/
-void shift2_SetDividerRegister(uint16 clkDivider, uint8 restart)
+void shift_clk_SetDividerRegister(uint16 clkDivider, uint8 restart)
                                 
 {
     uint8 enabled;
 
-    uint8 currSrc = shift2_GetSourceRegister();
-    uint16 oldDivider = shift2_GetDividerRegister();
+    uint8 currSrc = shift_clk_GetSourceRegister();
+    uint16 oldDivider = shift_clk_GetDividerRegister();
 
     if (clkDivider != oldDivider)
     {
-        enabled = shift2_CLKEN & shift2_CLKEN_MASK;
+        enabled = shift_clk_CLKEN & shift_clk_CLKEN_MASK;
 
         if ((currSrc == (uint8)CYCLK_SRC_SEL_CLK_SYNC_D) && ((oldDivider == 0u) || (clkDivider == 0u)))
         {
@@ -210,15 +210,15 @@ void shift2_SetDividerRegister(uint16 clkDivider, uint8 restart)
                 /* Moving away from SSS, set the divider first so when SSS is cleared we    */
                 /* don't halt the clock.  Using the shadow load isn't required as the       */
                 /* divider is ignored while SSS is set.                                     */
-                CY_SET_REG16(shift2_DIV_PTR, clkDivider);
-                shift2_MOD_SRC &= (uint8)(~CYCLK_SSS);
+                CY_SET_REG16(shift_clk_DIV_PTR, clkDivider);
+                shift_clk_MOD_SRC &= (uint8)(~CYCLK_SSS);
             }
             else
             {
                 /* Moving to SSS, set SSS which then ignores the divider and we can set     */
                 /* it without bothering with the shadow load.                               */
-                shift2_MOD_SRC |= CYCLK_SSS;
-                CY_SET_REG16(shift2_DIV_PTR, clkDivider);
+                shift_clk_MOD_SRC |= CYCLK_SSS;
+                CY_SET_REG16(shift_clk_DIV_PTR, clkDivider);
             }
         }
         else
@@ -229,18 +229,18 @@ void shift2_SetDividerRegister(uint16 clkDivider, uint8 restart)
                 CLK_DIST_LD = 0x00u;
 
                 /* Clear all the mask bits except ours. */
-#if defined(shift2__CFG3)
-                CLK_DIST_AMASK = shift2_CLKEN_MASK;
+#if defined(shift_clk__CFG3)
+                CLK_DIST_AMASK = shift_clk_CLKEN_MASK;
                 CLK_DIST_DMASK = 0x00u;
 #else
-                CLK_DIST_DMASK = shift2_CLKEN_MASK;
+                CLK_DIST_DMASK = shift_clk_CLKEN_MASK;
                 CLK_DIST_AMASK = 0x00u;
-#endif /* shift2__CFG3 */
+#endif /* shift_clk__CFG3 */
                 /* Clear mask of bus clock. */
                 CLK_DIST_BCFG2 &= (uint8)(~BCFG2_MASK);
 
                 /* If clock is currently enabled, disable it if async or going from N-to-1*/
-                if (((shift2_MOD_SRC & CYCLK_SYNC) == 0u) || (clkDivider == 0u))
+                if (((shift_clk_MOD_SRC & CYCLK_SYNC) == 0u) || (clkDivider == 0u))
                 {
 #if HAS_CLKDIST_LD_DISABLE
                     CY_SET_REG16(CYREG_CLKDIST_WRK0, oldDivider);
@@ -250,7 +250,7 @@ void shift2_SetDividerRegister(uint16 clkDivider, uint8 restart)
                     while ((CLK_DIST_LD & CYCLK_LD_LOAD) != 0u) { }
 #endif /* HAS_CLKDIST_LD_DISABLE */
 
-                    shift2_CLKEN &= (uint8)(~shift2_CLKEN_MASK);
+                    shift_clk_CLKEN &= (uint8)(~shift_clk_CLKEN_MASK);
 
 #if HAS_CLKDIST_LD_DISABLE
                     /* Clear the disable bit */
@@ -260,7 +260,7 @@ void shift2_SetDividerRegister(uint16 clkDivider, uint8 restart)
             }
 
             /* Load divide value. */
-            if ((shift2_CLKEN & shift2_CLKEN_MASK) != 0u)
+            if ((shift_clk_CLKEN & shift_clk_CLKEN_MASK) != 0u)
             {
                 /* If the clock is still enabled, use the shadow registers */
                 CY_SET_REG16(CYREG_CLKDIST_WRK0, clkDivider);
@@ -271,8 +271,8 @@ void shift2_SetDividerRegister(uint16 clkDivider, uint8 restart)
             else
             {
                 /* If the clock is disabled, set the divider directly */
-                CY_SET_REG16(shift2_DIV_PTR, clkDivider);
-				shift2_CLKEN |= enabled;
+                CY_SET_REG16(shift_clk_DIV_PTR, clkDivider);
+				shift_clk_CLKEN |= enabled;
             }
         }
     }
@@ -280,7 +280,7 @@ void shift2_SetDividerRegister(uint16 clkDivider, uint8 restart)
 
 
 /*******************************************************************************
-* Function Name: shift2_GetDividerRegister
+* Function Name: shift_clk_GetDividerRegister
 ********************************************************************************
 *
 * Summary:
@@ -294,14 +294,14 @@ void shift2_SetDividerRegister(uint16 clkDivider, uint8 restart)
 *  divide by 2, the return value will be 1.
 *
 *******************************************************************************/
-uint16 shift2_GetDividerRegister(void) 
+uint16 shift_clk_GetDividerRegister(void) 
 {
-    return CY_GET_REG16(shift2_DIV_PTR);
+    return CY_GET_REG16(shift_clk_DIV_PTR);
 }
 
 
 /*******************************************************************************
-* Function Name: shift2_SetModeRegister
+* Function Name: shift_clk_SetModeRegister
 ********************************************************************************
 *
 * Summary:
@@ -329,14 +329,14 @@ uint16 shift2_GetDividerRegister(void)
 *  None
 *
 *******************************************************************************/
-void shift2_SetModeRegister(uint8 modeBitMask) 
+void shift_clk_SetModeRegister(uint8 modeBitMask) 
 {
-    shift2_MOD_SRC |= modeBitMask & (uint8)shift2_MODE_MASK;
+    shift_clk_MOD_SRC |= modeBitMask & (uint8)shift_clk_MODE_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: shift2_ClearModeRegister
+* Function Name: shift_clk_ClearModeRegister
 ********************************************************************************
 *
 * Summary:
@@ -364,14 +364,14 @@ void shift2_SetModeRegister(uint8 modeBitMask)
 *  None
 *
 *******************************************************************************/
-void shift2_ClearModeRegister(uint8 modeBitMask) 
+void shift_clk_ClearModeRegister(uint8 modeBitMask) 
 {
-    shift2_MOD_SRC &= (uint8)(~modeBitMask) | (uint8)(~(uint8)(shift2_MODE_MASK));
+    shift_clk_MOD_SRC &= (uint8)(~modeBitMask) | (uint8)(~(uint8)(shift_clk_MODE_MASK));
 }
 
 
 /*******************************************************************************
-* Function Name: shift2_GetModeRegister
+* Function Name: shift_clk_GetModeRegister
 ********************************************************************************
 *
 * Summary:
@@ -385,14 +385,14 @@ void shift2_ClearModeRegister(uint8 modeBitMask)
 *  ClearModeRegister descriptions for details about the mode bits.
 *
 *******************************************************************************/
-uint8 shift2_GetModeRegister(void) 
+uint8 shift_clk_GetModeRegister(void) 
 {
-    return shift2_MOD_SRC & (uint8)(shift2_MODE_MASK);
+    return shift_clk_MOD_SRC & (uint8)(shift_clk_MODE_MASK);
 }
 
 
 /*******************************************************************************
-* Function Name: shift2_SetSourceRegister
+* Function Name: shift_clk_SetSourceRegister
 ********************************************************************************
 *
 * Summary:
@@ -416,39 +416,39 @@ uint8 shift2_GetModeRegister(void)
 *  None
 *
 *******************************************************************************/
-void shift2_SetSourceRegister(uint8 clkSource) 
+void shift_clk_SetSourceRegister(uint8 clkSource) 
 {
-    uint16 currDiv = shift2_GetDividerRegister();
-    uint8 oldSrc = shift2_GetSourceRegister();
+    uint16 currDiv = shift_clk_GetDividerRegister();
+    uint8 oldSrc = shift_clk_GetSourceRegister();
 
     if (((oldSrc != ((uint8)CYCLK_SRC_SEL_CLK_SYNC_D)) && 
         (clkSource == ((uint8)CYCLK_SRC_SEL_CLK_SYNC_D))) && (currDiv == 0u))
     {
         /* Switching to Master and divider is 1, set SSS, which will output master, */
         /* then set the source so we are consistent.                                */
-        shift2_MOD_SRC |= CYCLK_SSS;
-        shift2_MOD_SRC =
-            (shift2_MOD_SRC & (uint8)(~shift2_SRC_SEL_MSK)) | clkSource;
+        shift_clk_MOD_SRC |= CYCLK_SSS;
+        shift_clk_MOD_SRC =
+            (shift_clk_MOD_SRC & (uint8)(~shift_clk_SRC_SEL_MSK)) | clkSource;
     }
     else if (((oldSrc == ((uint8)CYCLK_SRC_SEL_CLK_SYNC_D)) && 
             (clkSource != ((uint8)CYCLK_SRC_SEL_CLK_SYNC_D))) && (currDiv == 0u))
     {
         /* Switching from Master to not and divider is 1, set source, so we don't   */
         /* lock when we clear SSS.                                                  */
-        shift2_MOD_SRC =
-            (shift2_MOD_SRC & (uint8)(~shift2_SRC_SEL_MSK)) | clkSource;
-        shift2_MOD_SRC &= (uint8)(~CYCLK_SSS);
+        shift_clk_MOD_SRC =
+            (shift_clk_MOD_SRC & (uint8)(~shift_clk_SRC_SEL_MSK)) | clkSource;
+        shift_clk_MOD_SRC &= (uint8)(~CYCLK_SSS);
     }
     else
     {
-        shift2_MOD_SRC =
-            (shift2_MOD_SRC & (uint8)(~shift2_SRC_SEL_MSK)) | clkSource;
+        shift_clk_MOD_SRC =
+            (shift_clk_MOD_SRC & (uint8)(~shift_clk_SRC_SEL_MSK)) | clkSource;
     }
 }
 
 
 /*******************************************************************************
-* Function Name: shift2_GetSourceRegister
+* Function Name: shift_clk_GetSourceRegister
 ********************************************************************************
 *
 * Summary:
@@ -461,17 +461,17 @@ void shift2_SetSourceRegister(uint8 clkSource)
 *  The input source of the clock. See SetSourceRegister for details.
 *
 *******************************************************************************/
-uint8 shift2_GetSourceRegister(void) 
+uint8 shift_clk_GetSourceRegister(void) 
 {
-    return shift2_MOD_SRC & shift2_SRC_SEL_MSK;
+    return shift_clk_MOD_SRC & shift_clk_SRC_SEL_MSK;
 }
 
 
-#if defined(shift2__CFG3)
+#if defined(shift_clk__CFG3)
 
 
 /*******************************************************************************
-* Function Name: shift2_SetPhaseRegister
+* Function Name: shift_clk_SetPhaseRegister
 ********************************************************************************
 *
 * Summary:
@@ -489,14 +489,14 @@ uint8 shift2_GetSourceRegister(void)
 *  None
 *
 *******************************************************************************/
-void shift2_SetPhaseRegister(uint8 clkPhase) 
+void shift_clk_SetPhaseRegister(uint8 clkPhase) 
 {
-    shift2_PHASE = clkPhase & shift2_PHASE_MASK;
+    shift_clk_PHASE = clkPhase & shift_clk_PHASE_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: shift2_GetPhase
+* Function Name: shift_clk_GetPhase
 ********************************************************************************
 *
 * Summary:
@@ -510,12 +510,12 @@ void shift2_SetPhaseRegister(uint8 clkPhase)
 *  Phase of the analog clock. See SetPhaseRegister for details.
 *
 *******************************************************************************/
-uint8 shift2_GetPhaseRegister(void) 
+uint8 shift_clk_GetPhaseRegister(void) 
 {
-    return shift2_PHASE & shift2_PHASE_MASK;
+    return shift_clk_PHASE & shift_clk_PHASE_MASK;
 }
 
-#endif /* shift2__CFG3 */
+#endif /* shift_clk__CFG3 */
 
 
 /* [] END OF FILE */

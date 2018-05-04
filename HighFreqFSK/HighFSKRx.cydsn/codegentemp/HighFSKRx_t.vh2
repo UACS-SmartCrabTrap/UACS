@@ -1,12 +1,12 @@
 -- Project:   C:\Users\sdysart\Documents\UACS\UACS\HighFreqFSK\HighFSKRx.cydsn\HighFSKRx.cyprj
--- Generated: 05/01/2018 14:33:42
+-- Generated: 05/03/2018 18:31:56
 -- PSoC Creator  4.1 Update 1
 
 ENTITY HighFSKRx IS
     PORT(
-        HighF_DemodOut(0)_PAD : OUT std_ulogic;
-        HighF_CountOut(0)_PAD : OUT std_ulogic;
-        ReconOut(0)_PAD : OUT std_ulogic;
+        Demod_Out(0)_PAD : OUT std_ulogic;
+        Count_Out(0)_PAD : OUT std_ulogic;
+        Comp_Out(0)_PAD : OUT std_ulogic;
         \LCD_Char:LCDPort(0)_PAD\ : OUT std_ulogic;
         \LCD_Char:LCDPort(1)_PAD\ : OUT std_ulogic;
         \LCD_Char:LCDPort(2)_PAD\ : OUT std_ulogic;
@@ -14,9 +14,9 @@ ENTITY HighFSKRx IS
         \LCD_Char:LCDPort(4)_PAD\ : OUT std_ulogic;
         \LCD_Char:LCDPort(5)_PAD\ : OUT std_ulogic;
         \LCD_Char:LCDPort(6)_PAD\ : OUT std_ulogic;
-        HighF_XOR_Out(0)_PAD : OUT std_ulogic;
-        HighF_PWMOut(0)_PAD : OUT std_ulogic;
-        HighF_ShiftOut(0)_PAD : OUT std_ulogic);
+        XOR_Out(0)_PAD : OUT std_ulogic;
+        Recon_Out(0)_PAD : OUT std_ulogic;
+        Shift_Out(0)_PAD : OUT std_ulogic);
     ATTRIBUTE voltage_VDDABUF OF __DEFAULT__ : ENTITY IS 5e0;
     ATTRIBUTE voltage_VDDA OF __DEFAULT__ : ENTITY IS 5e0;
     ATTRIBUTE voltage_VUSB OF __DEFAULT__ : ENTITY IS 5e0;
@@ -28,6 +28,7 @@ ENTITY HighFSKRx IS
 END HighFSKRx;
 
 ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
+    SIGNAL BPF_In(0)__PA : bit;
     SIGNAL ClockBlock_100k : bit;
     SIGNAL ClockBlock_1k : bit;
     SIGNAL ClockBlock_32k : bit;
@@ -41,22 +42,19 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     SIGNAL ClockBlock_PLL_OUT : bit;
     SIGNAL ClockBlock_XTAL : bit;
     SIGNAL ClockBlock_XTAL_32KHZ : bit;
-    SIGNAL HighF_BPFIn(0)__PA : bit;
-    SIGNAL HighF_CountOut(0)__PA : bit;
-    SIGNAL HighF_DemodOut(0)__PA : bit;
-    SIGNAL HighF_LPFIn(0)__PA : bit;
-    SIGNAL HighF_LPFOut(0)__PA : bit;
-    SIGNAL HighF_PWMOut(0)__PA : bit;
-    SIGNAL HighF_ShiftOut(0)__PA : bit;
-    SIGNAL HighF_XOR_Out(0)__PA : bit;
+    SIGNAL Comp_Out(0)__PA : bit;
+    SIGNAL Count_Out(0)__PA : bit;
+    SIGNAL Demod_Out(0)__PA : bit;
+    SIGNAL LPF_In(0)__PA : bit;
+    SIGNAL LPF_Out(0)__PA : bit;
     SIGNAL Net_122 : bit;
-    ATTRIBUTE placement_force OF Net_122 : SIGNAL IS "U(2,1,A)1";
+    ATTRIBUTE placement_force OF Net_122 : SIGNAL IS "U(1,0,A)1";
     SIGNAL Net_134 : bit;
     ATTRIBUTE udbclken_assigned OF Net_134 : SIGNAL IS "True";
     ATTRIBUTE global_signal OF Net_134 : SIGNAL IS true;
     SIGNAL Net_134_local : bit;
     SIGNAL Net_145 : bit;
-    ATTRIBUTE placement_force OF Net_145 : SIGNAL IS "U(2,3,A)2";
+    ATTRIBUTE placement_force OF Net_145 : SIGNAL IS "U(2,3,A)3";
     SIGNAL Net_185 : bit;
     SIGNAL Net_185__SYNC_OUT : bit;
     SIGNAL Net_75 : bit;
@@ -64,41 +62,26 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     ATTRIBUTE global_signal OF Net_75 : SIGNAL IS true;
     SIGNAL Net_75_local : bit;
     SIGNAL Net_84 : bit;
-    ATTRIBUTE placement_force OF Net_84 : SIGNAL IS "U(2,0,B)1";
+    ATTRIBUTE placement_force OF Net_84 : SIGNAL IS "U(1,1,B)0";
     SIGNAL Net_87 : bit;
     SIGNAL Net_95 : bit;
-    SIGNAL Outside_Ref(0)__PA : bit;
-    SIGNAL ReconOut(0)__PA : bit;
-    SIGNAL \Comp_Buffer:Net_41\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:control_0\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:control_1\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:control_2\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:control_3\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:control_4\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:control_5\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:control_6\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:control_7\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:per_zero\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:status_2\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:status_3\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:status_tc\ : bit;
-    ATTRIBUTE placement_force OF \HighF_LevelCount:TimerUDB:status_tc\ : SIGNAL IS "U(3,3,A)1";
-    SIGNAL \HighF_PGA:Net_41\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:control_1\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:control_2\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:control_3\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:control_4\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:control_5\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:control_6\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:control_7\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:ctrl_clk_enable\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ce0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ce0__sig\ : bit;
-    SIGNAL \PWM_Recon:PWMUDB:sP16:pwmdp:u0.ce0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:status_3\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:status_4\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:status_5\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:status_6\ : bit;
+    SIGNAL Recon_Out(0)__PA : bit;
+    SIGNAL Shift_Out(0)__PA : bit;
+    SIGNAL V_Ground(0)__PA : bit;
+    SIGNAL XOR_Out(0)__PA : bit;
+    SIGNAL \Bit_Timer:TimerUDB:control_0\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:control_1\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:control_2\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:control_3\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:control_4\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:control_5\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:control_6\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:control_7\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:per_zero\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:status_2\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:status_3\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:status_tc\ : bit;
+    ATTRIBUTE placement_force OF \Bit_Timer:TimerUDB:status_tc\ : SIGNAL IS "U(3,3,A)1";
     SIGNAL \\\LCD_Char:LCDPort(0)\\__PA\ : bit;
     SIGNAL \\\LCD_Char:LCDPort(1)\\__PA\ : bit;
     SIGNAL \\\LCD_Char:LCDPort(2)\\__PA\ : bit;
@@ -116,62 +99,76 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     SIGNAL \PWM_Recon:PWMUDB:control_6\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:control_7\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:prevCompare1\ : bit;
-    ATTRIBUTE placement_force OF \PWM_Recon:PWMUDB:prevCompare1\ : SIGNAL IS "U(2,1,B)0";
+    ATTRIBUTE placement_force OF \PWM_Recon:PWMUDB:prevCompare1\ : SIGNAL IS "U(2,1,A)0";
     SIGNAL \PWM_Recon:PWMUDB:runmode_enable\ : bit;
-    ATTRIBUTE placement_force OF \PWM_Recon:PWMUDB:runmode_enable\ : SIGNAL IS "U(2,1,A)2";
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ce0__sig\ : bit;
+    ATTRIBUTE placement_force OF \PWM_Recon:PWMUDB:runmode_enable\ : SIGNAL IS "U(1,0,B)3";
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.ce0__sig\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:status_0\ : bit;
-    ATTRIBUTE placement_force OF \PWM_Recon:PWMUDB:status_0\ : SIGNAL IS "U(2,1,B)1";
+    ATTRIBUTE placement_force OF \PWM_Recon:PWMUDB:status_0\ : SIGNAL IS "U(2,1,A)1";
     SIGNAL \PWM_Recon:PWMUDB:status_2\ : bit;
-    ATTRIBUTE placement_force OF \PWM_Recon:PWMUDB:status_2\ : SIGNAL IS "U(2,1,A)3";
+    ATTRIBUTE placement_force OF \PWM_Recon:PWMUDB:status_2\ : SIGNAL IS "U(2,1,B)2";
     SIGNAL \PWM_Recon:PWMUDB:status_3\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:tc_i\ : bit;
-    SIGNAL \VGround_Buffer:Net_41\ : bit;
+    SIGNAL \Shift_Reg:bSR:control_1\ : bit;
+    SIGNAL \Shift_Reg:bSR:control_2\ : bit;
+    SIGNAL \Shift_Reg:bSR:control_3\ : bit;
+    SIGNAL \Shift_Reg:bSR:control_4\ : bit;
+    SIGNAL \Shift_Reg:bSR:control_5\ : bit;
+    SIGNAL \Shift_Reg:bSR:control_6\ : bit;
+    SIGNAL \Shift_Reg:bSR:control_7\ : bit;
+    SIGNAL \Shift_Reg:bSR:ctrl_clk_enable\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ce0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ce0__sig\ : bit;
+    SIGNAL \PWM_Recon:PWMUDB:sP16:pwmdp:u0.ce0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:status_3\ : bit;
+    SIGNAL \Shift_Reg:bSR:status_4\ : bit;
+    SIGNAL \Shift_Reg:bSR:status_5\ : bit;
+    SIGNAL \Shift_Reg:bSR:status_6\ : bit;
     SIGNAL __ONE__ : bit;
     ATTRIBUTE POWER OF __ONE__ : SIGNAL IS true;
     SIGNAL __ZERO__ : bit;
     ATTRIBUTE GROUND OF __ZERO__ : SIGNAL IS true;
-    SIGNAL tmpOE__HighF_LPFIn_net_0 : bit;
-    ATTRIBUTE POWER OF tmpOE__HighF_LPFIn_net_0 : SIGNAL IS true;
+    SIGNAL tmpOE__LPF_In_net_0 : bit;
+    ATTRIBUTE POWER OF tmpOE__LPF_In_net_0 : SIGNAL IS true;
     SIGNAL zero : bit;
     ATTRIBUTE GROUND OF zero : SIGNAL IS true;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ce0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.cl0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.z0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ff0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ce1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.cl1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.z1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ff1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.co_msb__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.sol_msb__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.cfbo__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.sor__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cmsbo__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cl0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.z0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ff0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ce1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cl1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.z1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ff1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.co_msb__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.sol_msb__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cfbo__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.sor__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cmsbo__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cl0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.z0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ff0__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ce1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cl1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.z1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ff1__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.co_msb__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.sol_msb__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cfbo__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u3.sor__sig\ : bit;
-    SIGNAL \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u3.cmsbo__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ce0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cl0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.z0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ff0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ce1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cl1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.z1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ff1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.co_msb__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.sol_msb__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cfbo__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.sor__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cmsbo__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cl0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.z0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ff0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ce1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cl1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.z1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ff1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.co_msb__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.sol_msb__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cfbo__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.sor__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cmsbo__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cl0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.z0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ff0__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ce1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cl1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.z1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ff1__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.co_msb__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.sol_msb__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cfbo__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u3.sor__sig\ : bit;
+    SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u3.cmsbo__sig\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:sP16:pwmdp:u0.cl0__sig\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:sP16:pwmdp:u0.z0__sig\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:sP16:pwmdp:u0.ff0__sig\ : bit;
@@ -184,29 +181,29 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     SIGNAL \PWM_Recon:PWMUDB:sP16:pwmdp:u0.cfbo__sig\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:sP16:pwmdp:u1.sor__sig\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:sP16:pwmdp:u1.cmsbo__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.cl0__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.z0__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ff0__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ce1__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.cl1__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.z1__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ff1__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.co_msb__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.sol_msb__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.cfbo__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u1.sor__sig\ : bit;
-    SIGNAL \HighF_LevelCount:TimerUDB:sT16:timerdp:u1.cmsbo__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.cl0__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.z0__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.ff0__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.ce1__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.cl1__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.z1__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.ff1__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.co_msb__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.sol_msb__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u0.cfbo__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u1.sor__sig\ : bit;
+    SIGNAL \Bit_Timer:TimerUDB:sT16:timerdp:u1.cmsbo__sig\ : bit;
     ATTRIBUTE Location OF ClockBlock : LABEL IS "F(Clock,0)";
-    ATTRIBUTE lib_model OF HighF_LPFIn(0) : LABEL IS "iocell1";
-    ATTRIBUTE Location OF HighF_LPFIn(0) : LABEL IS "P3[4]";
-    ATTRIBUTE lib_model OF HighF_LPFOut(0) : LABEL IS "iocell2";
-    ATTRIBUTE Location OF HighF_LPFOut(0) : LABEL IS "P3[3]";
-    ATTRIBUTE lib_model OF HighF_DemodOut(0) : LABEL IS "iocell3";
-    ATTRIBUTE Location OF HighF_DemodOut(0) : LABEL IS "P1[7]";
-    ATTRIBUTE lib_model OF HighF_CountOut(0) : LABEL IS "iocell4";
-    ATTRIBUTE Location OF HighF_CountOut(0) : LABEL IS "P3[0]";
-    ATTRIBUTE lib_model OF ReconOut(0) : LABEL IS "iocell5";
-    ATTRIBUTE Location OF ReconOut(0) : LABEL IS "P0[6]";
+    ATTRIBUTE lib_model OF LPF_In(0) : LABEL IS "iocell1";
+    ATTRIBUTE Location OF LPF_In(0) : LABEL IS "P0[0]";
+    ATTRIBUTE lib_model OF LPF_Out(0) : LABEL IS "iocell2";
+    ATTRIBUTE Location OF LPF_Out(0) : LABEL IS "P3[5]";
+    ATTRIBUTE lib_model OF Demod_Out(0) : LABEL IS "iocell3";
+    ATTRIBUTE Location OF Demod_Out(0) : LABEL IS "P3[6]";
+    ATTRIBUTE lib_model OF Count_Out(0) : LABEL IS "iocell4";
+    ATTRIBUTE Location OF Count_Out(0) : LABEL IS "P0[1]";
+    ATTRIBUTE lib_model OF Comp_Out(0) : LABEL IS "iocell5";
+    ATTRIBUTE Location OF Comp_Out(0) : LABEL IS "P0[6]";
     ATTRIBUTE lib_model OF \LCD_Char:LCDPort(0)\ : LABEL IS "iocell6";
     ATTRIBUTE Location OF \LCD_Char:LCDPort(0)\ : LABEL IS "P2[0]";
     ATTRIBUTE lib_model OF \LCD_Char:LCDPort(1)\ : LABEL IS "iocell7";
@@ -221,65 +218,62 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     ATTRIBUTE Location OF \LCD_Char:LCDPort(5)\ : LABEL IS "P2[5]";
     ATTRIBUTE lib_model OF \LCD_Char:LCDPort(6)\ : LABEL IS "iocell12";
     ATTRIBUTE Location OF \LCD_Char:LCDPort(6)\ : LABEL IS "P2[6]";
-    ATTRIBUTE lib_model OF Outside_Ref(0) : LABEL IS "iocell13";
-    ATTRIBUTE Location OF Outside_Ref(0) : LABEL IS "P0[5]";
-    ATTRIBUTE lib_model OF HighF_XOR_Out(0) : LABEL IS "iocell14";
-    ATTRIBUTE Location OF HighF_XOR_Out(0) : LABEL IS "P0[2]";
-    ATTRIBUTE lib_model OF HighF_BPFIn(0) : LABEL IS "iocell15";
-    ATTRIBUTE Location OF HighF_BPFIn(0) : LABEL IS "P1[6]";
-    ATTRIBUTE lib_model OF HighF_PWMOut(0) : LABEL IS "iocell16";
-    ATTRIBUTE Location OF HighF_PWMOut(0) : LABEL IS "P2[7]";
-    ATTRIBUTE lib_model OF HighF_ShiftOut(0) : LABEL IS "iocell17";
-    ATTRIBUTE Location OF HighF_ShiftOut(0) : LABEL IS "P0[3]";
-    ATTRIBUTE Location OF Net_185__SYNC : LABEL IS "U(0,1)";
+    ATTRIBUTE lib_model OF V_Ground(0) : LABEL IS "iocell13";
+    ATTRIBUTE Location OF V_Ground(0) : LABEL IS "P3[0]";
+    ATTRIBUTE lib_model OF XOR_Out(0) : LABEL IS "iocell14";
+    ATTRIBUTE Location OF XOR_Out(0) : LABEL IS "P3[4]";
+    ATTRIBUTE lib_model OF BPF_In(0) : LABEL IS "iocell15";
+    ATTRIBUTE Location OF BPF_In(0) : LABEL IS "P0[7]";
+    ATTRIBUTE lib_model OF Recon_Out(0) : LABEL IS "iocell16";
+    ATTRIBUTE Location OF Recon_Out(0) : LABEL IS "P3[2]";
+    ATTRIBUTE lib_model OF Shift_Out(0) : LABEL IS "iocell17";
+    ATTRIBUTE Location OF Shift_Out(0) : LABEL IS "P3[3]";
+    ATTRIBUTE Location OF Net_185__SYNC : LABEL IS "U(3,1)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:status_2\ : LABEL IS "macrocell1";
     ATTRIBUTE Location OF \PWM_Recon:PWMUDB:status_2\ : LABEL IS "U(2,1)";
-    ATTRIBUTE lib_model OF \HighF_LevelCount:TimerUDB:status_tc\ : LABEL IS "macrocell2";
-    ATTRIBUTE Location OF \HighF_LevelCount:TimerUDB:status_tc\ : LABEL IS "U(3,3)";
+    ATTRIBUTE lib_model OF \Bit_Timer:TimerUDB:status_tc\ : LABEL IS "macrocell2";
+    ATTRIBUTE Location OF \Bit_Timer:TimerUDB:status_tc\ : LABEL IS "U(3,3)";
     ATTRIBUTE lib_model OF Net_84 : LABEL IS "macrocell3";
-    ATTRIBUTE Location OF Net_84 : LABEL IS "U(2,0)";
-    ATTRIBUTE Location OF \HighF_OutComp:ctComp\ : LABEL IS "F(Comparator,0)";
-    ATTRIBUTE lib_model OF \HighF_ShiftReg2:bSR:SyncCtl:CtrlReg\ : LABEL IS "controlcell1";
-    ATTRIBUTE Location OF \HighF_ShiftReg2:bSR:SyncCtl:CtrlReg\ : LABEL IS "U(3,0)";
-    ATTRIBUTE lib_model OF \HighF_ShiftReg2:bSR:StsReg\ : LABEL IS "statusicell1";
-    ATTRIBUTE Location OF \HighF_ShiftReg2:bSR:StsReg\ : LABEL IS "U(2,0)";
-    ATTRIBUTE lib_model OF \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0\ : LABEL IS "datapathcell1";
-    ATTRIBUTE Location OF \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0\ : LABEL IS "U(2,0)";
-    ATTRIBUTE lib_model OF \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1\ : LABEL IS "datapathcell2";
-    ATTRIBUTE Location OF \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1\ : LABEL IS "U(3,0)";
-    ATTRIBUTE lib_model OF \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2\ : LABEL IS "datapathcell3";
-    ATTRIBUTE Location OF \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2\ : LABEL IS "U(3,1)";
-    ATTRIBUTE lib_model OF \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u3\ : LABEL IS "datapathcell4";
-    ATTRIBUTE Location OF \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u3\ : LABEL IS "U(2,1)";
+    ATTRIBUTE Location OF Net_84 : LABEL IS "U(1,1)";
+    ATTRIBUTE Location OF \Out_Comp:ctComp\ : LABEL IS "F(Comparator,2)";
+    ATTRIBUTE lib_model OF \Shift_Reg:bSR:SyncCtl:CtrlReg\ : LABEL IS "controlcell1";
+    ATTRIBUTE Location OF \Shift_Reg:bSR:SyncCtl:CtrlReg\ : LABEL IS "U(0,1)";
+    ATTRIBUTE lib_model OF \Shift_Reg:bSR:StsReg\ : LABEL IS "statusicell1";
+    ATTRIBUTE Location OF \Shift_Reg:bSR:StsReg\ : LABEL IS "U(1,1)";
+    ATTRIBUTE lib_model OF \Shift_Reg:bSR:sC32:BShiftRegDp:u0\ : LABEL IS "datapathcell1";
+    ATTRIBUTE Location OF \Shift_Reg:bSR:sC32:BShiftRegDp:u0\ : LABEL IS "U(1,1)";
+    ATTRIBUTE lib_model OF \Shift_Reg:bSR:sC32:BShiftRegDp:u1\ : LABEL IS "datapathcell2";
+    ATTRIBUTE Location OF \Shift_Reg:bSR:sC32:BShiftRegDp:u1\ : LABEL IS "U(0,1)";
+    ATTRIBUTE lib_model OF \Shift_Reg:bSR:sC32:BShiftRegDp:u2\ : LABEL IS "datapathcell3";
+    ATTRIBUTE Location OF \Shift_Reg:bSR:sC32:BShiftRegDp:u2\ : LABEL IS "U(0,0)";
+    ATTRIBUTE lib_model OF \Shift_Reg:bSR:sC32:BShiftRegDp:u3\ : LABEL IS "datapathcell4";
+    ATTRIBUTE Location OF \Shift_Reg:bSR:sC32:BShiftRegDp:u3\ : LABEL IS "U(1,0)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:genblk1:ctrlreg\ : LABEL IS "controlcell2";
-    ATTRIBUTE Location OF \PWM_Recon:PWMUDB:genblk1:ctrlreg\ : LABEL IS "U(2,1)";
+    ATTRIBUTE Location OF \PWM_Recon:PWMUDB:genblk1:ctrlreg\ : LABEL IS "U(1,0)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:genblk8:stsreg\ : LABEL IS "statusicell2";
     ATTRIBUTE Location OF \PWM_Recon:PWMUDB:genblk8:stsreg\ : LABEL IS "U(2,1)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:sP16:pwmdp:u0\ : LABEL IS "datapathcell5";
-    ATTRIBUTE Location OF \PWM_Recon:PWMUDB:sP16:pwmdp:u0\ : LABEL IS "U(1,1)";
+    ATTRIBUTE Location OF \PWM_Recon:PWMUDB:sP16:pwmdp:u0\ : LABEL IS "U(3,1)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:sP16:pwmdp:u1\ : LABEL IS "datapathcell6";
-    ATTRIBUTE Location OF \PWM_Recon:PWMUDB:sP16:pwmdp:u1\ : LABEL IS "U(0,1)";
-    ATTRIBUTE Location OF HighF_LevelCountISR : LABEL IS "[IntrContainer=(0)][IntrId=(0)]";
-    ATTRIBUTE lib_model OF \HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\ : LABEL IS "controlcell3";
-    ATTRIBUTE Location OF \HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\ : LABEL IS "U(3,3)";
-    ATTRIBUTE lib_model OF \HighF_LevelCount:TimerUDB:rstSts:stsreg\ : LABEL IS "statusicell3";
-    ATTRIBUTE Location OF \HighF_LevelCount:TimerUDB:rstSts:stsreg\ : LABEL IS "U(3,3)";
-    ATTRIBUTE lib_model OF \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\ : LABEL IS "datapathcell7";
-    ATTRIBUTE Location OF \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\ : LABEL IS "U(2,3)";
-    ATTRIBUTE lib_model OF \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\ : LABEL IS "datapathcell8";
-    ATTRIBUTE Location OF \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\ : LABEL IS "U(3,3)";
-    ATTRIBUTE Location OF \HighF_PGA:SC\ : LABEL IS "F(SC,0)";
-    ATTRIBUTE Location OF \HighF_BPF_Comp:ctComp\ : LABEL IS "F(Comparator,1)";
-    ATTRIBUTE Location OF \VGround_Buffer:SC\ : LABEL IS "F(SC,2)";
-    ATTRIBUTE Location OF \Comp_Buffer:SC\ : LABEL IS "F(SC,1)";
+    ATTRIBUTE Location OF \PWM_Recon:PWMUDB:sP16:pwmdp:u1\ : LABEL IS "U(2,1)";
+    ATTRIBUTE Location OF Timer_ISR : LABEL IS "[IntrContainer=(0)][IntrId=(0)]";
+    ATTRIBUTE lib_model OF \Bit_Timer:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\ : LABEL IS "controlcell3";
+    ATTRIBUTE Location OF \Bit_Timer:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\ : LABEL IS "U(2,3)";
+    ATTRIBUTE lib_model OF \Bit_Timer:TimerUDB:rstSts:stsreg\ : LABEL IS "statusicell3";
+    ATTRIBUTE Location OF \Bit_Timer:TimerUDB:rstSts:stsreg\ : LABEL IS "U(3,3)";
+    ATTRIBUTE lib_model OF \Bit_Timer:TimerUDB:sT16:timerdp:u0\ : LABEL IS "datapathcell7";
+    ATTRIBUTE Location OF \Bit_Timer:TimerUDB:sT16:timerdp:u0\ : LABEL IS "U(2,3)";
+    ATTRIBUTE lib_model OF \Bit_Timer:TimerUDB:sT16:timerdp:u1\ : LABEL IS "datapathcell8";
+    ATTRIBUTE Location OF \Bit_Timer:TimerUDB:sT16:timerdp:u1\ : LABEL IS "U(3,3)";
+    ATTRIBUTE Location OF \BPF_Comp:ctComp\ : LABEL IS "F(Comparator,0)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:runmode_enable\ : LABEL IS "macrocell4";
-    ATTRIBUTE Location OF \PWM_Recon:PWMUDB:runmode_enable\ : LABEL IS "U(2,1)";
+    ATTRIBUTE Location OF \PWM_Recon:PWMUDB:runmode_enable\ : LABEL IS "U(1,0)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:prevCompare1\ : LABEL IS "macrocell5";
     ATTRIBUTE Location OF \PWM_Recon:PWMUDB:prevCompare1\ : LABEL IS "U(2,1)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:status_0\ : LABEL IS "macrocell6";
     ATTRIBUTE Location OF \PWM_Recon:PWMUDB:status_0\ : LABEL IS "U(2,1)";
     ATTRIBUTE lib_model OF Net_122 : LABEL IS "macrocell7";
-    ATTRIBUTE Location OF Net_122 : LABEL IS "U(2,1)";
+    ATTRIBUTE Location OF Net_122 : LABEL IS "U(1,0)";
     ATTRIBUTE lib_model OF Net_145 : LABEL IS "macrocell8";
     ATTRIBUTE Location OF Net_145 : LABEL IS "U(2,3)";
     COMPONENT clockblockcell
@@ -557,14 +551,6 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
             q : OUT std_ulogic;
             q_fixed : OUT std_ulogic);
     END COMPONENT;
-    COMPONENT sccell
-        PORT (
-            aclk : IN std_ulogic;
-            bst_clk : IN std_ulogic;
-            clk_udb : IN std_ulogic;
-            modout : OUT std_ulogic;
-            dyn_cntl_udb : IN std_ulogic);
-    END COMPONENT;
     COMPONENT statusicell
         PORT (
             status_0 : IN std_ulogic;
@@ -611,7 +597,7 @@ BEGIN
             dclk_glb_1 => Net_134,
             dclk_1 => Net_134_local);
 
-    HighF_LPFIn:logicalport
+    LPF_In:logicalport
         GENERIC MAP(
             drive_mode => "000",
             ibuf_enabled => "0",
@@ -682,16 +668,16 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    HighF_LPFIn(0):iocell
+    LPF_In(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "HighF_LPFIn",
+            logicalport => "LPF_In",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000010")
         PORT MAP(
-            pa_out => HighF_LPFIn(0)__PA,
+            pa_out => LPF_In(0)__PA,
             oe => open,
             in_clock => open,
             in_clock_en => '1',
@@ -700,7 +686,7 @@ BEGIN
             out_clock_en => '1',
             out_reset => '0');
 
-    HighF_LPFOut:logicalport
+    LPF_Out:logicalport
         GENERIC MAP(
             drive_mode => "000",
             ibuf_enabled => "0",
@@ -771,16 +757,16 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    HighF_LPFOut(0):iocell
+    LPF_Out(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "HighF_LPFOut",
+            logicalport => "LPF_Out",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000010")
         PORT MAP(
-            pa_out => HighF_LPFOut(0)__PA,
+            pa_out => LPF_Out(0)__PA,
             oe => open,
             in_clock => open,
             in_clock_en => '1',
@@ -789,7 +775,7 @@ BEGIN
             out_clock_en => '1',
             out_reset => '0');
 
-    HighF_DemodOut:logicalport
+    Demod_Out:logicalport
         GENERIC MAP(
             drive_mode => "110",
             ibuf_enabled => "1",
@@ -860,20 +846,20 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    HighF_DemodOut(0):iocell
+    Demod_Out(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "HighF_DemodOut",
+            logicalport => "Demod_Out",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000101")
         PORT MAP(
-            pa_out => HighF_DemodOut(0)__PA,
+            pa_out => Demod_Out(0)__PA,
             oe => open,
             pin_input => Net_87,
-            pad_out => HighF_DemodOut(0)_PAD,
-            pad_in => HighF_DemodOut(0)_PAD,
+            pad_out => Demod_Out(0)_PAD,
+            pad_in => Demod_Out(0)_PAD,
             in_clock => open,
             in_clock_en => '1',
             in_reset => '0',
@@ -881,7 +867,7 @@ BEGIN
             out_clock_en => '1',
             out_reset => '0');
 
-    HighF_CountOut:logicalport
+    Count_Out:logicalport
         GENERIC MAP(
             drive_mode => "110",
             ibuf_enabled => "1",
@@ -952,18 +938,18 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    HighF_CountOut(0):iocell
+    Count_Out(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "HighF_CountOut",
+            logicalport => "Count_Out",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000001")
         PORT MAP(
-            pa_out => HighF_CountOut(0)__PA,
+            pa_out => Count_Out(0)__PA,
             oe => open,
-            pad_in => HighF_CountOut(0)_PAD,
+            pad_in => Count_Out(0)_PAD,
             in_clock => open,
             in_clock_en => '1',
             in_reset => '0',
@@ -971,7 +957,7 @@ BEGIN
             out_clock_en => '1',
             out_reset => '0');
 
-    ReconOut:logicalport
+    Comp_Out:logicalport
         GENERIC MAP(
             drive_mode => "110",
             ibuf_enabled => "1",
@@ -1042,20 +1028,20 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    ReconOut(0):iocell
+    Comp_Out(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "ReconOut",
+            logicalport => "Comp_Out",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000101")
         PORT MAP(
-            pa_out => ReconOut(0)__PA,
+            pa_out => Comp_Out(0)__PA,
             oe => open,
             pin_input => Net_185,
-            pad_out => ReconOut(0)_PAD,
-            pad_in => ReconOut(0)_PAD,
+            pad_out => Comp_Out(0)_PAD,
+            pad_in => Comp_Out(0)_PAD,
             in_clock => open,
             in_clock_en => '1',
             in_reset => '0',
@@ -1267,7 +1253,7 @@ BEGIN
             out_clock_en => '1',
             out_reset => '0');
 
-    Outside_Ref:logicalport
+    V_Ground:logicalport
         GENERIC MAP(
             drive_mode => "000",
             ibuf_enabled => "0",
@@ -1338,16 +1324,16 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    Outside_Ref(0):iocell
+    V_Ground(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "Outside_Ref",
+            logicalport => "V_Ground",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000010")
         PORT MAP(
-            pa_out => Outside_Ref(0)__PA,
+            pa_out => V_Ground(0)__PA,
             oe => open,
             in_clock => open,
             in_clock_en => '1',
@@ -1356,7 +1342,7 @@ BEGIN
             out_clock_en => '1',
             out_reset => '0');
 
-    HighF_XOR_Out:logicalport
+    XOR_Out:logicalport
         GENERIC MAP(
             drive_mode => "110",
             ibuf_enabled => "1",
@@ -1427,20 +1413,20 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    HighF_XOR_Out(0):iocell
+    XOR_Out(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "HighF_XOR_Out",
+            logicalport => "XOR_Out",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000101")
         PORT MAP(
-            pa_out => HighF_XOR_Out(0)__PA,
+            pa_out => XOR_Out(0)__PA,
             oe => open,
             pin_input => Net_84,
-            pad_out => HighF_XOR_Out(0)_PAD,
-            pad_in => HighF_XOR_Out(0)_PAD,
+            pad_out => XOR_Out(0)_PAD,
+            pad_in => XOR_Out(0)_PAD,
             in_clock => open,
             in_clock_en => '1',
             in_reset => '0',
@@ -1448,7 +1434,7 @@ BEGIN
             out_clock_en => '1',
             out_reset => '0');
 
-    HighF_BPFIn:logicalport
+    BPF_In:logicalport
         GENERIC MAP(
             drive_mode => "000",
             ibuf_enabled => "0",
@@ -1519,16 +1505,16 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    HighF_BPFIn(0):iocell
+    BPF_In(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "HighF_BPFIn",
+            logicalport => "BPF_In",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000010")
         PORT MAP(
-            pa_out => HighF_BPFIn(0)__PA,
+            pa_out => BPF_In(0)__PA,
             oe => open,
             in_clock => open,
             in_clock_en => '1',
@@ -1537,7 +1523,7 @@ BEGIN
             out_clock_en => '1',
             out_reset => '0');
 
-    HighF_PWMOut:logicalport
+    Recon_Out:logicalport
         GENERIC MAP(
             drive_mode => "110",
             ibuf_enabled => "1",
@@ -1608,20 +1594,20 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    HighF_PWMOut(0):iocell
+    Recon_Out(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "HighF_PWMOut",
+            logicalport => "Recon_Out",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000101")
         PORT MAP(
-            pa_out => HighF_PWMOut(0)__PA,
+            pa_out => Recon_Out(0)__PA,
             oe => open,
             pin_input => Net_122,
-            pad_out => HighF_PWMOut(0)_PAD,
-            pad_in => HighF_PWMOut(0)_PAD,
+            pad_out => Recon_Out(0)_PAD,
+            pad_in => Recon_Out(0)_PAD,
             in_clock => open,
             in_clock_en => '1',
             in_reset => '0',
@@ -1629,7 +1615,7 @@ BEGIN
             out_clock_en => '1',
             out_reset => '0');
 
-    HighF_ShiftOut:logicalport
+    Shift_Out:logicalport
         GENERIC MAP(
             drive_mode => "110",
             ibuf_enabled => "1",
@@ -1700,20 +1686,20 @@ BEGIN
             out_clock_en => open,
             out_reset => open);
 
-    HighF_ShiftOut(0):iocell
+    Shift_Out(0):iocell
         GENERIC MAP(
             in_sync_mode => 0,
             out_sync_mode => 0,
             oe_sync_mode => 0,
-            logicalport => "HighF_ShiftOut",
+            logicalport => "Shift_Out",
             logicalport_pin_id => 0,
             io_capabilities => "0000000000000000000000000000000000000000000000000000000000000101")
         PORT MAP(
-            pa_out => HighF_ShiftOut(0)__PA,
+            pa_out => Shift_Out(0)__PA,
             oe => open,
             pin_input => Net_95,
-            pad_out => HighF_ShiftOut(0)_PAD,
-            pad_in => HighF_ShiftOut(0)_PAD,
+            pad_out => Shift_Out(0)_PAD,
+            pad_in => Shift_Out(0)_PAD,
             in_clock => open,
             in_clock_en => '1',
             in_reset => '0',
@@ -1741,15 +1727,15 @@ BEGIN
             main_0 => \PWM_Recon:PWMUDB:runmode_enable\,
             main_1 => \PWM_Recon:PWMUDB:tc_i\);
 
-    \HighF_LevelCount:TimerUDB:status_tc\:macrocell
+    \Bit_Timer:TimerUDB:status_tc\:macrocell
         GENERIC MAP(
             eqn_main => "(main_0 * main_1)",
             regmode => 0,
             clken_mode => 1)
         PORT MAP(
-            q => \HighF_LevelCount:TimerUDB:status_tc\,
-            main_0 => \HighF_LevelCount:TimerUDB:control_7\,
-            main_1 => \HighF_LevelCount:TimerUDB:per_zero\);
+            q => \Bit_Timer:TimerUDB:status_tc\,
+            main_0 => \Bit_Timer:TimerUDB:control_7\,
+            main_1 => \Bit_Timer:TimerUDB:per_zero\);
 
     Net_84:macrocell
         GENERIC MAP(
@@ -1761,13 +1747,13 @@ BEGIN
             main_0 => Net_122,
             main_1 => Net_95);
 
-    \HighF_OutComp:ctComp\:comparatorcell
+    \Out_Comp:ctComp\:comparatorcell
         GENERIC MAP(
             cy_registers => "")
         PORT MAP(
             out => Net_87);
 
-    \HighF_ShiftReg2:bSR:SyncCtl:CtrlReg\:controlcell
+    \Shift_Reg:bSR:SyncCtl:CtrlReg\:controlcell
         GENERIC MAP(
             cy_ctrl_mode_0 => "00000001",
             cy_ctrl_mode_1 => "00000000",
@@ -1778,17 +1764,17 @@ BEGIN
             clken_mode => 1)
         PORT MAP(
             clock => Net_134,
-            control_7 => \HighF_ShiftReg2:bSR:control_7\,
-            control_6 => \HighF_ShiftReg2:bSR:control_6\,
-            control_5 => \HighF_ShiftReg2:bSR:control_5\,
-            control_4 => \HighF_ShiftReg2:bSR:control_4\,
-            control_3 => \HighF_ShiftReg2:bSR:control_3\,
-            control_2 => \HighF_ShiftReg2:bSR:control_2\,
-            control_1 => \HighF_ShiftReg2:bSR:control_1\,
-            control_0 => \HighF_ShiftReg2:bSR:ctrl_clk_enable\,
+            control_7 => \Shift_Reg:bSR:control_7\,
+            control_6 => \Shift_Reg:bSR:control_6\,
+            control_5 => \Shift_Reg:bSR:control_5\,
+            control_4 => \Shift_Reg:bSR:control_4\,
+            control_3 => \Shift_Reg:bSR:control_3\,
+            control_2 => \Shift_Reg:bSR:control_2\,
+            control_1 => \Shift_Reg:bSR:control_1\,
+            control_0 => \Shift_Reg:bSR:ctrl_clk_enable\,
             busclk => ClockBlock_BUS_CLK);
 
-    \HighF_ShiftReg2:bSR:StsReg\:statusicell
+    \Shift_Reg:bSR:StsReg\:statusicell
         GENERIC MAP(
             cy_force_order => 1,
             cy_int_mask => "0000111",
@@ -1797,15 +1783,15 @@ BEGIN
             clken_mode => 1)
         PORT MAP(
             clock => Net_134,
-            status_6 => \HighF_ShiftReg2:bSR:status_6\,
-            status_5 => \HighF_ShiftReg2:bSR:status_5\,
-            status_4 => \HighF_ShiftReg2:bSR:status_4\,
-            status_3 => \HighF_ShiftReg2:bSR:status_3\,
+            status_6 => \Shift_Reg:bSR:status_6\,
+            status_5 => \Shift_Reg:bSR:status_5\,
+            status_4 => \Shift_Reg:bSR:status_4\,
+            status_3 => \Shift_Reg:bSR:status_3\,
             status_2 => open,
             status_1 => open,
             status_0 => open);
 
-    \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0\:datapathcell
+    \Shift_Reg:bSR:sC32:BShiftRegDp:u0\:datapathcell
         GENERIC MAP(
             a0_init => "00000000",
             a1_init => "00000000",
@@ -1834,25 +1820,25 @@ BEGIN
             clken_mode => 1)
         PORT MAP(
             clock => Net_134,
-            cs_addr_2 => \HighF_ShiftReg2:bSR:ctrl_clk_enable\,
+            cs_addr_2 => \Shift_Reg:bSR:ctrl_clk_enable\,
             route_si => Net_122,
             so_comb => Net_95,
             busclk => ClockBlock_BUS_CLK,
-            ce0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ce0__sig\,
-            cl0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.cl0__sig\,
-            z0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.z0__sig\,
-            ff0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ff0__sig\,
-            ce1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ce1__sig\,
-            cl1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.cl1__sig\,
-            z1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.z1__sig\,
-            ff1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ff1__sig\,
-            co_msb => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.co_msb__sig\,
-            sol_msb => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.sol_msb__sig\,
-            cfbo => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.cfbo__sig\,
-            sil => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.sor__sig\,
-            cmsbi => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cmsbo__sig\);
+            ce0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ce0__sig\,
+            cl0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cl0__sig\,
+            z0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.z0__sig\,
+            ff0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ff0__sig\,
+            ce1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ce1__sig\,
+            cl1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cl1__sig\,
+            z1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.z1__sig\,
+            ff1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ff1__sig\,
+            co_msb => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.co_msb__sig\,
+            sol_msb => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.sol_msb__sig\,
+            cfbo => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cfbo__sig\,
+            sil => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.sor__sig\,
+            cmsbi => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cmsbo__sig\);
 
-    \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1\:datapathcell
+    \Shift_Reg:bSR:sC32:BShiftRegDp:u1\:datapathcell
         GENERIC MAP(
             a0_init => "00000000",
             a1_init => "00000000",
@@ -1881,37 +1867,37 @@ BEGIN
             clken_mode => 1)
         PORT MAP(
             clock => Net_134,
-            cs_addr_2 => \HighF_ShiftReg2:bSR:ctrl_clk_enable\,
+            cs_addr_2 => \Shift_Reg:bSR:ctrl_clk_enable\,
             route_si => Net_122,
             busclk => ClockBlock_BUS_CLK,
-            ce0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ce0__sig\,
-            cl0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.cl0__sig\,
-            z0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.z0__sig\,
-            ff0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ff0__sig\,
-            ce1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ce1__sig\,
-            cl1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.cl1__sig\,
-            z1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.z1__sig\,
-            ff1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.ff1__sig\,
-            ci => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.co_msb__sig\,
-            sir => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.sol_msb__sig\,
-            cfbi => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u0.cfbo__sig\,
-            sor => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.sor__sig\,
-            cmsbo => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cmsbo__sig\,
-            ce0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ce0__sig\,
-            cl0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cl0__sig\,
-            z0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.z0__sig\,
-            ff0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ff0__sig\,
-            ce1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ce1__sig\,
-            cl1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cl1__sig\,
-            z1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.z1__sig\,
-            ff1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ff1__sig\,
-            co_msb => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.co_msb__sig\,
-            sol_msb => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.sol_msb__sig\,
-            cfbo => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cfbo__sig\,
-            sil => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.sor__sig\,
-            cmsbi => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cmsbo__sig\);
+            ce0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ce0__sig\,
+            cl0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cl0__sig\,
+            z0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.z0__sig\,
+            ff0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ff0__sig\,
+            ce1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ce1__sig\,
+            cl1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cl1__sig\,
+            z1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.z1__sig\,
+            ff1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ff1__sig\,
+            ci => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.co_msb__sig\,
+            sir => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.sol_msb__sig\,
+            cfbi => \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cfbo__sig\,
+            sor => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.sor__sig\,
+            cmsbo => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cmsbo__sig\,
+            ce0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ce0__sig\,
+            cl0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cl0__sig\,
+            z0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.z0__sig\,
+            ff0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ff0__sig\,
+            ce1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ce1__sig\,
+            cl1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cl1__sig\,
+            z1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.z1__sig\,
+            ff1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ff1__sig\,
+            co_msb => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.co_msb__sig\,
+            sol_msb => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.sol_msb__sig\,
+            cfbo => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cfbo__sig\,
+            sil => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.sor__sig\,
+            cmsbi => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cmsbo__sig\);
 
-    \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2\:datapathcell
+    \Shift_Reg:bSR:sC32:BShiftRegDp:u2\:datapathcell
         GENERIC MAP(
             a0_init => "00000000",
             a1_init => "00000000",
@@ -1940,37 +1926,37 @@ BEGIN
             clken_mode => 1)
         PORT MAP(
             clock => Net_134,
-            cs_addr_2 => \HighF_ShiftReg2:bSR:ctrl_clk_enable\,
+            cs_addr_2 => \Shift_Reg:bSR:ctrl_clk_enable\,
             route_si => Net_122,
             busclk => ClockBlock_BUS_CLK,
-            ce0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ce0__sig\,
-            cl0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cl0__sig\,
-            z0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.z0__sig\,
-            ff0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ff0__sig\,
-            ce1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ce1__sig\,
-            cl1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cl1__sig\,
-            z1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.z1__sig\,
-            ff1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.ff1__sig\,
-            ci => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.co_msb__sig\,
-            sir => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.sol_msb__sig\,
-            cfbi => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u1.cfbo__sig\,
-            sor => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.sor__sig\,
-            cmsbo => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cmsbo__sig\,
-            ce0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ce0__sig\,
-            cl0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cl0__sig\,
-            z0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.z0__sig\,
-            ff0 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ff0__sig\,
-            ce1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ce1__sig\,
-            cl1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cl1__sig\,
-            z1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.z1__sig\,
-            ff1 => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ff1__sig\,
-            co_msb => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.co_msb__sig\,
-            sol_msb => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.sol_msb__sig\,
-            cfbo => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cfbo__sig\,
-            sil => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u3.sor__sig\,
-            cmsbi => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u3.cmsbo__sig\);
+            ce0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ce0__sig\,
+            cl0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cl0__sig\,
+            z0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.z0__sig\,
+            ff0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ff0__sig\,
+            ce1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ce1__sig\,
+            cl1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cl1__sig\,
+            z1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.z1__sig\,
+            ff1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.ff1__sig\,
+            ci => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.co_msb__sig\,
+            sir => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.sol_msb__sig\,
+            cfbi => \Shift_Reg:bSR:sC32:BShiftRegDp:u1.cfbo__sig\,
+            sor => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.sor__sig\,
+            cmsbo => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cmsbo__sig\,
+            ce0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ce0__sig\,
+            cl0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cl0__sig\,
+            z0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.z0__sig\,
+            ff0 => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ff0__sig\,
+            ce1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ce1__sig\,
+            cl1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cl1__sig\,
+            z1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.z1__sig\,
+            ff1 => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ff1__sig\,
+            co_msb => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.co_msb__sig\,
+            sol_msb => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.sol_msb__sig\,
+            cfbo => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cfbo__sig\,
+            sil => \Shift_Reg:bSR:sC32:BShiftRegDp:u3.sor__sig\,
+            cmsbi => \Shift_Reg:bSR:sC32:BShiftRegDp:u3.cmsbo__sig\);
 
-    \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u3\:datapathcell
+    \Shift_Reg:bSR:sC32:BShiftRegDp:u3\:datapathcell
         GENERIC MAP(
             a0_init => "00000000",
             a1_init => "00000000",
@@ -1999,26 +1985,26 @@ BEGIN
             clken_mode => 1)
         PORT MAP(
             clock => Net_134,
-            cs_addr_2 => \HighF_ShiftReg2:bSR:ctrl_clk_enable\,
+            cs_addr_2 => \Shift_Reg:bSR:ctrl_clk_enable\,
             route_si => Net_122,
-            f0_bus_stat_comb => \HighF_ShiftReg2:bSR:status_4\,
-            f0_blk_stat_comb => \HighF_ShiftReg2:bSR:status_3\,
-            f1_bus_stat_comb => \HighF_ShiftReg2:bSR:status_6\,
-            f1_blk_stat_comb => \HighF_ShiftReg2:bSR:status_5\,
+            f0_bus_stat_comb => \Shift_Reg:bSR:status_4\,
+            f0_blk_stat_comb => \Shift_Reg:bSR:status_3\,
+            f1_bus_stat_comb => \Shift_Reg:bSR:status_6\,
+            f1_blk_stat_comb => \Shift_Reg:bSR:status_5\,
             busclk => ClockBlock_BUS_CLK,
-            ce0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ce0__sig\,
-            cl0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cl0__sig\,
-            z0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.z0__sig\,
-            ff0i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ff0__sig\,
-            ce1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ce1__sig\,
-            cl1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cl1__sig\,
-            z1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.z1__sig\,
-            ff1i => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.ff1__sig\,
-            ci => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.co_msb__sig\,
-            sir => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.sol_msb__sig\,
-            cfbi => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u2.cfbo__sig\,
-            sor => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u3.sor__sig\,
-            cmsbo => \HighF_ShiftReg2:bSR:sC32:BShiftRegDp:u3.cmsbo__sig\);
+            ce0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ce0__sig\,
+            cl0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cl0__sig\,
+            z0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.z0__sig\,
+            ff0i => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ff0__sig\,
+            ce1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ce1__sig\,
+            cl1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cl1__sig\,
+            z1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.z1__sig\,
+            ff1i => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.ff1__sig\,
+            ci => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.co_msb__sig\,
+            sir => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.sol_msb__sig\,
+            cfbi => \Shift_Reg:bSR:sC32:BShiftRegDp:u2.cfbo__sig\,
+            sor => \Shift_Reg:bSR:sC32:BShiftRegDp:u3.sor__sig\,
+            cmsbo => \Shift_Reg:bSR:sC32:BShiftRegDp:u3.cmsbo__sig\);
 
     \PWM_Recon:PWMUDB:genblk1:ctrlreg\:controlcell
         GENERIC MAP(
@@ -2161,7 +2147,7 @@ BEGIN
             sor => \PWM_Recon:PWMUDB:sP16:pwmdp:u1.sor__sig\,
             cmsbo => \PWM_Recon:PWMUDB:sP16:pwmdp:u1.cmsbo__sig\);
 
-    HighF_LevelCountISR:interrupt
+    Timer_ISR:interrupt
         GENERIC MAP(
             int_type => "10",
             is_nmi => 0)
@@ -2169,7 +2155,7 @@ BEGIN
             interrupt => Net_145,
             clock => ClockBlock_BUS_CLK);
 
-    \HighF_LevelCount:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\:controlcell
+    \Bit_Timer:TimerUDB:sCTRLReg:SyncCtl:ctrlreg\:controlcell
         GENERIC MAP(
             cy_ctrl_mode_0 => "11111111",
             cy_ctrl_mode_1 => "00000000",
@@ -2180,17 +2166,17 @@ BEGIN
             clken_mode => 1)
         PORT MAP(
             clock => Net_75,
-            control_7 => \HighF_LevelCount:TimerUDB:control_7\,
-            control_6 => \HighF_LevelCount:TimerUDB:control_6\,
-            control_5 => \HighF_LevelCount:TimerUDB:control_5\,
-            control_4 => \HighF_LevelCount:TimerUDB:control_4\,
-            control_3 => \HighF_LevelCount:TimerUDB:control_3\,
-            control_2 => \HighF_LevelCount:TimerUDB:control_2\,
-            control_1 => \HighF_LevelCount:TimerUDB:control_1\,
-            control_0 => \HighF_LevelCount:TimerUDB:control_0\,
+            control_7 => \Bit_Timer:TimerUDB:control_7\,
+            control_6 => \Bit_Timer:TimerUDB:control_6\,
+            control_5 => \Bit_Timer:TimerUDB:control_5\,
+            control_4 => \Bit_Timer:TimerUDB:control_4\,
+            control_3 => \Bit_Timer:TimerUDB:control_3\,
+            control_2 => \Bit_Timer:TimerUDB:control_2\,
+            control_1 => \Bit_Timer:TimerUDB:control_1\,
+            control_0 => \Bit_Timer:TimerUDB:control_0\,
             busclk => ClockBlock_BUS_CLK);
 
-    \HighF_LevelCount:TimerUDB:rstSts:stsreg\:statusicell
+    \Bit_Timer:TimerUDB:rstSts:stsreg\:statusicell
         GENERIC MAP(
             cy_force_order => 1,
             cy_int_mask => "1111111",
@@ -2202,12 +2188,12 @@ BEGIN
             status_6 => open,
             status_5 => open,
             status_4 => open,
-            status_3 => \HighF_LevelCount:TimerUDB:status_3\,
-            status_2 => \HighF_LevelCount:TimerUDB:status_2\,
+            status_3 => \Bit_Timer:TimerUDB:status_3\,
+            status_2 => \Bit_Timer:TimerUDB:status_2\,
             status_1 => open,
-            status_0 => \HighF_LevelCount:TimerUDB:status_tc\);
+            status_0 => \Bit_Timer:TimerUDB:status_tc\);
 
-    \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\:datapathcell
+    \Bit_Timer:TimerUDB:sT16:timerdp:u0\:datapathcell
         GENERIC MAP(
             a0_init => "00000000",
             a1_init => "00000000",
@@ -2236,24 +2222,24 @@ BEGIN
             clken_mode => 1)
         PORT MAP(
             clock => Net_75,
-            cs_addr_1 => \HighF_LevelCount:TimerUDB:control_7\,
-            cs_addr_0 => \HighF_LevelCount:TimerUDB:per_zero\,
+            cs_addr_1 => \Bit_Timer:TimerUDB:control_7\,
+            cs_addr_0 => \Bit_Timer:TimerUDB:per_zero\,
             busclk => ClockBlock_BUS_CLK,
-            ce0 => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ce0__sig\,
-            cl0 => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.cl0__sig\,
-            z0 => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.z0__sig\,
-            ff0 => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ff0__sig\,
-            ce1 => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ce1__sig\,
-            cl1 => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.cl1__sig\,
-            z1 => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.z1__sig\,
-            ff1 => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ff1__sig\,
-            co_msb => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.co_msb__sig\,
-            sol_msb => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.sol_msb__sig\,
-            cfbo => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.cfbo__sig\,
-            sil => \HighF_LevelCount:TimerUDB:sT16:timerdp:u1.sor__sig\,
-            cmsbi => \HighF_LevelCount:TimerUDB:sT16:timerdp:u1.cmsbo__sig\);
+            ce0 => \Bit_Timer:TimerUDB:sT16:timerdp:u0.ce0__sig\,
+            cl0 => \Bit_Timer:TimerUDB:sT16:timerdp:u0.cl0__sig\,
+            z0 => \Bit_Timer:TimerUDB:sT16:timerdp:u0.z0__sig\,
+            ff0 => \Bit_Timer:TimerUDB:sT16:timerdp:u0.ff0__sig\,
+            ce1 => \Bit_Timer:TimerUDB:sT16:timerdp:u0.ce1__sig\,
+            cl1 => \Bit_Timer:TimerUDB:sT16:timerdp:u0.cl1__sig\,
+            z1 => \Bit_Timer:TimerUDB:sT16:timerdp:u0.z1__sig\,
+            ff1 => \Bit_Timer:TimerUDB:sT16:timerdp:u0.ff1__sig\,
+            co_msb => \Bit_Timer:TimerUDB:sT16:timerdp:u0.co_msb__sig\,
+            sol_msb => \Bit_Timer:TimerUDB:sT16:timerdp:u0.sol_msb__sig\,
+            cfbo => \Bit_Timer:TimerUDB:sT16:timerdp:u0.cfbo__sig\,
+            sil => \Bit_Timer:TimerUDB:sT16:timerdp:u1.sor__sig\,
+            cmsbi => \Bit_Timer:TimerUDB:sT16:timerdp:u1.cmsbo__sig\);
 
-    \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\:datapathcell
+    \Bit_Timer:TimerUDB:sT16:timerdp:u1\:datapathcell
         GENERIC MAP(
             a0_init => "00000000",
             a1_init => "00000000",
@@ -2282,52 +2268,31 @@ BEGIN
             clken_mode => 1)
         PORT MAP(
             clock => Net_75,
-            cs_addr_1 => \HighF_LevelCount:TimerUDB:control_7\,
-            cs_addr_0 => \HighF_LevelCount:TimerUDB:per_zero\,
-            z0_comb => \HighF_LevelCount:TimerUDB:per_zero\,
-            f0_bus_stat_comb => \HighF_LevelCount:TimerUDB:status_3\,
-            f0_blk_stat_comb => \HighF_LevelCount:TimerUDB:status_2\,
+            cs_addr_1 => \Bit_Timer:TimerUDB:control_7\,
+            cs_addr_0 => \Bit_Timer:TimerUDB:per_zero\,
+            z0_comb => \Bit_Timer:TimerUDB:per_zero\,
+            f0_bus_stat_comb => \Bit_Timer:TimerUDB:status_3\,
+            f0_blk_stat_comb => \Bit_Timer:TimerUDB:status_2\,
             busclk => ClockBlock_BUS_CLK,
-            ce0i => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ce0__sig\,
-            cl0i => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.cl0__sig\,
-            z0i => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.z0__sig\,
-            ff0i => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ff0__sig\,
-            ce1i => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ce1__sig\,
-            cl1i => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.cl1__sig\,
-            z1i => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.z1__sig\,
-            ff1i => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.ff1__sig\,
-            ci => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.co_msb__sig\,
-            sir => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.sol_msb__sig\,
-            cfbi => \HighF_LevelCount:TimerUDB:sT16:timerdp:u0.cfbo__sig\,
-            sor => \HighF_LevelCount:TimerUDB:sT16:timerdp:u1.sor__sig\,
-            cmsbo => \HighF_LevelCount:TimerUDB:sT16:timerdp:u1.cmsbo__sig\);
+            ce0i => \Bit_Timer:TimerUDB:sT16:timerdp:u0.ce0__sig\,
+            cl0i => \Bit_Timer:TimerUDB:sT16:timerdp:u0.cl0__sig\,
+            z0i => \Bit_Timer:TimerUDB:sT16:timerdp:u0.z0__sig\,
+            ff0i => \Bit_Timer:TimerUDB:sT16:timerdp:u0.ff0__sig\,
+            ce1i => \Bit_Timer:TimerUDB:sT16:timerdp:u0.ce1__sig\,
+            cl1i => \Bit_Timer:TimerUDB:sT16:timerdp:u0.cl1__sig\,
+            z1i => \Bit_Timer:TimerUDB:sT16:timerdp:u0.z1__sig\,
+            ff1i => \Bit_Timer:TimerUDB:sT16:timerdp:u0.ff1__sig\,
+            ci => \Bit_Timer:TimerUDB:sT16:timerdp:u0.co_msb__sig\,
+            sir => \Bit_Timer:TimerUDB:sT16:timerdp:u0.sol_msb__sig\,
+            cfbi => \Bit_Timer:TimerUDB:sT16:timerdp:u0.cfbo__sig\,
+            sor => \Bit_Timer:TimerUDB:sT16:timerdp:u1.sor__sig\,
+            cmsbo => \Bit_Timer:TimerUDB:sT16:timerdp:u1.cmsbo__sig\);
 
-    \HighF_PGA:SC\:sccell
-        GENERIC MAP(
-            cy_registers => "")
-        PORT MAP(
-            dyn_cntl_udb => open,
-            modout => \HighF_PGA:Net_41\);
-
-    \HighF_BPF_Comp:ctComp\:comparatorcell
+    \BPF_Comp:ctComp\:comparatorcell
         GENERIC MAP(
             cy_registers => "")
         PORT MAP(
             out => Net_185);
-
-    \VGround_Buffer:SC\:sccell
-        GENERIC MAP(
-            cy_registers => "")
-        PORT MAP(
-            dyn_cntl_udb => open,
-            modout => \VGround_Buffer:Net_41\);
-
-    \Comp_Buffer:SC\:sccell
-        GENERIC MAP(
-            cy_registers => "")
-        PORT MAP(
-            dyn_cntl_udb => open,
-            modout => \Comp_Buffer:Net_41\);
 
     \PWM_Recon:PWMUDB:runmode_enable\:macrocell
         GENERIC MAP(
@@ -2392,7 +2357,7 @@ BEGIN
         PORT MAP(
             q => Net_145,
             clock_0 => Net_75,
-            main_0 => \HighF_LevelCount:TimerUDB:control_7\,
-            main_1 => \HighF_LevelCount:TimerUDB:per_zero\);
+            main_0 => \Bit_Timer:TimerUDB:control_7\,
+            main_1 => \Bit_Timer:TimerUDB:per_zero\);
 
 END __DEFAULT__;

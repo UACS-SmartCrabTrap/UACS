@@ -11,8 +11,8 @@
 #include <stdio.h>
 #include "LCD_Char.h"
 
-// Interrupt for switching bits 500 ms
-CY_ISR_PROTO(HighF_LevelCount);
+// Interrupt for switching bits 100 ms
+CY_ISR_PROTO(Bit_Timer);
 
 // Global Variables
 static uint16 levelCounter = 0; // Timer counter to debounce bit
@@ -26,7 +26,7 @@ static uint8 dataFlag = 0; // Flag to start looking for data
 static uint8 decodeFlag = 0; // Flag to start looking for post-fix
 
 
-//FLAGS for turning on messages on LCD screen
+// FLAGS for turning on messages on LCD screen
 static uint8 lcdFlagEncode = 0; // Turns on pre-fix message
 static uint8 lcdFlagData = 0; // Displays data 
 static uint8 lcdFlagDecode = 0; // good or bad postfix
@@ -40,13 +40,13 @@ int main(void)
 
     /* initialization/startup code here */
     PWM_Recon_Start();
-    HighF_BPF_Comp_Start();
-    HighF_ShiftReg2_Start();
-    //HighF_PGA_Start() ; 
-    HighF_OutComp_Start();
-    HighF_LevelCount_Start();
-    HighF_LevelCountISR_StartEx(HighF_LevelCount);
+    BPF_Comp_Start();
+    Shift_Reg_Start();
+    Out_Comp_Start();
+    Bit_Timer_Start();
+    Timer_ISR_StartEx(Bit_Timer);
     LCD_Char_Start();
+    //HighF_PGA_Start() ;
     //Comp_Buffer_Start();
     //VGround_Buffer_Start();
 
@@ -94,11 +94,11 @@ int main(void)
 //Bit length = 100 ms
 //timer period = 10 ms
 //will check bit 10 times, to debounce
-CY_ISR(HighF_LevelCount){
+CY_ISR(Bit_Timer){
     levelCounter++;
     
     // Count whether bit is currently 1 or 0
-    if(HighF_OutComp_GetCompare() != 0){
+    if(Out_Comp_GetCompare() != 0){
         oneCount++;
     }else{
         zeroCount++;
@@ -122,7 +122,7 @@ CY_ISR(HighF_LevelCount){
         data = data | currentBit;
         // Check if data is prefix(oxFF) but we are not looking for data or decode
         if((data == 0xff) && (dataFlag == 0) && (decodeFlag == 0)){ 
-            HighF_CountOut_Write(1);
+            Count_Out_Write(1);
             dataCount = 0;
             data = 0x00;
             dataFlag = 1; //Start looking for data

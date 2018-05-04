@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: PGA_2.c  
+* File Name: Comp_Buffer.c  
 * Version 2.0
 *
 * Description:
@@ -15,7 +15,7 @@
 * the software package with which this file was provided.
 *******************************************************************************/
 
-#include "PGA_2.h"
+#include "Comp_Buffer.h"
 
 #if (!CY_PSOC5A)
     #if (CYDEV_VARIABLE_VDDA == 1u)
@@ -24,20 +24,20 @@
 #endif /* (!CY_PSOC5A) */
 
 #if (CY_PSOC5A)
-    static PGA_2_BACKUP_STRUCT  PGA_2_P5backup;
+    static Comp_Buffer_BACKUP_STRUCT  Comp_Buffer_P5backup;
 #endif /* (CY_ PSOC5A) */
 
-uint8 PGA_2_initVar = 0u;
+uint8 Comp_Buffer_initVar = 0u;
 
 
 /*******************************************************************************   
-* Function Name: PGA_2_Init
+* Function Name: Comp_Buffer_Init
 ********************************************************************************
 *
 * Summary:
 *  Initialize component's parameters to the parameters set by user in the 
 *  customizer of the component placed onto schematic. Usually called in 
-*  PGA_2_Start().
+*  Comp_Buffer_Start().
 *
 * Parameters:
 *  void
@@ -46,23 +46,23 @@ uint8 PGA_2_initVar = 0u;
 *  void
 *
 *******************************************************************************/
-void PGA_2_Init(void) 
+void Comp_Buffer_Init(void) 
 {
     /* Set PGA mode */
-    PGA_2_CR0_REG = PGA_2_MODE_PGA;      
+    Comp_Buffer_CR0_REG = Comp_Buffer_MODE_PGA;      
     /* Set non-inverting PGA mode and reference mode */
-    PGA_2_CR1_REG |= PGA_2_PGA_NINV;  
+    Comp_Buffer_CR1_REG |= Comp_Buffer_PGA_NINV;  
     /* Set default gain and ref mode */
-    PGA_2_CR2_REG = PGA_2_VREF_MODE;
+    Comp_Buffer_CR2_REG = Comp_Buffer_VREF_MODE;
     /* Set gain and compensation */
-    PGA_2_SetGain(PGA_2_DEFAULT_GAIN);
+    Comp_Buffer_SetGain(Comp_Buffer_DEFAULT_GAIN);
     /* Set power */
-    PGA_2_SetPower(PGA_2_DEFAULT_POWER);
+    Comp_Buffer_SetPower(Comp_Buffer_DEFAULT_POWER);
 }
 
 
 /*******************************************************************************   
-* Function Name: PGA_2_Enable
+* Function Name: Comp_Buffer_Enable
 ********************************************************************************
 *
 * Summary:
@@ -75,40 +75,40 @@ void PGA_2_Init(void)
 *  void
 *
 *******************************************************************************/
-void PGA_2_Enable(void) 
+void Comp_Buffer_Enable(void) 
 {
     /* This is to restore the value of register CR1 and CR2 which is saved 
       in prior to the modifications in stop() API */
     #if (CY_PSOC5A)
-        if(PGA_2_P5backup.enableState == 1u)
+        if(Comp_Buffer_P5backup.enableState == 1u)
         {
-            PGA_2_CR1_REG = PGA_2_P5backup.scCR1Reg;
-            PGA_2_CR2_REG = PGA_2_P5backup.scCR2Reg;
-            PGA_2_P5backup.enableState = 0u;
+            Comp_Buffer_CR1_REG = Comp_Buffer_P5backup.scCR1Reg;
+            Comp_Buffer_CR2_REG = Comp_Buffer_P5backup.scCR2Reg;
+            Comp_Buffer_P5backup.enableState = 0u;
         }
     #endif /* CY_PSOC5A */   
 
     /* Enable power to the Amp in Active mode*/
-    PGA_2_PM_ACT_CFG_REG |= PGA_2_ACT_PWR_EN;
+    Comp_Buffer_PM_ACT_CFG_REG |= Comp_Buffer_ACT_PWR_EN;
 
     /* Enable power to the Amp in Alternative Active mode*/
-    PGA_2_PM_STBY_CFG_REG |= PGA_2_STBY_PWR_EN;
+    Comp_Buffer_PM_STBY_CFG_REG |= Comp_Buffer_STBY_PWR_EN;
     
-    PGA_2_PUMP_CR1_REG |= PGA_2_PUMP_CR1_SC_CLKSEL;
+    Comp_Buffer_PUMP_CR1_REG |= Comp_Buffer_PUMP_CR1_SC_CLKSEL;
     
     #if (!CY_PSOC5A)
         #if (CYDEV_VARIABLE_VDDA == 1u)
             if(CyScPumpEnabled == 1u)
             {
-                PGA_2_BSTCLK_REG &= (uint8)(~PGA_2_BST_CLK_INDEX_MASK);
-                PGA_2_BSTCLK_REG |= PGA_2_BST_CLK_EN | CyScBoostClk__INDEX;
-                PGA_2_SC_MISC_REG |= PGA_2_PUMP_FORCE;
+                Comp_Buffer_BSTCLK_REG &= (uint8)(~Comp_Buffer_BST_CLK_INDEX_MASK);
+                Comp_Buffer_BSTCLK_REG |= Comp_Buffer_BST_CLK_EN | CyScBoostClk__INDEX;
+                Comp_Buffer_SC_MISC_REG |= Comp_Buffer_PUMP_FORCE;
                 CyScBoostClk_Start();
             }
             else
             {
-                PGA_2_BSTCLK_REG &= (uint8)(~PGA_2_BST_CLK_EN);
-                PGA_2_SC_MISC_REG &= (uint8)(~PGA_2_PUMP_FORCE);
+                Comp_Buffer_BSTCLK_REG &= (uint8)(~Comp_Buffer_BST_CLK_EN);
+                Comp_Buffer_SC_MISC_REG &= (uint8)(~Comp_Buffer_PUMP_FORCE);
             }
         #endif /* (CYDEV_VARIABLE_VDDA == 1u) */
     #endif /* (!CY_PSOC5A) */
@@ -116,7 +116,7 @@ void PGA_2_Enable(void)
 
 
 /*******************************************************************************
-* Function Name: PGA_2_Start
+* Function Name: Comp_Buffer_Start
 ********************************************************************************
 *
 * Summary:
@@ -131,24 +131,24 @@ void PGA_2_Enable(void)
 *  void
 *
 *******************************************************************************/
-void PGA_2_Start(void) 
+void Comp_Buffer_Start(void) 
 {
 
     /* This is to restore the value of register CR1 and CR2 which is saved 
       in prior to the modification in stop() API */
 
-    if(PGA_2_initVar == 0u)
+    if(Comp_Buffer_initVar == 0u)
     {
-        PGA_2_Init();
-        PGA_2_initVar = 1u;
+        Comp_Buffer_Init();
+        Comp_Buffer_initVar = 1u;
     }
 
-    PGA_2_Enable();
+    Comp_Buffer_Enable();
 }
 
 
 /*******************************************************************************
-* Function Name: PGA_2_Stop
+* Function Name: Comp_Buffer_Stop
 ********************************************************************************
 *
 * Summary:
@@ -161,22 +161,22 @@ void PGA_2_Start(void)
 *  void
 *
 *******************************************************************************/
-void PGA_2_Stop(void) 
+void Comp_Buffer_Stop(void) 
 { 
     /* Disble power to the Amp in Active mode template */
-    PGA_2_PM_ACT_CFG_REG &= (uint8)(~PGA_2_ACT_PWR_EN);
+    Comp_Buffer_PM_ACT_CFG_REG &= (uint8)(~Comp_Buffer_ACT_PWR_EN);
 
     /* Disble power to the Amp in Alternative Active mode template */
-    PGA_2_PM_STBY_CFG_REG &= (uint8)(~PGA_2_STBY_PWR_EN);
+    Comp_Buffer_PM_STBY_CFG_REG &= (uint8)(~Comp_Buffer_STBY_PWR_EN);
 
     #if (!CY_PSOC5A)
         #if (CYDEV_VARIABLE_VDDA == 1u)
-            PGA_2_BSTCLK_REG &= (uint8)(~PGA_2_BST_CLK_EN);
+            Comp_Buffer_BSTCLK_REG &= (uint8)(~Comp_Buffer_BST_CLK_EN);
             /* Disable pumps only if there aren't any SC block in use */
-            if ((PGA_2_PM_ACT_CFG_REG & PGA_2_PM_ACT_CFG_MASK) == 0u)
+            if ((Comp_Buffer_PM_ACT_CFG_REG & Comp_Buffer_PM_ACT_CFG_MASK) == 0u)
             {
-                PGA_2_SC_MISC_REG &= (uint8)(~PGA_2_PUMP_FORCE);
-                PGA_2_PUMP_CR1_REG &= (uint8)(~PGA_2_PUMP_CR1_SC_CLKSEL);
+                Comp_Buffer_SC_MISC_REG &= (uint8)(~Comp_Buffer_PUMP_FORCE);
+                Comp_Buffer_PUMP_CR1_REG &= (uint8)(~Comp_Buffer_PUMP_CR1_SC_CLKSEL);
                 CyScBoostClk_Stop();
             }
         #endif /* CYDEV_VARIABLE_VDDA == 1u */
@@ -184,17 +184,17 @@ void PGA_2_Stop(void)
 
     /* This sets PGA in zero current mode and output routes are valid */
     #if (CY_PSOC5A)
-        PGA_2_P5backup.scCR1Reg = PGA_2_CR1_REG;
-        PGA_2_P5backup.scCR2Reg = PGA_2_CR2_REG;
-        PGA_2_CR1_REG = 0x00u;
-        PGA_2_CR2_REG = 0x00u;
-        PGA_2_P5backup.enableState = 1u;
+        Comp_Buffer_P5backup.scCR1Reg = Comp_Buffer_CR1_REG;
+        Comp_Buffer_P5backup.scCR2Reg = Comp_Buffer_CR2_REG;
+        Comp_Buffer_CR1_REG = 0x00u;
+        Comp_Buffer_CR2_REG = 0x00u;
+        Comp_Buffer_P5backup.enableState = 1u;
     #endif /* CY_PSOC5A */
 }
 
 
 /*******************************************************************************
-* Function Name: PGA_2_SetPower
+* Function Name: Comp_Buffer_SetPower
 ********************************************************************************
 *
 * Summary:
@@ -207,18 +207,18 @@ void PGA_2_Stop(void)
 *  void
 *
 *******************************************************************************/
-void PGA_2_SetPower(uint8 power) 
+void Comp_Buffer_SetPower(uint8 power) 
 {
     uint8 tmpCR;
 
-    tmpCR = PGA_2_CR1_REG & (uint8)(~PGA_2_DRIVE_MASK);
-    tmpCR |= (power & PGA_2_DRIVE_MASK);
-    PGA_2_CR1_REG = tmpCR;  
+    tmpCR = Comp_Buffer_CR1_REG & (uint8)(~Comp_Buffer_DRIVE_MASK);
+    tmpCR |= (power & Comp_Buffer_DRIVE_MASK);
+    Comp_Buffer_CR1_REG = tmpCR;  
 }
 
 
 /*******************************************************************************
-* Function Name: PGA_2_SetGain
+* Function Name: Comp_Buffer_SetGain
 ********************************************************************************
 *
 * Summary:
@@ -232,49 +232,49 @@ void PGA_2_SetPower(uint8 power)
 *  void 
 *
 *******************************************************************************/
-void PGA_2_SetGain(uint8 gain) 
+void Comp_Buffer_SetGain(uint8 gain) 
 {
     /* Constant array for gain settings */
-    const uint8 PGA_2_GainArray[9] = { 
-        (PGA_2_RVAL_0K   | PGA_2_R20_40B_40K | PGA_2_BIAS_LOW), /* G=1  */
-        (PGA_2_RVAL_40K  | PGA_2_R20_40B_40K | PGA_2_BIAS_LOW), /* G=2  */
-        (PGA_2_RVAL_120K | PGA_2_R20_40B_40K | PGA_2_BIAS_LOW), /* G=4  */
-        (PGA_2_RVAL_280K | PGA_2_R20_40B_40K | PGA_2_BIAS_LOW), /* G=8  */
-        (PGA_2_RVAL_600K | PGA_2_R20_40B_40K | PGA_2_BIAS_LOW), /* G=16 */
-        (PGA_2_RVAL_460K | PGA_2_R20_40B_40K | PGA_2_BIAS_LOW), /* G=24, Sets Rin as 20k */
-        (PGA_2_RVAL_620K | PGA_2_R20_40B_20K | PGA_2_BIAS_LOW), /* G=32 */
-        (PGA_2_RVAL_470K | PGA_2_R20_40B_20K | PGA_2_BIAS_LOW), /* G=48, Sets Rin as 10k */
-        (PGA_2_RVAL_490K | PGA_2_R20_40B_20K | PGA_2_BIAS_LOW)  /* G=50, Sets Rin as 10k */
+    const uint8 Comp_Buffer_GainArray[9] = { 
+        (Comp_Buffer_RVAL_0K   | Comp_Buffer_R20_40B_40K | Comp_Buffer_BIAS_LOW), /* G=1  */
+        (Comp_Buffer_RVAL_40K  | Comp_Buffer_R20_40B_40K | Comp_Buffer_BIAS_LOW), /* G=2  */
+        (Comp_Buffer_RVAL_120K | Comp_Buffer_R20_40B_40K | Comp_Buffer_BIAS_LOW), /* G=4  */
+        (Comp_Buffer_RVAL_280K | Comp_Buffer_R20_40B_40K | Comp_Buffer_BIAS_LOW), /* G=8  */
+        (Comp_Buffer_RVAL_600K | Comp_Buffer_R20_40B_40K | Comp_Buffer_BIAS_LOW), /* G=16 */
+        (Comp_Buffer_RVAL_460K | Comp_Buffer_R20_40B_40K | Comp_Buffer_BIAS_LOW), /* G=24, Sets Rin as 20k */
+        (Comp_Buffer_RVAL_620K | Comp_Buffer_R20_40B_20K | Comp_Buffer_BIAS_LOW), /* G=32 */
+        (Comp_Buffer_RVAL_470K | Comp_Buffer_R20_40B_20K | Comp_Buffer_BIAS_LOW), /* G=48, Sets Rin as 10k */
+        (Comp_Buffer_RVAL_490K | Comp_Buffer_R20_40B_20K | Comp_Buffer_BIAS_LOW)  /* G=50, Sets Rin as 10k */
     };
     
     /* Constant array for gain compenstion settings */
-    const uint8 PGA_2_GainComp[9] = { 
-        ( PGA_2_COMP_4P35PF  | (uint8)( PGA_2_REDC_00 >> 2 )), /* G=1  */
-        ( PGA_2_COMP_4P35PF  | (uint8)( PGA_2_REDC_01 >> 2 )), /* G=2  */
-        ( PGA_2_COMP_3P0PF   | (uint8)( PGA_2_REDC_01 >> 2 )), /* G=4  */
-        ( PGA_2_COMP_3P0PF   | (uint8)( PGA_2_REDC_01 >> 2 )), /* G=8  */
-        ( PGA_2_COMP_3P6PF   | (uint8)( PGA_2_REDC_01 >> 2 )), /* G=16 */
-        ( PGA_2_COMP_3P6PF   | (uint8)( PGA_2_REDC_11 >> 2 )), /* G=24 */
-        ( PGA_2_COMP_3P6PF   | (uint8)( PGA_2_REDC_11 >> 2 )), /* G=32 */
-        ( PGA_2_COMP_3P6PF   | (uint8)( PGA_2_REDC_00 >> 2 )), /* G=48 */
-        ( PGA_2_COMP_3P6PF   | (uint8)( PGA_2_REDC_00 >> 2 ))  /* G=50 */
+    const uint8 Comp_Buffer_GainComp[9] = { 
+        ( Comp_Buffer_COMP_4P35PF  | (uint8)( Comp_Buffer_REDC_00 >> 2 )), /* G=1  */
+        ( Comp_Buffer_COMP_4P35PF  | (uint8)( Comp_Buffer_REDC_01 >> 2 )), /* G=2  */
+        ( Comp_Buffer_COMP_3P0PF   | (uint8)( Comp_Buffer_REDC_01 >> 2 )), /* G=4  */
+        ( Comp_Buffer_COMP_3P0PF   | (uint8)( Comp_Buffer_REDC_01 >> 2 )), /* G=8  */
+        ( Comp_Buffer_COMP_3P6PF   | (uint8)( Comp_Buffer_REDC_01 >> 2 )), /* G=16 */
+        ( Comp_Buffer_COMP_3P6PF   | (uint8)( Comp_Buffer_REDC_11 >> 2 )), /* G=24 */
+        ( Comp_Buffer_COMP_3P6PF   | (uint8)( Comp_Buffer_REDC_11 >> 2 )), /* G=32 */
+        ( Comp_Buffer_COMP_3P6PF   | (uint8)( Comp_Buffer_REDC_00 >> 2 )), /* G=48 */
+        ( Comp_Buffer_COMP_3P6PF   | (uint8)( Comp_Buffer_REDC_00 >> 2 ))  /* G=50 */
     };
     
     /* Only set new gain if it is a valid gain */
-    if( gain <= PGA_2_GAIN_MAX)
+    if( gain <= Comp_Buffer_GAIN_MAX)
     {
         /* Clear resistors, redc, and bias */
-        PGA_2_CR2_REG &= (uint8)(~(PGA_2_RVAL_MASK | PGA_2_R20_40B_MASK | 
-                                PGA_2_REDC_MASK | PGA_2_BIAS_MASK ));
+        Comp_Buffer_CR2_REG &= (uint8)(~(Comp_Buffer_RVAL_MASK | Comp_Buffer_R20_40B_MASK | 
+                                Comp_Buffer_REDC_MASK | Comp_Buffer_BIAS_MASK ));
 
         /* Set gain value resistors, redc comp, and bias */
-        PGA_2_CR2_REG |= (PGA_2_GainArray[gain] |
-                                ((uint8)(PGA_2_GainComp[gain] << 2 ) & PGA_2_REDC_MASK));
+        Comp_Buffer_CR2_REG |= (Comp_Buffer_GainArray[gain] |
+                                ((uint8)(Comp_Buffer_GainComp[gain] << 2 ) & Comp_Buffer_REDC_MASK));
 
         /* Clear sc_comp  */
-        PGA_2_CR1_REG &= (uint8)(~PGA_2_COMP_MASK);
+        Comp_Buffer_CR1_REG &= (uint8)(~Comp_Buffer_COMP_MASK);
         /* Set sc_comp  */
-        PGA_2_CR1_REG |= ( PGA_2_GainComp[gain] | PGA_2_COMP_MASK );
+        Comp_Buffer_CR1_REG |= ( Comp_Buffer_GainComp[gain] | Comp_Buffer_COMP_MASK );
     }
 }
 

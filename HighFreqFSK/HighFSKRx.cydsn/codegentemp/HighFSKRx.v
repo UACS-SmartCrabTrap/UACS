@@ -1,6 +1,6 @@
 // ======================================================================
 // HighFSKRx.v generated from TopDesign.cysch
-// 04/30/2018 at 22:37
+// 05/01/2018 at 14:33
 // This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 // ======================================================================
 
@@ -405,7 +405,7 @@ module CharLCD_v2_20_3 ;
 	electrical [0:0] tmpSIOVREF__LCDPort_net;
 
 	cy_psoc3_pins_v1_10
-		#(.id("99c3b657-7435-48a1-9669-a2a5a5830095/ed092b9b-d398-4703-be89-cebf998501f6"),
+		#(.id("e75dc368-b2c9-42f4-9377-510d096d5beb/ed092b9b-d398-4703-be89-cebf998501f6"),
 		  .drive_mode(21'b110_110_110_110_110_110_110),
 		  .ibuf_enabled(7'b1_1_1_1_1_1_1),
 		  .init_dr_st(7'b0_0_0_0_0_0_0),
@@ -677,7 +677,7 @@ module Comp_v2_0_6 (
 
 endmodule
 
-// PGA_v2_0(Gain=0, Power=1, VddaValue=5, Vref_Input=0, CY_API_CALLBACK_HEADER_INCLUDE=#include "cyapicallbacks.h", CY_COMMENT=, CY_COMPONENT_NAME=PGA_v2_0, CY_CONST_CONFIG=true, CY_CONTROL_FILE=<:default:>, CY_DATASHEET_FILE=<:default:>, CY_FITTER_NAME=PGA_2, CY_INSTANCE_SHORT_NAME=PGA_2, CY_MAJOR_VERSION=2, CY_MINOR_VERSION=0, CY_PDL_DRIVER_NAME=, CY_PDL_DRIVER_REQ_VERSION=, CY_PDL_DRIVER_SUBGROUP=, CY_PDL_DRIVER_VARIANT=, CY_REMOVE=false, CY_SUPPRESS_API_GEN=false, CY_VERSION=PSoC Creator  4.1 Update 1, INSTANCE_NAME=PGA_2, )
+// PGA_v2_0(Gain=0, Power=1, VddaValue=5, Vref_Input=0, CY_API_CALLBACK_HEADER_INCLUDE=#include "cyapicallbacks.h", CY_COMMENT=, CY_COMPONENT_NAME=PGA_v2_0, CY_CONST_CONFIG=true, CY_CONTROL_FILE=<:default:>, CY_DATASHEET_FILE=<:default:>, CY_FITTER_NAME=VGround_Buffer, CY_INSTANCE_SHORT_NAME=VGround_Buffer, CY_MAJOR_VERSION=2, CY_MINOR_VERSION=0, CY_PDL_DRIVER_NAME=, CY_PDL_DRIVER_REQ_VERSION=, CY_PDL_DRIVER_SUBGROUP=, CY_PDL_DRIVER_VARIANT=, CY_REMOVE=false, CY_SUPPRESS_API_GEN=false, CY_VERSION=PSoC Creator  4.1 Update 1, INSTANCE_NAME=VGround_Buffer, )
 module PGA_v2_0_7 (
     Vin,
     Vref,
@@ -731,11 +731,66 @@ module PGA_v2_0_7 (
 
 endmodule
 
+// PGA_v2_0(Gain=0, Power=1, VddaValue=5, Vref_Input=1, CY_API_CALLBACK_HEADER_INCLUDE=#include "cyapicallbacks.h", CY_COMMENT=, CY_COMPONENT_NAME=PGA_v2_0, CY_CONST_CONFIG=true, CY_CONTROL_FILE=<:default:>, CY_DATASHEET_FILE=<:default:>, CY_FITTER_NAME=Comp_Buffer, CY_INSTANCE_SHORT_NAME=Comp_Buffer, CY_MAJOR_VERSION=2, CY_MINOR_VERSION=0, CY_PDL_DRIVER_NAME=, CY_PDL_DRIVER_REQ_VERSION=, CY_PDL_DRIVER_SUBGROUP=, CY_PDL_DRIVER_VARIANT=, CY_REMOVE=false, CY_SUPPRESS_API_GEN=false, CY_VERSION=PSoC Creator  4.1 Update 1, INSTANCE_NAME=Comp_Buffer, )
+module PGA_v2_0_8 (
+    Vin,
+    Vref,
+    Vout);
+    inout       Vin;
+    electrical  Vin;
+    inout       Vref;
+    electrical  Vref;
+    inout       Vout;
+    electrical  Vout;
+
+
+    electrical  Net_75;
+          wire  Net_41;
+          wire  Net_40;
+    electrical  Net_17;
+          wire  Net_39;
+          wire  Net_38;
+          wire  Net_37;
+
+    cy_psoc3_scblock_v1_0 SC (
+        .vin(Vin),
+        .vref(Net_17),
+        .vout(Vout),
+        .modout_sync(Net_41),
+        .aclk(Net_37),
+        .clk_udb(Net_38),
+        .dyn_cntl(Net_39),
+        .bst_clk(Net_40));
+
+    ZeroTerminal ZeroTerminal_1 (
+        .z(Net_37));
+
+    ZeroTerminal ZeroTerminal_2 (
+        .z(Net_38));
+
+    ZeroTerminal ZeroTerminal_3 (
+        .z(Net_39));
+
+    ZeroTerminal ZeroTerminal_4 (
+        .z(Net_40));
+
+	// cy_analog_virtualmux_1 (cy_analog_virtualmux_v1_0)
+	cy_connect_v1_0 cy_analog_virtualmux_1_connect(Net_17, Vref);
+	defparam cy_analog_virtualmux_1_connect.sig_width = 1;
+
+    cy_analog_noconnect_v1_0 cy_analog_noconnect_2 (
+        .noconnect(Net_75));
+
+
+
+endmodule
+
 // top
 module top ;
 
     electrical  Net_154;
           wire  Net_83;
+    electrical  Net_174;
           wire  Net_84;
           wire  Net_113;
           wire  Net_112;
@@ -761,8 +816,8 @@ module top ;
           wire  Net_88;
           wire  Net_87;
     electrical  Net_114;
-    electrical  Net_153;
     electrical  Net_151;
+    electrical  Net_153;
     electrical  Net_101;
           wire  Net_145;
           wire  Net_124;
@@ -1632,15 +1687,20 @@ module top ;
     assign Net_84 = Net_95 ^ Net_122;
 
     Comp_v2_0_6 HighF_BPF_Comp (
-        .Vplus(Net_151),
+        .Vplus(Net_174),
         .CmpOut(Net_185),
         .Vminus(Net_158),
         .clock(1'b0));
 
-    PGA_v2_0_7 PGA_2 (
+    PGA_v2_0_7 VGround_Buffer (
         .Vin(Net_153),
         .Vref(Net_154),
         .Vout(Net_158));
+
+    PGA_v2_0_8 Comp_Buffer (
+        .Vin(Net_151),
+        .Vref(Net_158),
+        .Vout(Net_174));
 
 
 

@@ -4,7 +4,7 @@
 /*Definitions*/
 #define CLOCK_FREQ 1000000
 #define FREQ(x) (CLOCK_FREQ/x)-1
-#define ONE_FREQ 42000
+#define ONE_FREQ 43000
 #define ZERO_FREQ 36000
 #define DEFAULT_FREQ MIN_FREQ
 
@@ -56,12 +56,6 @@ int main(void)
     int bitCase = 0;
     int data_turn = 0;
     unsigned int data_to_be_sent = ONE;
-    
-    // Create constant frequencies to ensure frequencies are being read
-//    PWM_2_WritePeriod(FREQ(12000));
-//    PWM_2_WriteCompare(FREQ(12000)/2); // Sets pulse width to half
-//    PWM_3_WritePeriod(FREQ(12000));
-//    PWM_3_WriteCompare(FREQ(12000)/2); // Sets pulse width to half
     
     for(;;)
     {

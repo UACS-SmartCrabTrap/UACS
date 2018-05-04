@@ -1,5 +1,5 @@
 -- Project:   HighFSKRx
--- Generated: 04/30/2018 22:37:51
+-- Generated: 05/01/2018 14:33:38
 -- PSoC Creator  4.1 Update 1
 
 ENTITY HighFSKRx IS
@@ -66,6 +66,7 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     SIGNAL Net_95 : bit;
     SIGNAL Outside_Ref(0)__PA : bit;
     SIGNAL ReconOut(0)__PA : bit;
+    SIGNAL \Comp_Buffer:Net_41\ : bit;
     SIGNAL \HighF_LevelCount:TimerUDB:control_0\ : bit;
     SIGNAL \HighF_LevelCount:TimerUDB:control_1\ : bit;
     SIGNAL \HighF_LevelCount:TimerUDB:control_2\ : bit;
@@ -101,7 +102,6 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     SIGNAL \\\LCD_Char:LCDPort(4)\\__PA\ : bit;
     SIGNAL \\\LCD_Char:LCDPort(5)\\__PA\ : bit;
     SIGNAL \\\LCD_Char:LCDPort(6)\\__PA\ : bit;
-    SIGNAL \PGA_2:Net_41\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:cmp1_less\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:control_0\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:control_1\ : bit;
@@ -118,6 +118,7 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     SIGNAL \PWM_Recon:PWMUDB:status_2\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:status_3\ : bit;
     SIGNAL \PWM_Recon:PWMUDB:tc_i\ : bit;
+    SIGNAL \VGround_Buffer:Net_41\ : bit;
     SIGNAL __ONE__ : bit;
     ATTRIBUTE POWER OF __ONE__ : SIGNAL IS true;
     SIGNAL __ZERO__ : bit;
@@ -197,29 +198,15 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     ATTRIBUTE Location OF HighF_CountOut(0) : LABEL IS "P3[0]";
     ATTRIBUTE lib_model OF ReconOut(0) : LABEL IS "iocell5";
     ATTRIBUTE Location OF ReconOut(0) : LABEL IS "P0[6]";
-    ATTRIBUTE lib_model OF \LCD_Char:LCDPort(0)\ : LABEL IS "iocell6";
-    ATTRIBUTE Location OF \LCD_Char:LCDPort(0)\ : LABEL IS "P2[0]";
-    ATTRIBUTE lib_model OF \LCD_Char:LCDPort(1)\ : LABEL IS "iocell7";
-    ATTRIBUTE Location OF \LCD_Char:LCDPort(1)\ : LABEL IS "P2[1]";
-    ATTRIBUTE lib_model OF \LCD_Char:LCDPort(2)\ : LABEL IS "iocell8";
-    ATTRIBUTE Location OF \LCD_Char:LCDPort(2)\ : LABEL IS "P2[2]";
-    ATTRIBUTE lib_model OF \LCD_Char:LCDPort(3)\ : LABEL IS "iocell9";
-    ATTRIBUTE Location OF \LCD_Char:LCDPort(3)\ : LABEL IS "P2[3]";
-    ATTRIBUTE lib_model OF \LCD_Char:LCDPort(4)\ : LABEL IS "iocell10";
-    ATTRIBUTE Location OF \LCD_Char:LCDPort(4)\ : LABEL IS "P2[4]";
-    ATTRIBUTE lib_model OF \LCD_Char:LCDPort(5)\ : LABEL IS "iocell11";
-    ATTRIBUTE Location OF \LCD_Char:LCDPort(5)\ : LABEL IS "P2[5]";
-    ATTRIBUTE lib_model OF \LCD_Char:LCDPort(6)\ : LABEL IS "iocell12";
-    ATTRIBUTE Location OF \LCD_Char:LCDPort(6)\ : LABEL IS "P2[6]";
-    ATTRIBUTE lib_model OF Outside_Ref(0) : LABEL IS "iocell13";
+    ATTRIBUTE lib_model OF Outside_Ref(0) : LABEL IS "iocell6";
     ATTRIBUTE Location OF Outside_Ref(0) : LABEL IS "P0[5]";
-    ATTRIBUTE lib_model OF HighF_XOR_Out(0) : LABEL IS "iocell14";
+    ATTRIBUTE lib_model OF HighF_XOR_Out(0) : LABEL IS "iocell7";
     ATTRIBUTE Location OF HighF_XOR_Out(0) : LABEL IS "P0[2]";
-    ATTRIBUTE lib_model OF HighF_BPFIn(0) : LABEL IS "iocell15";
+    ATTRIBUTE lib_model OF HighF_BPFIn(0) : LABEL IS "iocell8";
     ATTRIBUTE Location OF HighF_BPFIn(0) : LABEL IS "P1[6]";
-    ATTRIBUTE lib_model OF HighF_PWMOut(0) : LABEL IS "iocell16";
+    ATTRIBUTE lib_model OF HighF_PWMOut(0) : LABEL IS "iocell9";
     ATTRIBUTE Location OF HighF_PWMOut(0) : LABEL IS "P2[7]";
-    ATTRIBUTE lib_model OF HighF_ShiftOut(0) : LABEL IS "iocell17";
+    ATTRIBUTE lib_model OF HighF_ShiftOut(0) : LABEL IS "iocell10";
     ATTRIBUTE Location OF HighF_ShiftOut(0) : LABEL IS "P0[3]";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:status_2\ : LABEL IS "macrocell1";
     ATTRIBUTE lib_model OF \HighF_LevelCount:TimerUDB:status_tc\ : LABEL IS "macrocell2";
@@ -240,8 +227,9 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     ATTRIBUTE lib_model OF \HighF_LevelCount:TimerUDB:sT16:timerdp:u0\ : LABEL IS "datapathcell7";
     ATTRIBUTE lib_model OF \HighF_LevelCount:TimerUDB:sT16:timerdp:u1\ : LABEL IS "datapathcell8";
     ATTRIBUTE Location OF \HighF_PGA:SC\ : LABEL IS "F(SC,0)";
-    ATTRIBUTE Location OF \HighF_BPF_Comp:ctComp\ : LABEL IS "F(Comparator,3)";
-    ATTRIBUTE Location OF \PGA_2:SC\ : LABEL IS "F(SC,2)";
+    ATTRIBUTE Location OF \HighF_BPF_Comp:ctComp\ : LABEL IS "F(Comparator,1)";
+    ATTRIBUTE Location OF \VGround_Buffer:SC\ : LABEL IS "F(SC,2)";
+    ATTRIBUTE Location OF \Comp_Buffer:SC\ : LABEL IS "F(SC,1)";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:runmode_enable\ : LABEL IS "macrocell4";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:prevCompare1\ : LABEL IS "macrocell5";
     ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:status_0\ : LABEL IS "macrocell6";
@@ -1053,7 +1041,7 @@ BEGIN
         GENERIC MAP(
             drive_mode => "110110110110110110110",
             ibuf_enabled => "1111111",
-            id => "99c3b657-7435-48a1-9669-a2a5a5830095/ed092b9b-d398-4703-be89-cebf998501f6",
+            id => "e75dc368-b2c9-42f4-9377-510d096d5beb/ed092b9b-d398-4703-be89-cebf998501f6",
             init_dr_st => "0000000",
             input_buffer_sel => "00000000000000",
             input_clk_en => 0,
@@ -2301,12 +2289,19 @@ BEGIN
         PORT MAP(
             out => Net_185);
 
-    \PGA_2:SC\:sccell
+    \VGround_Buffer:SC\:sccell
         GENERIC MAP(
             cy_registers => "")
         PORT MAP(
             dyn_cntl_udb => open,
-            modout => \PGA_2:Net_41\);
+            modout => \VGround_Buffer:Net_41\);
+
+    \Comp_Buffer:SC\:sccell
+        GENERIC MAP(
+            cy_registers => "")
+        PORT MAP(
+            dyn_cntl_udb => open,
+            modout => \Comp_Buffer:Net_41\);
 
     \PWM_Recon:PWMUDB:runmode_enable\:macrocell
         GENERIC MAP(

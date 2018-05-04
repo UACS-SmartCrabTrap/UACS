@@ -2,7 +2,7 @@
 --	Conversion of HighFSKRx.v to vh2:
 --
 --	Cypress Semiconductor - WARP Version 6.3 IR 41
---	Mon Apr 30 22:37:47 2018
+--	Tue May 01 14:33:34 2018
 --
 
 USE cypress.cypress.all;
@@ -1034,16 +1034,24 @@ SIGNAL tmpFB_0__HighF_ShiftOut_net_0 : bit;
 SIGNAL tmpIO_0__HighF_ShiftOut_net_0 : bit;
 TERMINAL tmpSIOVREF__HighF_ShiftOut_net_0 : bit;
 SIGNAL tmpINTERRUPT_0__HighF_ShiftOut_net_0 : bit;
+TERMINAL Net_174 : bit;
 SIGNAL \HighF_BPF_Comp:clock\ : bit;
 SIGNAL \HighF_BPF_Comp:Net_1\ : bit;
 SIGNAL \HighF_BPF_Comp:Net_9\ : bit;
-TERMINAL \PGA_2:Net_17\ : bit;
-SIGNAL \PGA_2:Net_37\ : bit;
-SIGNAL \PGA_2:Net_40\ : bit;
-SIGNAL \PGA_2:Net_38\ : bit;
-SIGNAL \PGA_2:Net_39\ : bit;
-SIGNAL \PGA_2:Net_41\ : bit;
-TERMINAL \PGA_2:Net_75\ : bit;
+TERMINAL \VGround_Buffer:Net_17\ : bit;
+SIGNAL \VGround_Buffer:Net_37\ : bit;
+SIGNAL \VGround_Buffer:Net_40\ : bit;
+SIGNAL \VGround_Buffer:Net_38\ : bit;
+SIGNAL \VGround_Buffer:Net_39\ : bit;
+SIGNAL \VGround_Buffer:Net_41\ : bit;
+TERMINAL \VGround_Buffer:Net_75\ : bit;
+TERMINAL \Comp_Buffer:Net_17\ : bit;
+SIGNAL \Comp_Buffer:Net_37\ : bit;
+SIGNAL \Comp_Buffer:Net_40\ : bit;
+SIGNAL \Comp_Buffer:Net_38\ : bit;
+SIGNAL \Comp_Buffer:Net_39\ : bit;
+SIGNAL \Comp_Buffer:Net_41\ : bit;
+TERMINAL \Comp_Buffer:Net_75\ : bit;
 SIGNAL \HighF_ShiftReg2:bSR:load_reg\\D\ : bit;
 SIGNAL \PWM_Recon:PWMUDB:min_kill_reg\\D\ : bit;
 SIGNAL \PWM_Recon:PWMUDB:prevCapture\\D\ : bit;
@@ -2032,7 +2040,7 @@ ReconOut:cy_psoc3_pins_v1_10
 		out_reset=>zero,
 		interrupt=>tmpINTERRUPT_0__ReconOut_net_0);
 \LCD_Char:LCDPort\:cy_psoc3_pins_v1_10
-	GENERIC MAP(id=>"99c3b657-7435-48a1-9669-a2a5a5830095/ed092b9b-d398-4703-be89-cebf998501f6",
+	GENERIC MAP(id=>"e75dc368-b2c9-42f4-9377-510d096d5beb/ed092b9b-d398-4703-be89-cebf998501f6",
 		drive_mode=>"110110110110110110110",
 		ibuf_enabled=>"1111111",
 		init_dr_st=>"0000000",
@@ -2691,28 +2699,45 @@ HighF_ShiftOut:cy_psoc3_pins_v1_10
 		interrupt=>tmpINTERRUPT_0__HighF_ShiftOut_net_0);
 \HighF_BPF_Comp:ctComp\:cy_psoc3_ctcomp_v1_0
 	GENERIC MAP(cy_registers=>"")
-	PORT MAP(vplus=>Net_151,
+	PORT MAP(vplus=>Net_174,
 		vminus=>Net_158,
 		clock=>zero,
 		clk_udb=>zero,
 		cmpout=>Net_185);
-\PGA_2:SC\:cy_psoc3_scblock_v1_0
+\VGround_Buffer:SC\:cy_psoc3_scblock_v1_0
 	GENERIC MAP(cy_registers=>"")
-	PORT MAP(vref=>\PGA_2:Net_17\,
+	PORT MAP(vref=>\VGround_Buffer:Net_17\,
 		vin=>Net_153,
 		aclk=>zero,
 		bst_clk=>zero,
 		clk_udb=>zero,
 		dyn_cntl=>zero,
-		modout_sync=>\PGA_2:Net_41\,
+		modout_sync=>\VGround_Buffer:Net_41\,
 		vout=>Net_158);
-\PGA_2:cy_analog_virtualmux_1_connect\:cy_connect_v1_0
+\VGround_Buffer:cy_analog_virtualmux_1_connect\:cy_connect_v1_0
 	GENERIC MAP(sig_width=>1,
 		is_net_join=>'0')
-	PORT MAP(signal1=>\PGA_2:Net_17\,
-		signal2=>\PGA_2:Net_75\);
-\PGA_2:cy_analog_noconnect_2\:cy_analog_noconnect_v1_0
-	PORT MAP(noconnect=>\PGA_2:Net_75\);
+	PORT MAP(signal1=>\VGround_Buffer:Net_17\,
+		signal2=>\VGround_Buffer:Net_75\);
+\VGround_Buffer:cy_analog_noconnect_2\:cy_analog_noconnect_v1_0
+	PORT MAP(noconnect=>\VGround_Buffer:Net_75\);
+\Comp_Buffer:SC\:cy_psoc3_scblock_v1_0
+	GENERIC MAP(cy_registers=>"")
+	PORT MAP(vref=>\Comp_Buffer:Net_17\,
+		vin=>Net_151,
+		aclk=>zero,
+		bst_clk=>zero,
+		clk_udb=>zero,
+		dyn_cntl=>zero,
+		modout_sync=>\Comp_Buffer:Net_41\,
+		vout=>Net_174);
+\Comp_Buffer:cy_analog_virtualmux_1_connect\:cy_connect_v1_0
+	GENERIC MAP(sig_width=>1,
+		is_net_join=>'0')
+	PORT MAP(signal1=>\Comp_Buffer:Net_17\,
+		signal2=>Net_158);
+\Comp_Buffer:cy_analog_noconnect_2\:cy_analog_noconnect_v1_0
+	PORT MAP(noconnect=>\Comp_Buffer:Net_75\);
 \HighF_ShiftReg2:bSR:load_reg\:cy_dff
 	PORT MAP(d=>zero,
 		clk=>\HighF_ShiftReg2:bSR:clk_fin\,

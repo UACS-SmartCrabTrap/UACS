@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: PGA_2_PM.c  
+* File Name: VGround_Buffer_PM.c  
 * Version 2.0
 *
 * Description:
@@ -15,13 +15,13 @@
 * the software package with which this file was provided.
 *******************************************************************************/
 
-#include "PGA_2.h"
+#include "VGround_Buffer.h"
 
-static PGA_2_BACKUP_STRUCT  PGA_2_backup;
+static VGround_Buffer_BACKUP_STRUCT  VGround_Buffer_backup;
 
 
 /*******************************************************************************
-* Function Name: PGA_2_SaveConfig
+* Function Name: VGround_Buffer_SaveConfig
 ********************************************************************************
 *
 * Summary:
@@ -34,14 +34,14 @@ static PGA_2_BACKUP_STRUCT  PGA_2_backup;
 *  void
 *
 *******************************************************************************/
-void PGA_2_SaveConfig(void) 
+void VGround_Buffer_SaveConfig(void) 
 {
     /* Nothing to save as registers are System reset on retention flops */
 }
 
 
 /*******************************************************************************  
-* Function Name: PGA_2_RestoreConfig
+* Function Name: VGround_Buffer_RestoreConfig
 ********************************************************************************
 *
 * Summary:
@@ -54,14 +54,14 @@ void PGA_2_SaveConfig(void)
 *  void
 *
 *******************************************************************************/
-void PGA_2_RestoreConfig(void) 
+void VGround_Buffer_RestoreConfig(void) 
 {
     /* Nothing to restore */
 }
 
 
 /*******************************************************************************   
-* Function Name: PGA_2_Sleep
+* Function Name: VGround_Buffer_Sleep
 ********************************************************************************
 *
 * Summary:
@@ -75,32 +75,32 @@ void PGA_2_RestoreConfig(void)
 *  None
 *
 * Global variables:
-*  PGA_2_backup: The structure field 'enableState' is modified 
+*  VGround_Buffer_backup: The structure field 'enableState' is modified 
 *  depending on the enable state of the block before entering to sleep mode.
 *
 *******************************************************************************/
-void PGA_2_Sleep(void) 
+void VGround_Buffer_Sleep(void) 
 {
     /* Save PGA enable state */
-    if((PGA_2_PM_ACT_CFG_REG & PGA_2_ACT_PWR_EN) != 0u)
+    if((VGround_Buffer_PM_ACT_CFG_REG & VGround_Buffer_ACT_PWR_EN) != 0u)
     {
         /* Component is enabled */
-        PGA_2_backup.enableState = 1u;
+        VGround_Buffer_backup.enableState = 1u;
         /* Stop the configuration */
-        PGA_2_Stop();
+        VGround_Buffer_Stop();
     }
     else
     {
         /* Component is disabled */
-        PGA_2_backup.enableState = 0u;
+        VGround_Buffer_backup.enableState = 0u;
     }
     /* Save the configuration */
-    PGA_2_SaveConfig();
+    VGround_Buffer_SaveConfig();
 }
 
 
 /*******************************************************************************
-* Function Name: PGA_2_Wakeup
+* Function Name: VGround_Buffer_Wakeup
 ********************************************************************************
 *
 * Summary:
@@ -114,18 +114,18 @@ void PGA_2_Sleep(void)
 *  void
 *
 * Global variables:
-*  PGA_2_backup: The structure field 'enableState' is used to 
+*  VGround_Buffer_backup: The structure field 'enableState' is used to 
 *  restore the enable state of block after wakeup from sleep mode.
 * 
 *******************************************************************************/
-void PGA_2_Wakeup(void) 
+void VGround_Buffer_Wakeup(void) 
 {
     /* Restore the configurations */
-    PGA_2_RestoreConfig();
+    VGround_Buffer_RestoreConfig();
      /* Enables the component operation */
-    if(PGA_2_backup.enableState == 1u)
+    if(VGround_Buffer_backup.enableState == 1u)
     {
-        PGA_2_Enable();
+        VGround_Buffer_Enable();
     } /* Do nothing if component was disable before */
 }
 

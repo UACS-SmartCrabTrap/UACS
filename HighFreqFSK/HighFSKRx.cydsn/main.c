@@ -42,12 +42,13 @@ int main(void)
     PWM_Recon_Start();
     HighF_BPF_Comp_Start();
     HighF_ShiftReg2_Start();
-    HighF_PGA_Start() ; 
+    //HighF_PGA_Start() ; 
     HighF_OutComp_Start();
     HighF_LevelCount_Start();
     HighF_LevelCountISR_StartEx(HighF_LevelCount);
     LCD_Char_Start();
-    //PGA_1_Start();
+    //Comp_Buffer_Start();
+    //VGround_Buffer_Start();
 
     // Displays Loading Message before receiving pre-fix
     char OutputString[12];
@@ -90,8 +91,8 @@ int main(void)
 } // end of main()
     
 
-//Bit length = 500 ms
-//timer period = 50 ms
+//Bit length = 100 ms
+//timer period = 10 ms
 //will check bit 10 times, to debounce
 CY_ISR(HighF_LevelCount){
     levelCounter++;

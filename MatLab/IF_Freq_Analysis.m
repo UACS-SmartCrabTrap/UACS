@@ -56,6 +56,6 @@ ylabel('Magnitude')
 [ chan2_avgFreq, chan2_avgTime ] = freqChange(chan2_freqAvg , chan2_timeAvg );
 
 
-
+%making changes to commit
 
 

@@ -6,7 +6,11 @@
 %========================================
 
 %read the number data only
-data = csvread('38_3_gain1_gain2.csv', 11, 0); 
+
+
+
+data = csvread('3_gain1_gain2 (1).csv', 11, 0); 
+
 
 %r = number of rows, c = number of columns 
 [r,c] = size(data);
@@ -39,6 +43,7 @@ plot((w*5000000)/(2*pi),log10(abs(z)));
 xlabel('Frequencies Hz');
 ylabel('Magnitude')
 
+
 %find frequencies 
 %function [ FrequencyOut, timeChange ] = IF_FrequencyCalcs( TimeIn )
 [chan1_frequencies, chan1_freqTime] = IF_FrequencyCalcs(chan1_zeroTime); 
@@ -52,8 +57,10 @@ ylabel('Magnitude')
 
 
 %find the changes in average frequencies 
+
 [ chan1_avgFreq, chan1_avgTime ] = freqChange( chan1_freqAvg , chan1_timeAvg );
 [ chan2_avgFreq, chan2_avgTime ] = freqChange(chan2_freqAvg , chan2_timeAvg );
+
 
 
 

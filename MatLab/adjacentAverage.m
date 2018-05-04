@@ -9,12 +9,13 @@ while(i < length(inFreq) - 1)
      
     runningSum = 0;
     %wait until the different is greater that 0.01s
-<<<<<<< HEAD
+
+
     % && (abs(inFreq(i) - inFreq(i+j) < 200)
-    while((inTime(i+j) - inTime(i) < 0) && (i+j < length(inFreq)))
-=======
+
+
     while((inTime(i+j) - inTime(i) < 0.0000115) && (i+j < length(inFreq)) && (abs(inFreq(i) - inFreq(i+j) < 3000)))
->>>>>>> b5f3578fcb7ae52303ff9f73a1f8f7fb84b6bf0e
+
         runningSum = runningSum + inFreq(i+j); 
         j = j+1;  
     end

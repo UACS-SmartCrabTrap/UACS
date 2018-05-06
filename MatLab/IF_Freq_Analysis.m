@@ -9,7 +9,7 @@
 
 
 
-data = csvread('3_gain1_gain2 (1).csv', 11, 0); 
+data = csvread('42_surface_lpfin_lpfout.csv', 11, 0); 
 
 
 %r = number of rows, c = number of columns 

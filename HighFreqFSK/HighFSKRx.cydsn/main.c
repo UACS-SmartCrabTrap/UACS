@@ -2,7 +2,7 @@
  * Smart Crab Trap
  * FSK RX 
  * Edited by: Stephanie Salazar
- * Revision: 4/18/18
+ * Revision: 5/10/18
  *
  * ========================================
 */
@@ -46,9 +46,6 @@ int main(void)
     Bit_Timer_Start();
     Timer_ISR_StartEx(Bit_Timer);
     LCD_Char_Start();
-    //HighF_PGA_Start() ;
-    //Comp_Buffer_Start();
-    //VGround_Buffer_Start();
 
     // Displays Loading Message before receiving pre-fix
     char OutputString[12];

@@ -4,8 +4,9 @@
 /*Definitions*/
 #define CLOCK_FREQ 1000000
 #define FREQ(x) (CLOCK_FREQ/x)-1
-#define ONE_FREQ 43000
-#define ZERO_FREQ 36000
+#define ONE_FREQ 42000
+#define ZERO_FREQ 37000
+#define AUDIBLE_FREQ 12000
 #define DEFAULT_FREQ MIN_FREQ
 
 #define BIT_0_MASK 0x01
@@ -30,7 +31,6 @@ int Data(unsigned int hex_value, int bT);
 int Decode(unsigned int hex_value, int bT);
 int PreFix(unsigned int hex_value, int prefixCount);
 CY_ISR_PROTO(isr_halfsec); // High F Interrupts
-//CY_ISR_PROTO(isr_msec); // High F  Alternating Interrupts
 
 /*Global Variables*/
 static int bitTime = 0;
@@ -57,9 +57,17 @@ int main(void)
     int data_turn = 0;
     unsigned int data_to_be_sent = ONE;
     
+    // Set PWM to AUDIBLE_FREQ
+    PWM_1_WritePeriod(FREQ(AUDIBLE_FREQ));
+    PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
+    
     // Set PWM to ONE_FREQ
     PWM_2_WritePeriod(FREQ(ONE_FREQ));
     PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+    
+    // Set PWM to ZERO_FREQ
+    PWM_3_WritePeriod(FREQ(ZERO_FREQ));
+    PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
 
 
     

@@ -3,7 +3,10 @@
  * FSK RX 
  * Edited by: Stephanie Salazar
  * Revision: 4/23/18
- *
+ * Function: This code alternates between two frequencies depending on 
+ * the set delay time. This can be changed with the #define DELAY_TIME. 
+ * There are 3 PWM blocks with this functionality that have the same ONE_FREQ,
+ * but vary depending on the ZERO_FREQ. The audible PWM is for testing.
  * ========================================
 */
 
@@ -53,18 +56,24 @@ int main(void)
         if(alternating == 1){
             /*Alternate between high and low frequency for 10 ms*/
             // Pin 1.2 PWM
+            PWM_Alternating_1_Start();
             PWM_Alternating_1_WritePeriod(FREQ(ONE_FREQ));
             PWM_Alternating_1_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
             // Pin 1.4 PWM
             PWM_Alternating_2_Start();
             PWM_Alternating_2_WritePeriod(FREQ(ONE_FREQ));
             PWM_Alternating_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+            // Pin 1.6 PWM
+            PWM_Alternating_3_Start();
+            PWM_Alternating_3_WritePeriod(FREQ(ONE_FREQ));
+            PWM_Alternating_3_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
             
 
         }else if(alternating == 2 || alternating == 4){
             PWM_Alternating_2_Stop();
         }else if(alternating == 3){
             // Pin 1.2 PWM
+            PWM_Alternating_1_Start();
             PWM_Alternating_1_WritePeriod(FREQ(ZERO_FREQ_1));
             PWM_Alternating_1_WriteCompare((FREQ(ZERO_FREQ_1))/2); // Sets pulse width to half
             // Pin 1.4 PWM
@@ -72,8 +81,9 @@ int main(void)
             PWM_Alternating_2_WritePeriod(FREQ(ZERO_FREQ_2));
             PWM_Alternating_2_WriteCompare((FREQ(ZERO_FREQ_2))/2); // Sets pulse width to half
             // Pin 1.6 PWM
-//            PWM_Alternating_3_WritePeriod(FREQ(ZERO_FREQ_3));
-//            PWM_Alternating_3_WriteCompare((FREQ(ZERO_FREQ_3))/2); // Sets pulse width to half
+            PWM_Alternating_3_Start();
+            PWM_Alternating_3_WritePeriod(FREQ(ZERO_FREQ_3));
+            PWM_Alternating_3_WriteCompare((FREQ(ZERO_FREQ_3))/2); // Sets pulse width to half
         }
             
     }//end for(;;)

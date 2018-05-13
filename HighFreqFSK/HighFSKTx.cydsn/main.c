@@ -1,13 +1,28 @@
+/* ========================================
+ * Smart Crab Trap
+ * HighFSKTx 
+ * Edited by: Stephanie Salazar
+ * Revision: 5/12/18
+ * Function: This project contains 4 PWM blocks
+ * that output a different PWM. PWM_Modulator 
+ * outputs the FSK data that alternates between
+ * 1, 2, 3, and 8 with a 3 second delay in between.
+ * The other PWM blocks have an audible frequency,
+ * a one frequency, and a zero frequency.
+ * ========================================
+*/
+
 /*Included header files*/
 #include "project.h"
 
 /*Definitions*/
 #define CLOCK_FREQ 1000000
 #define FREQ(x) (CLOCK_FREQ/x)-1
+
+/*PWM Frequencies*/
 #define ONE_FREQ 42000
 #define ZERO_FREQ 37000
 #define AUDIBLE_FREQ 12000
-#define DEFAULT_FREQ MIN_FREQ
 
 #define BIT_0_MASK 0x01
 #define BIT_1_MASK 0x02
@@ -30,7 +45,7 @@
 int Data(unsigned int hex_value, int bT);
 int Decode(unsigned int hex_value, int bT);
 int PreFix(unsigned int hex_value, int prefixCount);
-CY_ISR_PROTO(isr_halfsec); // High F Interrupts
+CY_ISR_PROTO(isr_halfsec); // High F Interrupt
 
 /*Global Variables*/
 static int bitTime = 0;
@@ -43,14 +58,11 @@ int main(void)
     
     /*Block initializations*/
     PWM_Modulator_Start();
-//    PWM_Alternating_Start();
-//    PWM_Alternating_Timer_Start();
     PWM_1_Start();
     PWM_2_Start();
     PWM_3_Start();
     PWM_Switch_Timer_Start();
     isr_halfsec_StartEx(isr_halfsec);
-//    isr_msec_StartEx(isr_msec);
     
     /*Variable initializations*/
     int bitCase = 0;
@@ -135,7 +147,7 @@ int main(void)
 }//end main()
 
 
-// Interrupt triggered on a 0.5s timer timeout
+// Interrupt triggered on a 0.1s timer timeout
 // Will increment prefixTime counter for the 1st 8 bits
 // Then move on to incrementing the message bit counter
 CY_ISR(isr_halfsec)

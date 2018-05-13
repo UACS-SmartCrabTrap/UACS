@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 1
 
 
    1              		.syntax unified
@@ -35,190 +35,193 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
    5:main.c        ****  * Revision: 5/12/18
    6:main.c        ****  * Function: This project contains 4 PWM blocks
    7:main.c        ****  * that output a different PWM. PWM_Modulator 
-   8:main.c        ****  * outputs the FSK data that can be changed 
-   9:main.c        ****  * ========================================
-  10:main.c        **** */
-  11:main.c        **** 
-  12:main.c        **** /*Included header files*/
-  13:main.c        **** #include "project.h"
+   8:main.c        ****  * outputs the FSK data that alternates between
+   9:main.c        ****  * 1, 2, 3, and 8 with a 3 second delay in between.
+  10:main.c        ****  * The other PWM blocks have an audible frequency,
+  11:main.c        ****  * a one frequency, and a zero frequency.
+  12:main.c        ****  * ========================================
+  13:main.c        **** */
   14:main.c        **** 
-  15:main.c        **** /*Definitions*/
-  16:main.c        **** #define CLOCK_FREQ 1000000
-  17:main.c        **** #define FREQ(x) (CLOCK_FREQ/x)-1
-  18:main.c        **** #define ONE_FREQ 42000
-  19:main.c        **** #define ZERO_FREQ 37000
-  20:main.c        **** #define AUDIBLE_FREQ 12000
-  21:main.c        **** #define DEFAULT_FREQ MIN_FREQ
-  22:main.c        **** 
-  23:main.c        **** #define BIT_0_MASK 0x01
-  24:main.c        **** #define BIT_1_MASK 0x02
-  25:main.c        **** #define BIT_2_MASK 0x04
-  26:main.c        **** #define BIT_3_MASK 0x08
-  27:main.c        **** #define BIT_4_MASK 0x10
-  28:main.c        **** #define BIT_5_MASK 0x20
-  29:main.c        **** #define BIT_6_MASK 0x40
-  30:main.c        **** #define BIT_7_MASK 0x80
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 2
+  15:main.c        **** /*Included header files*/
+  16:main.c        **** #include "project.h"
+  17:main.c        **** 
+  18:main.c        **** /*Definitions*/
+  19:main.c        **** #define CLOCK_FREQ 1000000
+  20:main.c        **** #define FREQ(x) (CLOCK_FREQ/x)-1
+  21:main.c        **** 
+  22:main.c        **** /*PWM Frequencies*/
+  23:main.c        **** #define ONE_FREQ 42000
+  24:main.c        **** #define ZERO_FREQ 37000
+  25:main.c        **** #define AUDIBLE_FREQ 12000
+  26:main.c        **** 
+  27:main.c        **** #define BIT_0_MASK 0x01
+  28:main.c        **** #define BIT_1_MASK 0x02
+  29:main.c        **** #define BIT_2_MASK 0x04
+  30:main.c        **** #define BIT_3_MASK 0x08
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 2
 
 
-  31:main.c        **** 
-  32:main.c        **** #define ZERO 0x0
-  33:main.c        **** #define ONE 0x1
-  34:main.c        **** #define DATA_LENGTH 4
-  35:main.c        **** #define DECODE_VALUE 0x01
-  36:main.c        **** //
-  37:main.c        **** #define PREFIX_BIT_LENGTH 6
-  38:main.c        **** #define PREFIX_MESSAGE 0xFF
-  39:main.c        **** 
-  40:main.c        **** /*Function Prototypes*/
-  41:main.c        **** int Data(unsigned int hex_value, int bT);
-  42:main.c        **** int Decode(unsigned int hex_value, int bT);
-  43:main.c        **** int PreFix(unsigned int hex_value, int prefixCount);
-  44:main.c        **** CY_ISR_PROTO(isr_halfsec); // High F Interrupts
-  45:main.c        **** 
-  46:main.c        **** /*Global Variables*/
-  47:main.c        **** static int bitTime = 0;
-  48:main.c        **** static int prefixTime = 0;
-  49:main.c        **** static int alternating = 0;
-  50:main.c        **** 
-  51:main.c        **** int main(void)
-  52:main.c        **** {
-  53:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
-  54:main.c        ****     
-  55:main.c        ****     /*Block initializations*/
-  56:main.c        ****     PWM_Modulator_Start();
-  57:main.c        ****     PWM_1_Start();
-  58:main.c        ****     PWM_2_Start();
-  59:main.c        ****     PWM_3_Start();
-  60:main.c        ****     PWM_Switch_Timer_Start();
-  61:main.c        ****     isr_halfsec_StartEx(isr_halfsec);
-  62:main.c        **** //    isr_msec_StartEx(isr_msec);
-  63:main.c        ****     
-  64:main.c        ****     /*Variable initializations*/
-  65:main.c        ****     int bitCase = 0;
-  66:main.c        ****     int data_turn = 0;
-  67:main.c        ****     unsigned int data_to_be_sent = ONE;
-  68:main.c        ****     
-  69:main.c        ****     // Set PWM to AUDIBLE_FREQ
-  70:main.c        ****     PWM_1_WritePeriod(FREQ(AUDIBLE_FREQ));
-  71:main.c        ****     PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
-  72:main.c        ****     
-  73:main.c        ****     // Set PWM to ONE_FREQ
-  74:main.c        ****     PWM_2_WritePeriod(FREQ(ONE_FREQ));
-  75:main.c        ****     PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
-  76:main.c        ****     
-  77:main.c        ****     // Set PWM to ZERO_FREQ
-  78:main.c        ****     PWM_3_WritePeriod(FREQ(ZERO_FREQ));
-  79:main.c        ****     PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
-  80:main.c        **** 
-  81:main.c        **** 
-  82:main.c        ****     
-  83:main.c        ****     for(;;)
-  84:main.c        ****     {
-  85:main.c        ****         switch(bitTime){
-  86:main.c        ****             // ENCODE
-  87:main.c        ****             case 0:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 3
+  31:main.c        **** #define BIT_4_MASK 0x10
+  32:main.c        **** #define BIT_5_MASK 0x20
+  33:main.c        **** #define BIT_6_MASK 0x40
+  34:main.c        **** #define BIT_7_MASK 0x80
+  35:main.c        **** 
+  36:main.c        **** #define ZERO 0x0
+  37:main.c        **** #define ONE 0x1
+  38:main.c        **** #define DATA_LENGTH 4
+  39:main.c        **** #define DECODE_VALUE 0x01
+  40:main.c        **** //
+  41:main.c        **** #define PREFIX_BIT_LENGTH 6
+  42:main.c        **** #define PREFIX_MESSAGE 0xFF
+  43:main.c        **** 
+  44:main.c        **** /*Function Prototypes*/
+  45:main.c        **** int Data(unsigned int hex_value, int bT);
+  46:main.c        **** int Decode(unsigned int hex_value, int bT);
+  47:main.c        **** int PreFix(unsigned int hex_value, int prefixCount);
+  48:main.c        **** CY_ISR_PROTO(isr_halfsec); // High F Interrupt
+  49:main.c        **** 
+  50:main.c        **** /*Global Variables*/
+  51:main.c        **** static int bitTime = 0;
+  52:main.c        **** static int prefixTime = 0;
+  53:main.c        **** static int alternating = 0;
+  54:main.c        **** 
+  55:main.c        **** int main(void)
+  56:main.c        **** {
+  57:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+  58:main.c        ****     
+  59:main.c        ****     /*Block initializations*/
+  60:main.c        ****     PWM_Modulator_Start();
+  61:main.c        ****     PWM_1_Start();
+  62:main.c        ****     PWM_2_Start();
+  63:main.c        ****     PWM_3_Start();
+  64:main.c        ****     PWM_Switch_Timer_Start();
+  65:main.c        ****     isr_halfsec_StartEx(isr_halfsec);
+  66:main.c        ****     
+  67:main.c        ****     /*Variable initializations*/
+  68:main.c        ****     int bitCase = 0;
+  69:main.c        ****     int data_turn = 0;
+  70:main.c        ****     unsigned int data_to_be_sent = ONE;
+  71:main.c        ****     
+  72:main.c        ****     // Set PWM to AUDIBLE_FREQ
+  73:main.c        ****     PWM_1_WritePeriod(FREQ(AUDIBLE_FREQ));
+  74:main.c        ****     PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
+  75:main.c        ****     
+  76:main.c        ****     // Set PWM to ONE_FREQ
+  77:main.c        ****     PWM_2_WritePeriod(FREQ(ONE_FREQ));
+  78:main.c        ****     PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+  79:main.c        ****     
+  80:main.c        ****     // Set PWM to ZERO_FREQ
+  81:main.c        ****     PWM_3_WritePeriod(FREQ(ZERO_FREQ));
+  82:main.c        ****     PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
+  83:main.c        **** 
+  84:main.c        **** 
+  85:main.c        ****     
+  86:main.c        ****     for(;;)
+  87:main.c        ****     {
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 3
 
 
-  88:main.c        ****                 bitCase = PreFix(PREFIX_MESSAGE , prefixTime);
-  89:main.c        ****                 break; 
-  90:main.c        ****             // DATA
-  91:main.c        ****             case 1:
-  92:main.c        ****             case 2:
-  93:main.c        ****             case 3:
-  94:main.c        ****             case 4:
-  95:main.c        ****                 bitCase = Data(data_to_be_sent, bitTime); 
-  96:main.c        ****                 break; 
-  97:main.c        ****             // DECODE
-  98:main.c        ****             case 5:    
-  99:main.c        ****             case 6:
- 100:main.c        ****             case 7:    
- 101:main.c        ****             case 8:
- 102:main.c        ****             case 9:
- 103:main.c        ****             case 10:
- 104:main.c        ****             case 11:
- 105:main.c        ****             case 12:
- 106:main.c        ****                 bitCase = Decode(DECODE_VALUE, bitTime);
- 107:main.c        ****                 break;
- 108:main.c        ****             case 13:
- 109:main.c        ****                 bitTime = 0;
- 110:main.c        ****                 //encode used to transmit 7 1's for the prefix 
- 111:main.c        ****                 //reset here to be ready for case 0 
- 112:main.c        ****                 prefixTime = 0;
- 113:main.c        ****                 data_turn++;
- 114:main.c        ****                 data_to_be_sent <<= 1;
- 115:main.c        ****                 //Once data to be sent can't be contained in a nibble, reset to 0x1
- 116:main.c        ****                 if (data_turn == DATA_LENGTH) {
- 117:main.c        ****                     data_turn = 0;
- 118:main.c        ****                     data_to_be_sent = ONE;
- 119:main.c        ****                 }
- 120:main.c        ****                 PWM_Modulator_Stop();
- 121:main.c        ****                 // Turn High Voltage off while delaying
- 122:main.c        ****                 PWM_Switch_Timer_Stop();
- 123:main.c        ****                 // Turn High Voltage Back On
- 124:main.c        ****                 HighVoltage_Write(0);
- 125:main.c        ****                 CyDelay(3000);
- 126:main.c        ****                 HighVoltage_Write(1);
- 127:main.c        ****                 PWM_Modulator_Start();
- 128:main.c        ****                 PWM_Switch_Timer_Start();
- 129:main.c        ****                 break;
- 130:main.c        ****             default:
- 131:main.c        ****                 break; 
- 132:main.c        ****          } //end switch(bitTime) 
- 133:main.c        ****         
- 134:main.c        ****         if(bitCase == ONE){
- 135:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
- 136:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
- 137:main.c        ****         }else if(bitCase == ZERO){
- 138:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
- 139:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
- 140:main.c        ****         }
- 141:main.c        ****         
- 142:main.c        ****     }//end for(;;)
- 143:main.c        ****     
- 144:main.c        **** }//end main()
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 4
+  88:main.c        ****         switch(bitTime){
+  89:main.c        ****             // ENCODE
+  90:main.c        ****             case 0:
+  91:main.c        ****                 bitCase = PreFix(PREFIX_MESSAGE , prefixTime);
+  92:main.c        ****                 break; 
+  93:main.c        ****             // DATA
+  94:main.c        ****             case 1:
+  95:main.c        ****             case 2:
+  96:main.c        ****             case 3:
+  97:main.c        ****             case 4:
+  98:main.c        ****                 bitCase = Data(data_to_be_sent, bitTime); 
+  99:main.c        ****                 break; 
+ 100:main.c        ****             // DECODE
+ 101:main.c        ****             case 5:    
+ 102:main.c        ****             case 6:
+ 103:main.c        ****             case 7:    
+ 104:main.c        ****             case 8:
+ 105:main.c        ****             case 9:
+ 106:main.c        ****             case 10:
+ 107:main.c        ****             case 11:
+ 108:main.c        ****             case 12:
+ 109:main.c        ****                 bitCase = Decode(DECODE_VALUE, bitTime);
+ 110:main.c        ****                 break;
+ 111:main.c        ****             case 13:
+ 112:main.c        ****                 bitTime = 0;
+ 113:main.c        ****                 //encode used to transmit 7 1's for the prefix 
+ 114:main.c        ****                 //reset here to be ready for case 0 
+ 115:main.c        ****                 prefixTime = 0;
+ 116:main.c        ****                 data_turn++;
+ 117:main.c        ****                 data_to_be_sent <<= 1;
+ 118:main.c        ****                 //Once data to be sent can't be contained in a nibble, reset to 0x1
+ 119:main.c        ****                 if (data_turn == DATA_LENGTH) {
+ 120:main.c        ****                     data_turn = 0;
+ 121:main.c        ****                     data_to_be_sent = ONE;
+ 122:main.c        ****                 }
+ 123:main.c        ****                 PWM_Modulator_Stop();
+ 124:main.c        ****                 // Turn High Voltage off while delaying
+ 125:main.c        ****                 PWM_Switch_Timer_Stop();
+ 126:main.c        ****                 // Turn High Voltage Back On
+ 127:main.c        ****                 HighVoltage_Write(0);
+ 128:main.c        ****                 CyDelay(3000);
+ 129:main.c        ****                 HighVoltage_Write(1);
+ 130:main.c        ****                 PWM_Modulator_Start();
+ 131:main.c        ****                 PWM_Switch_Timer_Start();
+ 132:main.c        ****                 break;
+ 133:main.c        ****             default:
+ 134:main.c        ****                 break; 
+ 135:main.c        ****          } //end switch(bitTime) 
+ 136:main.c        ****         
+ 137:main.c        ****         if(bitCase == ONE){
+ 138:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
+ 139:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
+ 140:main.c        ****         }else if(bitCase == ZERO){
+ 141:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
+ 142:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+ 143:main.c        ****         }
+ 144:main.c        ****         
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 4
 
 
- 145:main.c        **** 
- 146:main.c        **** 
- 147:main.c        **** // Interrupt triggered on a 0.5s timer timeout
- 148:main.c        **** // Will increment prefixTime counter for the 1st 8 bits
- 149:main.c        **** // Then move on to incrementing the message bit counter
- 150:main.c        **** CY_ISR(isr_halfsec)
- 151:main.c        **** {
-  28              		.loc 1 151 0
+ 145:main.c        ****     }//end for(;;)
+ 146:main.c        ****     
+ 147:main.c        **** }//end main()
+ 148:main.c        **** 
+ 149:main.c        **** 
+ 150:main.c        **** // Interrupt triggered on a 0.1s timer timeout
+ 151:main.c        **** // Will increment prefixTime counter for the 1st 8 bits
+ 152:main.c        **** // Then move on to incrementing the message bit counter
+ 153:main.c        **** CY_ISR(isr_halfsec)
+ 154:main.c        **** {
+  28              		.loc 1 154 0
   29              		.cfi_startproc
   30              		@ args = 0, pretend = 0, frame = 0
   31              		@ frame_needed = 0, uses_anonymous_args = 0
   32              		@ link register save eliminated.
- 152:main.c        ****     if((bitTime == 0) && (prefixTime <= PREFIX_BIT_LENGTH)){
-  33              		.loc 1 152 0
+ 155:main.c        ****     if((bitTime == 0) && (prefixTime <= PREFIX_BIT_LENGTH)){
+  33              		.loc 1 155 0
   34 0000 094B     		ldr	r3, .L4
   35 0002 1B68     		ldr	r3, [r3]
   36 0004 3BB9     		cbnz	r3, .L2
-  37              		.loc 1 152 0 is_stmt 0 discriminator 1
+  37              		.loc 1 155 0 is_stmt 0 discriminator 1
   38 0006 084A     		ldr	r2, .L4
   39 0008 5268     		ldr	r2, [r2, #4]
   40 000a 062A     		cmp	r2, #6
   41 000c 03DC     		bgt	.L2
- 153:main.c        ****         prefixTime++;
-  42              		.loc 1 153 0 is_stmt 1
+ 156:main.c        ****         prefixTime++;
+  42              		.loc 1 156 0 is_stmt 1
   43 000e 0132     		adds	r2, r2, #1
   44 0010 054B     		ldr	r3, .L4
   45 0012 5A60     		str	r2, [r3, #4]
   46 0014 7047     		bx	lr
   47              	.L2:
- 154:main.c        ****     }
- 155:main.c        ****     else if(prefixTime > PREFIX_BIT_LENGTH){
-  48              		.loc 1 155 0
+ 157:main.c        ****     }
+ 158:main.c        ****     else if(prefixTime > PREFIX_BIT_LENGTH){
+  48              		.loc 1 158 0
   49 0016 044A     		ldr	r2, .L4
   50 0018 5268     		ldr	r2, [r2, #4]
   51 001a 062A     		cmp	r2, #6
   52 001c 02DD     		ble	.L1
- 156:main.c        ****         bitTime++;
-  53              		.loc 1 156 0
+ 159:main.c        ****         bitTime++;
+  53              		.loc 1 159 0
   54 001e 0133     		adds	r3, r3, #1
   55 0020 014A     		ldr	r2, .L4
   56 0022 1360     		str	r3, [r2]
@@ -235,54 +238,54 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
   67              		.align	2
   68              		.global	Data
   69              		.thumb
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 5
+
+
   70              		.thumb_func
   71              		.type	Data, %function
   72              	Data:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 5
-
-
   73              	.LFB65:
- 157:main.c        ****     }
- 158:main.c        **** }//end CY_ISR(isr_halfsec)
- 159:main.c        **** 
- 160:main.c        **** 
- 161:main.c        **** // Interrupt triggered on a 1 ms timer timeout
- 162:main.c        **** // Will change between 30k and 45k every 1 ms
- 163:main.c        **** //CY_ISR(isr_msec)
- 164:main.c        **** //{
- 165:main.c        **** //    if(alternating == 1){
- 166:main.c        **** //        alternating = 0;
- 167:main.c        **** //    }else{
- 168:main.c        **** //        alternating = 1;
- 169:main.c        **** //    }
- 170:main.c        **** //    if(alternating == 1){
- 171:main.c        **** //        PWM_Alternating_WritePeriod(FREQ(ONE_FREQ));
- 172:main.c        **** //        PWM_Alternating_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
- 173:main.c        **** //    }else if(alternating == 0){
- 174:main.c        **** //        PWM_Alternating_WritePeriod(FREQ(ZERO_FREQ));
- 175:main.c        **** //        PWM_Alternating_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
- 176:main.c        **** //    }
- 177:main.c        **** //}//end CY_ISR(isr_msec)
- 178:main.c        **** 
- 179:main.c        **** /*
- 180:main.c        ****  * function: int Data(unsigned int hex_value, int bT)
- 181:main.c        ****  * parameters: hex_value - a four bit value specifying what data you want to send
- 182:main.c        ****  *             bT - the current bit time
- 183:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
- 184:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
- 185:main.c        ****  *  low signal depending on the bit time. Used only to set desired data nibble.
- 186:main.c        ****  */
- 187:main.c        **** int Data(unsigned int hex_value, int bT)
- 188:main.c        **** {
-  74              		.loc 1 188 0
+ 160:main.c        ****     }
+ 161:main.c        **** }//end CY_ISR(isr_halfsec)
+ 162:main.c        **** 
+ 163:main.c        **** 
+ 164:main.c        **** // Interrupt triggered on a 1 ms timer timeout
+ 165:main.c        **** // Will change between 30k and 45k every 1 ms
+ 166:main.c        **** //CY_ISR(isr_msec)
+ 167:main.c        **** //{
+ 168:main.c        **** //    if(alternating == 1){
+ 169:main.c        **** //        alternating = 0;
+ 170:main.c        **** //    }else{
+ 171:main.c        **** //        alternating = 1;
+ 172:main.c        **** //    }
+ 173:main.c        **** //    if(alternating == 1){
+ 174:main.c        **** //        PWM_Alternating_WritePeriod(FREQ(ONE_FREQ));
+ 175:main.c        **** //        PWM_Alternating_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
+ 176:main.c        **** //    }else if(alternating == 0){
+ 177:main.c        **** //        PWM_Alternating_WritePeriod(FREQ(ZERO_FREQ));
+ 178:main.c        **** //        PWM_Alternating_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+ 179:main.c        **** //    }
+ 180:main.c        **** //}//end CY_ISR(isr_msec)
+ 181:main.c        **** 
+ 182:main.c        **** /*
+ 183:main.c        ****  * function: int Data(unsigned int hex_value, int bT)
+ 184:main.c        ****  * parameters: hex_value - a four bit value specifying what data you want to send
+ 185:main.c        ****  *             bT - the current bit time
+ 186:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
+ 187:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
+ 188:main.c        ****  *  low signal depending on the bit time. Used only to set desired data nibble.
+ 189:main.c        ****  */
+ 190:main.c        **** int Data(unsigned int hex_value, int bT)
+ 191:main.c        **** {
+  74              		.loc 1 191 0
   75              		.cfi_startproc
   76              		@ args = 0, pretend = 0, frame = 0
   77              		@ frame_needed = 0, uses_anonymous_args = 0
   78              		@ link register save eliminated.
   79              	.LVL0:
- 189:main.c        ****     int bitCase;
- 190:main.c        ****     switch(bT){
-  80              		.loc 1 190 0
+ 192:main.c        ****     int bitCase;
+ 193:main.c        ****     switch(bT){
+  80              		.loc 1 193 0
   81 0000 0139     		subs	r1, r1, #1
   82              	.LVL1:
   83 0002 0329     		cmp	r1, #3
@@ -295,52 +298,52 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
   90 000d 0B       		.byte	(.L12-.L9)/2
   91              		.p2align 1
   92              	.L8:
- 191:main.c        ****         case 1:
- 192:main.c        ****             bitCase = (hex_value & BIT_3_MASK) >> 3;
-  93              		.loc 1 192 0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 6
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 6
 
 
+ 194:main.c        ****         case 1:
+ 195:main.c        ****             bitCase = (hex_value & BIT_3_MASK) >> 3;
+  93              		.loc 1 195 0
   94 000e C0F3C003 		ubfx	r3, r0, #3, #1
   95              	.LVL2:
- 193:main.c        ****             break; 
-  96              		.loc 1 193 0
+ 196:main.c        ****             break; 
+  96              		.loc 1 196 0
   97 0012 07E0     		b	.L7
   98              	.LVL3:
   99              	.L10:
- 194:main.c        ****         case 2:
- 195:main.c        ****             bitCase = (hex_value & BIT_2_MASK) >> 2;
- 100              		.loc 1 195 0
+ 197:main.c        ****         case 2:
+ 198:main.c        ****             bitCase = (hex_value & BIT_2_MASK) >> 2;
+ 100              		.loc 1 198 0
  101 0014 C0F38003 		ubfx	r3, r0, #2, #1
  102              	.LVL4:
- 196:main.c        ****             break; 
- 103              		.loc 1 196 0
+ 199:main.c        ****             break; 
+ 103              		.loc 1 199 0
  104 0018 04E0     		b	.L7
  105              	.LVL5:
  106              	.L11:
- 197:main.c        ****         case 3:
- 198:main.c        ****             bitCase = (hex_value & BIT_1_MASK) >> 1;
- 107              		.loc 1 198 0
+ 200:main.c        ****         case 3:
+ 201:main.c        ****             bitCase = (hex_value & BIT_1_MASK) >> 1;
+ 107              		.loc 1 201 0
  108 001a C0F34003 		ubfx	r3, r0, #1, #1
  109              	.LVL6:
- 199:main.c        ****             break; 
- 110              		.loc 1 199 0
+ 202:main.c        ****             break; 
+ 110              		.loc 1 202 0
  111 001e 01E0     		b	.L7
  112              	.LVL7:
  113              	.L12:
- 200:main.c        ****         case 4:
- 201:main.c        ****             bitCase = (hex_value & BIT_0_MASK);
- 114              		.loc 1 201 0
+ 203:main.c        ****         case 4:
+ 204:main.c        ****             bitCase = (hex_value & BIT_0_MASK);
+ 114              		.loc 1 204 0
  115 0020 00F00103 		and	r3, r0, #1
  116              	.LVL8:
  117              	.L7:
- 202:main.c        ****             break;
- 203:main.c        ****         default:
- 204:main.c        ****             break;
- 205:main.c        ****     } //end switch(bT)
- 206:main.c        ****     return bitCase;
- 207:main.c        **** }//end Data()
- 118              		.loc 1 207 0
+ 205:main.c        ****             break;
+ 206:main.c        ****         default:
+ 207:main.c        ****             break;
+ 208:main.c        ****     } //end switch(bT)
+ 209:main.c        ****     return bitCase;
+ 210:main.c        **** }//end Data()
+ 118              		.loc 1 210 0
  119 0024 1846     		mov	r0, r3
  120              	.LVL9:
  121 0026 7047     		bx	lr
@@ -355,30 +358,30 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  130              		.type	Decode, %function
  131              	Decode:
  132              	.LFB66:
- 208:main.c        **** 
- 209:main.c        **** 
- 210:main.c        **** /*
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 7
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 7
 
 
- 211:main.c        ****  * function: int Decode(unsigned int hex_value, int bT)
- 212:main.c        ****  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
- 213:main.c        ****  *             bT - the current bit time
- 214:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
- 215:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
- 216:main.c        ****  *  low signal depending on the bit time. Used only to set desired decode encryption.
- 217:main.c        ****  */
- 218:main.c        **** int Decode(unsigned int hex_value, int bT)
- 219:main.c        **** {
- 133              		.loc 1 219 0
+ 211:main.c        **** 
+ 212:main.c        **** 
+ 213:main.c        **** /*
+ 214:main.c        ****  * function: int Decode(unsigned int hex_value, int bT)
+ 215:main.c        ****  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
+ 216:main.c        ****  *             bT - the current bit time
+ 217:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
+ 218:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
+ 219:main.c        ****  *  low signal depending on the bit time. Used only to set desired decode encryption.
+ 220:main.c        ****  */
+ 221:main.c        **** int Decode(unsigned int hex_value, int bT)
+ 222:main.c        **** {
+ 133              		.loc 1 222 0
  134              		.cfi_startproc
  135              		@ args = 0, pretend = 0, frame = 0
  136              		@ frame_needed = 0, uses_anonymous_args = 0
  137              		@ link register save eliminated.
  138              	.LVL10:
- 220:main.c        ****     int bitCase;
- 221:main.c        ****     switch(bT){
- 139              		.loc 1 221 0
+ 223:main.c        ****     int bitCase;
+ 224:main.c        ****     switch(bT){
+ 139              		.loc 1 224 0
  140 0000 0539     		subs	r1, r1, #5
  141              	.LVL11:
  142 0002 0729     		cmp	r1, #7
@@ -395,95 +398,95 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  153 0011 19       		.byte	(.L23-.L16)/2
  154              		.p2align 1
  155              	.L15:
- 222:main.c        ****         case 5:
- 223:main.c        ****             bitCase = (hex_value & BIT_7_MASK) >> 7;
- 156              		.loc 1 223 0
+ 225:main.c        ****         case 5:
+ 226:main.c        ****             bitCase = (hex_value & BIT_7_MASK) >> 7;
+ 156              		.loc 1 226 0
  157 0012 C0F3C013 		ubfx	r3, r0, #7, #1
  158              	.LVL12:
- 224:main.c        ****             break;
- 159              		.loc 1 224 0
+ 227:main.c        ****             break;
+ 159              		.loc 1 227 0
  160 0016 13E0     		b	.L14
  161              	.LVL13:
  162              	.L17:
- 225:main.c        ****         case 6:
- 226:main.c        ****             bitCase = (hex_value & BIT_6_MASK) >> 6;
- 163              		.loc 1 226 0
+ 228:main.c        ****         case 6:
+ 229:main.c        ****             bitCase = (hex_value & BIT_6_MASK) >> 6;
+ 163              		.loc 1 229 0
  164 0018 C0F38013 		ubfx	r3, r0, #6, #1
  165              	.LVL14:
- 227:main.c        ****             break; 
- 166              		.loc 1 227 0
+ 230:main.c        ****             break; 
+ 166              		.loc 1 230 0
  167 001c 10E0     		b	.L14
  168              	.LVL15:
  169              	.L18:
- 228:main.c        ****         case 7:
- 229:main.c        ****             bitCase = (hex_value & BIT_5_MASK) >> 5;
- 170              		.loc 1 229 0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 8
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 8
 
 
+ 231:main.c        ****         case 7:
+ 232:main.c        ****             bitCase = (hex_value & BIT_5_MASK) >> 5;
+ 170              		.loc 1 232 0
  171 001e C0F34013 		ubfx	r3, r0, #5, #1
  172              	.LVL16:
- 230:main.c        ****             break; 
- 173              		.loc 1 230 0
+ 233:main.c        ****             break; 
+ 173              		.loc 1 233 0
  174 0022 0DE0     		b	.L14
  175              	.LVL17:
  176              	.L19:
- 231:main.c        ****         case 8:
- 232:main.c        ****             bitCase = (hex_value & BIT_4_MASK) >> 4;
- 177              		.loc 1 232 0
+ 234:main.c        ****         case 8:
+ 235:main.c        ****             bitCase = (hex_value & BIT_4_MASK) >> 4;
+ 177              		.loc 1 235 0
  178 0024 C0F30013 		ubfx	r3, r0, #4, #1
  179              	.LVL18:
- 233:main.c        ****             break;
- 180              		.loc 1 233 0
+ 236:main.c        ****             break;
+ 180              		.loc 1 236 0
  181 0028 0AE0     		b	.L14
  182              	.LVL19:
  183              	.L20:
- 234:main.c        ****         case 9:
- 235:main.c        ****             bitCase = (hex_value & BIT_3_MASK) >> 3;
- 184              		.loc 1 235 0
+ 237:main.c        ****         case 9:
+ 238:main.c        ****             bitCase = (hex_value & BIT_3_MASK) >> 3;
+ 184              		.loc 1 238 0
  185 002a C0F3C003 		ubfx	r3, r0, #3, #1
  186              	.LVL20:
- 236:main.c        ****             break; 
- 187              		.loc 1 236 0
+ 239:main.c        ****             break; 
+ 187              		.loc 1 239 0
  188 002e 07E0     		b	.L14
  189              	.LVL21:
  190              	.L21:
- 237:main.c        ****         case 10:
- 238:main.c        ****             bitCase = (hex_value & BIT_2_MASK) >> 2;
- 191              		.loc 1 238 0
+ 240:main.c        ****         case 10:
+ 241:main.c        ****             bitCase = (hex_value & BIT_2_MASK) >> 2;
+ 191              		.loc 1 241 0
  192 0030 C0F38003 		ubfx	r3, r0, #2, #1
  193              	.LVL22:
- 239:main.c        ****             break; 
- 194              		.loc 1 239 0
+ 242:main.c        ****             break; 
+ 194              		.loc 1 242 0
  195 0034 04E0     		b	.L14
  196              	.LVL23:
  197              	.L22:
- 240:main.c        ****         case 11:
- 241:main.c        ****             bitCase = (hex_value & BIT_1_MASK) >> 1;
- 198              		.loc 1 241 0
+ 243:main.c        ****         case 11:
+ 244:main.c        ****             bitCase = (hex_value & BIT_1_MASK) >> 1;
+ 198              		.loc 1 244 0
  199 0036 C0F34003 		ubfx	r3, r0, #1, #1
  200              	.LVL24:
- 242:main.c        ****             break; 
- 201              		.loc 1 242 0
+ 245:main.c        ****             break; 
+ 201              		.loc 1 245 0
  202 003a 01E0     		b	.L14
  203              	.LVL25:
  204              	.L23:
- 243:main.c        ****         case 12:
- 244:main.c        ****             bitCase = (hex_value & BIT_0_MASK);
- 205              		.loc 1 244 0
+ 246:main.c        ****         case 12:
+ 247:main.c        ****             bitCase = (hex_value & BIT_0_MASK);
+ 205              		.loc 1 247 0
  206 003c 00F00103 		and	r3, r0, #1
  207              	.LVL26:
  208              	.L14:
- 245:main.c        ****             break;
- 246:main.c        ****         default:
- 247:main.c        ****             break;
- 248:main.c        ****     } //end switch(bT)
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 9
+ 248:main.c        ****             break;
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 9
 
 
- 249:main.c        ****     return bitCase;
- 250:main.c        **** }//end Decode()
- 209              		.loc 1 250 0
+ 249:main.c        ****         default:
+ 250:main.c        ****             break;
+ 251:main.c        ****     } //end switch(bT)
+ 252:main.c        ****     return bitCase;
+ 253:main.c        **** }//end Decode()
+ 209              		.loc 1 253 0
  210 0040 1846     		mov	r0, r3
  211              	.LVL27:
  212 0042 7047     		bx	lr
@@ -498,28 +501,28 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  221              		.type	PreFix, %function
  222              	PreFix:
  223              	.LFB67:
- 251:main.c        **** 
- 252:main.c        **** 
- 253:main.c        **** /*
- 254:main.c        ****  * function: int PreFix(unsigned int hex_value, int bT)
- 255:main.c        ****  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
- 256:main.c        ****  *             bT - the current bit time
- 257:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
- 258:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
- 259:main.c        ****  *  low signal depending on the bit time. Used only to set desired decode encryption.
- 260:main.c        ****  */
- 261:main.c        **** int PreFix(unsigned int hex_value, int prefixCount)
- 262:main.c        **** {   
- 224              		.loc 1 262 0
+ 254:main.c        **** 
+ 255:main.c        **** 
+ 256:main.c        **** /*
+ 257:main.c        ****  * function: int PreFix(unsigned int hex_value, int bT)
+ 258:main.c        ****  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
+ 259:main.c        ****  *             bT - the current bit time
+ 260:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
+ 261:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
+ 262:main.c        ****  *  low signal depending on the bit time. Used only to set desired decode encryption.
+ 263:main.c        ****  */
+ 264:main.c        **** int PreFix(unsigned int hex_value, int prefixCount)
+ 265:main.c        **** {   
+ 224              		.loc 1 265 0
  225              		.cfi_startproc
  226              		@ args = 0, pretend = 0, frame = 0
  227              		@ frame_needed = 0, uses_anonymous_args = 0
  228              		@ link register save eliminated.
  229              	.LVL28:
- 263:main.c        ****     int prefixBit;
- 264:main.c        ****     
- 265:main.c        ****     switch(prefixCount){
- 230              		.loc 1 265 0
+ 266:main.c        ****     int prefixBit;
+ 267:main.c        ****     
+ 268:main.c        ****     switch(prefixCount){
+ 230              		.loc 1 268 0
  231 0000 0729     		cmp	r1, #7
  232 0002 1CD8     		bhi	.L25
  233 0004 DFE801F0 		tbb	[pc, r1]
@@ -534,98 +537,98 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  242 000f 19       		.byte	(.L34-.L27)/2
  243              		.p2align 1
  244              	.L26:
- 266:main.c        ****         case 0:
- 267:main.c        ****            prefixBit = (hex_value & BIT_7_MASK) >> 7;
- 245              		.loc 1 267 0
+ 269:main.c        ****         case 0:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 10
+
+
+ 270:main.c        ****            prefixBit = (hex_value & BIT_7_MASK) >> 7;
+ 245              		.loc 1 270 0
  246 0010 C0F3C013 		ubfx	r3, r0, #7, #1
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 10
-
-
  247              	.LVL29:
- 268:main.c        ****             break;
- 248              		.loc 1 268 0
+ 271:main.c        ****             break;
+ 248              		.loc 1 271 0
  249 0014 13E0     		b	.L25
  250              	.LVL30:
  251              	.L28:
- 269:main.c        ****         case 1:
- 270:main.c        ****             prefixBit = (hex_value & BIT_6_MASK) >> 6;
- 252              		.loc 1 270 0
+ 272:main.c        ****         case 1:
+ 273:main.c        ****             prefixBit = (hex_value & BIT_6_MASK) >> 6;
+ 252              		.loc 1 273 0
  253 0016 C0F38013 		ubfx	r3, r0, #6, #1
  254              	.LVL31:
- 271:main.c        ****             break; 
- 255              		.loc 1 271 0
+ 274:main.c        ****             break; 
+ 255              		.loc 1 274 0
  256 001a 10E0     		b	.L25
  257              	.LVL32:
  258              	.L29:
- 272:main.c        ****         case 2:
- 273:main.c        ****             prefixBit = (hex_value & BIT_5_MASK) >> 5;
- 259              		.loc 1 273 0
+ 275:main.c        ****         case 2:
+ 276:main.c        ****             prefixBit = (hex_value & BIT_5_MASK) >> 5;
+ 259              		.loc 1 276 0
  260 001c C0F34013 		ubfx	r3, r0, #5, #1
  261              	.LVL33:
- 274:main.c        ****             break; 
- 262              		.loc 1 274 0
+ 277:main.c        ****             break; 
+ 262              		.loc 1 277 0
  263 0020 0DE0     		b	.L25
  264              	.LVL34:
  265              	.L30:
- 275:main.c        ****         case 3:
- 276:main.c        ****             prefixBit = (hex_value & BIT_4_MASK) >> 4;
- 266              		.loc 1 276 0
+ 278:main.c        ****         case 3:
+ 279:main.c        ****             prefixBit = (hex_value & BIT_4_MASK) >> 4;
+ 266              		.loc 1 279 0
  267 0022 C0F30013 		ubfx	r3, r0, #4, #1
  268              	.LVL35:
- 277:main.c        ****             break;
- 269              		.loc 1 277 0
+ 280:main.c        ****             break;
+ 269              		.loc 1 280 0
  270 0026 0AE0     		b	.L25
  271              	.LVL36:
  272              	.L31:
- 278:main.c        ****         case 4:
- 279:main.c        ****             prefixBit = (hex_value & BIT_3_MASK) >> 3;
- 273              		.loc 1 279 0
+ 281:main.c        ****         case 4:
+ 282:main.c        ****             prefixBit = (hex_value & BIT_3_MASK) >> 3;
+ 273              		.loc 1 282 0
  274 0028 C0F3C003 		ubfx	r3, r0, #3, #1
  275              	.LVL37:
- 280:main.c        ****             break; 
- 276              		.loc 1 280 0
+ 283:main.c        ****             break; 
+ 276              		.loc 1 283 0
  277 002c 07E0     		b	.L25
  278              	.LVL38:
  279              	.L32:
- 281:main.c        ****         case 5:
- 282:main.c        ****             prefixBit = (hex_value & BIT_2_MASK) >> 2;
- 280              		.loc 1 282 0
+ 284:main.c        ****         case 5:
+ 285:main.c        ****             prefixBit = (hex_value & BIT_2_MASK) >> 2;
+ 280              		.loc 1 285 0
  281 002e C0F38003 		ubfx	r3, r0, #2, #1
  282              	.LVL39:
- 283:main.c        ****             break; 
- 283              		.loc 1 283 0
+ 286:main.c        ****             break; 
+ 283              		.loc 1 286 0
  284 0032 04E0     		b	.L25
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 11
+
+
  285              	.LVL40:
  286              	.L33:
- 284:main.c        ****         case 6:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 11
-
-
- 285:main.c        ****             prefixBit = (hex_value & BIT_1_MASK) >> 1;
- 287              		.loc 1 285 0
+ 287:main.c        ****         case 6:
+ 288:main.c        ****             prefixBit = (hex_value & BIT_1_MASK) >> 1;
+ 287              		.loc 1 288 0
  288 0034 C0F34003 		ubfx	r3, r0, #1, #1
  289              	.LVL41:
- 286:main.c        ****             break; 
- 290              		.loc 1 286 0
+ 289:main.c        ****             break; 
+ 290              		.loc 1 289 0
  291 0038 01E0     		b	.L25
  292              	.LVL42:
  293              	.L34:
- 287:main.c        ****         case 7:
- 288:main.c        ****             prefixBit = (hex_value & BIT_0_MASK);
- 294              		.loc 1 288 0
+ 290:main.c        ****         case 7:
+ 291:main.c        ****             prefixBit = (hex_value & BIT_0_MASK);
+ 294              		.loc 1 291 0
  295 003a 00F00103 		and	r3, r0, #1
  296              	.LVL43:
  297              	.L25:
- 289:main.c        ****             break;
- 290:main.c        ****         default:
- 291:main.c        ****             break;
- 292:main.c        ****  
- 293:main.c        ****     }
- 294:main.c        ****     
- 295:main.c        ****     return prefixBit; 
- 296:main.c        **** 
- 297:main.c        **** }
- 298              		.loc 1 297 0
+ 292:main.c        ****             break;
+ 293:main.c        ****         default:
+ 294:main.c        ****             break;
+ 295:main.c        ****  
+ 296:main.c        ****     }
+ 297:main.c        ****     
+ 298:main.c        ****     return prefixBit; 
+ 299:main.c        **** 
+ 300:main.c        **** }
+ 298              		.loc 1 300 0
  299 003e 1846     		mov	r0, r3
  300              	.LVL44:
  301 0040 7047     		bx	lr
@@ -640,8 +643,8 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  310              		.type	main, %function
  311              	main:
  312              	.LFB63:
-  52:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
- 313              		.loc 1 52 0
+  56:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+ 313              		.loc 1 56 0
  314              		.cfi_startproc
  315              		@ args = 0, pretend = 0, frame = 0
  316              		@ frame_needed = 0, uses_anonymous_args = 0
@@ -651,88 +654,88 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  320              		.cfi_offset 5, -12
  321              		.cfi_offset 6, -8
  322              		.cfi_offset 14, -4
-  53:main.c        ****     
- 323              		.loc 1 53 0
+  57:main.c        ****     
+ 323              		.loc 1 57 0
  324              		.syntax unified
- 325              	@ 53 "main.c" 1
+ 325              	@ 57 "main.c" 1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 12
+
+
  326 0002 62B6     		CPSIE   i
  327              	@ 0 "" 2
-  56:main.c        ****     PWM_1_Start();
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 12
-
-
- 328              		.loc 1 56 0
+  60:main.c        ****     PWM_1_Start();
+ 328              		.loc 1 60 0
  329              		.thumb
  330              		.syntax unified
  331 0004 FFF7FEFF 		bl	PWM_Modulator_Start
  332              	.LVL45:
-  57:main.c        ****     PWM_2_Start();
- 333              		.loc 1 57 0
+  61:main.c        ****     PWM_2_Start();
+ 333              		.loc 1 61 0
  334 0008 FFF7FEFF 		bl	PWM_1_Start
  335              	.LVL46:
-  58:main.c        ****     PWM_3_Start();
- 336              		.loc 1 58 0
+  62:main.c        ****     PWM_3_Start();
+ 336              		.loc 1 62 0
  337 000c FFF7FEFF 		bl	PWM_2_Start
  338              	.LVL47:
-  59:main.c        ****     PWM_Switch_Timer_Start();
- 339              		.loc 1 59 0
+  63:main.c        ****     PWM_Switch_Timer_Start();
+ 339              		.loc 1 63 0
  340 0010 FFF7FEFF 		bl	PWM_3_Start
  341              	.LVL48:
-  60:main.c        ****     isr_halfsec_StartEx(isr_halfsec);
- 342              		.loc 1 60 0
+  64:main.c        ****     isr_halfsec_StartEx(isr_halfsec);
+ 342              		.loc 1 64 0
  343 0014 FFF7FEFF 		bl	PWM_Switch_Timer_Start
  344              	.LVL49:
-  61:main.c        **** //    isr_msec_StartEx(isr_msec);
- 345              		.loc 1 61 0
+  65:main.c        ****     
+ 345              		.loc 1 65 0
  346 0018 3148     		ldr	r0, .L48
  347 001a FFF7FEFF 		bl	isr_halfsec_StartEx
  348              	.LVL50:
-  70:main.c        ****     PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
- 349              		.loc 1 70 0
+  73:main.c        ****     PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
+ 349              		.loc 1 73 0
  350 001e 5220     		movs	r0, #82
  351 0020 FFF7FEFF 		bl	PWM_1_WritePeriod
  352              	.LVL51:
-  71:main.c        ****     
- 353              		.loc 1 71 0
+  74:main.c        ****     
+ 353              		.loc 1 74 0
  354 0024 2920     		movs	r0, #41
  355 0026 FFF7FEFF 		bl	PWM_1_WriteCompare
  356              	.LVL52:
-  74:main.c        ****     PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
- 357              		.loc 1 74 0
+  77:main.c        ****     PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+ 357              		.loc 1 77 0
  358 002a 1620     		movs	r0, #22
  359 002c FFF7FEFF 		bl	PWM_2_WritePeriod
  360              	.LVL53:
-  75:main.c        ****     
- 361              		.loc 1 75 0
+  78:main.c        ****     
+ 361              		.loc 1 78 0
  362 0030 0B20     		movs	r0, #11
  363 0032 FFF7FEFF 		bl	PWM_2_WriteCompare
  364              	.LVL54:
-  78:main.c        ****     PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
- 365              		.loc 1 78 0
+  81:main.c        ****     PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
+ 365              		.loc 1 81 0
  366 0036 1A20     		movs	r0, #26
  367 0038 FFF7FEFF 		bl	PWM_3_WritePeriod
  368              	.LVL55:
-  79:main.c        **** 
- 369              		.loc 1 79 0
+  82:main.c        **** 
+ 369              		.loc 1 82 0
  370 003c 0D20     		movs	r0, #13
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 13
+
+
  371 003e FFF7FEFF 		bl	PWM_3_WriteCompare
  372              	.LVL56:
-  67:main.c        ****     
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 13
-
-
- 373              		.loc 1 67 0
+  70:main.c        ****     
+ 373              		.loc 1 70 0
  374 0042 0126     		movs	r6, #1
-  66:main.c        ****     unsigned int data_to_be_sent = ONE;
- 375              		.loc 1 66 0
+  69:main.c        ****     unsigned int data_to_be_sent = ONE;
+ 375              		.loc 1 69 0
  376 0044 0025     		movs	r5, #0
-  65:main.c        ****     int data_turn = 0;
- 377              		.loc 1 65 0
+  68:main.c        ****     int data_turn = 0;
+ 377              		.loc 1 68 0
  378 0046 2C46     		mov	r4, r5
  379              	.LVL57:
  380              	.L36:
-  85:main.c        ****             // ENCODE
- 381              		.loc 1 85 0
+  88:main.c        ****             // ENCODE
+ 381              		.loc 1 88 0
  382 0048 264B     		ldr	r3, .L48+4
  383 004a 1968     		ldr	r1, [r3]
  384 004c 0D29     		cmp	r1, #13
@@ -755,8 +758,8 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  401 0061 18       		.byte	(.L42-.L39)/2
  402              		.p2align 1
  403              	.L38:
-  88:main.c        ****                 break; 
- 404              		.loc 1 88 0
+  91:main.c        ****                 break; 
+ 404              		.loc 1 91 0
  405 0062 204B     		ldr	r3, .L48+4
  406 0064 5968     		ldr	r1, [r3, #4]
  407 0066 FF20     		movs	r0, #255
@@ -764,129 +767,129 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  409              	.LVL58:
  410 006c 0446     		mov	r4, r0
  411              	.LVL59:
-  89:main.c        ****             // DATA
- 412              		.loc 1 89 0
+  92:main.c        ****             // DATA
+ 412              		.loc 1 92 0
  413 006e 25E0     		b	.L37
  414              	.LVL60:
  415              	.L40:
-  95:main.c        ****                 break; 
- 416              		.loc 1 95 0
+  98:main.c        ****                 break; 
+ 416              		.loc 1 98 0
  417 0070 3046     		mov	r0, r6
  418 0072 FFF7FEFF 		bl	Data
  419              	.LVL61:
  420 0076 0446     		mov	r4, r0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 14
+
+
  421              	.LVL62:
-  96:main.c        ****             // DECODE
- 422              		.loc 1 96 0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 14
-
-
+  99:main.c        ****             // DECODE
+ 422              		.loc 1 99 0
  423 0078 20E0     		b	.L37
  424              	.LVL63:
  425              	.L41:
- 106:main.c        ****                 break;
- 426              		.loc 1 106 0
+ 109:main.c        ****                 break;
+ 426              		.loc 1 109 0
  427 007a 0120     		movs	r0, #1
  428 007c FFF7FEFF 		bl	Decode
  429              	.LVL64:
  430 0080 0446     		mov	r4, r0
  431              	.LVL65:
- 107:main.c        ****             case 13:
- 432              		.loc 1 107 0
+ 110:main.c        ****             case 13:
+ 432              		.loc 1 110 0
  433 0082 1BE0     		b	.L37
  434              	.LVL66:
  435              	.L42:
- 109:main.c        ****                 //encode used to transmit 7 1's for the prefix 
- 436              		.loc 1 109 0
+ 112:main.c        ****                 //encode used to transmit 7 1's for the prefix 
+ 436              		.loc 1 112 0
  437 0084 174B     		ldr	r3, .L48+4
  438 0086 0022     		movs	r2, #0
  439 0088 1A60     		str	r2, [r3]
- 112:main.c        ****                 data_turn++;
- 440              		.loc 1 112 0
+ 115:main.c        ****                 data_turn++;
+ 440              		.loc 1 115 0
  441 008a 5A60     		str	r2, [r3, #4]
- 113:main.c        ****                 data_to_be_sent <<= 1;
- 442              		.loc 1 113 0
+ 116:main.c        ****                 data_to_be_sent <<= 1;
+ 442              		.loc 1 116 0
  443 008c 0135     		adds	r5, r5, #1
  444              	.LVL67:
- 114:main.c        ****                 //Once data to be sent can't be contained in a nibble, reset to 0x1
- 445              		.loc 1 114 0
+ 117:main.c        ****                 //Once data to be sent can't be contained in a nibble, reset to 0x1
+ 445              		.loc 1 117 0
  446 008e 7600     		lsls	r6, r6, #1
  447              	.LVL68:
- 116:main.c        ****                     data_turn = 0;
- 448              		.loc 1 116 0
+ 119:main.c        ****                     data_turn = 0;
+ 448              		.loc 1 119 0
  449 0090 042D     		cmp	r5, #4
  450 0092 01D1     		bne	.L43
- 118:main.c        ****                 }
- 451              		.loc 1 118 0
+ 121:main.c        ****                 }
+ 451              		.loc 1 121 0
  452 0094 0126     		movs	r6, #1
  453              	.LVL69:
- 117:main.c        ****                     data_to_be_sent = ONE;
- 454              		.loc 1 117 0
+ 120:main.c        ****                     data_to_be_sent = ONE;
+ 454              		.loc 1 120 0
  455 0096 1546     		mov	r5, r2
  456              	.LVL70:
  457              	.L43:
- 120:main.c        ****                 // Turn High Voltage off while delaying
- 458              		.loc 1 120 0
+ 123:main.c        ****                 // Turn High Voltage off while delaying
+ 458              		.loc 1 123 0
  459 0098 FFF7FEFF 		bl	PWM_Modulator_Stop
  460              	.LVL71:
- 122:main.c        ****                 // Turn High Voltage Back On
- 461              		.loc 1 122 0
+ 125:main.c        ****                 // Turn High Voltage Back On
+ 461              		.loc 1 125 0
  462 009c FFF7FEFF 		bl	PWM_Switch_Timer_Stop
  463              	.LVL72:
- 124:main.c        ****                 CyDelay(3000);
- 464              		.loc 1 124 0
+ 127:main.c        ****                 CyDelay(3000);
+ 464              		.loc 1 127 0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 15
+
+
  465 00a0 0020     		movs	r0, #0
  466 00a2 FFF7FEFF 		bl	HighVoltage_Write
  467              	.LVL73:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 15
-
-
- 125:main.c        ****                 HighVoltage_Write(1);
- 468              		.loc 1 125 0
+ 128:main.c        ****                 HighVoltage_Write(1);
+ 468              		.loc 1 128 0
  469 00a6 40F6B830 		movw	r0, #3000
  470 00aa FFF7FEFF 		bl	CyDelay
  471              	.LVL74:
- 126:main.c        ****                 PWM_Modulator_Start();
- 472              		.loc 1 126 0
+ 129:main.c        ****                 PWM_Modulator_Start();
+ 472              		.loc 1 129 0
  473 00ae 0120     		movs	r0, #1
  474 00b0 FFF7FEFF 		bl	HighVoltage_Write
  475              	.LVL75:
- 127:main.c        ****                 PWM_Switch_Timer_Start();
- 476              		.loc 1 127 0
+ 130:main.c        ****                 PWM_Switch_Timer_Start();
+ 476              		.loc 1 130 0
  477 00b4 FFF7FEFF 		bl	PWM_Modulator_Start
  478              	.LVL76:
- 128:main.c        ****                 break;
- 479              		.loc 1 128 0
+ 131:main.c        ****                 break;
+ 479              		.loc 1 131 0
  480 00b8 FFF7FEFF 		bl	PWM_Switch_Timer_Start
  481              	.LVL77:
  482              	.L37:
- 134:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
- 483              		.loc 1 134 0
+ 137:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
+ 483              		.loc 1 137 0
  484 00bc 012C     		cmp	r4, #1
  485 00be 06D1     		bne	.L44
- 135:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
- 486              		.loc 1 135 0
+ 138:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
+ 486              		.loc 1 138 0
  487 00c0 1620     		movs	r0, #22
  488 00c2 FFF7FEFF 		bl	PWM_Modulator_WritePeriod
  489              	.LVL78:
- 136:main.c        ****         }else if(bitCase == ZERO){
- 490              		.loc 1 136 0
+ 139:main.c        ****         }else if(bitCase == ZERO){
+ 490              		.loc 1 139 0
  491 00c6 0B20     		movs	r0, #11
  492 00c8 FFF7FEFF 		bl	PWM_Modulator_WriteCompare
  493              	.LVL79:
  494 00cc BCE7     		b	.L36
  495              	.L44:
- 137:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
- 496              		.loc 1 137 0
+ 140:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
+ 496              		.loc 1 140 0
  497 00ce 002C     		cmp	r4, #0
  498 00d0 BAD1     		bne	.L36
- 138:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
- 499              		.loc 1 138 0
+ 141:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+ 499              		.loc 1 141 0
  500 00d2 1A20     		movs	r0, #26
  501 00d4 FFF7FEFF 		bl	PWM_Modulator_WritePeriod
  502              	.LVL80:
- 139:main.c        ****         }
- 503              		.loc 1 139 0
+ 142:main.c        ****         }
+ 503              		.loc 1 142 0
  504 00d8 0D20     		movs	r0, #13
  505 00da FFF7FEFF 		bl	PWM_Modulator_WriteCompare
  506              	.LVL81:
@@ -895,12 +898,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  509              		.align	2
  510              	.L48:
  511 00e0 00000000 		.word	isr_halfsec
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 16
+
+
  512 00e4 00000000 		.word	.LANCHOR0
  513              		.cfi_endproc
  514              	.LFE63:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 16
-
-
  515              		.size	main, .-main
  516              		.bss
  517              		.align	2
@@ -955,12 +958,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  566 003a 02       		.uleb128 0x2
  567 003b 02       		.byte	0x2
  568 003c 07       		.byte	0x7
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 17
+
+
  569 003d 9A000000 		.4byte	.LASF3
  570 0041 03       		.uleb128 0x3
  571 0042 75000000 		.4byte	.LASF9
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 17
-
-
  572 0046 02       		.byte	0x2
  573 0047 3F       		.byte	0x3f
  574 0048 4C000000 		.4byte	0x4c
@@ -1015,19 +1018,19 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  623 00a0 9F020000 		.4byte	.LASF15
  624 00a4 05       		.uleb128 0x5
  625 00a5 32030000 		.4byte	.LASF49
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 18
+
+
  626 00a9 01       		.byte	0x1
- 627 00aa 96       		.byte	0x96
+ 627 00aa 99       		.byte	0x99
  628 00ab 00000000 		.4byte	.LFB64
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 18
-
-
  629 00af 2C000000 		.4byte	.LFE64-.LFB64
  630 00b3 01       		.uleb128 0x1
  631 00b4 9C       		.byte	0x9c
  632 00b5 06       		.uleb128 0x6
  633 00b6 85010000 		.4byte	.LASF17
  634 00ba 01       		.byte	0x1
- 635 00bb BB       		.byte	0xbb
+ 635 00bb BE       		.byte	0xbe
  636 00bc 68000000 		.4byte	0x68
  637 00c0 00000000 		.4byte	.LFB65
  638 00c4 28000000 		.4byte	.LFE65-.LFB65
@@ -1037,26 +1040,26 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  642 00ce 07       		.uleb128 0x7
  643 00cf 1C030000 		.4byte	.LASF16
  644 00d3 01       		.byte	0x1
- 645 00d4 BB       		.byte	0xbb
+ 645 00d4 BE       		.byte	0xbe
  646 00d5 6F000000 		.4byte	0x6f
  647 00d9 00000000 		.4byte	.LLST0
  648 00dd 08       		.uleb128 0x8
  649 00de 625400   		.ascii	"bT\000"
  650 00e1 01       		.byte	0x1
- 651 00e2 BB       		.byte	0xbb
+ 651 00e2 BE       		.byte	0xbe
  652 00e3 68000000 		.4byte	0x68
  653 00e7 21000000 		.4byte	.LLST1
  654 00eb 09       		.uleb128 0x9
  655 00ec E3010000 		.4byte	.LASF19
  656 00f0 01       		.byte	0x1
- 657 00f1 BD       		.byte	0xbd
+ 657 00f1 C0       		.byte	0xc0
  658 00f2 68000000 		.4byte	0x68
  659 00f6 41000000 		.4byte	.LLST2
  660 00fa 00       		.byte	0
  661 00fb 06       		.uleb128 0x6
  662 00fc 52010000 		.4byte	.LASF18
  663 0100 01       		.byte	0x1
- 664 0101 DA       		.byte	0xda
+ 664 0101 DD       		.byte	0xdd
  665 0102 68000000 		.4byte	0x68
  666 0106 00000000 		.4byte	.LFB66
  667 010a 44000000 		.4byte	.LFE66-.LFB66
@@ -1066,29 +1069,29 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  671 0114 07       		.uleb128 0x7
  672 0115 1C030000 		.4byte	.LASF16
  673 0119 01       		.byte	0x1
- 674 011a DA       		.byte	0xda
+ 674 011a DD       		.byte	0xdd
  675 011b 6F000000 		.4byte	0x6f
  676 011f 75000000 		.4byte	.LLST3
  677 0123 08       		.uleb128 0x8
  678 0124 625400   		.ascii	"bT\000"
  679 0127 01       		.byte	0x1
- 680 0128 DA       		.byte	0xda
+ 680 0128 DD       		.byte	0xdd
  681 0129 68000000 		.4byte	0x68
  682 012d 96000000 		.4byte	.LLST4
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 19
+
+
  683 0131 09       		.uleb128 0x9
  684 0132 E3010000 		.4byte	.LASF19
  685 0136 01       		.byte	0x1
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 19
-
-
- 686 0137 DC       		.byte	0xdc
+ 686 0137 DF       		.byte	0xdf
  687 0138 68000000 		.4byte	0x68
  688 013c B6000000 		.4byte	.LLST5
  689 0140 00       		.byte	0
  690 0141 0A       		.uleb128 0xa
  691 0142 13010000 		.4byte	.LASF20
  692 0146 01       		.byte	0x1
- 693 0147 0501     		.2byte	0x105
+ 693 0147 0801     		.2byte	0x108
  694 0149 68000000 		.4byte	0x68
  695 014d 00000000 		.4byte	.LFB67
  696 0151 42000000 		.4byte	.LFE67-.LFB67
@@ -1098,27 +1101,27 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  700 015b 0B       		.uleb128 0xb
  701 015c 1C030000 		.4byte	.LASF16
  702 0160 01       		.byte	0x1
- 703 0161 0501     		.2byte	0x105
+ 703 0161 0801     		.2byte	0x108
  704 0163 6F000000 		.4byte	0x6f
  705 0167 16010000 		.4byte	.LLST6
  706 016b 0C       		.uleb128 0xc
  707 016c 66010000 		.4byte	.LASF21
  708 0170 01       		.byte	0x1
- 709 0171 0501     		.2byte	0x105
+ 709 0171 0801     		.2byte	0x108
  710 0173 68000000 		.4byte	0x68
  711 0177 01       		.uleb128 0x1
  712 0178 51       		.byte	0x51
  713 0179 0D       		.uleb128 0xd
  714 017a EB010000 		.4byte	.LASF22
  715 017e 01       		.byte	0x1
- 716 017f 0701     		.2byte	0x107
+ 716 017f 0A01     		.2byte	0x10a
  717 0181 68000000 		.4byte	0x68
  718 0185 37010000 		.4byte	.LLST7
  719 0189 00       		.byte	0
  720 018a 0E       		.uleb128 0xe
  721 018b 96010000 		.4byte	.LASF50
  722 018f 01       		.byte	0x1
- 723 0190 33       		.byte	0x33
+ 723 0190 37       		.byte	0x37
  724 0191 68000000 		.4byte	0x68
  725 0195 00000000 		.4byte	.LFB63
  726 0199 E8000000 		.4byte	.LFE63-.LFB63
@@ -1128,22 +1131,22 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  730 01a3 09       		.uleb128 0x9
  731 01a4 E3010000 		.4byte	.LASF19
  732 01a8 01       		.byte	0x1
- 733 01a9 41       		.byte	0x41
+ 733 01a9 44       		.byte	0x44
  734 01aa 68000000 		.4byte	0x68
  735 01ae 97010000 		.4byte	.LLST8
  736 01b2 09       		.uleb128 0x9
  737 01b3 48010000 		.4byte	.LASF23
  738 01b7 01       		.byte	0x1
- 739 01b8 42       		.byte	0x42
+ 739 01b8 45       		.byte	0x45
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 20
+
+
  740 01b9 68000000 		.4byte	0x68
  741 01bd F8010000 		.4byte	.LLST9
  742 01c1 09       		.uleb128 0x9
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 20
-
-
  743 01c2 1A010000 		.4byte	.LASF24
  744 01c6 01       		.byte	0x1
- 745 01c7 43       		.byte	0x43
+ 745 01c7 46       		.byte	0x46
  746 01c8 6F000000 		.4byte	0x6f
  747 01cc 17020000 		.4byte	.LLST10
  748 01d0 0F       		.uleb128 0xf
@@ -1195,12 +1198,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  794 023a 29       		.byte	0x29
  795 023b 00       		.byte	0
  796 023c 10       		.uleb128 0x10
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 21
+
+
  797 023d 30000000 		.4byte	.LVL53
  798 0241 02040000 		.4byte	0x402
  799 0245 4F020000 		.4byte	0x24f
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 21
-
-
  800 0249 11       		.uleb128 0x11
  801 024a 01       		.uleb128 0x1
  802 024b 50       		.byte	0x50
@@ -1255,12 +1258,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  851 02a9 11       		.uleb128 0x11
  852 02aa 01       		.uleb128 0x1
  853 02ab 50       		.byte	0x50
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 22
+
+
  854 02ac 02       		.uleb128 0x2
  855 02ad 76       		.byte	0x76
  856 02ae 00       		.sleb128 0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 22
-
-
  857 02af 00       		.byte	0
  858 02b0 10       		.uleb128 0x10
  859 02b1 80000000 		.4byte	.LVL64
@@ -1315,12 +1318,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  908 0319 0F       		.uleb128 0xf
  909 031a BC000000 		.4byte	.LVL77
  910 031e D6030000 		.4byte	0x3d6
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 23
+
+
  911 0322 10       		.uleb128 0x10
  912 0323 C6000000 		.4byte	.LVL78
  913 0327 5A040000 		.4byte	0x45a
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 23
-
-
  914 032b 35030000 		.4byte	0x335
  915 032f 11       		.uleb128 0x11
  916 0330 01       		.uleb128 0x1
@@ -1361,7 +1364,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  951 036b 13       		.uleb128 0x13
  952 036c 14030000 		.4byte	.LASF25
  953 0370 01       		.byte	0x1
- 954 0371 2F       		.byte	0x2f
+ 954 0371 33       		.byte	0x33
  955 0372 68000000 		.4byte	0x68
  956 0376 05       		.uleb128 0x5
  957 0377 03       		.byte	0x3
@@ -1369,18 +1372,18 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  959 037c 13       		.uleb128 0x13
  960 037d 4A030000 		.4byte	.LASF26
  961 0381 01       		.byte	0x1
- 962 0382 30       		.byte	0x30
+ 962 0382 34       		.byte	0x34
  963 0383 68000000 		.4byte	0x68
  964 0387 05       		.uleb128 0x5
  965 0388 03       		.byte	0x3
  966 0389 04000000 		.4byte	prefixTime
  967 038d 14       		.uleb128 0x14
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 24
+
+
  968 038e 8A010000 		.4byte	.LASF27
  969 0392 01       		.byte	0x1
- 970 0393 31       		.byte	0x31
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 24
-
-
+ 970 0393 35       		.byte	0x35
  971 0394 68000000 		.4byte	0x68
  972 0398 00       		.byte	0
  973 0399 15       		.uleb128 0x15
@@ -1435,12 +1438,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1022 0407 7F000000 		.4byte	.LASF36
  1023 040b 06       		.byte	0x6
  1024 040c BE       		.byte	0xbe
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 25
+
+
  1025 040d 17       		.uleb128 0x17
  1026 040e C3000000 		.4byte	.LASF37
  1027 0412 C3000000 		.4byte	.LASF37
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 25
-
-
  1028 0416 06       		.byte	0x6
  1029 0417 C3       		.byte	0xc3
  1030 0418 17       		.uleb128 0x17
@@ -1495,12 +1498,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1079 0006 0B       		.uleb128 0xb
  1080 0007 03       		.uleb128 0x3
  1081 0008 0E       		.uleb128 0xe
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 26
+
+
  1082 0009 1B       		.uleb128 0x1b
  1083 000a 0E       		.uleb128 0xe
  1084 000b 55       		.uleb128 0x55
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 26
-
-
  1085 000c 17       		.uleb128 0x17
  1086 000d 11       		.uleb128 0x11
  1087 000e 01       		.uleb128 0x1
@@ -1555,12 +1558,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1136 003f 3B       		.uleb128 0x3b
  1137 0040 0B       		.uleb128 0xb
  1138 0041 27       		.uleb128 0x27
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 27
+
+
  1139 0042 19       		.uleb128 0x19
  1140 0043 11       		.uleb128 0x11
  1141 0044 01       		.uleb128 0x1
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 27
-
-
  1142 0045 12       		.uleb128 0x12
  1143 0046 06       		.uleb128 0x6
  1144 0047 40       		.uleb128 0x40
@@ -1615,12 +1618,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1193 007a 05       		.uleb128 0x5
  1194 007b 00       		.byte	0
  1195 007c 03       		.uleb128 0x3
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 28
+
+
  1196 007d 08       		.uleb128 0x8
  1197 007e 3A       		.uleb128 0x3a
  1198 007f 0B       		.uleb128 0xb
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 28
-
-
  1199 0080 3B       		.uleb128 0x3b
  1200 0081 0B       		.uleb128 0xb
  1201 0082 49       		.uleb128 0x49
@@ -1675,12 +1678,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1250 00b4 05       		.uleb128 0x5
  1251 00b5 00       		.byte	0
  1252 00b6 03       		.uleb128 0x3
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 29
+
+
  1253 00b7 0E       		.uleb128 0xe
  1254 00b8 3A       		.uleb128 0x3a
  1255 00b9 0B       		.uleb128 0xb
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 29
-
-
  1256 00ba 3B       		.uleb128 0x3b
  1257 00bb 05       		.uleb128 0x5
  1258 00bc 49       		.uleb128 0x49
@@ -1735,12 +1738,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1307 00ed 49       		.uleb128 0x49
  1308 00ee 13       		.uleb128 0x13
  1309 00ef 8701     		.uleb128 0x87
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 30
+
+
  1310 00f1 19       		.uleb128 0x19
  1311 00f2 11       		.uleb128 0x11
  1312 00f3 01       		.uleb128 0x1
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 30
-
-
  1313 00f4 12       		.uleb128 0x12
  1314 00f5 06       		.uleb128 0x6
  1315 00f6 40       		.uleb128 0x40
@@ -1795,12 +1798,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1364 0131 03       		.uleb128 0x3
  1365 0132 0E       		.uleb128 0xe
  1366 0133 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 31
+
+
  1367 0134 0B       		.uleb128 0xb
  1368 0135 3B       		.uleb128 0x3b
  1369 0136 0B       		.uleb128 0xb
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 31
-
-
  1370 0137 49       		.uleb128 0x49
  1371 0138 13       		.uleb128 0x13
  1372 0139 02       		.uleb128 0x2
@@ -1855,12 +1858,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1421 016a 19       		.uleb128 0x19
  1422 016b 6E       		.uleb128 0x6e
  1423 016c 0E       		.uleb128 0xe
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 32
+
+
  1424 016d 03       		.uleb128 0x3
  1425 016e 0E       		.uleb128 0xe
  1426 016f 3A       		.uleb128 0x3a
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 32
-
-
  1427 0170 0B       		.uleb128 0xb
  1428 0171 3B       		.uleb128 0x3b
  1429 0172 0B       		.uleb128 0xb
@@ -1915,12 +1918,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1478 006c 53       		.byte	0x53
  1479 006d 00000000 		.4byte	0
  1480 0071 00000000 		.4byte	0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 33
+
+
  1481              	.LLST3:
  1482 0075 00000000 		.4byte	.LVL10
  1483 0079 42000000 		.4byte	.LVL27
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 33
-
-
  1484 007d 0100     		.2byte	0x1
  1485 007f 50       		.byte	0x50
  1486 0080 42000000 		.4byte	.LVL27
@@ -1975,12 +1978,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1535 0100 0100     		.2byte	0x1
  1536 0102 53       		.byte	0x53
  1537 0103 40000000 		.4byte	.LVL26
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 34
+
+
  1538 0107 44000000 		.4byte	.LFE66
  1539 010b 0100     		.2byte	0x1
  1540 010d 53       		.byte	0x53
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 34
-
-
  1541 010e 00000000 		.4byte	0
  1542 0112 00000000 		.4byte	0
  1543              	.LLST6:
@@ -2035,12 +2038,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1592              	.LLST8:
  1593 0197 1E000000 		.4byte	.LVL50
  1594 019b 48000000 		.4byte	.LVL57
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 35
+
+
  1595 019f 0200     		.2byte	0x2
  1596 01a1 30       		.byte	0x30
  1597 01a2 9F       		.byte	0x9f
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 35
-
-
  1598 01a3 48000000 		.4byte	.LVL57
  1599 01a7 6E000000 		.4byte	.LVL59
  1600 01ab 0100     		.2byte	0x1
@@ -2095,12 +2098,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1649 022d 56       		.byte	0x56
  1650 022e 98000000 		.4byte	.LVL70
  1651 0232 E8000000 		.4byte	.LFE63
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 36
+
+
  1652 0236 0100     		.2byte	0x1
  1653 0238 56       		.byte	0x56
  1654 0239 00000000 		.4byte	0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 36
-
-
  1655 023d 00000000 		.4byte	0
  1656              		.section	.debug_aranges,"",%progbits
  1657 0000 3C000000 		.4byte	0x3c
@@ -2138,7 +2141,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1689 002c 00000000 		.4byte	0
  1690              		.section	.debug_line,"",%progbits
  1691              	.Ldebug_line0:
- 1692 0000 76020000 		.section	.debug_str,"MS",%progbits,1
+ 1692 0000 74020000 		.section	.debug_str,"MS",%progbits,1
  1692      0200B601 
  1692      00000201 
  1692      FB0E0D00 
@@ -2155,12 +2158,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1696      6F6D7061 
  1696      726500
  1697              	.LASF48:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 37
+
+
  1698 0021 433A5C55 		.ascii	"C:\\Users\\sdysart\\Documents\\UACS\\UACS\\HighFreq"
  1698      73657273 
  1698      5C736479 
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 37
-
-
  1698      73617274 
  1698      5C446F63 
  1699 004e 46534B5C 		.ascii	"FSK\\HighFSKTx.cydsn\000"
@@ -2215,12 +2218,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1717      6720756E 
  1717      7369676E 
  1717      65642069 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 38
+
+
  1718              	.LASF1:
  1719 00f3 756E7369 		.ascii	"unsigned char\000"
  1719      676E6564 
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 38
-
-
  1719      20636861 
  1719      7200
  1720              	.LASF38:
@@ -2275,12 +2278,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1743      00
  1744              	.LASF27:
  1745 018a 616C7465 		.ascii	"alternating\000"
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 39
+
+
  1745      726E6174 
  1745      696E6700 
  1746              	.LASF50:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 39
-
-
  1747 0196 6D61696E 		.ascii	"main\000"
  1747      00
  1748              	.LASF28:
@@ -2335,12 +2338,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1765      74696F6E 
  1766              	.LASF10:
  1767 0297 696E7433 		.ascii	"int32_t\000"
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 40
+
+
  1767      325F7400 
  1768              	.LASF15:
  1769 029f 73697A65 		.ascii	"sizetype\000"
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 40
-
-
  1769      74797065 
  1769      00
  1770              	.LASF35:
@@ -2395,12 +2398,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 1
  1792              	.LASF0:
  1793 033e 7369676E 		.ascii	"signed char\000"
  1793      65642063 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccih1MZE.s 			page 41
+
+
  1793      68617200 
  1794              	.LASF26:
  1795 034a 70726566 		.ascii	"prefixTime\000"
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccooIXzt.s 			page 41
-
-
  1795      69785469 
  1795      6D6500
  1796              	.LASF43:

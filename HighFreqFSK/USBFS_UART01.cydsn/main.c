@@ -1,5 +1,7 @@
 /*******************************************************************************
 * File Name: main.c
+* Editer: Stephanie Salazar
+* Revision: 5/14/18
 *
 * Version: 2.0
 *
@@ -41,9 +43,11 @@
 */
 #define USBUART_BUFFER_SIZE (64u)
 #define LINE_STR_LENGTH     (20u)
+#define DATA_SIZE           (7u)
 
 char8* parity[] = {"None", "Odd", "Even", "Mark", "Space"};
 char8* stop[]   = {"1", "1.5", "2"};
+int i = 0;
 
 
 /*******************************************************************************
@@ -69,6 +73,8 @@ int main()
 {
     uint16 count;
     uint8 buffer[USBUART_BUFFER_SIZE];
+    uint8 data = 0;
+    int flag0 = 0;
     
 #if (CY_PSOC3 || CY_PSOC5LP)
     uint8 state;
@@ -82,6 +88,18 @@ int main()
     /* Start USBFS operation with 5-V operation. */
     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
     
+    /* Get string to output. */
+    sprintf(lineStr,"Hello");
+
+    /* Clear LCD line. */
+    LCD_Position(0u, 0u);
+    LCD_PrintString("                    ");
+
+    /* Output string on LCD. */
+    LCD_Position(0u, 0u);
+    LCD_PrintString(lineStr);
+    
+   
     for(;;)
     {
         /* Host can send double SET_INTERFACE request. */
@@ -91,11 +109,11 @@ int main()
             if (0u != USBUART_GetConfiguration())
             {
                 /* Enumeration is done, enable OUT endpoint to receive data 
-                 * from host. */
+                * from host. */
                 USBUART_CDC_Init();
             }
         }
-
+        
         /* Service USB CDC when device is configured. */
         if (0u != USBUART_GetConfiguration())
         {
@@ -104,12 +122,22 @@ int main()
             {
                 /* Read received data and re-enable OUT endpoint. */
                 count = USBUART_GetAll(buffer);
-                
+    
                 sprintf(lineStr,buffer);
+                if (strncmp (buffer,"0",1) == 0){
+                    flag0 = 1;
+                    USBUART_PutString("True zero");
+                }
+                data = (uint8)atoi(buffer);
+                
+                // Reset data
+                if(i == 7){
+                    i=0;
+                }
 
-                    /* Clear LCD line. */
-                    LCD_Position(0u, 0u);
-                    LCD_PrintString(lineStr);
+                /* Clear LCD line. */
+                LCD_Position(0u, 0u);
+                LCD_PrintString(lineStr);
 
                 if (0u != count)
                 {
@@ -142,50 +170,56 @@ int main()
                         USBUART_PutData(NULL, 0u);
                     }
                 }
+                     /* Wait until component is ready to send data to host. */
+                    while (0u == USBUART_CDCIsReady())
+                    {
+                    }
+                    sprintf(lineStr,"%d", data);
+                    USBUART_PutString(lineStr);
             }
 
 
-        #if (CY_PSOC3 || CY_PSOC5LP)
-            /* Check for Line settings change. */
-            state = USBUART_IsLineChanged();
-            if (0u != state)
-            {
-                /* Output on LCD Line Coding settings. */
-                if (0u != (state & USBUART_LINE_CODING_CHANGED))
-                {                  
-                    /* Get string to output. */
-                    sprintf(lineStr,"BR:%4ld %d%c%s", USBUART_GetDTERate(),\
-                                   (uint16) USBUART_GetDataBits(),\
-                                   parity[(uint16) USBUART_GetParityType()][0],\
-                                   stop[(uint16) USBUART_GetCharFormat()]);
-
-                    /* Clear LCD line. */
-                    LCD_Position(0u, 0u);
-                    LCD_PrintString("                    ");
-
-                    /* Output string on LCD. */
-                    LCD_Position(0u, 0u);
-                    LCD_PrintString(lineStr);
-                }
-
-                /* Output on LCD Line Control settings. */
-                if (0u != (state & USBUART_LINE_CONTROL_CHANGED))
-                {                   
-                    /* Get string to output. */
-                    state = USBUART_GetLineControl();
-                    sprintf(lineStr,"DTR:%s,RTS:%s",  (0u != (state & USBUART_LINE_CONTROL_DTR)) ? "ON" : "OFF",
-                                                      (0u != (state & USBUART_LINE_CONTROL_RTS)) ? "ON" : "OFF");
-
-                    /* Clear LCD line. */
-                    LCD_Position(1u, 0u);
-                    LCD_PrintString("                    ");
-
-                    /* Output string on LCD. */
-                    LCD_Position(1u, 0u);
-                    LCD_PrintString(lineStr);
-                }
-            }
-        #endif /* (CY_PSOC3 || CY_PSOC5LP) */
+//        #if (CY_PSOC3 || CY_PSOC5LP)
+//            /* Check for Line settings change. */
+//            state = USBUART_IsLineChanged();
+//            if (0u != state)
+//            {
+//                /* Output on LCD Line Coding settings. */
+//                if (0u != (state & USBUART_LINE_CODING_CHANGED))
+//                {                  
+//                    /* Get string to output. */
+//                    sprintf(lineStr,"BR:%4ld %d%c%s", USBUART_GetDTERate(),\
+//                                   (uint16) USBUART_GetDataBits(),\
+//                                   parity[(uint16) USBUART_GetParityType()][0],\
+//                                   stop[(uint16) USBUART_GetCharFormat()]);
+//
+//                    /* Clear LCD line. */
+//                    LCD_Position(0u, 0u);
+//                    LCD_PrintString("                    ");
+//
+//                    /* Output string on LCD. */
+//                    LCD_Position(0u, 0u);
+//                    LCD_PrintString(lineStr);
+//                }
+//
+//                /* Output on LCD Line Control settings. */
+//                if (0u != (state & USBUART_LINE_CONTROL_CHANGED))
+//                {                   
+//                    /* Get string to output. */
+//                    state = USBUART_GetLineControl();
+//                    sprintf(lineStr,"DTR:%s,RTS:%s",  (0u != (state & USBUART_LINE_CONTROL_DTR)) ? "ON" : "OFF",
+//                                                      (0u != (state & USBUART_LINE_CONTROL_RTS)) ? "ON" : "OFF");
+//
+//                    /* Clear LCD line. */
+//                    LCD_Position(1u, 0u);
+//                    LCD_PrintString("                    ");
+//
+//                    /* Output string on LCD. */
+//                    LCD_Position(1u, 0u);
+//                    LCD_PrintString(lineStr);
+//                }
+//            }
+//        #endif /* (CY_PSOC3 || CY_PSOC5LP) */
         }
     }
 }

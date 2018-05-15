@@ -28,6 +28,7 @@
 
 #include <project.h>
 #include "stdio.h"
+#include "stdlib.h"
 
 #if defined (__GNUC__)
     /* Add an explicit reference to the floating point printf library */
@@ -47,8 +48,10 @@
 
 char8* parity[] = {"None", "Odd", "Even", "Mark", "Space"};
 char8* stop[]   = {"1", "1.5", "2"};
-int i = 0;
-
+int prompt = 1;
+int endFlag = 0;
+int oneDigit = 0;
+int twoDigit = 0;
 
 /*******************************************************************************
 * Function Name: main
@@ -72,16 +75,15 @@ int i = 0;
 int main()
 {
     uint16 count;
-    uint8 buffer[USBUART_BUFFER_SIZE];
-    uint8 data = 0;
-    int flag0 = 0;
-    
-#if (CY_PSOC3 || CY_PSOC5LP)
-    uint8 state;
     char8 lineStr[LINE_STR_LENGTH];
+    uint8 buffer[USBUART_BUFFER_SIZE];
+    uint8 data[3] = {0};
+    uint8 crabs = 0;
+    int i = 2; // to iterate through data array
     
+    /* Initialize LCD Screen */
     LCD_Start();
-#endif /* (CY_PSOC3 || CY_PSOC5LP) */
+
     
     CyGlobalIntEnable;
 
@@ -117,6 +119,22 @@ int main()
         /* Service USB CDC when device is configured. */
         if (0u != USBUART_GetConfiguration())
         {
+            /* Wait until component is ready to send data to host. */
+            while (0u == USBUART_CDCIsReady())
+                {
+                }
+                if(prompt == 1){
+                    USBUART_PutString("Hello. Please enter amount of crabs (up to 127). Terminates with carriage return or third character. Any non-integer will be interpreted as a 0.");
+                }
+            /* Wait until component is ready to send data to host. */
+            while (0u == USBUART_CDCIsReady())
+                {
+                }
+                if(prompt == 1){
+                    USBUART_PutCRLF();
+                    prompt = 0;
+                }
+                
             /* Check for input data from host. */
             if (0u != USBUART_DataIsReady())
             {
@@ -125,19 +143,68 @@ int main()
     
                 sprintf(lineStr,buffer);
                 if (strncmp (buffer,"0",1) == 0){
-                    flag0 = 1;
-                    USBUART_PutString("True zero");
+                    USBUART_PutString("True Zero");
                 }
-                data = (uint8)atoi(buffer);
+                if (strncmp (buffer,"\r",1) == 0){
+                    //USBUART_PutString("Carriage Return");
+                    if(i == 1){
+                        oneDigit = 1;
+                    }else if(i == 0){
+                        twoDigit = 1;
+                    }
+                    endFlag = 1; // set flag to add numbers
+                }else{
+                    // Convert string to int
+                    data[i] = (uint8)atoi(buffer);
+                }
                 
-                // Reset data
-                if(i == 7){
-                    i=0;
+                /* Make sure data array stays in bounds (size = 3) */
+                if(i == 0){
+                    i = 2;
+                    endFlag = 1; // 3 characters have been entered
+                }else{
+                    i--;
                 }
-
-                /* Clear LCD line. */
-                LCD_Position(0u, 0u);
-                LCD_PrintString(lineStr);
+               
+                /* 3 characters or carriage return, begin processing data */
+                if(endFlag == 1){
+                    /* Shift data if carriage return was pressed */
+                    if(oneDigit == 1){
+                        USBUART_PutString("one digit");
+                        data[0] = data[2];
+                        data[2] = 0;
+                        oneDigit = 0;
+                    }else if(twoDigit == 1){
+                        USBUART_PutString("two digits");
+                        data[0] = data[1];
+                        data[1] = data[2];
+                        data[2] = 0;
+                        twoDigit = 0;
+                    }
+                    /* Apply digit place to integer */
+                    data[0] = data[0] * 1;
+                    data[1] = data[1] * 10;
+                    data[2] = data[2] * 100;
+                    crabs = data[0] + data[1] + data[2];
+                    /* reset array */
+                    data[0] = 0; 
+                    data[1] = 0;
+                    data[2] = 0;
+                    i = 2;
+                    endFlag = 0;
+                    
+                    /* Wait until component is ready to send data to host. */
+                    while (0u == USBUART_CDCIsReady())
+                    {
+                    }
+                        /* Clear LCD line. */
+                        LCD_Position(0u, 0u);
+                        LCD_PrintString("           ");
+                        LCD_Position(0u, 0u);
+                        sprintf(lineStr,"%d", crabs);
+                        LCD_PrintString(lineStr);
+                }
+                
 
                 if (0u != count)
                 {
@@ -163,8 +230,10 @@ int main()
                         }
                         
                         /* Clear LCD line. */
-                        LCD_Position(1u, 0u);
-                        LCD_PrintString("                    ");
+                        LCD_Position(0u, 0u);
+                        LCD_PrintString("           ");
+                        sprintf(lineStr,"%d", crabs);
+                        LCD_PrintString(lineStr);
 
                         /* Send zero-length packet to PC. */
                         USBUART_PutData(NULL, 0u);
@@ -174,55 +243,13 @@ int main()
                     while (0u == USBUART_CDCIsReady())
                     {
                     }
-                    sprintf(lineStr,"%d", data);
+                    sprintf(lineStr,"%d", data[2]);
                     USBUART_PutString(lineStr);
-            }
-
-
-//        #if (CY_PSOC3 || CY_PSOC5LP)
-//            /* Check for Line settings change. */
-//            state = USBUART_IsLineChanged();
-//            if (0u != state)
-//            {
-//                /* Output on LCD Line Coding settings. */
-//                if (0u != (state & USBUART_LINE_CODING_CHANGED))
-//                {                  
-//                    /* Get string to output. */
-//                    sprintf(lineStr,"BR:%4ld %d%c%s", USBUART_GetDTERate(),\
-//                                   (uint16) USBUART_GetDataBits(),\
-//                                   parity[(uint16) USBUART_GetParityType()][0],\
-//                                   stop[(uint16) USBUART_GetCharFormat()]);
-//
-//                    /* Clear LCD line. */
-//                    LCD_Position(0u, 0u);
-//                    LCD_PrintString("                    ");
-//
-//                    /* Output string on LCD. */
-//                    LCD_Position(0u, 0u);
-//                    LCD_PrintString(lineStr);
-//                }
-//
-//                /* Output on LCD Line Control settings. */
-//                if (0u != (state & USBUART_LINE_CONTROL_CHANGED))
-//                {                   
-//                    /* Get string to output. */
-//                    state = USBUART_GetLineControl();
-//                    sprintf(lineStr,"DTR:%s,RTS:%s",  (0u != (state & USBUART_LINE_CONTROL_DTR)) ? "ON" : "OFF",
-//                                                      (0u != (state & USBUART_LINE_CONTROL_RTS)) ? "ON" : "OFF");
-//
-//                    /* Clear LCD line. */
-//                    LCD_Position(1u, 0u);
-//                    LCD_PrintString("                    ");
-//
-//                    /* Output string on LCD. */
-//                    LCD_Position(1u, 0u);
-//                    LCD_PrintString(lineStr);
-//                }
-//            }
-//        #endif /* (CY_PSOC3 || CY_PSOC5LP) */
-        }
-    }
-}
+                   
+            } // end (0u != USBUART_DataIsReady())
+        } // end (0u != USBUART_GetConfiguration())
+    } // end for(;;)
+} // end main
 
 
 /* [] END OF FILE */

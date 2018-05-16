@@ -161,24 +161,6 @@ CY_ISR(isr_halfsec)
 }//end CY_ISR(isr_halfsec)
 
 
-// Interrupt triggered on a 1 ms timer timeout
-// Will change between 30k and 45k every 1 ms
-//CY_ISR(isr_msec)
-//{
-//    if(alternating == 1){
-//        alternating = 0;
-//    }else{
-//        alternating = 1;
-//    }
-//    if(alternating == 1){
-//        PWM_Alternating_WritePeriod(FREQ(ONE_FREQ));
-//        PWM_Alternating_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
-//    }else if(alternating == 0){
-//        PWM_Alternating_WritePeriod(FREQ(ZERO_FREQ));
-//        PWM_Alternating_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
-//    }
-//}//end CY_ISR(isr_msec)
-
 /*
  * function: int Data(unsigned int hex_value, int bT)
  * parameters: hex_value - a four bit value specifying what data you want to send

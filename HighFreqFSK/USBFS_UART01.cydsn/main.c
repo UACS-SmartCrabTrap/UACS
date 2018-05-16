@@ -3,28 +3,12 @@
 * Editer: Stephanie Salazar
 * Revision: 5/14/18
 *
-* Version: 2.0
-*
 * Description:
 *   The component is enumerated as a Virtual Com port. Receives data from the 
 *   hyper terminal, then sends back the received data.
-*   For PSoC3/PSoC5LP, the LCD shows the line settings.
-*
-* Related Document:
-*  Universal Serial Bus Specification Revision 2.0
-*  Universal Serial Bus Class Definitions for Communications Devices
-*  Revision 1.2
-*
-********************************************************************************
-* Copyright 2015, Cypress Semiconductor Corporation. All rights reserved.
-* This software is owned by Cypress Semiconductor Corporation and is protected
-* by and subject to worldwide patent and copyright laws and treaties.
-* Therefore, you may use this software only as provided in the license agreement
-* accompanying the software package from which you obtained this software.
-* CYPRESS AND ITS SUPPLIERS MAKE NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-* WITH REGARD TO THIS SOFTWARE, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT,
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-*******************************************************************************/
+*   The LCD Display shows the number of crabs sent
+*/
+
 
 #include <project.h>
 #include "stdio.h"
@@ -45,13 +29,26 @@
 #define USBUART_BUFFER_SIZE (64u)
 #define LINE_STR_LENGTH     (20u)
 #define DATA_SIZE           (7u)
+#define ERROR               (333u)
 
-char8* parity[] = {"None", "Odd", "Even", "Mark", "Space"};
-char8* stop[]   = {"1", "1.5", "2"};
+/*Function Prototypes*/
+int GetCrabs(void);
+int CalculateCrabs(void);
+void DisplayCrabs(int);
+
+/*Global Variables*/
 int prompt = 1;
 int endFlag = 0;
 int oneDigit = 0;
 int twoDigit = 0;
+int error = 0;
+int i = 2; // to iterate through data array
+uint16 count;
+char8 lineStr[LINE_STR_LENGTH];
+uint8 buffer[USBUART_BUFFER_SIZE];
+uint8 data[3] = {0};
+
+
 
 /*******************************************************************************
 * Function Name: main
@@ -63,7 +60,7 @@ int twoDigit = 0;
 *      enumerated as virtual Com port.
 *   2. Waits until the device is enumerated by the host.
 *   3. Waits for data coming from the hyper terminal and sends it back.
-*   4. PSoC3/PSoC5LP: the LCD shows the line settings.
+*   4. the LCD shows the amount of crabs
 *
 * Parameters:
 *  None.
@@ -74,13 +71,8 @@ int twoDigit = 0;
 *******************************************************************************/
 int main()
 {
-    uint16 count;
-    char8 lineStr[LINE_STR_LENGTH];
-    uint8 buffer[USBUART_BUFFER_SIZE];
-    uint8 data[3] = {0};
-    uint8 crabs = 0;
-    int i = 2; // to iterate through data array
-    
+    int crabs = 0;
+    int gettingData = 1;
     /* Initialize LCD Screen */
     LCD_Start();
 
@@ -89,9 +81,6 @@ int main()
 
     /* Start USBFS operation with 5-V operation. */
     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
-    
-    /* Get string to output. */
-    sprintf(lineStr,"Hello");
 
     /* Clear LCD line. */
     LCD_Position(0u, 0u);
@@ -99,20 +88,46 @@ int main()
 
     /* Output string on LCD. */
     LCD_Position(0u, 0u);
-    LCD_PrintString(lineStr);
+    LCD_PrintString("Hello");
     
    
     for(;;)
     {
-        /* Host can send double SET_INTERFACE request. */
-        if (0u != USBUART_IsConfigurationChanged())
+       /* Start UART interface and fill array with 3 parameters until valid */
+       while(gettingData){
+            while(0u == GetCrabs()){
+            };
+            crabs = CalculateCrabs();
+            if(crabs != ERROR){
+                DisplayCrabs(crabs);
+                gettingData = 0;
+            }
+        }   
+       
+    } // end for(;;)
+} // end main
+
+
+/*
+ * function: int GetCrabs()
+ * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
+ *             bT - the current bit time
+ * returns: bitCase - a high or low signal to be sent to an output pin
+ * description: This function starts UART interface and waits for a valid amount of crabs
+ * entered by user
+ */
+int GetCrabs()
+{
+    uint16 crabs = 0;
+    /* Host can send double SET_INTERFACE request. */
+    if (0u != USBUART_IsConfigurationChanged())
+    {
+        /* Initialize IN endpoints when device is configured. */
+        if (0u != USBUART_GetConfiguration())
         {
-            /* Initialize IN endpoints when device is configured. */
-            if (0u != USBUART_GetConfiguration())
-            {
-                /* Enumeration is done, enable OUT endpoint to receive data 
-                * from host. */
-                USBUART_CDC_Init();
+            /* Enumeration is done, enable OUT endpoint to receive data 
+            * from host. */
+            USBUART_CDC_Init();
             }
         }
         
@@ -141,12 +156,12 @@ int main()
                 /* Read received data and re-enable OUT endpoint. */
                 count = USBUART_GetAll(buffer);
     
-                sprintf(lineStr,buffer);
                 if (strncmp (buffer,"0",1) == 0){
-                    USBUART_PutString("True Zero");
+                    //USBUART_PutString("True Zero");
                 }
                 if (strncmp (buffer,"\r",1) == 0){
                     //USBUART_PutString("Carriage Return");
+
                     if(i == 1){
                         oneDigit = 1;
                     }else if(i == 0){
@@ -165,48 +180,8 @@ int main()
                 }else{
                     i--;
                 }
-               
-                /* 3 characters or carriage return, begin processing data */
-                if(endFlag == 1){
-                    /* Shift data if carriage return was pressed */
-                    if(oneDigit == 1){
-                        USBUART_PutString("one digit");
-                        data[0] = data[2];
-                        data[2] = 0;
-                        oneDigit = 0;
-                    }else if(twoDigit == 1){
-                        USBUART_PutString("two digits");
-                        data[0] = data[1];
-                        data[1] = data[2];
-                        data[2] = 0;
-                        twoDigit = 0;
-                    }
-                    /* Apply digit place to integer */
-                    data[0] = data[0] * 1;
-                    data[1] = data[1] * 10;
-                    data[2] = data[2] * 100;
-                    crabs = data[0] + data[1] + data[2];
-                    /* reset array */
-                    data[0] = 0; 
-                    data[1] = 0;
-                    data[2] = 0;
-                    i = 2;
-                    endFlag = 0;
-                    
-                    /* Wait until component is ready to send data to host. */
-                    while (0u == USBUART_CDCIsReady())
-                    {
-                    }
-                        /* Clear LCD line. */
-                        LCD_Position(0u, 0u);
-                        LCD_PrintString("           ");
-                        LCD_Position(0u, 0u);
-                        sprintf(lineStr,"%d", crabs);
-                        LCD_PrintString(lineStr);
-                }
                 
-
-                if (0u != count)
+                 if (0u != count)
                 {
                     /* Wait until component is ready to send data to host. */
                     while (0u == USBUART_CDCIsReady())
@@ -228,28 +203,99 @@ int main()
                         while (0u == USBUART_CDCIsReady())
                         {
                         }
-                        
-                        /* Clear LCD line. */
-                        LCD_Position(0u, 0u);
-                        LCD_PrintString("           ");
-                        sprintf(lineStr,"%d", crabs);
-                        LCD_PrintString(lineStr);
 
                         /* Send zero-length packet to PC. */
                         USBUART_PutData(NULL, 0u);
                     }
                 }
-                     /* Wait until component is ready to send data to host. */
-                    while (0u == USBUART_CDCIsReady())
-                    {
-                    }
-                    sprintf(lineStr,"%d", data[2]);
-                    USBUART_PutString(lineStr);
-                   
             } // end (0u != USBUART_DataIsReady())
         } // end (0u != USBUART_GetConfiguration())
-    } // end for(;;)
-} // end main
+        if(endFlag == 1){
+            return 1;
+        }else{
+            return 0;
+        }
+}//end Decode()
+
+/*
+ * function: int CalculateCrabs()
+ * parameters: none
+ * returns: int crabs - amount of crabs from user input 
+ * description: This function takes an array of size three and converts
+ * to a single number
+ */
+int CalculateCrabs()
+{
+    int crabs;
+    /* Wait until component is ready to send data to host. */
+    while (0u == USBUART_CDCIsReady())
+    {
+    }
+    USBUART_PutCRLF();
+    /* Shift data if carriage return was pressed */
+    if(oneDigit == 1){
+        //USBUART_PutString("one digit");
+        data[0] = data[2];
+        data[2] = 0;
+        oneDigit = 0;
+    }else if(twoDigit == 1){
+        //USBUART_PutString("two digits");
+        data[0] = data[1];
+        data[1] = data[2];
+        data[2] = 0;
+        twoDigit = 0;
+    }
+    /* Apply digit place to integer */
+    data[0] = data[0] * 1;
+    data[1] = data[1] * 10;
+    data[2] = data[2] * 100;
+    crabs = data[0] + data[1] + data[2];
+    if(crabs > 127){
+        crabs = 0;
+        error = 1;
+        /* Wait until component is ready to send data to host. */
+        while (0u == USBUART_CDCIsReady())
+        {
+        }
+        USBUART_PutString("Error. Please enter a number UP TO 127");
+        /* Wait until component is ready to send data to host. */
+        while (0u == USBUART_CDCIsReady())
+        {
+        }
+        USBUART_PutCRLF();
+    }
+    /* reset array */
+    data[0] = 0; 
+    data[1] = 0;
+    data[2] = 0;
+    i = 2; // reset indexing for array
+    endFlag = 0; // reset endFlag for gathering new data
+                    
+    if(error == 1){
+        error = 0; // reset error checking
+        return ERROR;
+
+    }else{
+        return crabs;
+    }
+} /* END OF CalculateCrabs() */
+
+/*
+ * function: void DisplayCrabs()
+ * parameters: int crabs
+ * returns: void
+ * description: Displays the number of crabs on LCD Display
+ */
+void DisplayCrabs(int crabs){
+    /* Clear LCD line. */
+    LCD_Position(0u, 0u);
+    LCD_PrintString("           ");
+    /* Reset LCD line position. */
+    LCD_Position(0u, 0u);
+    /* Store int crabs into a string to print to LCD */
+    sprintf(lineStr,"Crabs: %d", crabs);
+    LCD_PrintString(lineStr);
+}
 
 
 /* [] END OF FILE */

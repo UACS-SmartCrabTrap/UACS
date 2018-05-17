@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: isr_halfsec.c  
+* File Name: isr_rx.c  
 * Version 1.70
 *
 *  Description:
@@ -18,15 +18,15 @@
 
 #include <cydevice_trm.h>
 #include <CyLib.h>
-#include <isr_halfsec.h>
+#include <isr_rx.h>
 #include "cyapicallbacks.h"
 
-#if !defined(isr_halfsec__REMOVED) /* Check for removal by optimization */
+#if !defined(isr_rx__REMOVED) /* Check for removal by optimization */
 
 /*******************************************************************************
 *  Place your includes, defines and code here 
 ********************************************************************************/
-/* `#START isr_halfsec_intc` */
+/* `#START isr_rx_intc` */
 
 /* `#END` */
 
@@ -42,7 +42,7 @@ CY_ISR_PROTO(IntDefaultHandler);
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_Start
+* Function Name: isr_rx_Start
 ********************************************************************************
 *
 * Summary:
@@ -58,24 +58,24 @@ CY_ISR_PROTO(IntDefaultHandler);
 *   None
 *
 *******************************************************************************/
-void isr_halfsec_Start(void)
+void isr_rx_Start(void)
 {
     /* For all we know the interrupt is active. */
-    isr_halfsec_Disable();
+    isr_rx_Disable();
 
-    /* Set the ISR to point to the isr_halfsec Interrupt. */
-    isr_halfsec_SetVector(&isr_halfsec_Interrupt);
+    /* Set the ISR to point to the isr_rx Interrupt. */
+    isr_rx_SetVector(&isr_rx_Interrupt);
 
     /* Set the priority. */
-    isr_halfsec_SetPriority((uint8)isr_halfsec_INTC_PRIOR_NUMBER);
+    isr_rx_SetPriority((uint8)isr_rx_INTC_PRIOR_NUMBER);
 
     /* Enable it. */
-    isr_halfsec_Enable();
+    isr_rx_Enable();
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_StartEx
+* Function Name: isr_rx_StartEx
 ********************************************************************************
 *
 * Summary:
@@ -101,24 +101,24 @@ void isr_halfsec_Start(void)
 *   None
 *
 *******************************************************************************/
-void isr_halfsec_StartEx(cyisraddress address)
+void isr_rx_StartEx(cyisraddress address)
 {
     /* For all we know the interrupt is active. */
-    isr_halfsec_Disable();
+    isr_rx_Disable();
 
-    /* Set the ISR to point to the isr_halfsec Interrupt. */
-    isr_halfsec_SetVector(address);
+    /* Set the ISR to point to the isr_rx Interrupt. */
+    isr_rx_SetVector(address);
 
     /* Set the priority. */
-    isr_halfsec_SetPriority((uint8)isr_halfsec_INTC_PRIOR_NUMBER);
+    isr_rx_SetPriority((uint8)isr_rx_INTC_PRIOR_NUMBER);
 
     /* Enable it. */
-    isr_halfsec_Enable();
+    isr_rx_Enable();
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_Stop
+* Function Name: isr_rx_Stop
 ********************************************************************************
 *
 * Summary:
@@ -131,22 +131,22 @@ void isr_halfsec_StartEx(cyisraddress address)
 *   None
 *
 *******************************************************************************/
-void isr_halfsec_Stop(void)
+void isr_rx_Stop(void)
 {
     /* Disable this interrupt. */
-    isr_halfsec_Disable();
+    isr_rx_Disable();
 
     /* Set the ISR to point to the passive one. */
-    isr_halfsec_SetVector(&IntDefaultHandler);
+    isr_rx_SetVector(&IntDefaultHandler);
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_Interrupt
+* Function Name: isr_rx_Interrupt
 ********************************************************************************
 *
 * Summary:
-*   The default Interrupt Service Routine for isr_halfsec.
+*   The default Interrupt Service Routine for isr_rx.
 *
 *   Add custom code between the coments to keep the next version of this file
 *   from over writting your code.
@@ -157,27 +157,27 @@ void isr_halfsec_Stop(void)
 *   None
 *
 *******************************************************************************/
-CY_ISR(isr_halfsec_Interrupt)
+CY_ISR(isr_rx_Interrupt)
 {
-    #ifdef isr_halfsec_INTERRUPT_INTERRUPT_CALLBACK
-        isr_halfsec_Interrupt_InterruptCallback();
-    #endif /* isr_halfsec_INTERRUPT_INTERRUPT_CALLBACK */ 
+    #ifdef isr_rx_INTERRUPT_INTERRUPT_CALLBACK
+        isr_rx_Interrupt_InterruptCallback();
+    #endif /* isr_rx_INTERRUPT_INTERRUPT_CALLBACK */ 
 
     /*  Place your Interrupt code here. */
-    /* `#START isr_halfsec_Interrupt` */
+    /* `#START isr_rx_Interrupt` */
 
     /* `#END` */
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_SetVector
+* Function Name: isr_rx_SetVector
 ********************************************************************************
 *
 * Summary:
-*   Change the ISR vector for the Interrupt. Note calling isr_halfsec_Start
+*   Change the ISR vector for the Interrupt. Note calling isr_rx_Start
 *   will override any effect this method would have had. To set the vector 
-*   before the component has been started use isr_halfsec_StartEx instead.
+*   before the component has been started use isr_rx_StartEx instead.
 * 
 *   When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
 *   used to provide consistent definition across compilers:
@@ -197,18 +197,18 @@ CY_ISR(isr_halfsec_Interrupt)
 *   None
 *
 *******************************************************************************/
-void isr_halfsec_SetVector(cyisraddress address)
+void isr_rx_SetVector(cyisraddress address)
 {
     cyisraddress * ramVectorTable;
 
     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
 
-    ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_halfsec__INTC_NUMBER] = address;
+    ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_rx__INTC_NUMBER] = address;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_GetVector
+* Function Name: isr_rx_GetVector
 ********************************************************************************
 *
 * Summary:
@@ -221,26 +221,26 @@ void isr_halfsec_SetVector(cyisraddress address)
 *   Address of the ISR in the interrupt vector table.
 *
 *******************************************************************************/
-cyisraddress isr_halfsec_GetVector(void)
+cyisraddress isr_rx_GetVector(void)
 {
     cyisraddress * ramVectorTable;
 
     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
 
-    return ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_halfsec__INTC_NUMBER];
+    return ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_rx__INTC_NUMBER];
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_SetPriority
+* Function Name: isr_rx_SetPriority
 ********************************************************************************
 *
 * Summary:
 *   Sets the Priority of the Interrupt. 
 *
-*   Note calling isr_halfsec_Start or isr_halfsec_StartEx will 
+*   Note calling isr_rx_Start or isr_rx_StartEx will 
 *   override any effect this API would have had. This API should only be called
-*   after isr_halfsec_Start or isr_halfsec_StartEx has been called. 
+*   after isr_rx_Start or isr_rx_StartEx has been called. 
 *   To set the initial priority for the component, use the Design-Wide Resources
 *   Interrupt Editor.
 *
@@ -255,14 +255,14 @@ cyisraddress isr_halfsec_GetVector(void)
 *   None
 *
 *******************************************************************************/
-void isr_halfsec_SetPriority(uint8 priority)
+void isr_rx_SetPriority(uint8 priority)
 {
-    *isr_halfsec_INTC_PRIOR = priority << 5;
+    *isr_rx_INTC_PRIOR = priority << 5;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_GetPriority
+* Function Name: isr_rx_GetPriority
 ********************************************************************************
 *
 * Summary:
@@ -277,19 +277,19 @@ void isr_halfsec_SetPriority(uint8 priority)
 *    PSoC 4: Priority is from 0 to 3.
 *
 *******************************************************************************/
-uint8 isr_halfsec_GetPriority(void)
+uint8 isr_rx_GetPriority(void)
 {
     uint8 priority;
 
 
-    priority = *isr_halfsec_INTC_PRIOR >> 5;
+    priority = *isr_rx_INTC_PRIOR >> 5;
 
     return priority;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_Enable
+* Function Name: isr_rx_Enable
 ********************************************************************************
 *
 * Summary:
@@ -304,15 +304,15 @@ uint8 isr_halfsec_GetPriority(void)
 *   None
 *
 *******************************************************************************/
-void isr_halfsec_Enable(void)
+void isr_rx_Enable(void)
 {
     /* Enable the general interrupt. */
-    *isr_halfsec_INTC_SET_EN = isr_halfsec__INTC_MASK;
+    *isr_rx_INTC_SET_EN = isr_rx__INTC_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_GetState
+* Function Name: isr_rx_GetState
 ********************************************************************************
 *
 * Summary:
@@ -325,15 +325,15 @@ void isr_halfsec_Enable(void)
 *   1 if enabled, 0 if disabled.
 *
 *******************************************************************************/
-uint8 isr_halfsec_GetState(void)
+uint8 isr_rx_GetState(void)
 {
     /* Get the state of the general interrupt. */
-    return ((*isr_halfsec_INTC_SET_EN & (uint32)isr_halfsec__INTC_MASK) != 0u) ? 1u:0u;
+    return ((*isr_rx_INTC_SET_EN & (uint32)isr_rx__INTC_MASK) != 0u) ? 1u:0u;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_Disable
+* Function Name: isr_rx_Disable
 ********************************************************************************
 *
 * Summary:
@@ -346,15 +346,15 @@ uint8 isr_halfsec_GetState(void)
 *   None
 *
 *******************************************************************************/
-void isr_halfsec_Disable(void)
+void isr_rx_Disable(void)
 {
     /* Disable the general interrupt. */
-    *isr_halfsec_INTC_CLR_EN = isr_halfsec__INTC_MASK;
+    *isr_rx_INTC_CLR_EN = isr_rx__INTC_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_SetPending
+* Function Name: isr_rx_SetPending
 ********************************************************************************
 *
 * Summary:
@@ -373,14 +373,14 @@ void isr_halfsec_Disable(void)
 *   interrupts).
 *
 *******************************************************************************/
-void isr_halfsec_SetPending(void)
+void isr_rx_SetPending(void)
 {
-    *isr_halfsec_INTC_SET_PD = isr_halfsec__INTC_MASK;
+    *isr_rx_INTC_SET_PD = isr_rx__INTC_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_halfsec_ClearPending
+* Function Name: isr_rx_ClearPending
 ********************************************************************************
 *
 * Summary:
@@ -398,9 +398,9 @@ void isr_halfsec_SetPending(void)
 *   None
 *
 *******************************************************************************/
-void isr_halfsec_ClearPending(void)
+void isr_rx_ClearPending(void)
 {
-    *isr_halfsec_INTC_CLR_PD = isr_halfsec__INTC_MASK;
+    *isr_rx_INTC_CLR_PD = isr_rx__INTC_MASK;
 }
 
 #endif /* End check for removal by optimization */

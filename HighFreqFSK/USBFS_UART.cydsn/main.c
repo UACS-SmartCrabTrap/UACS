@@ -1,25 +1,20 @@
 /*******************************************************************************
 * File Name: main.c
 * Editer: Stephanie Salazar
-* Revision: 5/14/18
+* Created: 5/12/18
+* Revision: 5/15/18
 *
 * Description:
 *   The component is enumerated as a Virtual Com port. Receives data from the 
-*   hyper terminal, then sends back the received data.
-*   The LCD Display shows the number of crabs sent
+*   hyper terminal, then sends back the received data. FSK is then started
+*   using the input data and then prompts the user for more data.
+*   The LCD Display shows the number of crabs sent.
 */
 
 
 #include <project.h>
 #include "stdio.h"
 #include "stdlib.h"
-
-#if defined (__GNUC__)
-    /* Add an explicit reference to the floating point printf library */
-    /* to allow usage of the floating point conversion specifiers. */
-    /* This is not linked in by default with the newlib-nano library. */
-    asm (".global _printf_float");
-#endif
 
 #define USBFS_DEVICE    (0u)
 
@@ -28,9 +23,13 @@
 */
 #define USBUART_BUFFER_SIZE (64u)
 #define LINE_STR_LENGTH     (20u)
+/* Change data size for sending longer data (n-1) */
 #define DATA_SIZE           (7u)
-#define ERROR               (333u)
+/* Change max crabs to correlate with data size 2^(n) - 1 */
 #define MAX_CRABS           (15)
+/* Error used for user error */
+#define ERROR               (333u)
+
 
 /*Definitions*/
 #define CLOCK_FREQ 1000000
@@ -52,6 +51,8 @@
 
 #define ZERO 0x0
 #define ONE 0x1
+#define TRUE 0x1
+#define FALSE 0x0
 #define DATA_LENGTH 4
 #define DECODE_VALUE 0x01
 //
@@ -67,14 +68,14 @@ void DisplayCrabs(int);
 int Data(unsigned int hex_value, int bT);
 int Decode(unsigned int hex_value, int bT);
 int PreFix(unsigned int hex_value, int prefixCount);
-CY_ISR_PROTO(isr_halfsec); // High F Interrupt
+CY_ISR_PROTO(isr_sec); // High F Interrupt
 
 /*Global Variables*/
 int prompt = 1;
-int endFlag = 0;
-int oneDigit = 0;
-int twoDigit = 0;
-int error = 0;
+int endFlag = 0; // flag for end of user input
+int oneDigit = 0; // flag for end of input with one character
+int twoDigit = 0; // flag for end of input with two characters
+int error = 0; // flag for input error
 int i = 2; // to iterate through data array
 uint16 count;
 char8 lineStr[LINE_STR_LENGTH];
@@ -84,42 +85,21 @@ uint8 data[3] = {0};
 /*Global Variables*/
 static int bitTime = 0;
 static int prefixTime = 0;
-static int alternating = 0;
-
-
 
 /*******************************************************************************
 * Function Name: main
 ********************************************************************************
-*
-* Summary:
-*  The main function performs the following actions:
-*   1. Waits until VBUS becomes valid and starts the USBFS component which is
-*      enumerated as virtual Com port.
-*   2. Waits until the device is enumerated by the host.
-*   3. Waits for data coming from the hyper terminal and sends it back.
-*   4. the LCD shows the amount of crabs
-*
-* Parameters:
-*  None.
-*
-* Return:
-*  None.
-*
-*******************************************************************************/
+*/
 int main()
 {
-  
     int crabs = 0;
-    int gettingData = 1;
-    /* Initialize LCD Screen */
-    LCD_Start();
+    int gettingData = TRUE;
 
     CyGlobalIntEnable; /* Enable global interrupts. */
     /*Block initializations*/
+    LCD_Start();
     PWM_Modulator_Start();
-    
-    isr_halfsec_StartEx(isr_halfsec);
+    isr_sec_StartEx(isr_sec);
     
     /*Variable initializations*/
     int bitCase = 0;
@@ -128,6 +108,7 @@ int main()
 
     /* Start USBFS operation with 5-V operation. */
     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
+    UART_Start();           /* Start communication component */
 
     /* Clear LCD line. */
     LCD_Position(0u, 0u);
@@ -139,9 +120,10 @@ int main()
     
     /* Start UART interface and fill array with 3 parameters until valid */
     while(gettingData){
+        // Check for final input
         while(0u == GetCrabs()){
         };
-        crabs = CalculateCrabs();
+        crabs = CalculateCrabs(); // Convert string to int
         if(crabs != ERROR){
             DisplayCrabs(crabs);
             gettingData = 0;
@@ -150,6 +132,7 @@ int main()
     /* Start Timer after interface to start at case 0 */
     PWM_Switch_Timer_Start();
    
+    /* cases represent 100 ms */
     for(;;)
     {
         switch(bitTime){
@@ -197,6 +180,7 @@ int main()
                         gettingData = 0;
                     }
                 }
+                UART_WriteTxData(crabs);
                 bitTime = 0;
                 PWM_Modulator_Start();
                 PWM_Switch_Timer_Start();
@@ -205,6 +189,7 @@ int main()
                 break; 
          } //end switch(bitTime) 
         
+        /* Send out frequency depending on bit is 1 or 0 */
         if(bitCase == ONE){
             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
@@ -218,13 +203,14 @@ int main()
 } // end main
 
 
-/*
+/*******************************************************************************************
  * function: int GetCrabs()
  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
  *             bT - the current bit time
  * returns: bitCase - a high or low signal to be sent to an output pin
  * description: This function starts UART interface and waits for a valid amount of crabs
  * entered by user
+ *******************************************************************************************
  */
 int GetCrabs()
 {
@@ -249,7 +235,7 @@ int GetCrabs()
                 {
                 }
                 if(prompt == 1){
-                    USBUART_PutString("Hello. Please enter amount of crabs (up to 127). Terminates with carriage return or third character. Any non-integer will be interpreted as a 0.");
+                    USBUART_PutString("Please enter amount of crabs (up to 127). Terminates with carriage return or third character. Any non-integer will be interpreted as a 0.");
                 }
             /* Wait until component is ready to send data to host. */
             while (0u == USBUART_CDCIsReady())
@@ -411,7 +397,7 @@ void DisplayCrabs(int crabs){
 // Interrupt triggered on a 0.1s timer timeout
 // Will increment prefixTime counter for the 1st 8 bits
 // Then move on to incrementing the message bit counter
-CY_ISR(isr_halfsec)
+CY_ISR(isr_sec)
 {
     if((bitTime == 0) && (prefixTime <= PREFIX_BIT_LENGTH)){
         prefixTime++;
@@ -419,7 +405,7 @@ CY_ISR(isr_halfsec)
     else if(prefixTime > PREFIX_BIT_LENGTH){
         bitTime++;
     }
-}//end CY_ISR(isr_halfsec)
+}//end CY_ISR(isr_sec)
 
 /*
  * function: int Data(unsigned int hex_value, int bT)

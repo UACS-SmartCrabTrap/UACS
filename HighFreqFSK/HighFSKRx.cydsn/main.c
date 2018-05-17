@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include "LCD_Char.h"
 
+#define ARRAY_SIZE 12
+
 // Interrupt for switching bits 100 ms
 CY_ISR_PROTO(Bit_Timer);
 
@@ -51,8 +53,8 @@ int main(void)
     LCD_Char_Start();
 
     // Displays Loading Message before receiving pre-fix
-    char OutputString[12];
-    char display[12];
+    char OutputString[ARRAY_SIZE];
+    char display[ARRAY_SIZE];
     sprintf(display, "counting crabs...");
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
     LCD_Char_PrintString(display);

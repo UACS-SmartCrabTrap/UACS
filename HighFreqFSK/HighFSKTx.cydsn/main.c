@@ -1,6 +1,7 @@
 /* ========================================
  * Smart Crab Trap
  * HighFSKTx 
+ * Written by: Julian Salazar
  * Edited by: Stephanie Salazar
  * Revision: 5/12/18
  * Function: This project contains 4 PWM blocks
@@ -114,13 +115,13 @@ int main(void)
                 //reset here to be ready for case 0 
                 prefixTime = 0;
                 data_turn++;
-//                //comment out when wanting to send constant data
-//                data_to_be_sent <<= 1; 
-//                Once data to be sent can't be contained in a nibble, reset to 0x1
-//                if (data_turn == DATA_LENGTH) {
-//                    data_turn = 0;
-//                    data_to_be_sent = ONE;
-//                }
+                //comment out when wanting to send constant data
+                data_to_be_sent <<= 1; 
+                //Once data to be sent can't be contained in a nibble, reset to 0x1
+                if (data_turn == DATA_LENGTH) {
+                    data_turn = 0;
+                    data_to_be_sent = ONE;
+                }
                 PWM_Modulator_Stop();
                 // Turn High Voltage off while delaying
                 PWM_Switch_Timer_Stop();

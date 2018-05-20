@@ -40,6 +40,8 @@
 #include "Clock_3.h"
 #include "HighVoltage_aliases.h"
 #include "HighVoltage.h"
+#include "SignalBase_aliases.h"
+#include "SignalBase.h"
 #include "core_cm3_psoc5.h"
 #include "CyDmac.h"
 #include "CyFlash.h"

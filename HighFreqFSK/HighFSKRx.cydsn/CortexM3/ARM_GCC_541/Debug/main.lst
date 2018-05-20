@@ -1,0 +1,1832 @@
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.Bit_Timer,"ax",%progbits
+  20              		.align	2
+  21              		.global	Bit_Timer
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	Bit_Timer, %function
+  25              	Bit_Timer:
+  26              	.LFB65:
+  27              		.file 1 "main.c"
+   1:main.c        **** /* ========================================
+   2:main.c        ****  * Smart Crab Trap
+   3:main.c        ****  * FSK RX 
+   4:main.c        ****  * Edited by: Stephanie Salazar
+   5:main.c        ****  * Revision: 5/10/18
+   6:main.c        ****  * Function: This project takes in a signal from an outside source
+   7:main.c        ****  * and reads the data within the signal. This code waits for a pre-fix
+   8:main.c        ****  * of 0xFF and then reads the next 4 bits as the data and confirms
+   9:main.c        ****  * the message with a post-fix of 0x01. The data is display on an LCD display.
+  10:main.c        ****  * ========================================
+  11:main.c        **** */
+  12:main.c        **** 
+  13:main.c        **** #include "project.h"
+  14:main.c        **** #include <stdio.h>
+  15:main.c        **** #include "LCD_Char.h"
+  16:main.c        **** 
+  17:main.c        **** #define ARRAY_SIZE 12
+  18:main.c        **** 
+  19:main.c        **** // Interrupt for switching bits 100 ms
+  20:main.c        **** CY_ISR_PROTO(Bit_Timer);
+  21:main.c        **** 
+  22:main.c        **** // Global Variables
+  23:main.c        **** static uint16 levelCounter = 0; // Timer counter to debounce bit
+  24:main.c        **** static uint8 zeroCount = 0; // 0 count used in timer counter debounce
+  25:main.c        **** static uint8 oneCount = 0; // 1 count used in timer counter debounce
+  26:main.c        **** static uint8 currentBit = 0; // x/10 bit decision for 500 ms bit
+  27:main.c        **** static uint8 dataCount = 0; // which bit of data we are looking at
+  28:main.c        **** static uint8 data = 0; // 4 bits of data
+  29:main.c        **** static uint8 crabs = 0; // 4 bits of data transferred from data variable
+  30:main.c        **** static uint8 dataFlag = 0; // Flag to start looking for data
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 2
+
+
+  31:main.c        **** static uint8 decodeFlag = 0; // Flag to start looking for post-fix
+  32:main.c        **** 
+  33:main.c        **** 
+  34:main.c        **** // FLAGS for turning on messages on LCD screen
+  35:main.c        **** static uint8 lcdFlagEncode = 0; // Turns on pre-fix message
+  36:main.c        **** static uint8 lcdFlagData = 0; // Displays data 
+  37:main.c        **** static uint8 lcdFlagDecode = 0; // good or bad postfix
+  38:main.c        **** static uint8 decodeWrong = 0;
+  39:main.c        **** 
+  40:main.c        **** 
+  41:main.c        **** int main(void)
+  42:main.c        **** {
+  43:main.c        ****     /* Enable global interrupts. */
+  44:main.c        ****     CyGlobalIntEnable; 
+  45:main.c        **** 
+  46:main.c        ****     /* initialization/startup code here */
+  47:main.c        ****     PWM_Recon_Start();
+  48:main.c        ****     //BPF_Comp_Start();
+  49:main.c        ****     Shift_Reg_Start();
+  50:main.c        ****     Out_Comp_Start();
+  51:main.c        ****     Bit_Timer_Start();
+  52:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
+  53:main.c        ****     LCD_Char_Start();
+  54:main.c        **** 
+  55:main.c        ****     // Displays Loading Message before receiving pre-fix
+  56:main.c        ****     char OutputString[ARRAY_SIZE];
+  57:main.c        ****     char display[ARRAY_SIZE];
+  58:main.c        ****     sprintf(display, "counting crabs...");
+  59:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+  60:main.c        ****     LCD_Char_PrintString(display);
+  61:main.c        **** 
+  62:main.c        ****     for(;;)
+  63:main.c        ****     {
+  64:main.c        ****         // LCD Screen Messages
+  65:main.c        ****         // If encode is received, display message
+  66:main.c        ****         if(lcdFlagEncode == 1){
+  67:main.c        ****             LCD_Char_ClearDisplay();
+  68:main.c        ****             LCD_Char_PrintString("0xFF pre-fix");
+  69:main.c        ****             lcdFlagEncode = 0; 
+  70:main.c        ****         // When 4 bits are received, data will display at top of screen
+  71:main.c        ****         }else if(lcdFlagData == 1){
+  72:main.c        ****             sprintf(OutputString, "%i", crabs);
+  73:main.c        ****             LCD_Char_ClearDisplay();
+  74:main.c        ****             LCD_Char_Position(0u,0u);
+  75:main.c        ****             LCD_Char_PrintString(OutputString);
+  76:main.c        ****             LCD_Char_PrintString(" crabs");
+  77:main.c        ****             dataFlag = 0;
+  78:main.c        ****             lcdFlagData = 0;
+  79:main.c        ****         // Postfix will display good or bad below data on screen
+  80:main.c        ****         }else if(lcdFlagDecode == 1){
+  81:main.c        ****             LCD_Char_Position(1u,0u);
+  82:main.c        ****             char8 displayG[] = "good";
+  83:main.c        ****             LCD_Char_PrintString(displayG);
+  84:main.c        ****             dataFlag = 0;
+  85:main.c        ****             lcdFlagDecode = 0;
+  86:main.c        ****         }else if(decodeWrong == 1){
+  87:main.c        ****             LCD_Char_Position(1u,0u);
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 3
+
+
+  88:main.c        ****             char8 displayB[] = "bad";
+  89:main.c        ****             LCD_Char_PrintString(displayB);
+  90:main.c        ****             decodeWrong = 0;
+  91:main.c        ****         }
+  92:main.c        ****     } // end of for(;;)
+  93:main.c        **** } // end of main()
+  94:main.c        ****     
+  95:main.c        **** 
+  96:main.c        **** //Bit length = 100 ms
+  97:main.c        **** //timer period = 10 ms
+  98:main.c        **** //will check bit 10 times, to debounce
+  99:main.c        **** CY_ISR(Bit_Timer){
+  28              		.loc 1 99 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 08B5     		push	{r3, lr}
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 3, -8
+  35              		.cfi_offset 14, -4
+ 100:main.c        ****     levelCounter++;
+  36              		.loc 1 100 0
+  37 0002 344A     		ldr	r2, .L12
+  38 0004 1388     		ldrh	r3, [r2]
+  39 0006 0133     		adds	r3, r3, #1
+  40 0008 1380     		strh	r3, [r2]	@ movhi
+ 101:main.c        ****     
+ 102:main.c        ****     // Count whether bit is currently 1 or 0
+ 103:main.c        ****     if(Out_Comp_GetCompare() != 0){
+  41              		.loc 1 103 0
+  42 000a FFF7FEFF 		bl	Out_Comp_GetCompare
+  43              	.LVL0:
+  44 000e 20B1     		cbz	r0, .L2
+ 104:main.c        ****         oneCount++;
+  45              		.loc 1 104 0
+  46 0010 304A     		ldr	r2, .L12
+  47 0012 9378     		ldrb	r3, [r2, #2]	@ zero_extendqisi2
+  48 0014 0133     		adds	r3, r3, #1
+  49 0016 9370     		strb	r3, [r2, #2]
+  50 0018 03E0     		b	.L3
+  51              	.L2:
+ 105:main.c        ****     }else{
+ 106:main.c        ****         zeroCount++;
+  52              		.loc 1 106 0
+  53 001a 2E4A     		ldr	r2, .L12
+  54 001c D378     		ldrb	r3, [r2, #3]	@ zero_extendqisi2
+  55 001e 0133     		adds	r3, r3, #1
+  56 0020 D370     		strb	r3, [r2, #3]
+  57              	.L3:
+ 107:main.c        ****     }
+ 108:main.c        ****     
+ 109:main.c        ****     // Debouncing
+ 110:main.c        ****     if(levelCounter == 10){
+  58              		.loc 1 110 0
+  59 0022 2C4B     		ldr	r3, .L12
+  60 0024 1B88     		ldrh	r3, [r3]
+  61 0026 0A2B     		cmp	r3, #10
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 4
+
+
+  62 0028 52D1     		bne	.L1
+ 111:main.c        ****         if(oneCount >= 7){ // 1 bit must be 7/10 = 1 
+  63              		.loc 1 111 0
+  64 002a 2A4B     		ldr	r3, .L12
+  65 002c 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+  66 002e 062B     		cmp	r3, #6
+  67 0030 05D9     		bls	.L5
+ 112:main.c        ****             currentBit = 0x01;
+  68              		.loc 1 112 0
+  69 0032 284B     		ldr	r3, .L12
+  70 0034 0122     		movs	r2, #1
+  71 0036 1A71     		strb	r2, [r3, #4]
+ 113:main.c        ****             oneCount = 0;
+  72              		.loc 1 113 0
+  73 0038 0022     		movs	r2, #0
+  74 003a 9A70     		strb	r2, [r3, #2]
+  75 003c 03E0     		b	.L6
+  76              	.L5:
+ 114:main.c        ****         
+ 115:main.c        ****         }else{ // if oneCount <= 7, bit is 0
+ 116:main.c        ****             currentBit = 0x00; 
+  77              		.loc 1 116 0
+  78 003e 254B     		ldr	r3, .L12
+  79 0040 0022     		movs	r2, #0
+  80 0042 1A71     		strb	r2, [r3, #4]
+ 117:main.c        ****             zeroCount = 0; 
+  81              		.loc 1 117 0
+  82 0044 DA70     		strb	r2, [r3, #3]
+  83              	.L6:
+ 118:main.c        ****         }
+ 119:main.c        ****         dataCount++; // Keep track of what bit we are on
+  84              		.loc 1 119 0
+  85 0046 234B     		ldr	r3, .L12
+  86 0048 5A79     		ldrb	r2, [r3, #5]	@ zero_extendqisi2
+  87 004a 0132     		adds	r2, r2, #1
+  88 004c D2B2     		uxtb	r2, r2
+  89 004e 5A71     		strb	r2, [r3, #5]
+ 120:main.c        ****         levelCounter = 0; // Reset timer bit debouncer  
+  90              		.loc 1 120 0
+  91 0050 0021     		movs	r1, #0
+  92 0052 1980     		strh	r1, [r3]	@ movhi
+ 121:main.c        ****         
+ 122:main.c        ****         //Look for pre-fix
+ 123:main.c        ****         data = data << 1; // Shift data over to store next bit
+  93              		.loc 1 123 0
+  94 0054 9979     		ldrb	r1, [r3, #6]	@ zero_extendqisi2
+  95 0056 4900     		lsls	r1, r1, #1
+  96 0058 C9B2     		uxtb	r1, r1
+ 124:main.c        ****         data = data | currentBit;
+  97              		.loc 1 124 0
+  98 005a 1879     		ldrb	r0, [r3, #4]	@ zero_extendqisi2
+  99 005c 0143     		orrs	r1, r1, r0
+ 100 005e 9971     		strb	r1, [r3, #6]
+ 125:main.c        ****         // Check if data is prefix(oxFF) but we are not looking for data or decode
+ 126:main.c        ****         if((data == 0xff) && (dataFlag == 0) && (decodeFlag == 0)){ 
+ 101              		.loc 1 126 0
+ 102 0060 FF29     		cmp	r1, #255
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 5
+
+
+ 103 0062 0FD1     		bne	.L7
+ 104              		.loc 1 126 0 is_stmt 0 discriminator 1
+ 105 0064 DB79     		ldrb	r3, [r3, #7]	@ zero_extendqisi2
+ 106 0066 6BB9     		cbnz	r3, .L7
+ 107              		.loc 1 126 0 discriminator 2
+ 108 0068 1A4B     		ldr	r3, .L12
+ 109 006a 1B7A     		ldrb	r3, [r3, #8]	@ zero_extendqisi2
+ 110 006c 53B9     		cbnz	r3, .L7
+ 127:main.c        ****             Count_Out_Write(1);
+ 111              		.loc 1 127 0 is_stmt 1
+ 112 006e 0120     		movs	r0, #1
+ 113 0070 FFF7FEFF 		bl	Count_Out_Write
+ 114              	.LVL1:
+ 128:main.c        ****             dataCount = 0;
+ 115              		.loc 1 128 0
+ 116 0074 174B     		ldr	r3, .L12
+ 117 0076 0022     		movs	r2, #0
+ 118 0078 5A71     		strb	r2, [r3, #5]
+ 129:main.c        ****             data = 0x00;
+ 119              		.loc 1 129 0
+ 120 007a 9A71     		strb	r2, [r3, #6]
+ 130:main.c        ****             dataFlag = 1; //Start looking for data
+ 121              		.loc 1 130 0
+ 122 007c 0122     		movs	r2, #1
+ 123 007e DA71     		strb	r2, [r3, #7]
+ 131:main.c        ****             lcdFlagEncode = 1; //Display pre-fix on lcd
+ 124              		.loc 1 131 0
+ 125 0080 5A72     		strb	r2, [r3, #9]
+ 126 0082 0EE0     		b	.L8
+ 127              	.L7:
+ 132:main.c        **** 
+ 133:main.c        ****         
+ 134:main.c        ****         // Look for 4 bits of data
+ 135:main.c        ****         }else if((dataFlag == 1) && (dataCount > 3)){
+ 128              		.loc 1 135 0
+ 129 0084 134B     		ldr	r3, .L12
+ 130 0086 DB79     		ldrb	r3, [r3, #7]	@ zero_extendqisi2
+ 131 0088 012B     		cmp	r3, #1
+ 132 008a 0AD1     		bne	.L8
+ 133              		.loc 1 135 0 is_stmt 0 discriminator 1
+ 134 008c 032A     		cmp	r2, #3
+ 135 008e 08D9     		bls	.L8
+ 136:main.c        ****             crabs = data;
+ 136              		.loc 1 136 0 is_stmt 1
+ 137 0090 104B     		ldr	r3, .L12
+ 138 0092 9972     		strb	r1, [r3, #10]
+ 137:main.c        ****             data = 0; //Restart data for decode
+ 139              		.loc 1 137 0
+ 140 0094 0022     		movs	r2, #0
+ 141 0096 9A71     		strb	r2, [r3, #6]
+ 138:main.c        ****             dataCount = 0; 
+ 142              		.loc 1 138 0
+ 143 0098 5A71     		strb	r2, [r3, #5]
+ 139:main.c        ****             lcdFlagEncode = 0; //Turn off encode message
+ 144              		.loc 1 139 0
+ 145 009a 5A72     		strb	r2, [r3, #9]
+ 140:main.c        ****             lcdFlagData = 1; //Display data
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 6
+
+
+ 146              		.loc 1 140 0
+ 147 009c 0122     		movs	r2, #1
+ 148 009e DA72     		strb	r2, [r3, #11]
+ 141:main.c        ****             decodeFlag = 1; //Now go to decode stage
+ 149              		.loc 1 141 0
+ 150 00a0 1A72     		strb	r2, [r3, #8]
+ 151              	.L8:
+ 142:main.c        ****         }
+ 143:main.c        ****         
+ 144:main.c        ****         // Check for 8 bits of post-fix
+ 145:main.c        ****         if(decodeFlag == 1 && (dataCount > 7)){
+ 152              		.loc 1 145 0
+ 153 00a2 0C4B     		ldr	r3, .L12
+ 154 00a4 1B7A     		ldrb	r3, [r3, #8]	@ zero_extendqisi2
+ 155 00a6 012B     		cmp	r3, #1
+ 156 00a8 12D1     		bne	.L1
+ 157              		.loc 1 145 0 is_stmt 0 discriminator 1
+ 158 00aa 0A4B     		ldr	r3, .L12
+ 159 00ac 5B79     		ldrb	r3, [r3, #5]	@ zero_extendqisi2
+ 160 00ae 072B     		cmp	r3, #7
+ 161 00b0 0ED9     		bls	.L1
+ 146:main.c        ****             // Correct postfix is 0x01
+ 147:main.c        ****             if(data == 0x01){
+ 162              		.loc 1 147 0 is_stmt 1
+ 163 00b2 084B     		ldr	r3, .L12
+ 164 00b4 9B79     		ldrb	r3, [r3, #6]	@ zero_extendqisi2
+ 165 00b6 012B     		cmp	r3, #1
+ 166 00b8 03D1     		bne	.L9
+ 148:main.c        ****              lcdFlagDecode = 1; // lcd flag for "good" post-fix
+ 167              		.loc 1 148 0
+ 168 00ba 0122     		movs	r2, #1
+ 169 00bc 054B     		ldr	r3, .L12
+ 170 00be 1A73     		strb	r2, [r3, #12]
+ 171 00c0 02E0     		b	.L10
+ 172              	.L9:
+ 149:main.c        ****             }else{
+ 150:main.c        ****                 decodeWrong = 1; // lcd flag for "bad" post-fix
+ 173              		.loc 1 150 0
+ 174 00c2 0122     		movs	r2, #1
+ 175 00c4 034B     		ldr	r3, .L12
+ 176 00c6 5A73     		strb	r2, [r3, #13]
+ 177              	.L10:
+ 151:main.c        ****             }
+ 152:main.c        ****             decodeFlag = 0;
+ 178              		.loc 1 152 0
+ 179 00c8 024B     		ldr	r3, .L12
+ 180 00ca 0022     		movs	r2, #0
+ 181 00cc 1A72     		strb	r2, [r3, #8]
+ 153:main.c        ****             dataFlag = 0; //Don't want to check for data anymore
+ 182              		.loc 1 153 0
+ 183 00ce DA71     		strb	r2, [r3, #7]
+ 184              	.L1:
+ 185 00d0 08BD     		pop	{r3, pc}
+ 186              	.L13:
+ 187 00d2 00BF     		.align	2
+ 188              	.L12:
+ 189 00d4 00000000 		.word	.LANCHOR0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 7
+
+
+ 190              		.cfi_endproc
+ 191              	.LFE65:
+ 192              		.size	Bit_Timer, .-Bit_Timer
+ 193              		.section	.text.main,"ax",%progbits
+ 194              		.align	2
+ 195              		.global	main
+ 196              		.thumb
+ 197              		.thumb_func
+ 198              		.type	main, %function
+ 199              	main:
+ 200              	.LFB64:
+  42:main.c        ****     /* Enable global interrupts. */
+ 201              		.loc 1 42 0
+ 202              		.cfi_startproc
+ 203              		@ args = 0, pretend = 0, frame = 32
+ 204              		@ frame_needed = 0, uses_anonymous_args = 0
+ 205 0000 30B5     		push	{r4, r5, lr}
+ 206              		.cfi_def_cfa_offset 12
+ 207              		.cfi_offset 4, -12
+ 208              		.cfi_offset 5, -8
+ 209              		.cfi_offset 14, -4
+ 210 0002 89B0     		sub	sp, sp, #36
+ 211              		.cfi_def_cfa_offset 48
+  44:main.c        **** 
+ 212              		.loc 1 44 0
+ 213              		.syntax unified
+ 214              	@ 44 "main.c" 1
+ 215 0004 62B6     		CPSIE   i
+ 216              	@ 0 "" 2
+  47:main.c        ****     //BPF_Comp_Start();
+ 217              		.loc 1 47 0
+ 218              		.thumb
+ 219              		.syntax unified
+ 220 0006 FFF7FEFF 		bl	PWM_Recon_Start
+ 221              	.LVL2:
+  49:main.c        ****     Out_Comp_Start();
+ 222              		.loc 1 49 0
+ 223 000a FFF7FEFF 		bl	Shift_Reg_Start
+ 224              	.LVL3:
+  50:main.c        ****     Bit_Timer_Start();
+ 225              		.loc 1 50 0
+ 226 000e FFF7FEFF 		bl	Out_Comp_Start
+ 227              	.LVL4:
+  51:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
+ 228              		.loc 1 51 0
+ 229 0012 FFF7FEFF 		bl	Bit_Timer_Start
+ 230              	.LVL5:
+  52:main.c        ****     LCD_Char_Start();
+ 231              		.loc 1 52 0
+ 232 0016 3148     		ldr	r0, .L21
+ 233 0018 FFF7FEFF 		bl	Timer_ISR_StartEx
+ 234              	.LVL6:
+  53:main.c        **** 
+ 235              		.loc 1 53 0
+ 236 001c FFF7FEFF 		bl	LCD_Char_Start
+ 237              	.LVL7:
+  58:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 8
+
+
+ 238              		.loc 1 58 0
+ 239 0020 02AC     		add	r4, sp, #8
+ 240 0022 2F4D     		ldr	r5, .L21+4
+ 241 0024 0FCD     		ldmia	r5!, {r0, r1, r2, r3}
+ 242 0026 0FC4     		stmia	r4!, {r0, r1, r2, r3}
+ 243 0028 2B68     		ldr	r3, [r5]
+ 244 002a 2380     		strh	r3, [r4]	@ movhi
+  59:main.c        ****     LCD_Char_PrintString(display);
+ 245              		.loc 1 59 0
+ 246 002c 0021     		movs	r1, #0
+ 247 002e 0846     		mov	r0, r1
+ 248 0030 FFF7FEFF 		bl	LCD_Char_Position
+ 249              	.LVL8:
+  60:main.c        **** 
+ 250              		.loc 1 60 0
+ 251 0034 02A8     		add	r0, sp, #8
+ 252 0036 FFF7FEFF 		bl	LCD_Char_PrintString
+ 253              	.LVL9:
+ 254              	.L15:
+  66:main.c        ****             LCD_Char_ClearDisplay();
+ 255              		.loc 1 66 0
+ 256 003a 2A4B     		ldr	r3, .L21+8
+ 257 003c 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 258 003e 012B     		cmp	r3, #1
+ 259 0040 09D1     		bne	.L16
+  67:main.c        ****             LCD_Char_PrintString("0xFF pre-fix");
+ 260              		.loc 1 67 0
+ 261 0042 0120     		movs	r0, #1
+ 262 0044 FFF7FEFF 		bl	LCD_Char_WriteControl
+ 263              	.LVL10:
+  68:main.c        ****             lcdFlagEncode = 0; 
+ 264              		.loc 1 68 0
+ 265 0048 2748     		ldr	r0, .L21+12
+ 266 004a FFF7FEFF 		bl	LCD_Char_PrintString
+ 267              	.LVL11:
+  69:main.c        ****         // When 4 bits are received, data will display at top of screen
+ 268              		.loc 1 69 0
+ 269 004e 0022     		movs	r2, #0
+ 270 0050 244B     		ldr	r3, .L21+8
+ 271 0052 5A72     		strb	r2, [r3, #9]
+ 272 0054 F1E7     		b	.L15
+ 273              	.L16:
+  71:main.c        ****             sprintf(OutputString, "%i", crabs);
+ 274              		.loc 1 71 0
+ 275 0056 234B     		ldr	r3, .L21+8
+ 276 0058 DB7A     		ldrb	r3, [r3, #11]	@ zero_extendqisi2
+ 277 005a 012B     		cmp	r3, #1
+ 278 005c 16D1     		bne	.L18
+  72:main.c        ****             LCD_Char_ClearDisplay();
+ 279              		.loc 1 72 0
+ 280 005e 214C     		ldr	r4, .L21+8
+ 281 0060 A27A     		ldrb	r2, [r4, #10]	@ zero_extendqisi2
+ 282 0062 2249     		ldr	r1, .L21+16
+ 283 0064 05A8     		add	r0, sp, #20
+ 284 0066 FFF7FEFF 		bl	sprintf
+ 285              	.LVL12:
+  73:main.c        ****             LCD_Char_Position(0u,0u);
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 9
+
+
+ 286              		.loc 1 73 0
+ 287 006a 0120     		movs	r0, #1
+ 288 006c FFF7FEFF 		bl	LCD_Char_WriteControl
+ 289              	.LVL13:
+  74:main.c        ****             LCD_Char_PrintString(OutputString);
+ 290              		.loc 1 74 0
+ 291 0070 0021     		movs	r1, #0
+ 292 0072 0846     		mov	r0, r1
+ 293 0074 FFF7FEFF 		bl	LCD_Char_Position
+ 294              	.LVL14:
+  75:main.c        ****             LCD_Char_PrintString(" crabs");
+ 295              		.loc 1 75 0
+ 296 0078 05A8     		add	r0, sp, #20
+ 297 007a FFF7FEFF 		bl	LCD_Char_PrintString
+ 298              	.LVL15:
+  76:main.c        ****             dataFlag = 0;
+ 299              		.loc 1 76 0
+ 300 007e 1C48     		ldr	r0, .L21+20
+ 301 0080 FFF7FEFF 		bl	LCD_Char_PrintString
+ 302              	.LVL16:
+  77:main.c        ****             lcdFlagData = 0;
+ 303              		.loc 1 77 0
+ 304 0084 0023     		movs	r3, #0
+ 305 0086 E371     		strb	r3, [r4, #7]
+  78:main.c        ****         // Postfix will display good or bad below data on screen
+ 306              		.loc 1 78 0
+ 307 0088 E372     		strb	r3, [r4, #11]
+ 308 008a D6E7     		b	.L15
+ 309              	.L18:
+  80:main.c        ****             LCD_Char_Position(1u,0u);
+ 310              		.loc 1 80 0
+ 311 008c 154B     		ldr	r3, .L21+8
+ 312 008e 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 313 0090 012B     		cmp	r3, #1
+ 314 0092 11D1     		bne	.L19
+ 315              	.LBB2:
+  81:main.c        ****             char8 displayG[] = "good";
+ 316              		.loc 1 81 0
+ 317 0094 0021     		movs	r1, #0
+ 318 0096 0120     		movs	r0, #1
+ 319 0098 FFF7FEFF 		bl	LCD_Char_Position
+ 320              	.LVL17:
+  82:main.c        ****             LCD_Char_PrintString(displayG);
+ 321              		.loc 1 82 0
+ 322 009c 154B     		ldr	r3, .L21+24
+ 323 009e 93E80300 		ldmia	r3, {r0, r1}
+ 324 00a2 0090     		str	r0, [sp]
+ 325 00a4 8DF80410 		strb	r1, [sp, #4]
+  83:main.c        ****             dataFlag = 0;
+ 326              		.loc 1 83 0
+ 327 00a8 6846     		mov	r0, sp
+ 328 00aa FFF7FEFF 		bl	LCD_Char_PrintString
+ 329              	.LVL18:
+  84:main.c        ****             lcdFlagDecode = 0;
+ 330              		.loc 1 84 0
+ 331 00ae 0D4B     		ldr	r3, .L21+8
+ 332 00b0 0022     		movs	r2, #0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 10
+
+
+ 333 00b2 DA71     		strb	r2, [r3, #7]
+  85:main.c        ****         }else if(decodeWrong == 1){
+ 334              		.loc 1 85 0
+ 335 00b4 1A73     		strb	r2, [r3, #12]
+ 336              	.LBE2:
+ 337 00b6 C0E7     		b	.L15
+ 338              	.L19:
+  86:main.c        ****             LCD_Char_Position(1u,0u);
+ 339              		.loc 1 86 0
+ 340 00b8 0A4B     		ldr	r3, .L21+8
+ 341 00ba 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 342 00bc 012B     		cmp	r3, #1
+ 343 00be BCD1     		bne	.L15
+ 344              	.LBB3:
+  87:main.c        ****             char8 displayB[] = "bad";
+ 345              		.loc 1 87 0 discriminator 2
+ 346 00c0 0021     		movs	r1, #0
+ 347 00c2 0120     		movs	r0, #1
+ 348 00c4 FFF7FEFF 		bl	LCD_Char_Position
+ 349              	.LVL19:
+  88:main.c        ****             LCD_Char_PrintString(displayB);
+ 350              		.loc 1 88 0 discriminator 2
+ 351 00c8 08A8     		add	r0, sp, #32
+ 352 00ca 0B4B     		ldr	r3, .L21+28
+ 353 00cc 40F8203D 		str	r3, [r0, #-32]!
+  89:main.c        ****             decodeWrong = 0;
+ 354              		.loc 1 89 0 discriminator 2
+ 355 00d0 FFF7FEFF 		bl	LCD_Char_PrintString
+ 356              	.LVL20:
+  90:main.c        ****         }
+ 357              		.loc 1 90 0 discriminator 2
+ 358 00d4 0022     		movs	r2, #0
+ 359 00d6 034B     		ldr	r3, .L21+8
+ 360 00d8 5A73     		strb	r2, [r3, #13]
+ 361 00da AEE7     		b	.L15
+ 362              	.L22:
+ 363              		.align	2
+ 364              	.L21:
+ 365 00dc 00000000 		.word	Bit_Timer
+ 366 00e0 00000000 		.word	.LC0
+ 367 00e4 00000000 		.word	.LANCHOR0
+ 368 00e8 14000000 		.word	.LC1
+ 369 00ec 24000000 		.word	.LC2
+ 370 00f0 28000000 		.word	.LC3
+ 371 00f4 30000000 		.word	.LC4
+ 372 00f8 62616400 		.word	6578530
+ 373              	.LBE3:
+ 374              		.cfi_endproc
+ 375              	.LFE64:
+ 376              		.size	main, .-main
+ 377              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 378              		.align	2
+ 379              	.LC0:
+ 380 0000 636F756E 		.ascii	"counting crabs...\000"
+ 380      74696E67 
+ 380      20637261 
+ 380      62732E2E 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 11
+
+
+ 380      2E00
+ 381 0012 0000     		.space	2
+ 382              	.LC1:
+ 383 0014 30784646 		.ascii	"0xFF pre-fix\000"
+ 383      20707265 
+ 383      2D666978 
+ 383      00
+ 384 0021 000000   		.space	3
+ 385              	.LC2:
+ 386 0024 256900   		.ascii	"%i\000"
+ 387 0027 00       		.space	1
+ 388              	.LC3:
+ 389 0028 20637261 		.ascii	" crabs\000"
+ 389      627300
+ 390 002f 00       		.space	1
+ 391              	.LC4:
+ 392 0030 676F6F64 		.ascii	"good\000"
+ 392      00
+ 393              		.bss
+ 394              		.align	1
+ 395              		.set	.LANCHOR0,. + 0
+ 396              		.type	levelCounter, %object
+ 397              		.size	levelCounter, 2
+ 398              	levelCounter:
+ 399 0000 0000     		.space	2
+ 400              		.type	oneCount, %object
+ 401              		.size	oneCount, 1
+ 402              	oneCount:
+ 403 0002 00       		.space	1
+ 404              		.type	zeroCount, %object
+ 405              		.size	zeroCount, 1
+ 406              	zeroCount:
+ 407 0003 00       		.space	1
+ 408              		.type	currentBit, %object
+ 409              		.size	currentBit, 1
+ 410              	currentBit:
+ 411 0004 00       		.space	1
+ 412              		.type	dataCount, %object
+ 413              		.size	dataCount, 1
+ 414              	dataCount:
+ 415 0005 00       		.space	1
+ 416              		.type	data, %object
+ 417              		.size	data, 1
+ 418              	data:
+ 419 0006 00       		.space	1
+ 420              		.type	dataFlag, %object
+ 421              		.size	dataFlag, 1
+ 422              	dataFlag:
+ 423 0007 00       		.space	1
+ 424              		.type	decodeFlag, %object
+ 425              		.size	decodeFlag, 1
+ 426              	decodeFlag:
+ 427 0008 00       		.space	1
+ 428              		.type	lcdFlagEncode, %object
+ 429              		.size	lcdFlagEncode, 1
+ 430              	lcdFlagEncode:
+ 431 0009 00       		.space	1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 12
+
+
+ 432              		.type	crabs, %object
+ 433              		.size	crabs, 1
+ 434              	crabs:
+ 435 000a 00       		.space	1
+ 436              		.type	lcdFlagData, %object
+ 437              		.size	lcdFlagData, 1
+ 438              	lcdFlagData:
+ 439 000b 00       		.space	1
+ 440              		.type	lcdFlagDecode, %object
+ 441              		.size	lcdFlagDecode, 1
+ 442              	lcdFlagDecode:
+ 443 000c 00       		.space	1
+ 444              		.type	decodeWrong, %object
+ 445              		.size	decodeWrong, 1
+ 446              	decodeWrong:
+ 447 000d 00       		.space	1
+ 448              		.text
+ 449              	.Letext0:
+ 450              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 451              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 452              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 453              		.file 5 "Generated_Source\\PSoC5/Out_Comp.h"
+ 454              		.file 6 "Generated_Source\\PSoC5/Count_Out.h"
+ 455              		.file 7 "Generated_Source\\PSoC5/LCD_Char.h"
+ 456              		.file 8 "Generated_Source\\PSoC5/PWM_Recon.h"
+ 457              		.file 9 "Generated_Source\\PSoC5/Shift_Reg.h"
+ 458              		.file 10 "Generated_Source\\PSoC5/Bit_Timer.h"
+ 459              		.file 11 "Generated_Source\\PSoC5/Timer_ISR.h"
+ 460              		.file 12 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4
+ 461              		.file 13 "Generated_Source\\PSoC5/core_cm3.h"
+ 462              		.section	.debug_info,"",%progbits
+ 463              	.Ldebug_info0:
+ 464 0000 5C040000 		.4byte	0x45c
+ 465 0004 0400     		.2byte	0x4
+ 466 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 467 000a 04       		.byte	0x4
+ 468 000b 01       		.uleb128 0x1
+ 469 000c B2000000 		.4byte	.LASF48
+ 470 0010 0C       		.byte	0xc
+ 471 0011 A7020000 		.4byte	.LASF49
+ 472 0015 F0010000 		.4byte	.LASF50
+ 473 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 474 001d 00000000 		.4byte	0
+ 475 0021 00000000 		.4byte	.Ldebug_line0
+ 476 0025 02       		.uleb128 0x2
+ 477 0026 01       		.byte	0x1
+ 478 0027 06       		.byte	0x6
+ 479 0028 18030000 		.4byte	.LASF0
+ 480 002c 02       		.uleb128 0x2
+ 481 002d 01       		.byte	0x1
+ 482 002e 08       		.byte	0x8
+ 483 002f A4000000 		.4byte	.LASF1
+ 484 0033 02       		.uleb128 0x2
+ 485 0034 02       		.byte	0x2
+ 486 0035 05       		.byte	0x5
+ 487 0036 EB020000 		.4byte	.LASF2
+ 488 003a 02       		.uleb128 0x2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 13
+
+
+ 489 003b 02       		.byte	0x2
+ 490 003c 07       		.byte	0x7
+ 491 003d 71010000 		.4byte	.LASF3
+ 492 0041 03       		.uleb128 0x3
+ 493 0042 1E000000 		.4byte	.LASF9
+ 494 0046 02       		.byte	0x2
+ 495 0047 3F       		.byte	0x3f
+ 496 0048 4C000000 		.4byte	0x4c
+ 497 004c 02       		.uleb128 0x2
+ 498 004d 04       		.byte	0x4
+ 499 004e 05       		.byte	0x5
+ 500 004f FB020000 		.4byte	.LASF4
+ 501 0053 02       		.uleb128 0x2
+ 502 0054 04       		.byte	0x4
+ 503 0055 07       		.byte	0x7
+ 504 0056 5F010000 		.4byte	.LASF5
+ 505 005a 02       		.uleb128 0x2
+ 506 005b 08       		.byte	0x8
+ 507 005c 05       		.byte	0x5
+ 508 005d 99020000 		.4byte	.LASF6
+ 509 0061 02       		.uleb128 0x2
+ 510 0062 08       		.byte	0x8
+ 511 0063 07       		.byte	0x7
+ 512 0064 3E020000 		.4byte	.LASF7
+ 513 0068 04       		.uleb128 0x4
+ 514 0069 04       		.byte	0x4
+ 515 006a 05       		.byte	0x5
+ 516 006b 696E7400 		.ascii	"int\000"
+ 517 006f 02       		.uleb128 0x2
+ 518 0070 04       		.byte	0x4
+ 519 0071 07       		.byte	0x7
+ 520 0072 31020000 		.4byte	.LASF8
+ 521 0076 03       		.uleb128 0x3
+ 522 0077 88020000 		.4byte	.LASF10
+ 523 007b 03       		.byte	0x3
+ 524 007c 2C       		.byte	0x2c
+ 525 007d 41000000 		.4byte	0x41
+ 526 0081 05       		.uleb128 0x5
+ 527 0082 F5020000 		.4byte	.LASF11
+ 528 0086 04       		.byte	0x4
+ 529 0087 9201     		.2byte	0x192
+ 530 0089 2C000000 		.4byte	0x2c
+ 531 008d 05       		.uleb128 0x5
+ 532 008e D6010000 		.4byte	.LASF12
+ 533 0092 04       		.byte	0x4
+ 534 0093 9301     		.2byte	0x193
+ 535 0095 3A000000 		.4byte	0x3a
+ 536 0099 02       		.uleb128 0x2
+ 537 009a 04       		.byte	0x4
+ 538 009b 04       		.byte	0x4
+ 539 009c 99000000 		.4byte	.LASF13
+ 540 00a0 02       		.uleb128 0x2
+ 541 00a1 08       		.byte	0x8
+ 542 00a2 04       		.byte	0x4
+ 543 00a3 7B000000 		.4byte	.LASF14
+ 544 00a7 05       		.uleb128 0x5
+ 545 00a8 40010000 		.4byte	.LASF15
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 14
+
+
+ 546 00ac 04       		.byte	0x4
+ 547 00ad A301     		.2byte	0x1a3
+ 548 00af B3000000 		.4byte	0xb3
+ 549 00b3 02       		.uleb128 0x2
+ 550 00b4 01       		.byte	0x1
+ 551 00b5 08       		.byte	0x8
+ 552 00b6 AE020000 		.4byte	.LASF16
+ 553 00ba 02       		.uleb128 0x2
+ 554 00bb 08       		.byte	0x8
+ 555 00bc 04       		.byte	0x4
+ 556 00bd 0C030000 		.4byte	.LASF17
+ 557 00c1 02       		.uleb128 0x2
+ 558 00c2 04       		.byte	0x4
+ 559 00c3 07       		.byte	0x7
+ 560 00c4 90020000 		.4byte	.LASF18
+ 561 00c8 06       		.uleb128 0x6
+ 562 00c9 E6010000 		.4byte	.LASF51
+ 563 00cd 01       		.byte	0x1
+ 564 00ce 63       		.byte	0x63
+ 565 00cf 00000000 		.4byte	.LFB65
+ 566 00d3 D8000000 		.4byte	.LFE65-.LFB65
+ 567 00d7 01       		.uleb128 0x1
+ 568 00d8 9C       		.byte	0x9c
+ 569 00d9 F6000000 		.4byte	0xf6
+ 570 00dd 07       		.uleb128 0x7
+ 571 00de 0E000000 		.4byte	.LVL0
+ 572 00e2 DB030000 		.4byte	0x3db
+ 573 00e6 08       		.uleb128 0x8
+ 574 00e7 74000000 		.4byte	.LVL1
+ 575 00eb E6030000 		.4byte	0x3e6
+ 576 00ef 09       		.uleb128 0x9
+ 577 00f0 01       		.uleb128 0x1
+ 578 00f1 50       		.byte	0x50
+ 579 00f2 01       		.uleb128 0x1
+ 580 00f3 31       		.byte	0x31
+ 581 00f4 00       		.byte	0
+ 582 00f5 00       		.byte	0
+ 583 00f6 0A       		.uleb128 0xa
+ 584 00f7 B8010000 		.4byte	.LASF52
+ 585 00fb 01       		.byte	0x1
+ 586 00fc 29       		.byte	0x29
+ 587 00fd 68000000 		.4byte	0x68
+ 588 0101 00000000 		.4byte	.LFB64
+ 589 0105 FC000000 		.4byte	.LFE64-.LFB64
+ 590 0109 01       		.uleb128 0x1
+ 591 010a 9C       		.byte	0x9c
+ 592 010b BD020000 		.4byte	0x2bd
+ 593 010f 0B       		.uleb128 0xb
+ 594 0110 B3020000 		.4byte	.LASF19
+ 595 0114 01       		.byte	0x1
+ 596 0115 38       		.byte	0x38
+ 597 0116 BD020000 		.4byte	0x2bd
+ 598 011a 02       		.uleb128 0x2
+ 599 011b 91       		.byte	0x91
+ 600 011c 64       		.sleb128 -28
+ 601 011d 0B       		.uleb128 0xb
+ 602 011e 04030000 		.4byte	.LASF20
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 15
+
+
+ 603 0122 01       		.byte	0x1
+ 604 0123 39       		.byte	0x39
+ 605 0124 BD020000 		.4byte	0x2bd
+ 606 0128 02       		.uleb128 0x2
+ 607 0129 91       		.byte	0x91
+ 608 012a 58       		.sleb128 -40
+ 609 012b 0C       		.uleb128 0xc
+ 610 012c 94000000 		.4byte	.LBB2
+ 611 0130 22000000 		.4byte	.LBE2-.LBB2
+ 612 0134 6F010000 		.4byte	0x16f
+ 613 0138 0B       		.uleb128 0xb
+ 614 0139 BD010000 		.4byte	.LASF21
+ 615 013d 01       		.byte	0x1
+ 616 013e 52       		.byte	0x52
+ 617 013f CD020000 		.4byte	0x2cd
+ 618 0143 02       		.uleb128 0x2
+ 619 0144 91       		.byte	0x91
+ 620 0145 50       		.sleb128 -48
+ 621 0146 0D       		.uleb128 0xd
+ 622 0147 9C000000 		.4byte	.LVL17
+ 623 014b F1030000 		.4byte	0x3f1
+ 624 014f 5E010000 		.4byte	0x15e
+ 625 0153 09       		.uleb128 0x9
+ 626 0154 01       		.uleb128 0x1
+ 627 0155 50       		.byte	0x50
+ 628 0156 01       		.uleb128 0x1
+ 629 0157 31       		.byte	0x31
+ 630 0158 09       		.uleb128 0x9
+ 631 0159 01       		.uleb128 0x1
+ 632 015a 51       		.byte	0x51
+ 633 015b 01       		.uleb128 0x1
+ 634 015c 30       		.byte	0x30
+ 635 015d 00       		.byte	0
+ 636 015e 08       		.uleb128 0x8
+ 637 015f AE000000 		.4byte	.LVL18
+ 638 0163 FC030000 		.4byte	0x3fc
+ 639 0167 09       		.uleb128 0x9
+ 640 0168 01       		.uleb128 0x1
+ 641 0169 50       		.byte	0x50
+ 642 016a 02       		.uleb128 0x2
+ 643 016b 7D       		.byte	0x7d
+ 644 016c 00       		.sleb128 0
+ 645 016d 00       		.byte	0
+ 646 016e 00       		.byte	0
+ 647 016f 0C       		.uleb128 0xc
+ 648 0170 C0000000 		.4byte	.LBB3
+ 649 0174 3C000000 		.4byte	.LBE3-.LBB3
+ 650 0178 B3010000 		.4byte	0x1b3
+ 651 017c 0B       		.uleb128 0xb
+ 652 017d A9010000 		.4byte	.LASF22
+ 653 0181 01       		.byte	0x1
+ 654 0182 58       		.byte	0x58
+ 655 0183 DD020000 		.4byte	0x2dd
+ 656 0187 02       		.uleb128 0x2
+ 657 0188 91       		.byte	0x91
+ 658 0189 50       		.sleb128 -48
+ 659 018a 0D       		.uleb128 0xd
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 16
+
+
+ 660 018b C8000000 		.4byte	.LVL19
+ 661 018f F1030000 		.4byte	0x3f1
+ 662 0193 A2010000 		.4byte	0x1a2
+ 663 0197 09       		.uleb128 0x9
+ 664 0198 01       		.uleb128 0x1
+ 665 0199 50       		.byte	0x50
+ 666 019a 01       		.uleb128 0x1
+ 667 019b 31       		.byte	0x31
+ 668 019c 09       		.uleb128 0x9
+ 669 019d 01       		.uleb128 0x1
+ 670 019e 51       		.byte	0x51
+ 671 019f 01       		.uleb128 0x1
+ 672 01a0 30       		.byte	0x30
+ 673 01a1 00       		.byte	0
+ 674 01a2 08       		.uleb128 0x8
+ 675 01a3 D4000000 		.4byte	.LVL20
+ 676 01a7 FC030000 		.4byte	0x3fc
+ 677 01ab 09       		.uleb128 0x9
+ 678 01ac 01       		.uleb128 0x1
+ 679 01ad 50       		.byte	0x50
+ 680 01ae 02       		.uleb128 0x2
+ 681 01af 91       		.byte	0x91
+ 682 01b0 50       		.sleb128 -48
+ 683 01b1 00       		.byte	0
+ 684 01b2 00       		.byte	0
+ 685 01b3 07       		.uleb128 0x7
+ 686 01b4 0A000000 		.4byte	.LVL2
+ 687 01b8 07040000 		.4byte	0x407
+ 688 01bc 07       		.uleb128 0x7
+ 689 01bd 0E000000 		.4byte	.LVL3
+ 690 01c1 12040000 		.4byte	0x412
+ 691 01c5 07       		.uleb128 0x7
+ 692 01c6 12000000 		.4byte	.LVL4
+ 693 01ca 1D040000 		.4byte	0x41d
+ 694 01ce 07       		.uleb128 0x7
+ 695 01cf 16000000 		.4byte	.LVL5
+ 696 01d3 28040000 		.4byte	0x428
+ 697 01d7 0D       		.uleb128 0xd
+ 698 01d8 1C000000 		.4byte	.LVL6
+ 699 01dc 33040000 		.4byte	0x433
+ 700 01e0 EE010000 		.4byte	0x1ee
+ 701 01e4 09       		.uleb128 0x9
+ 702 01e5 01       		.uleb128 0x1
+ 703 01e6 50       		.byte	0x50
+ 704 01e7 05       		.uleb128 0x5
+ 705 01e8 03       		.byte	0x3
+ 706 01e9 00000000 		.4byte	Bit_Timer
+ 707 01ed 00       		.byte	0
+ 708 01ee 07       		.uleb128 0x7
+ 709 01ef 20000000 		.4byte	.LVL7
+ 710 01f3 3E040000 		.4byte	0x43e
+ 711 01f7 0D       		.uleb128 0xd
+ 712 01f8 34000000 		.4byte	.LVL8
+ 713 01fc F1030000 		.4byte	0x3f1
+ 714 0200 0F020000 		.4byte	0x20f
+ 715 0204 09       		.uleb128 0x9
+ 716 0205 01       		.uleb128 0x1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 17
+
+
+ 717 0206 50       		.byte	0x50
+ 718 0207 01       		.uleb128 0x1
+ 719 0208 30       		.byte	0x30
+ 720 0209 09       		.uleb128 0x9
+ 721 020a 01       		.uleb128 0x1
+ 722 020b 51       		.byte	0x51
+ 723 020c 01       		.uleb128 0x1
+ 724 020d 30       		.byte	0x30
+ 725 020e 00       		.byte	0
+ 726 020f 0D       		.uleb128 0xd
+ 727 0210 3A000000 		.4byte	.LVL9
+ 728 0214 FC030000 		.4byte	0x3fc
+ 729 0218 23020000 		.4byte	0x223
+ 730 021c 09       		.uleb128 0x9
+ 731 021d 01       		.uleb128 0x1
+ 732 021e 50       		.byte	0x50
+ 733 021f 02       		.uleb128 0x2
+ 734 0220 74       		.byte	0x74
+ 735 0221 70       		.sleb128 -16
+ 736 0222 00       		.byte	0
+ 737 0223 0D       		.uleb128 0xd
+ 738 0224 48000000 		.4byte	.LVL10
+ 739 0228 49040000 		.4byte	0x449
+ 740 022c 36020000 		.4byte	0x236
+ 741 0230 09       		.uleb128 0x9
+ 742 0231 01       		.uleb128 0x1
+ 743 0232 50       		.byte	0x50
+ 744 0233 01       		.uleb128 0x1
+ 745 0234 31       		.byte	0x31
+ 746 0235 00       		.byte	0
+ 747 0236 0D       		.uleb128 0xd
+ 748 0237 4E000000 		.4byte	.LVL11
+ 749 023b FC030000 		.4byte	0x3fc
+ 750 023f 4D020000 		.4byte	0x24d
+ 751 0243 09       		.uleb128 0x9
+ 752 0244 01       		.uleb128 0x1
+ 753 0245 50       		.byte	0x50
+ 754 0246 05       		.uleb128 0x5
+ 755 0247 03       		.byte	0x3
+ 756 0248 14000000 		.4byte	.LC1
+ 757 024c 00       		.byte	0
+ 758 024d 0D       		.uleb128 0xd
+ 759 024e 6A000000 		.4byte	.LVL12
+ 760 0252 54040000 		.4byte	0x454
+ 761 0256 6A020000 		.4byte	0x26a
+ 762 025a 09       		.uleb128 0x9
+ 763 025b 01       		.uleb128 0x1
+ 764 025c 50       		.byte	0x50
+ 765 025d 02       		.uleb128 0x2
+ 766 025e 91       		.byte	0x91
+ 767 025f 64       		.sleb128 -28
+ 768 0260 09       		.uleb128 0x9
+ 769 0261 01       		.uleb128 0x1
+ 770 0262 51       		.byte	0x51
+ 771 0263 05       		.uleb128 0x5
+ 772 0264 03       		.byte	0x3
+ 773 0265 24000000 		.4byte	.LC2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 18
+
+
+ 774 0269 00       		.byte	0
+ 775 026a 0D       		.uleb128 0xd
+ 776 026b 70000000 		.4byte	.LVL13
+ 777 026f 49040000 		.4byte	0x449
+ 778 0273 7D020000 		.4byte	0x27d
+ 779 0277 09       		.uleb128 0x9
+ 780 0278 01       		.uleb128 0x1
+ 781 0279 50       		.byte	0x50
+ 782 027a 01       		.uleb128 0x1
+ 783 027b 31       		.byte	0x31
+ 784 027c 00       		.byte	0
+ 785 027d 0D       		.uleb128 0xd
+ 786 027e 78000000 		.4byte	.LVL14
+ 787 0282 F1030000 		.4byte	0x3f1
+ 788 0286 95020000 		.4byte	0x295
+ 789 028a 09       		.uleb128 0x9
+ 790 028b 01       		.uleb128 0x1
+ 791 028c 50       		.byte	0x50
+ 792 028d 01       		.uleb128 0x1
+ 793 028e 30       		.byte	0x30
+ 794 028f 09       		.uleb128 0x9
+ 795 0290 01       		.uleb128 0x1
+ 796 0291 51       		.byte	0x51
+ 797 0292 01       		.uleb128 0x1
+ 798 0293 30       		.byte	0x30
+ 799 0294 00       		.byte	0
+ 800 0295 0D       		.uleb128 0xd
+ 801 0296 7E000000 		.4byte	.LVL15
+ 802 029a FC030000 		.4byte	0x3fc
+ 803 029e A9020000 		.4byte	0x2a9
+ 804 02a2 09       		.uleb128 0x9
+ 805 02a3 01       		.uleb128 0x1
+ 806 02a4 50       		.byte	0x50
+ 807 02a5 02       		.uleb128 0x2
+ 808 02a6 91       		.byte	0x91
+ 809 02a7 64       		.sleb128 -28
+ 810 02a8 00       		.byte	0
+ 811 02a9 08       		.uleb128 0x8
+ 812 02aa 84000000 		.4byte	.LVL16
+ 813 02ae FC030000 		.4byte	0x3fc
+ 814 02b2 09       		.uleb128 0x9
+ 815 02b3 01       		.uleb128 0x1
+ 816 02b4 50       		.byte	0x50
+ 817 02b5 05       		.uleb128 0x5
+ 818 02b6 03       		.byte	0x3
+ 819 02b7 28000000 		.4byte	.LC3
+ 820 02bb 00       		.byte	0
+ 821 02bc 00       		.byte	0
+ 822 02bd 0E       		.uleb128 0xe
+ 823 02be B3000000 		.4byte	0xb3
+ 824 02c2 CD020000 		.4byte	0x2cd
+ 825 02c6 0F       		.uleb128 0xf
+ 826 02c7 C1000000 		.4byte	0xc1
+ 827 02cb 0B       		.byte	0xb
+ 828 02cc 00       		.byte	0
+ 829 02cd 0E       		.uleb128 0xe
+ 830 02ce A7000000 		.4byte	0xa7
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 19
+
+
+ 831 02d2 DD020000 		.4byte	0x2dd
+ 832 02d6 0F       		.uleb128 0xf
+ 833 02d7 C1000000 		.4byte	0xc1
+ 834 02db 04       		.byte	0x4
+ 835 02dc 00       		.byte	0
+ 836 02dd 0E       		.uleb128 0xe
+ 837 02de A7000000 		.4byte	0xa7
+ 838 02e2 ED020000 		.4byte	0x2ed
+ 839 02e6 0F       		.uleb128 0xf
+ 840 02e7 C1000000 		.4byte	0xc1
+ 841 02eb 03       		.byte	0x3
+ 842 02ec 00       		.byte	0
+ 843 02ed 0B       		.uleb128 0xb
+ 844 02ee 70020000 		.4byte	.LASF23
+ 845 02f2 01       		.byte	0x1
+ 846 02f3 17       		.byte	0x17
+ 847 02f4 8D000000 		.4byte	0x8d
+ 848 02f8 05       		.uleb128 0x5
+ 849 02f9 03       		.byte	0x3
+ 850 02fa 00000000 		.4byte	levelCounter
+ 851 02fe 0B       		.uleb128 0xb
+ 852 02ff 46010000 		.4byte	.LASF24
+ 853 0303 01       		.byte	0x1
+ 854 0304 18       		.byte	0x18
+ 855 0305 81000000 		.4byte	0x81
+ 856 0309 05       		.uleb128 0x5
+ 857 030a 03       		.byte	0x3
+ 858 030b 03000000 		.4byte	zeroCount
+ 859 030f 0B       		.uleb128 0xb
+ 860 0310 67020000 		.4byte	.LASF25
+ 861 0314 01       		.byte	0x1
+ 862 0315 19       		.byte	0x19
+ 863 0316 81000000 		.4byte	0x81
+ 864 031a 05       		.uleb128 0x5
+ 865 031b 03       		.byte	0x3
+ 866 031c 02000000 		.4byte	oneCount
+ 867 0320 0B       		.uleb128 0xb
+ 868 0321 7D020000 		.4byte	.LASF26
+ 869 0325 01       		.byte	0x1
+ 870 0326 1A       		.byte	0x1a
+ 871 0327 81000000 		.4byte	0x81
+ 872 032b 05       		.uleb128 0x5
+ 873 032c 03       		.byte	0x3
+ 874 032d 04000000 		.4byte	currentBit
+ 875 0331 0B       		.uleb128 0xb
+ 876 0332 9F010000 		.4byte	.LASF27
+ 877 0336 01       		.byte	0x1
+ 878 0337 1B       		.byte	0x1b
+ 879 0338 81000000 		.4byte	0x81
+ 880 033c 05       		.uleb128 0x5
+ 881 033d 03       		.byte	0x3
+ 882 033e 05000000 		.4byte	dataCount
+ 883 0342 0B       		.uleb128 0xb
+ 884 0343 9F000000 		.4byte	.LASF28
+ 885 0347 01       		.byte	0x1
+ 886 0348 1C       		.byte	0x1c
+ 887 0349 81000000 		.4byte	0x81
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 20
+
+
+ 888 034d 05       		.uleb128 0x5
+ 889 034e 03       		.byte	0x3
+ 890 034f 06000000 		.4byte	data
+ 891 0353 0B       		.uleb128 0xb
+ 892 0354 B2010000 		.4byte	.LASF29
+ 893 0358 01       		.byte	0x1
+ 894 0359 1D       		.byte	0x1d
+ 895 035a 81000000 		.4byte	0x81
+ 896 035e 05       		.uleb128 0x5
+ 897 035f 03       		.byte	0x3
+ 898 0360 0A000000 		.4byte	crabs
+ 899 0364 0B       		.uleb128 0xb
+ 900 0365 DD010000 		.4byte	.LASF30
+ 901 0369 01       		.byte	0x1
+ 902 036a 1E       		.byte	0x1e
+ 903 036b 81000000 		.4byte	0x81
+ 904 036f 05       		.uleb128 0x5
+ 905 0370 03       		.byte	0x3
+ 906 0371 07000000 		.4byte	dataFlag
+ 907 0375 0B       		.uleb128 0xb
+ 908 0376 82000000 		.4byte	.LASF31
+ 909 037a 01       		.byte	0x1
+ 910 037b 1F       		.byte	0x1f
+ 911 037c 81000000 		.4byte	0x81
+ 912 0380 05       		.uleb128 0x5
+ 913 0381 03       		.byte	0x3
+ 914 0382 08000000 		.4byte	decodeFlag
+ 915 0386 0B       		.uleb128 0xb
+ 916 0387 91010000 		.4byte	.LASF32
+ 917 038b 01       		.byte	0x1
+ 918 038c 23       		.byte	0x23
+ 919 038d 81000000 		.4byte	0x81
+ 920 0391 05       		.uleb128 0x5
+ 921 0392 03       		.byte	0x3
+ 922 0393 09000000 		.4byte	lcdFlagEncode
+ 923 0397 0B       		.uleb128 0xb
+ 924 0398 00000000 		.4byte	.LASF33
+ 925 039c 01       		.byte	0x1
+ 926 039d 24       		.byte	0x24
+ 927 039e 81000000 		.4byte	0x81
+ 928 03a2 05       		.uleb128 0x5
+ 929 03a3 03       		.byte	0x3
+ 930 03a4 0B000000 		.4byte	lcdFlagData
+ 931 03a8 0B       		.uleb128 0xb
+ 932 03a9 2C030000 		.4byte	.LASF34
+ 933 03ad 01       		.byte	0x1
+ 934 03ae 25       		.byte	0x25
+ 935 03af 81000000 		.4byte	0x81
+ 936 03b3 05       		.uleb128 0x5
+ 937 03b4 03       		.byte	0x3
+ 938 03b5 0C000000 		.4byte	lcdFlagDecode
+ 939 03b9 0B       		.uleb128 0xb
+ 940 03ba 8D000000 		.4byte	.LASF35
+ 941 03be 01       		.byte	0x1
+ 942 03bf 26       		.byte	0x26
+ 943 03c0 81000000 		.4byte	0x81
+ 944 03c4 05       		.uleb128 0x5
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 21
+
+
+ 945 03c5 03       		.byte	0x3
+ 946 03c6 0D000000 		.4byte	decodeWrong
+ 947 03ca 10       		.uleb128 0x10
+ 948 03cb 84010000 		.4byte	.LASF53
+ 949 03cf 0D       		.byte	0xd
+ 950 03d0 1207     		.2byte	0x712
+ 951 03d2 D6030000 		.4byte	0x3d6
+ 952 03d6 11       		.uleb128 0x11
+ 953 03d7 76000000 		.4byte	0x76
+ 954 03db 12       		.uleb128 0x12
+ 955 03dc 28000000 		.4byte	.LASF36
+ 956 03e0 28000000 		.4byte	.LASF36
+ 957 03e4 05       		.byte	0x5
+ 958 03e5 42       		.byte	0x42
+ 959 03e6 12       		.uleb128 0x12
+ 960 03e7 6B000000 		.4byte	.LASF37
+ 961 03eb 6B000000 		.4byte	.LASF37
+ 962 03ef 06       		.byte	0x6
+ 963 03f0 26       		.byte	0x26
+ 964 03f1 12       		.uleb128 0x12
+ 965 03f2 0C000000 		.4byte	.LASF38
+ 966 03f6 0C000000 		.4byte	.LASF38
+ 967 03fa 07       		.byte	0x7
+ 968 03fb 3D       		.byte	0x3d
+ 969 03fc 12       		.uleb128 0x12
+ 970 03fd D6020000 		.4byte	.LASF39
+ 971 0401 D6020000 		.4byte	.LASF39
+ 972 0405 07       		.byte	0x7
+ 973 0406 3C       		.byte	0x3c
+ 974 0407 12       		.uleb128 0x12
+ 975 0408 4B000000 		.4byte	.LASF40
+ 976 040c 4B000000 		.4byte	.LASF40
+ 977 0410 08       		.byte	0x8
+ 978 0411 92       		.byte	0x92
+ 979 0412 12       		.uleb128 0x12
+ 980 0413 C6010000 		.4byte	.LASF41
+ 981 0417 C6010000 		.4byte	.LASF41
+ 982 041b 09       		.byte	0x9
+ 983 041c 3C       		.byte	0x3c
+ 984 041d 12       		.uleb128 0x12
+ 985 041e 50010000 		.4byte	.LASF42
+ 986 0422 50010000 		.4byte	.LASF42
+ 987 0426 05       		.byte	0x5
+ 988 0427 3F       		.byte	0x3f
+ 989 0428 12       		.uleb128 0x12
+ 990 0429 5B000000 		.4byte	.LASF43
+ 991 042d 5B000000 		.4byte	.LASF43
+ 992 0431 0A       		.byte	0xa
+ 993 0432 5A       		.byte	0x5a
+ 994 0433 12       		.uleb128 0x12
+ 995 0434 55020000 		.4byte	.LASF44
+ 996 0438 55020000 		.4byte	.LASF44
+ 997 043c 0B       		.byte	0xb
+ 998 043d 18       		.byte	0x18
+ 999 043e 12       		.uleb128 0x12
+ 1000 043f 3C000000 		.4byte	.LASF45
+ 1001 0443 3C000000 		.4byte	.LASF45
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 22
+
+
+ 1002 0447 07       		.byte	0x7
+ 1003 0448 38       		.byte	0x38
+ 1004 0449 12       		.uleb128 0x12
+ 1005 044a C0020000 		.4byte	.LASF46
+ 1006 044e C0020000 		.4byte	.LASF46
+ 1007 0452 07       		.byte	0x7
+ 1008 0453 3A       		.byte	0x3a
+ 1009 0454 12       		.uleb128 0x12
+ 1010 0455 24030000 		.4byte	.LASF47
+ 1011 0459 24030000 		.4byte	.LASF47
+ 1012 045d 0C       		.byte	0xc
+ 1013 045e E7       		.byte	0xe7
+ 1014 045f 00       		.byte	0
+ 1015              		.section	.debug_abbrev,"",%progbits
+ 1016              	.Ldebug_abbrev0:
+ 1017 0000 01       		.uleb128 0x1
+ 1018 0001 11       		.uleb128 0x11
+ 1019 0002 01       		.byte	0x1
+ 1020 0003 25       		.uleb128 0x25
+ 1021 0004 0E       		.uleb128 0xe
+ 1022 0005 13       		.uleb128 0x13
+ 1023 0006 0B       		.uleb128 0xb
+ 1024 0007 03       		.uleb128 0x3
+ 1025 0008 0E       		.uleb128 0xe
+ 1026 0009 1B       		.uleb128 0x1b
+ 1027 000a 0E       		.uleb128 0xe
+ 1028 000b 55       		.uleb128 0x55
+ 1029 000c 17       		.uleb128 0x17
+ 1030 000d 11       		.uleb128 0x11
+ 1031 000e 01       		.uleb128 0x1
+ 1032 000f 10       		.uleb128 0x10
+ 1033 0010 17       		.uleb128 0x17
+ 1034 0011 00       		.byte	0
+ 1035 0012 00       		.byte	0
+ 1036 0013 02       		.uleb128 0x2
+ 1037 0014 24       		.uleb128 0x24
+ 1038 0015 00       		.byte	0
+ 1039 0016 0B       		.uleb128 0xb
+ 1040 0017 0B       		.uleb128 0xb
+ 1041 0018 3E       		.uleb128 0x3e
+ 1042 0019 0B       		.uleb128 0xb
+ 1043 001a 03       		.uleb128 0x3
+ 1044 001b 0E       		.uleb128 0xe
+ 1045 001c 00       		.byte	0
+ 1046 001d 00       		.byte	0
+ 1047 001e 03       		.uleb128 0x3
+ 1048 001f 16       		.uleb128 0x16
+ 1049 0020 00       		.byte	0
+ 1050 0021 03       		.uleb128 0x3
+ 1051 0022 0E       		.uleb128 0xe
+ 1052 0023 3A       		.uleb128 0x3a
+ 1053 0024 0B       		.uleb128 0xb
+ 1054 0025 3B       		.uleb128 0x3b
+ 1055 0026 0B       		.uleb128 0xb
+ 1056 0027 49       		.uleb128 0x49
+ 1057 0028 13       		.uleb128 0x13
+ 1058 0029 00       		.byte	0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 23
+
+
+ 1059 002a 00       		.byte	0
+ 1060 002b 04       		.uleb128 0x4
+ 1061 002c 24       		.uleb128 0x24
+ 1062 002d 00       		.byte	0
+ 1063 002e 0B       		.uleb128 0xb
+ 1064 002f 0B       		.uleb128 0xb
+ 1065 0030 3E       		.uleb128 0x3e
+ 1066 0031 0B       		.uleb128 0xb
+ 1067 0032 03       		.uleb128 0x3
+ 1068 0033 08       		.uleb128 0x8
+ 1069 0034 00       		.byte	0
+ 1070 0035 00       		.byte	0
+ 1071 0036 05       		.uleb128 0x5
+ 1072 0037 16       		.uleb128 0x16
+ 1073 0038 00       		.byte	0
+ 1074 0039 03       		.uleb128 0x3
+ 1075 003a 0E       		.uleb128 0xe
+ 1076 003b 3A       		.uleb128 0x3a
+ 1077 003c 0B       		.uleb128 0xb
+ 1078 003d 3B       		.uleb128 0x3b
+ 1079 003e 05       		.uleb128 0x5
+ 1080 003f 49       		.uleb128 0x49
+ 1081 0040 13       		.uleb128 0x13
+ 1082 0041 00       		.byte	0
+ 1083 0042 00       		.byte	0
+ 1084 0043 06       		.uleb128 0x6
+ 1085 0044 2E       		.uleb128 0x2e
+ 1086 0045 01       		.byte	0x1
+ 1087 0046 3F       		.uleb128 0x3f
+ 1088 0047 19       		.uleb128 0x19
+ 1089 0048 03       		.uleb128 0x3
+ 1090 0049 0E       		.uleb128 0xe
+ 1091 004a 3A       		.uleb128 0x3a
+ 1092 004b 0B       		.uleb128 0xb
+ 1093 004c 3B       		.uleb128 0x3b
+ 1094 004d 0B       		.uleb128 0xb
+ 1095 004e 27       		.uleb128 0x27
+ 1096 004f 19       		.uleb128 0x19
+ 1097 0050 11       		.uleb128 0x11
+ 1098 0051 01       		.uleb128 0x1
+ 1099 0052 12       		.uleb128 0x12
+ 1100 0053 06       		.uleb128 0x6
+ 1101 0054 40       		.uleb128 0x40
+ 1102 0055 18       		.uleb128 0x18
+ 1103 0056 9742     		.uleb128 0x2117
+ 1104 0058 19       		.uleb128 0x19
+ 1105 0059 01       		.uleb128 0x1
+ 1106 005a 13       		.uleb128 0x13
+ 1107 005b 00       		.byte	0
+ 1108 005c 00       		.byte	0
+ 1109 005d 07       		.uleb128 0x7
+ 1110 005e 898201   		.uleb128 0x4109
+ 1111 0061 00       		.byte	0
+ 1112 0062 11       		.uleb128 0x11
+ 1113 0063 01       		.uleb128 0x1
+ 1114 0064 31       		.uleb128 0x31
+ 1115 0065 13       		.uleb128 0x13
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 24
+
+
+ 1116 0066 00       		.byte	0
+ 1117 0067 00       		.byte	0
+ 1118 0068 08       		.uleb128 0x8
+ 1119 0069 898201   		.uleb128 0x4109
+ 1120 006c 01       		.byte	0x1
+ 1121 006d 11       		.uleb128 0x11
+ 1122 006e 01       		.uleb128 0x1
+ 1123 006f 31       		.uleb128 0x31
+ 1124 0070 13       		.uleb128 0x13
+ 1125 0071 00       		.byte	0
+ 1126 0072 00       		.byte	0
+ 1127 0073 09       		.uleb128 0x9
+ 1128 0074 8A8201   		.uleb128 0x410a
+ 1129 0077 00       		.byte	0
+ 1130 0078 02       		.uleb128 0x2
+ 1131 0079 18       		.uleb128 0x18
+ 1132 007a 9142     		.uleb128 0x2111
+ 1133 007c 18       		.uleb128 0x18
+ 1134 007d 00       		.byte	0
+ 1135 007e 00       		.byte	0
+ 1136 007f 0A       		.uleb128 0xa
+ 1137 0080 2E       		.uleb128 0x2e
+ 1138 0081 01       		.byte	0x1
+ 1139 0082 3F       		.uleb128 0x3f
+ 1140 0083 19       		.uleb128 0x19
+ 1141 0084 03       		.uleb128 0x3
+ 1142 0085 0E       		.uleb128 0xe
+ 1143 0086 3A       		.uleb128 0x3a
+ 1144 0087 0B       		.uleb128 0xb
+ 1145 0088 3B       		.uleb128 0x3b
+ 1146 0089 0B       		.uleb128 0xb
+ 1147 008a 27       		.uleb128 0x27
+ 1148 008b 19       		.uleb128 0x19
+ 1149 008c 49       		.uleb128 0x49
+ 1150 008d 13       		.uleb128 0x13
+ 1151 008e 8701     		.uleb128 0x87
+ 1152 0090 19       		.uleb128 0x19
+ 1153 0091 11       		.uleb128 0x11
+ 1154 0092 01       		.uleb128 0x1
+ 1155 0093 12       		.uleb128 0x12
+ 1156 0094 06       		.uleb128 0x6
+ 1157 0095 40       		.uleb128 0x40
+ 1158 0096 18       		.uleb128 0x18
+ 1159 0097 9742     		.uleb128 0x2117
+ 1160 0099 19       		.uleb128 0x19
+ 1161 009a 01       		.uleb128 0x1
+ 1162 009b 13       		.uleb128 0x13
+ 1163 009c 00       		.byte	0
+ 1164 009d 00       		.byte	0
+ 1165 009e 0B       		.uleb128 0xb
+ 1166 009f 34       		.uleb128 0x34
+ 1167 00a0 00       		.byte	0
+ 1168 00a1 03       		.uleb128 0x3
+ 1169 00a2 0E       		.uleb128 0xe
+ 1170 00a3 3A       		.uleb128 0x3a
+ 1171 00a4 0B       		.uleb128 0xb
+ 1172 00a5 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 25
+
+
+ 1173 00a6 0B       		.uleb128 0xb
+ 1174 00a7 49       		.uleb128 0x49
+ 1175 00a8 13       		.uleb128 0x13
+ 1176 00a9 02       		.uleb128 0x2
+ 1177 00aa 18       		.uleb128 0x18
+ 1178 00ab 00       		.byte	0
+ 1179 00ac 00       		.byte	0
+ 1180 00ad 0C       		.uleb128 0xc
+ 1181 00ae 0B       		.uleb128 0xb
+ 1182 00af 01       		.byte	0x1
+ 1183 00b0 11       		.uleb128 0x11
+ 1184 00b1 01       		.uleb128 0x1
+ 1185 00b2 12       		.uleb128 0x12
+ 1186 00b3 06       		.uleb128 0x6
+ 1187 00b4 01       		.uleb128 0x1
+ 1188 00b5 13       		.uleb128 0x13
+ 1189 00b6 00       		.byte	0
+ 1190 00b7 00       		.byte	0
+ 1191 00b8 0D       		.uleb128 0xd
+ 1192 00b9 898201   		.uleb128 0x4109
+ 1193 00bc 01       		.byte	0x1
+ 1194 00bd 11       		.uleb128 0x11
+ 1195 00be 01       		.uleb128 0x1
+ 1196 00bf 31       		.uleb128 0x31
+ 1197 00c0 13       		.uleb128 0x13
+ 1198 00c1 01       		.uleb128 0x1
+ 1199 00c2 13       		.uleb128 0x13
+ 1200 00c3 00       		.byte	0
+ 1201 00c4 00       		.byte	0
+ 1202 00c5 0E       		.uleb128 0xe
+ 1203 00c6 01       		.uleb128 0x1
+ 1204 00c7 01       		.byte	0x1
+ 1205 00c8 49       		.uleb128 0x49
+ 1206 00c9 13       		.uleb128 0x13
+ 1207 00ca 01       		.uleb128 0x1
+ 1208 00cb 13       		.uleb128 0x13
+ 1209 00cc 00       		.byte	0
+ 1210 00cd 00       		.byte	0
+ 1211 00ce 0F       		.uleb128 0xf
+ 1212 00cf 21       		.uleb128 0x21
+ 1213 00d0 00       		.byte	0
+ 1214 00d1 49       		.uleb128 0x49
+ 1215 00d2 13       		.uleb128 0x13
+ 1216 00d3 2F       		.uleb128 0x2f
+ 1217 00d4 0B       		.uleb128 0xb
+ 1218 00d5 00       		.byte	0
+ 1219 00d6 00       		.byte	0
+ 1220 00d7 10       		.uleb128 0x10
+ 1221 00d8 34       		.uleb128 0x34
+ 1222 00d9 00       		.byte	0
+ 1223 00da 03       		.uleb128 0x3
+ 1224 00db 0E       		.uleb128 0xe
+ 1225 00dc 3A       		.uleb128 0x3a
+ 1226 00dd 0B       		.uleb128 0xb
+ 1227 00de 3B       		.uleb128 0x3b
+ 1228 00df 05       		.uleb128 0x5
+ 1229 00e0 49       		.uleb128 0x49
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 26
+
+
+ 1230 00e1 13       		.uleb128 0x13
+ 1231 00e2 3F       		.uleb128 0x3f
+ 1232 00e3 19       		.uleb128 0x19
+ 1233 00e4 3C       		.uleb128 0x3c
+ 1234 00e5 19       		.uleb128 0x19
+ 1235 00e6 00       		.byte	0
+ 1236 00e7 00       		.byte	0
+ 1237 00e8 11       		.uleb128 0x11
+ 1238 00e9 35       		.uleb128 0x35
+ 1239 00ea 00       		.byte	0
+ 1240 00eb 49       		.uleb128 0x49
+ 1241 00ec 13       		.uleb128 0x13
+ 1242 00ed 00       		.byte	0
+ 1243 00ee 00       		.byte	0
+ 1244 00ef 12       		.uleb128 0x12
+ 1245 00f0 2E       		.uleb128 0x2e
+ 1246 00f1 00       		.byte	0
+ 1247 00f2 3F       		.uleb128 0x3f
+ 1248 00f3 19       		.uleb128 0x19
+ 1249 00f4 3C       		.uleb128 0x3c
+ 1250 00f5 19       		.uleb128 0x19
+ 1251 00f6 6E       		.uleb128 0x6e
+ 1252 00f7 0E       		.uleb128 0xe
+ 1253 00f8 03       		.uleb128 0x3
+ 1254 00f9 0E       		.uleb128 0xe
+ 1255 00fa 3A       		.uleb128 0x3a
+ 1256 00fb 0B       		.uleb128 0xb
+ 1257 00fc 3B       		.uleb128 0x3b
+ 1258 00fd 0B       		.uleb128 0xb
+ 1259 00fe 00       		.byte	0
+ 1260 00ff 00       		.byte	0
+ 1261 0100 00       		.byte	0
+ 1262              		.section	.debug_aranges,"",%progbits
+ 1263 0000 24000000 		.4byte	0x24
+ 1264 0004 0200     		.2byte	0x2
+ 1265 0006 00000000 		.4byte	.Ldebug_info0
+ 1266 000a 04       		.byte	0x4
+ 1267 000b 00       		.byte	0
+ 1268 000c 0000     		.2byte	0
+ 1269 000e 0000     		.2byte	0
+ 1270 0010 00000000 		.4byte	.LFB65
+ 1271 0014 D8000000 		.4byte	.LFE65-.LFB65
+ 1272 0018 00000000 		.4byte	.LFB64
+ 1273 001c FC000000 		.4byte	.LFE64-.LFB64
+ 1274 0020 00000000 		.4byte	0
+ 1275 0024 00000000 		.4byte	0
+ 1276              		.section	.debug_ranges,"",%progbits
+ 1277              	.Ldebug_ranges0:
+ 1278 0000 00000000 		.4byte	.LFB65
+ 1279 0004 D8000000 		.4byte	.LFE65
+ 1280 0008 00000000 		.4byte	.LFB64
+ 1281 000c FC000000 		.4byte	.LFE64
+ 1282 0010 00000000 		.4byte	0
+ 1283 0014 00000000 		.4byte	0
+ 1284              		.section	.debug_line,"",%progbits
+ 1285              	.Ldebug_line0:
+ 1286 0000 B7020000 		.section	.debug_str,"MS",%progbits,1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 27
+
+
+ 1286      02002602 
+ 1286      00000201 
+ 1286      FB0E0D00 
+ 1286      01010101 
+ 1287              	.LASF33:
+ 1288 0000 6C636446 		.ascii	"lcdFlagData\000"
+ 1288      6C616744 
+ 1288      61746100 
+ 1289              	.LASF38:
+ 1290 000c 4C43445F 		.ascii	"LCD_Char_Position\000"
+ 1290      43686172 
+ 1290      5F506F73 
+ 1290      6974696F 
+ 1290      6E00
+ 1291              	.LASF9:
+ 1292 001e 5F5F696E 		.ascii	"__int32_t\000"
+ 1292      7433325F 
+ 1292      7400
+ 1293              	.LASF36:
+ 1294 0028 4F75745F 		.ascii	"Out_Comp_GetCompare\000"
+ 1294      436F6D70 
+ 1294      5F476574 
+ 1294      436F6D70 
+ 1294      61726500 
+ 1295              	.LASF45:
+ 1296 003c 4C43445F 		.ascii	"LCD_Char_Start\000"
+ 1296      43686172 
+ 1296      5F537461 
+ 1296      727400
+ 1297              	.LASF40:
+ 1298 004b 50574D5F 		.ascii	"PWM_Recon_Start\000"
+ 1298      5265636F 
+ 1298      6E5F5374 
+ 1298      61727400 
+ 1299              	.LASF43:
+ 1300 005b 4269745F 		.ascii	"Bit_Timer_Start\000"
+ 1300      54696D65 
+ 1300      725F5374 
+ 1300      61727400 
+ 1301              	.LASF37:
+ 1302 006b 436F756E 		.ascii	"Count_Out_Write\000"
+ 1302      745F4F75 
+ 1302      745F5772 
+ 1302      69746500 
+ 1303              	.LASF14:
+ 1304 007b 646F7562 		.ascii	"double\000"
+ 1304      6C6500
+ 1305              	.LASF31:
+ 1306 0082 6465636F 		.ascii	"decodeFlag\000"
+ 1306      6465466C 
+ 1306      616700
+ 1307              	.LASF35:
+ 1308 008d 6465636F 		.ascii	"decodeWrong\000"
+ 1308      64655772 
+ 1308      6F6E6700 
+ 1309              	.LASF13:
+ 1310 0099 666C6F61 		.ascii	"float\000"
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 28
+
+
+ 1310      7400
+ 1311              	.LASF28:
+ 1312 009f 64617461 		.ascii	"data\000"
+ 1312      00
+ 1313              	.LASF1:
+ 1314 00a4 756E7369 		.ascii	"unsigned char\000"
+ 1314      676E6564 
+ 1314      20636861 
+ 1314      7200
+ 1315              	.LASF48:
+ 1316 00b2 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1316      43313120 
+ 1316      352E342E 
+ 1316      31203230 
+ 1316      31363036 
+ 1317 00e5 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 1317      20726576 
+ 1317      6973696F 
+ 1317      6E203233 
+ 1317      37373135 
+ 1318 0118 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 1318      66756E63 
+ 1318      74696F6E 
+ 1318      2D736563 
+ 1318      74696F6E 
+ 1319              	.LASF15:
+ 1320 0140 63686172 		.ascii	"char8\000"
+ 1320      3800
+ 1321              	.LASF24:
+ 1322 0146 7A65726F 		.ascii	"zeroCount\000"
+ 1322      436F756E 
+ 1322      7400
+ 1323              	.LASF42:
+ 1324 0150 4F75745F 		.ascii	"Out_Comp_Start\000"
+ 1324      436F6D70 
+ 1324      5F537461 
+ 1324      727400
+ 1325              	.LASF5:
+ 1326 015f 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1326      20756E73 
+ 1326      69676E65 
+ 1326      6420696E 
+ 1326      7400
+ 1327              	.LASF3:
+ 1328 0171 73686F72 		.ascii	"short unsigned int\000"
+ 1328      7420756E 
+ 1328      7369676E 
+ 1328      65642069 
+ 1328      6E7400
+ 1329              	.LASF53:
+ 1330 0184 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1330      52784275 
+ 1330      66666572 
+ 1330      00
+ 1331              	.LASF32:
+ 1332 0191 6C636446 		.ascii	"lcdFlagEncode\000"
+ 1332      6C616745 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 29
+
+
+ 1332      6E636F64 
+ 1332      6500
+ 1333              	.LASF27:
+ 1334 019f 64617461 		.ascii	"dataCount\000"
+ 1334      436F756E 
+ 1334      7400
+ 1335              	.LASF22:
+ 1336 01a9 64697370 		.ascii	"displayB\000"
+ 1336      6C617942 
+ 1336      00
+ 1337              	.LASF29:
+ 1338 01b2 63726162 		.ascii	"crabs\000"
+ 1338      7300
+ 1339              	.LASF52:
+ 1340 01b8 6D61696E 		.ascii	"main\000"
+ 1340      00
+ 1341              	.LASF21:
+ 1342 01bd 64697370 		.ascii	"displayG\000"
+ 1342      6C617947 
+ 1342      00
+ 1343              	.LASF41:
+ 1344 01c6 53686966 		.ascii	"Shift_Reg_Start\000"
+ 1344      745F5265 
+ 1344      675F5374 
+ 1344      61727400 
+ 1345              	.LASF12:
+ 1346 01d6 75696E74 		.ascii	"uint16\000"
+ 1346      313600
+ 1347              	.LASF30:
+ 1348 01dd 64617461 		.ascii	"dataFlag\000"
+ 1348      466C6167 
+ 1348      00
+ 1349              	.LASF51:
+ 1350 01e6 4269745F 		.ascii	"Bit_Timer\000"
+ 1350      54696D65 
+ 1350      7200
+ 1351              	.LASF50:
+ 1352 01f0 433A5C55 		.ascii	"C:\\Users\\sdysart\\Documents\\UACS\\UACS\\HighFreq"
+ 1352      73657273 
+ 1352      5C736479 
+ 1352      73617274 
+ 1352      5C446F63 
+ 1353 021d 46534B5C 		.ascii	"FSK\\HighFSKRx.cydsn\000"
+ 1353      48696768 
+ 1353      46534B52 
+ 1353      782E6379 
+ 1353      64736E00 
+ 1354              	.LASF8:
+ 1355 0231 756E7369 		.ascii	"unsigned int\000"
+ 1355      676E6564 
+ 1355      20696E74 
+ 1355      00
+ 1356              	.LASF7:
+ 1357 023e 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1357      206C6F6E 
+ 1357      6720756E 
+ 1357      7369676E 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 30
+
+
+ 1357      65642069 
+ 1358              	.LASF44:
+ 1359 0255 54696D65 		.ascii	"Timer_ISR_StartEx\000"
+ 1359      725F4953 
+ 1359      525F5374 
+ 1359      61727445 
+ 1359      7800
+ 1360              	.LASF25:
+ 1361 0267 6F6E6543 		.ascii	"oneCount\000"
+ 1361      6F756E74 
+ 1361      00
+ 1362              	.LASF23:
+ 1363 0270 6C657665 		.ascii	"levelCounter\000"
+ 1363      6C436F75 
+ 1363      6E746572 
+ 1363      00
+ 1364              	.LASF26:
+ 1365 027d 63757272 		.ascii	"currentBit\000"
+ 1365      656E7442 
+ 1365      697400
+ 1366              	.LASF10:
+ 1367 0288 696E7433 		.ascii	"int32_t\000"
+ 1367      325F7400 
+ 1368              	.LASF18:
+ 1369 0290 73697A65 		.ascii	"sizetype\000"
+ 1369      74797065 
+ 1369      00
+ 1370              	.LASF6:
+ 1371 0299 6C6F6E67 		.ascii	"long long int\000"
+ 1371      206C6F6E 
+ 1371      6720696E 
+ 1371      7400
+ 1372              	.LASF49:
+ 1373 02a7 6D61696E 		.ascii	"main.c\000"
+ 1373      2E6300
+ 1374              	.LASF16:
+ 1375 02ae 63686172 		.ascii	"char\000"
+ 1375      00
+ 1376              	.LASF19:
+ 1377 02b3 4F757470 		.ascii	"OutputString\000"
+ 1377      75745374 
+ 1377      72696E67 
+ 1377      00
+ 1378              	.LASF46:
+ 1379 02c0 4C43445F 		.ascii	"LCD_Char_WriteControl\000"
+ 1379      43686172 
+ 1379      5F577269 
+ 1379      7465436F 
+ 1379      6E74726F 
+ 1380              	.LASF39:
+ 1381 02d6 4C43445F 		.ascii	"LCD_Char_PrintString\000"
+ 1381      43686172 
+ 1381      5F507269 
+ 1381      6E745374 
+ 1381      72696E67 
+ 1382              	.LASF2:
+ 1383 02eb 73686F72 		.ascii	"short int\000"
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccO5v3hz.s 			page 31
+
+
+ 1383      7420696E 
+ 1383      7400
+ 1384              	.LASF11:
+ 1385 02f5 75696E74 		.ascii	"uint8\000"
+ 1385      3800
+ 1386              	.LASF4:
+ 1387 02fb 6C6F6E67 		.ascii	"long int\000"
+ 1387      20696E74 
+ 1387      00
+ 1388              	.LASF20:
+ 1389 0304 64697370 		.ascii	"display\000"
+ 1389      6C617900 
+ 1390              	.LASF17:
+ 1391 030c 6C6F6E67 		.ascii	"long double\000"
+ 1391      20646F75 
+ 1391      626C6500 
+ 1392              	.LASF0:
+ 1393 0318 7369676E 		.ascii	"signed char\000"
+ 1393      65642063 
+ 1393      68617200 
+ 1394              	.LASF47:
+ 1395 0324 73707269 		.ascii	"sprintf\000"
+ 1395      6E746600 
+ 1396              	.LASF34:
+ 1397 032c 6C636446 		.ascii	"lcdFlagDecode\000"
+ 1397      6C616744 
+ 1397      65636F64 
+ 1397      6500
+ 1398              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

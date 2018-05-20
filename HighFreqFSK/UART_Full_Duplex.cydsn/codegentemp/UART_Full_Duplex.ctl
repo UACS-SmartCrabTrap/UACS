@@ -1,6 +1,6 @@
 -- ======================================================================
 -- UART_Full_Duplex.ctl generated from UART_Full_Duplex
--- 05/17/2018 at 14:59
+-- 05/20/2018 at 01:32
 -- This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 -- ======================================================================
 

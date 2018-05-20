@@ -126,9 +126,16 @@ int main(void)
                 // Turn High Voltage off while delaying
                 PWM_Switch_Timer_Stop();
                 // Turn High Voltage Back On
+
                 HighVoltage_Write(0);
+                CyDelay(20);
+                SignalBase_Write(0);
+
                 CyDelay(3000);
+                
                 HighVoltage_Write(1);
+                CyDelay(20);
+                SignalBase_Write(1);
                 PWM_Modulator_Start();
                 PWM_Switch_Timer_Start();
                 break;

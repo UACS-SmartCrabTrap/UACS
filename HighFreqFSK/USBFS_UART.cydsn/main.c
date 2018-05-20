@@ -30,25 +30,6 @@
 /* Error used for user error */
 #define ERROR               (333u)
 
-
-/*Definitions*/
-#define CLOCK_FREQ 1000000
-#define FREQ(x) (CLOCK_FREQ/x)-1
-
-/*PWM Frequencies*/
-#define ONE_FREQ 42000
-#define ZERO_FREQ 37000
-#define AUDIBLE_FREQ 12000
-
-#define BIT_0_MASK 0x01
-#define BIT_1_MASK 0x02
-#define BIT_2_MASK 0x04
-#define BIT_3_MASK 0x08
-#define BIT_4_MASK 0x10
-#define BIT_5_MASK 0x20
-#define BIT_6_MASK 0x40
-#define BIT_7_MASK 0x80
-
 #define ZERO 0x0
 #define ONE 0x1
 #define TRUE 0x1
@@ -64,12 +45,6 @@ int GetCrabs(void);
 int CalculateCrabs(void);
 void DisplayCrabs(int);
 
-/*Function Prototypes*/
-int Data(unsigned int hex_value, int bT);
-int Decode(unsigned int hex_value, int bT);
-int PreFix(unsigned int hex_value, int prefixCount);
-CY_ISR_PROTO(isr_sec); // High F Interrupt
-
 /*Global Variables*/
 int prompt = 1;
 int endFlag = 0; // flag for end of user input
@@ -82,9 +57,6 @@ char8 lineStr[LINE_STR_LENGTH];
 uint8 buffer[USBUART_BUFFER_SIZE];
 uint8 data[3] = {0};
 
-/*Global Variables*/
-static int bitTime = 0;
-static int prefixTime = 0;
 
 /*******************************************************************************
 * Function Name: main
@@ -98,13 +70,6 @@ int main()
     CyGlobalIntEnable; /* Enable global interrupts. */
     /*Block initializations*/
     LCD_Start();
-    PWM_Modulator_Start();
-    isr_sec_StartEx(isr_sec);
-    
-    /*Variable initializations*/
-    int bitCase = 0;
-    int data_turn = 0;
-    unsigned int data_to_be_sent = ONE;
 
     /* Start USBFS operation with 5-V operation. */
     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
@@ -118,87 +83,21 @@ int main()
     LCD_Position(0u, 0u);
     LCD_PrintString("Hello");
     
-    /* Start UART interface and fill array with 3 parameters until valid */
-    while(gettingData){
-        // Check for final input
-        while(0u == GetCrabs()){
-        };
-        crabs = CalculateCrabs(); // Convert string to int
-        if(crabs != ERROR){
-            DisplayCrabs(crabs);
-            gettingData = 0;
-        }
-    }
-    /* Start Timer after interface to start at case 0 */
-    PWM_Switch_Timer_Start();
-   
-    /* cases represent 100 ms */
+
     for(;;)
     {
-        switch(bitTime){
-            // ENCODE
-            case 0:
-                bitCase = PreFix(PREFIX_MESSAGE , prefixTime);
-                break; 
-            // DATA
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-                bitCase = Data(crabs, bitTime); 
-                break; 
-            // DECODE
-            case 5:    
-            case 6:
-            case 7:    
-            case 8:
-            case 9:
-            case 10:
-            case 11:
-            case 12:
-                bitCase = Decode(DECODE_VALUE, bitTime);
-                break;
-            case 13:
-                //encode used to transmit 7 1's for the prefix 
-                //reset here to be ready for case 0 
-                prefixTime = 0;
-                data_turn++;
-                if (data_turn == DATA_LENGTH) {
-                    data_turn = 0;
+        gettingData = 1;
+        /* Start UART interface and fill array with 3 parameters until valid */
+        while(gettingData){
+            while(0u == GetCrabs()){
+            };
+            crabs = CalculateCrabs();
+            if(crabs != ERROR){
+                DisplayCrabs(crabs);
+                gettingData = 0;
                 }
-                PWM_Modulator_Stop();
-                PWM_Switch_Timer_Stop();
-                
-                gettingData = 1;
-                /* Start UART interface and fill array with 3 parameters until valid */
-                while(gettingData){
-                    while(0u == GetCrabs()){
-                    };
-                    crabs = CalculateCrabs();
-                    if(crabs != ERROR){
-                        DisplayCrabs(crabs);
-                        gettingData = 0;
-                    }
-                }
-                UART_WriteTxData(crabs);
-                bitTime = 0;
-                PWM_Modulator_Start();
-                PWM_Switch_Timer_Start();
-                break;
-            default:
-                break; 
-         } //end switch(bitTime) 
-        
-        /* Send out frequency depending on bit is 1 or 0 */
-        if(bitCase == ONE){
-            PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
-            PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
-        }else if(bitCase == ZERO){
-            PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
-            PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
-        }
-        
-       
+            }
+            UART_WriteTxData(crabs);
     } // end for(;;)
 } // end main
 
@@ -311,7 +210,7 @@ int GetCrabs()
         }else{
             return 0;
         }
-}//end Decode()
+}//end GetCrabs()
 
 /*
  * function: int CalculateCrabs()
@@ -394,138 +293,6 @@ void DisplayCrabs(int crabs){
     LCD_PrintString(lineStr);
 }
 
-// Interrupt triggered on a 0.1s timer timeout
-// Will increment prefixTime counter for the 1st 8 bits
-// Then move on to incrementing the message bit counter
-CY_ISR(isr_sec)
-{
-    if((bitTime == 0) && (prefixTime <= PREFIX_BIT_LENGTH)){
-        prefixTime++;
-    }
-    else if(prefixTime > PREFIX_BIT_LENGTH){
-        bitTime++;
-    }
-}//end CY_ISR(isr_sec)
-
-/*
- * function: int Data(unsigned int hex_value, int bT)
- * parameters: hex_value - a four bit value specifying what data you want to send
- *             bT - the current bit time
- * returns: bitCase - a high or low signal to be sent to an output pin
- * description: This function takes in a hex value and sends it out a bit at a time as a high or
- *  low signal depending on the bit time. Used only to set desired data nibble.
- */
-int Data(unsigned int hex_value, int bT)
-{
-    int bitCase;
-    switch(bT){
-        case 1:
-            bitCase = (hex_value & BIT_3_MASK) >> 3;
-            break; 
-        case 2:
-            bitCase = (hex_value & BIT_2_MASK) >> 2;
-            break; 
-        case 3:
-            bitCase = (hex_value & BIT_1_MASK) >> 1;
-            break; 
-        case 4:
-            bitCase = (hex_value & BIT_0_MASK);
-            break;
-        default:
-            break;
-    } //end switch(bT)
-    return bitCase;
-}//end Data()
-
-
-/*
- * function: int Decode(unsigned int hex_value, int bT)
- * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
- *             bT - the current bit time
- * returns: bitCase - a high or low signal to be sent to an output pin
- * description: This function takes in a hex value and sends it out a bit at a time as a high or
- *  low signal depending on the bit time. Used only to set desired decode encryption.
- */
-int Decode(unsigned int hex_value, int bT)
-{
-    int bitCase;
-    switch(bT){
-        case 5:
-            bitCase = (hex_value & BIT_7_MASK) >> 7;
-            break;
-        case 6:
-            bitCase = (hex_value & BIT_6_MASK) >> 6;
-            break; 
-        case 7:
-            bitCase = (hex_value & BIT_5_MASK) >> 5;
-            break; 
-        case 8:
-            bitCase = (hex_value & BIT_4_MASK) >> 4;
-            break;
-        case 9:
-            bitCase = (hex_value & BIT_3_MASK) >> 3;
-            break; 
-        case 10:
-            bitCase = (hex_value & BIT_2_MASK) >> 2;
-            break; 
-        case 11:
-            bitCase = (hex_value & BIT_1_MASK) >> 1;
-            break; 
-        case 12:
-            bitCase = (hex_value & BIT_0_MASK);
-            break;
-        default:
-            break;
-    } //end switch(bT)
-    return bitCase;
-}//end Decode()
-
-
-/*
- * function: int PreFix(unsigned int hex_value, int bT)
- * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
- *             bT - the current bit time
- * returns: bitCase - a high or low signal to be sent to an output pin
- * description: This function takes in a hex value and sends it out a bit at a time as a high or
- *  low signal depending on the bit time. Used only to set desired decode encryption.
- */
-int PreFix(unsigned int hex_value, int prefixCount)
-{   
-    int prefixBit;
-    
-    switch(prefixCount){
-        case 0:
-           prefixBit = (hex_value & BIT_7_MASK) >> 7;
-            break;
-        case 1:
-            prefixBit = (hex_value & BIT_6_MASK) >> 6;
-            break; 
-        case 2:
-            prefixBit = (hex_value & BIT_5_MASK) >> 5;
-            break; 
-        case 3:
-            prefixBit = (hex_value & BIT_4_MASK) >> 4;
-            break;
-        case 4:
-            prefixBit = (hex_value & BIT_3_MASK) >> 3;
-            break; 
-        case 5:
-            prefixBit = (hex_value & BIT_2_MASK) >> 2;
-            break; 
-        case 6:
-            prefixBit = (hex_value & BIT_1_MASK) >> 1;
-            break; 
-        case 7:
-            prefixBit = (hex_value & BIT_0_MASK);
-            break;
-        default:
-            break;
- 
-    }
-    
-    return prefixBit; 
-
-}
 
 
 /* [] END OF FILE */

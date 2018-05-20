@@ -45,7 +45,7 @@ int main(void)
 
     /* initialization/startup code here */
     PWM_Recon_Start();
-    BPF_Comp_Start();
+    //BPF_Comp_Start();
     Shift_Reg_Start();
     Out_Comp_Start();
     Bit_Timer_Start();

@@ -130,7 +130,7 @@ CY_ISR(RxIsr)
 {
     uint8 rxStatus;         
     newDataflag = 1;
-    
+    HighVoltage_Write(1);
     do
     {
         /* Read receiver status register */

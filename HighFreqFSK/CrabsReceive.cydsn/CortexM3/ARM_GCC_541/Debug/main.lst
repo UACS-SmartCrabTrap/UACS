@@ -1,0 +1,1278 @@
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.Bit_Timer,"ax",%progbits
+  20              		.align	2
+  21              		.global	Bit_Timer
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	Bit_Timer, %function
+  25              	Bit_Timer:
+  26              	.LFB65:
+  27              		.file 1 "main.c"
+   1:main.c        **** /* ========================================
+   2:main.c        ****  * Smart Crab Trap
+   3:main.c        ****  * FSK RX 
+   4:main.c        ****  * Edited by: Stephanie Salazar
+   5:main.c        ****  * Revision: 5/10/18
+   6:main.c        ****  * Function: This project takes in a signal from an outside source
+   7:main.c        ****  * and reads the data within the signal. This code waits for a pre-fix
+   8:main.c        ****  * of 0xFF and then reads the next 4 bits as the data and confirms
+   9:main.c        ****  * the message with a post-fix of 0x01. The data is display on an LCD display.
+  10:main.c        ****  * ========================================
+  11:main.c        **** */
+  12:main.c        **** 
+  13:main.c        **** #include "project.h"
+  14:main.c        **** #include <stdio.h>
+  15:main.c        **** #include "LCD_Char.h"
+  16:main.c        **** 
+  17:main.c        **** #define ARRAY_SIZE 12
+  18:main.c        **** #define CRAB_TIME 50 //1 crab per CRAB_TIME
+  19:main.c        **** #define DEBOUNCE_TIME CRAB_TIME/10
+  20:main.c        **** 
+  21:main.c        **** // Interrupt for checking bit
+  22:main.c        **** CY_ISR_PROTO(Bit_Timer);
+  23:main.c        **** 
+  24:main.c        **** // Global Variables
+  25:main.c        **** static uint8 crabs = 0; // 4 bits of data transferred from data variable
+  26:main.c        **** static uint8 oldCrabs = 0;
+  27:main.c        **** static uint8 levelCounter = 0;
+  28:main.c        **** static uint8 currentBit = 0x0;
+  29:main.c        **** static uint8 oneCount = 0;
+  30:main.c        **** static uint8 stopCount = 0;
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 2
+
+
+  31:main.c        **** 
+  32:main.c        **** 
+  33:main.c        **** int main(void)
+  34:main.c        **** {
+  35:main.c        ****     /* Enable global interrupts. */
+  36:main.c        ****     CyGlobalIntEnable; 
+  37:main.c        **** 
+  38:main.c        ****     /* initialization/startup code here */
+  39:main.c        ****     PWM_Recon_Start();
+  40:main.c        ****     Shift_Reg_Start();
+  41:main.c        ****     Out_Comp_Start();
+  42:main.c        ****     Bit_Timer_Start();
+  43:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
+  44:main.c        ****     LCD_Char_Start();
+  45:main.c        ****     
+  46:main.c        ****     //Bit_Timer_WritePeriod(DEBOUNCE_TIME); 
+  47:main.c        **** 
+  48:main.c        ****     // Displays Loading Message before receiving pre-fix
+  49:main.c        ****     char OutputString[ARRAY_SIZE];
+  50:main.c        ****     char display[ARRAY_SIZE];
+  51:main.c        ****     sprintf(display, "counting crabs...");
+  52:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+  53:main.c        ****     LCD_Char_PrintString(display);
+  54:main.c        **** 
+  55:main.c        ****     for(;;)
+  56:main.c        ****     {
+  57:main.c        ****     // Debouncing
+  58:main.c        ****     // If levelCounter is 10, we have checked a whole bitTime
+  59:main.c        ****     if(levelCounter == 10){
+  60:main.c        ****         
+  61:main.c        ****         if(oneCount >= 9){ // 1 bit must be 7/10 = 1 
+  62:main.c        ****             // Reset crab count if previously not counting crabs
+  63:main.c        ****             currentBit = 0x01;
+  64:main.c        ****             crabs = currentBit + crabs;
+  65:main.c        ****             stopCount = 0; 
+  66:main.c        ****         }else{ // if oneCount <= 7, bit is 0
+  67:main.c        ****             currentBit = 0x00; 
+  68:main.c        ****             stopCount = 1; 
+  69:main.c        ****         }
+  70:main.c        ****         oneCount = 0;
+  71:main.c        ****         levelCounter = 0; // Reset timer bit debouncer  
+  72:main.c        ****         
+  73:main.c        ****     }
+  74:main.c        **** 
+  75:main.c        ****     if(stopCount == 1 && (crabs!= 0)){
+  76:main.c        ****         oldCrabs = crabs;
+  77:main.c        ****         crabs = 0;
+  78:main.c        ****         stopCount = 0;
+  79:main.c        ****         sprintf(OutputString, "%i", oldCrabs);
+  80:main.c        ****         LCD_Char_ClearDisplay();
+  81:main.c        ****         LCD_Char_Position(0u,0u);
+  82:main.c        ****         LCD_Char_PrintString(OutputString);
+  83:main.c        ****         LCD_Char_PrintString(" crabs");
+  84:main.c        ****         oldCrabs = crabs;
+  85:main.c        ****     }
+  86:main.c        **** 
+  87:main.c        ****     } // end of for(;;)
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 3
+
+
+  88:main.c        **** } // end of main()
+  89:main.c        ****     
+  90:main.c        **** 
+  91:main.c        **** //will check bit 10 times, to debounce
+  92:main.c        **** CY_ISR(Bit_Timer){
+  28              		.loc 1 92 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 08B5     		push	{r3, lr}
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 3, -8
+  35              		.cfi_offset 14, -4
+  93:main.c        ****     levelCounter++;
+  36              		.loc 1 93 0
+  37 0002 064A     		ldr	r2, .L4
+  38 0004 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+  39 0006 0133     		adds	r3, r3, #1
+  40 0008 1370     		strb	r3, [r2]
+  94:main.c        ****     
+  95:main.c        ****     // Count whether bit is currently 1 or 0
+  96:main.c        ****     if(Out_Comp_GetCompare() != 0){
+  41              		.loc 1 96 0
+  42 000a FFF7FEFF 		bl	Out_Comp_GetCompare
+  43              	.LVL0:
+  44 000e 18B1     		cbz	r0, .L1
+  97:main.c        ****         oneCount++;
+  45              		.loc 1 97 0
+  46 0010 024A     		ldr	r2, .L4
+  47 0012 5378     		ldrb	r3, [r2, #1]	@ zero_extendqisi2
+  48 0014 0133     		adds	r3, r3, #1
+  49 0016 5370     		strb	r3, [r2, #1]
+  50              	.L1:
+  51 0018 08BD     		pop	{r3, pc}
+  52              	.L5:
+  53 001a 00BF     		.align	2
+  54              	.L4:
+  55 001c 00000000 		.word	.LANCHOR0
+  56              		.cfi_endproc
+  57              	.LFE65:
+  58              		.size	Bit_Timer, .-Bit_Timer
+  59              		.section	.text.main,"ax",%progbits
+  60              		.align	2
+  61              		.global	main
+  62              		.thumb
+  63              		.thumb_func
+  64              		.type	main, %function
+  65              	main:
+  66              	.LFB64:
+  34:main.c        ****     /* Enable global interrupts. */
+  67              		.loc 1 34 0
+  68              		.cfi_startproc
+  69              		@ args = 0, pretend = 0, frame = 24
+  70              		@ frame_needed = 0, uses_anonymous_args = 0
+  71 0000 30B5     		push	{r4, r5, lr}
+  72              		.cfi_def_cfa_offset 12
+  73              		.cfi_offset 4, -12
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 4
+
+
+  74              		.cfi_offset 5, -8
+  75              		.cfi_offset 14, -4
+  76 0002 87B0     		sub	sp, sp, #28
+  77              		.cfi_def_cfa_offset 40
+  36:main.c        **** 
+  78              		.loc 1 36 0
+  79              		.syntax unified
+  80              	@ 36 "main.c" 1
+  81 0004 62B6     		CPSIE   i
+  82              	@ 0 "" 2
+  39:main.c        ****     Shift_Reg_Start();
+  83              		.loc 1 39 0
+  84              		.thumb
+  85              		.syntax unified
+  86 0006 FFF7FEFF 		bl	PWM_Recon_Start
+  87              	.LVL1:
+  40:main.c        ****     Out_Comp_Start();
+  88              		.loc 1 40 0
+  89 000a FFF7FEFF 		bl	Shift_Reg_Start
+  90              	.LVL2:
+  41:main.c        ****     Bit_Timer_Start();
+  91              		.loc 1 41 0
+  92 000e FFF7FEFF 		bl	Out_Comp_Start
+  93              	.LVL3:
+  42:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
+  94              		.loc 1 42 0
+  95 0012 FFF7FEFF 		bl	Bit_Timer_Start
+  96              	.LVL4:
+  43:main.c        ****     LCD_Char_Start();
+  97              		.loc 1 43 0
+  98 0016 2248     		ldr	r0, .L13
+  99 0018 FFF7FEFF 		bl	Timer_ISR_StartEx
+ 100              	.LVL5:
+  44:main.c        ****     
+ 101              		.loc 1 44 0
+ 102 001c FFF7FEFF 		bl	LCD_Char_Start
+ 103              	.LVL6:
+  51:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+ 104              		.loc 1 51 0
+ 105 0020 6C46     		mov	r4, sp
+ 106 0022 204D     		ldr	r5, .L13+4
+ 107 0024 0FCD     		ldmia	r5!, {r0, r1, r2, r3}
+ 108 0026 0FC4     		stmia	r4!, {r0, r1, r2, r3}
+ 109 0028 2B68     		ldr	r3, [r5]
+ 110 002a 2380     		strh	r3, [r4]	@ movhi
+  52:main.c        ****     LCD_Char_PrintString(display);
+ 111              		.loc 1 52 0
+ 112 002c 0021     		movs	r1, #0
+ 113 002e 0846     		mov	r0, r1
+ 114 0030 FFF7FEFF 		bl	LCD_Char_Position
+ 115              	.LVL7:
+  53:main.c        **** 
+ 116              		.loc 1 53 0
+ 117 0034 6846     		mov	r0, sp
+ 118 0036 FFF7FEFF 		bl	LCD_Char_PrintString
+ 119              	.LVL8:
+ 120              	.L7:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 5
+
+
+  59:main.c        ****         
+ 121              		.loc 1 59 0
+ 122 003a 1B4B     		ldr	r3, .L13+8
+ 123 003c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 124 003e 0A2B     		cmp	r3, #10
+ 125 0040 11D1     		bne	.L8
+  61:main.c        ****             // Reset crab count if previously not counting crabs
+ 126              		.loc 1 61 0
+ 127 0042 194B     		ldr	r3, .L13+8
+ 128 0044 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 129 0046 082B     		cmp	r3, #8
+ 130 0048 06D9     		bls	.L9
+  64:main.c        ****             stopCount = 0; 
+ 131              		.loc 1 64 0
+ 132 004a 174B     		ldr	r3, .L13+8
+ 133 004c 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 134 004e 0132     		adds	r2, r2, #1
+ 135 0050 9A70     		strb	r2, [r3, #2]
+  65:main.c        ****         }else{ // if oneCount <= 7, bit is 0
+ 136              		.loc 1 65 0
+ 137 0052 0022     		movs	r2, #0
+ 138 0054 DA70     		strb	r2, [r3, #3]
+ 139 0056 02E0     		b	.L10
+ 140              	.L9:
+  68:main.c        ****         }
+ 141              		.loc 1 68 0
+ 142 0058 0122     		movs	r2, #1
+ 143 005a 134B     		ldr	r3, .L13+8
+ 144 005c DA70     		strb	r2, [r3, #3]
+ 145              	.L10:
+  70:main.c        ****         levelCounter = 0; // Reset timer bit debouncer  
+ 146              		.loc 1 70 0
+ 147 005e 124B     		ldr	r3, .L13+8
+ 148 0060 0022     		movs	r2, #0
+ 149 0062 5A70     		strb	r2, [r3, #1]
+  71:main.c        ****         
+ 150              		.loc 1 71 0
+ 151 0064 1A70     		strb	r2, [r3]
+ 152              	.L8:
+  75:main.c        ****         oldCrabs = crabs;
+ 153              		.loc 1 75 0
+ 154 0066 104B     		ldr	r3, .L13+8
+ 155 0068 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 156 006a 012B     		cmp	r3, #1
+ 157 006c E5D1     		bne	.L7
+  75:main.c        ****         oldCrabs = crabs;
+ 158              		.loc 1 75 0 is_stmt 0 discriminator 1
+ 159 006e 0E4B     		ldr	r3, .L13+8
+ 160 0070 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 161 0072 002A     		cmp	r2, #0
+ 162 0074 E1D0     		beq	.L7
+  77:main.c        ****         stopCount = 0;
+ 163              		.loc 1 77 0 is_stmt 1
+ 164 0076 0024     		movs	r4, #0
+ 165 0078 9C70     		strb	r4, [r3, #2]
+  78:main.c        ****         sprintf(OutputString, "%i", oldCrabs);
+ 166              		.loc 1 78 0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 6
+
+
+ 167 007a DC70     		strb	r4, [r3, #3]
+  79:main.c        ****         LCD_Char_ClearDisplay();
+ 168              		.loc 1 79 0
+ 169 007c 0B49     		ldr	r1, .L13+12
+ 170 007e 03A8     		add	r0, sp, #12
+ 171 0080 FFF7FEFF 		bl	sprintf
+ 172              	.LVL9:
+  80:main.c        ****         LCD_Char_Position(0u,0u);
+ 173              		.loc 1 80 0
+ 174 0084 0120     		movs	r0, #1
+ 175 0086 FFF7FEFF 		bl	LCD_Char_WriteControl
+ 176              	.LVL10:
+  81:main.c        ****         LCD_Char_PrintString(OutputString);
+ 177              		.loc 1 81 0
+ 178 008a 2146     		mov	r1, r4
+ 179 008c 2046     		mov	r0, r4
+ 180 008e FFF7FEFF 		bl	LCD_Char_Position
+ 181              	.LVL11:
+  82:main.c        ****         LCD_Char_PrintString(" crabs");
+ 182              		.loc 1 82 0
+ 183 0092 03A8     		add	r0, sp, #12
+ 184 0094 FFF7FEFF 		bl	LCD_Char_PrintString
+ 185              	.LVL12:
+  83:main.c        ****         oldCrabs = crabs;
+ 186              		.loc 1 83 0
+ 187 0098 0548     		ldr	r0, .L13+16
+ 188 009a FFF7FEFF 		bl	LCD_Char_PrintString
+ 189              	.LVL13:
+ 190 009e CCE7     		b	.L7
+ 191              	.L14:
+ 192              		.align	2
+ 193              	.L13:
+ 194 00a0 00000000 		.word	Bit_Timer
+ 195 00a4 00000000 		.word	.LC0
+ 196 00a8 00000000 		.word	.LANCHOR0
+ 197 00ac 14000000 		.word	.LC1
+ 198 00b0 18000000 		.word	.LC2
+ 199              		.cfi_endproc
+ 200              	.LFE64:
+ 201              		.size	main, .-main
+ 202              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 203              		.align	2
+ 204              	.LC0:
+ 205 0000 636F756E 		.ascii	"counting crabs...\000"
+ 205      74696E67 
+ 205      20637261 
+ 205      62732E2E 
+ 205      2E00
+ 206 0012 0000     		.space	2
+ 207              	.LC1:
+ 208 0014 256900   		.ascii	"%i\000"
+ 209 0017 00       		.space	1
+ 210              	.LC2:
+ 211 0018 20637261 		.ascii	" crabs\000"
+ 211      627300
+ 212              		.bss
+ 213              		.set	.LANCHOR0,. + 0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 7
+
+
+ 214              		.type	levelCounter, %object
+ 215              		.size	levelCounter, 1
+ 216              	levelCounter:
+ 217 0000 00       		.space	1
+ 218              		.type	oneCount, %object
+ 219              		.size	oneCount, 1
+ 220              	oneCount:
+ 221 0001 00       		.space	1
+ 222              		.type	crabs, %object
+ 223              		.size	crabs, 1
+ 224              	crabs:
+ 225 0002 00       		.space	1
+ 226              		.type	stopCount, %object
+ 227              		.size	stopCount, 1
+ 228              	stopCount:
+ 229 0003 00       		.space	1
+ 230              		.text
+ 231              	.Letext0:
+ 232              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 233              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 234              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 235              		.file 5 "Generated_Source\\PSoC5/Out_Comp.h"
+ 236              		.file 6 "Generated_Source\\PSoC5/PWM_Recon.h"
+ 237              		.file 7 "Generated_Source\\PSoC5/Shift_Reg.h"
+ 238              		.file 8 "Generated_Source\\PSoC5/Bit_Timer.h"
+ 239              		.file 9 "Generated_Source\\PSoC5/Timer_ISR.h"
+ 240              		.file 10 "Generated_Source\\PSoC5/LCD_Char.h"
+ 241              		.file 11 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4
+ 242              		.file 12 "Generated_Source\\PSoC5/core_cm3.h"
+ 243              		.section	.debug_info,"",%progbits
+ 244              	.Ldebug_info0:
+ 245 0000 D7020000 		.4byte	0x2d7
+ 246 0004 0400     		.2byte	0x4
+ 247 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 248 000a 04       		.byte	0x4
+ 249 000b 01       		.uleb128 0x1
+ 250 000c C1000000 		.4byte	.LASF36
+ 251 0010 0C       		.byte	0xc
+ 252 0011 3B020000 		.4byte	.LASF37
+ 253 0015 59000000 		.4byte	.LASF38
+ 254 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 255 001d 00000000 		.4byte	0
+ 256 0021 00000000 		.4byte	.Ldebug_line0
+ 257 0025 02       		.uleb128 0x2
+ 258 0026 01       		.byte	0x1
+ 259 0027 06       		.byte	0x6
+ 260 0028 AC020000 		.4byte	.LASF0
+ 261 002c 02       		.uleb128 0x2
+ 262 002d 01       		.byte	0x1
+ 263 002e 08       		.byte	0x8
+ 264 002f B3000000 		.4byte	.LASF1
+ 265 0033 02       		.uleb128 0x2
+ 266 0034 02       		.byte	0x2
+ 267 0035 05       		.byte	0x5
+ 268 0036 7F020000 		.4byte	.LASF2
+ 269 003a 02       		.uleb128 0x2
+ 270 003b 02       		.byte	0x2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 8
+
+
+ 271 003c 07       		.byte	0x7
+ 272 003d 70010000 		.4byte	.LASF3
+ 273 0041 03       		.uleb128 0x3
+ 274 0042 1C000000 		.4byte	.LASF9
+ 275 0046 02       		.byte	0x2
+ 276 0047 3F       		.byte	0x3f
+ 277 0048 4C000000 		.4byte	0x4c
+ 278 004c 02       		.uleb128 0x2
+ 279 004d 04       		.byte	0x4
+ 280 004e 05       		.byte	0x5
+ 281 004f 8F020000 		.4byte	.LASF4
+ 282 0053 02       		.uleb128 0x2
+ 283 0054 04       		.byte	0x4
+ 284 0055 07       		.byte	0x7
+ 285 0056 5E010000 		.4byte	.LASF5
+ 286 005a 02       		.uleb128 0x2
+ 287 005b 08       		.byte	0x8
+ 288 005c 05       		.byte	0x5
+ 289 005d 2D020000 		.4byte	.LASF6
+ 290 0061 02       		.uleb128 0x2
+ 291 0062 08       		.byte	0x8
+ 292 0063 07       		.byte	0x7
+ 293 0064 D2010000 		.4byte	.LASF7
+ 294 0068 04       		.uleb128 0x4
+ 295 0069 04       		.byte	0x4
+ 296 006a 05       		.byte	0x5
+ 297 006b 696E7400 		.ascii	"int\000"
+ 298 006f 02       		.uleb128 0x2
+ 299 0070 04       		.byte	0x4
+ 300 0071 07       		.byte	0x7
+ 301 0072 C5010000 		.4byte	.LASF8
+ 302 0076 03       		.uleb128 0x3
+ 303 0077 1C020000 		.4byte	.LASF10
+ 304 007b 03       		.byte	0x3
+ 305 007c 2C       		.byte	0x2c
+ 306 007d 41000000 		.4byte	0x41
+ 307 0081 05       		.uleb128 0x5
+ 308 0082 89020000 		.4byte	.LASF11
+ 309 0086 04       		.byte	0x4
+ 310 0087 9201     		.2byte	0x192
+ 311 0089 2C000000 		.4byte	0x2c
+ 312 008d 02       		.uleb128 0x2
+ 313 008e 04       		.byte	0x4
+ 314 008f 04       		.byte	0x4
+ 315 0090 AD000000 		.4byte	.LASF12
+ 316 0094 02       		.uleb128 0x2
+ 317 0095 08       		.byte	0x8
+ 318 0096 04       		.byte	0x4
+ 319 0097 99010000 		.4byte	.LASF13
+ 320 009b 02       		.uleb128 0x2
+ 321 009c 01       		.byte	0x1
+ 322 009d 08       		.byte	0x8
+ 323 009e 42020000 		.4byte	.LASF14
+ 324 00a2 02       		.uleb128 0x2
+ 325 00a3 08       		.byte	0x8
+ 326 00a4 04       		.byte	0x4
+ 327 00a5 A0020000 		.4byte	.LASF15
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 9
+
+
+ 328 00a9 02       		.uleb128 0x2
+ 329 00aa 04       		.byte	0x4
+ 330 00ab 07       		.byte	0x7
+ 331 00ac 24020000 		.4byte	.LASF16
+ 332 00b0 06       		.uleb128 0x6
+ 333 00b1 BB010000 		.4byte	.LASF39
+ 334 00b5 01       		.byte	0x1
+ 335 00b6 5C       		.byte	0x5c
+ 336 00b7 00000000 		.4byte	.LFB65
+ 337 00bb 20000000 		.4byte	.LFE65-.LFB65
+ 338 00bf 01       		.uleb128 0x1
+ 339 00c0 9C       		.byte	0x9c
+ 340 00c1 CF000000 		.4byte	0xcf
+ 341 00c5 07       		.uleb128 0x7
+ 342 00c6 0E000000 		.4byte	.LVL0
+ 343 00ca 61020000 		.4byte	0x261
+ 344 00ce 00       		.byte	0
+ 345 00cf 08       		.uleb128 0x8
+ 346 00d0 A6010000 		.4byte	.LASF40
+ 347 00d4 01       		.byte	0x1
+ 348 00d5 21       		.byte	0x21
+ 349 00d6 68000000 		.4byte	0x68
+ 350 00da 00000000 		.4byte	.LFB64
+ 351 00de B4000000 		.4byte	.LFE64-.LFB64
+ 352 00e2 01       		.uleb128 0x1
+ 353 00e3 9C       		.byte	0x9c
+ 354 00e4 E6010000 		.4byte	0x1e6
+ 355 00e8 09       		.uleb128 0x9
+ 356 00e9 47020000 		.4byte	.LASF17
+ 357 00ed 01       		.byte	0x1
+ 358 00ee 31       		.byte	0x31
+ 359 00ef E6010000 		.4byte	0x1e6
+ 360 00f3 02       		.uleb128 0x2
+ 361 00f4 91       		.byte	0x91
+ 362 00f5 64       		.sleb128 -28
+ 363 00f6 09       		.uleb128 0x9
+ 364 00f7 98020000 		.4byte	.LASF18
+ 365 00fb 01       		.byte	0x1
+ 366 00fc 32       		.byte	0x32
+ 367 00fd E6010000 		.4byte	0x1e6
+ 368 0101 02       		.uleb128 0x2
+ 369 0102 91       		.byte	0x91
+ 370 0103 58       		.sleb128 -40
+ 371 0104 07       		.uleb128 0x7
+ 372 0105 0A000000 		.4byte	.LVL1
+ 373 0109 6C020000 		.4byte	0x26c
+ 374 010d 07       		.uleb128 0x7
+ 375 010e 0E000000 		.4byte	.LVL2
+ 376 0112 77020000 		.4byte	0x277
+ 377 0116 07       		.uleb128 0x7
+ 378 0117 12000000 		.4byte	.LVL3
+ 379 011b 82020000 		.4byte	0x282
+ 380 011f 07       		.uleb128 0x7
+ 381 0120 16000000 		.4byte	.LVL4
+ 382 0124 8D020000 		.4byte	0x28d
+ 383 0128 0A       		.uleb128 0xa
+ 384 0129 1C000000 		.4byte	.LVL5
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 10
+
+
+ 385 012d 98020000 		.4byte	0x298
+ 386 0131 3F010000 		.4byte	0x13f
+ 387 0135 0B       		.uleb128 0xb
+ 388 0136 01       		.uleb128 0x1
+ 389 0137 50       		.byte	0x50
+ 390 0138 05       		.uleb128 0x5
+ 391 0139 03       		.byte	0x3
+ 392 013a 00000000 		.4byte	Bit_Timer
+ 393 013e 00       		.byte	0
+ 394 013f 07       		.uleb128 0x7
+ 395 0140 20000000 		.4byte	.LVL6
+ 396 0144 A3020000 		.4byte	0x2a3
+ 397 0148 0A       		.uleb128 0xa
+ 398 0149 34000000 		.4byte	.LVL7
+ 399 014d AE020000 		.4byte	0x2ae
+ 400 0151 60010000 		.4byte	0x160
+ 401 0155 0B       		.uleb128 0xb
+ 402 0156 01       		.uleb128 0x1
+ 403 0157 50       		.byte	0x50
+ 404 0158 01       		.uleb128 0x1
+ 405 0159 30       		.byte	0x30
+ 406 015a 0B       		.uleb128 0xb
+ 407 015b 01       		.uleb128 0x1
+ 408 015c 51       		.byte	0x51
+ 409 015d 01       		.uleb128 0x1
+ 410 015e 30       		.byte	0x30
+ 411 015f 00       		.byte	0
+ 412 0160 0A       		.uleb128 0xa
+ 413 0161 3A000000 		.4byte	.LVL8
+ 414 0165 B9020000 		.4byte	0x2b9
+ 415 0169 74010000 		.4byte	0x174
+ 416 016d 0B       		.uleb128 0xb
+ 417 016e 01       		.uleb128 0x1
+ 418 016f 50       		.byte	0x50
+ 419 0170 02       		.uleb128 0x2
+ 420 0171 7D       		.byte	0x7d
+ 421 0172 00       		.sleb128 0
+ 422 0173 00       		.byte	0
+ 423 0174 0A       		.uleb128 0xa
+ 424 0175 84000000 		.4byte	.LVL9
+ 425 0179 C4020000 		.4byte	0x2c4
+ 426 017d 91010000 		.4byte	0x191
+ 427 0181 0B       		.uleb128 0xb
+ 428 0182 01       		.uleb128 0x1
+ 429 0183 50       		.byte	0x50
+ 430 0184 02       		.uleb128 0x2
+ 431 0185 91       		.byte	0x91
+ 432 0186 64       		.sleb128 -28
+ 433 0187 0B       		.uleb128 0xb
+ 434 0188 01       		.uleb128 0x1
+ 435 0189 51       		.byte	0x51
+ 436 018a 05       		.uleb128 0x5
+ 437 018b 03       		.byte	0x3
+ 438 018c 14000000 		.4byte	.LC1
+ 439 0190 00       		.byte	0
+ 440 0191 0A       		.uleb128 0xa
+ 441 0192 8A000000 		.4byte	.LVL10
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 11
+
+
+ 442 0196 CF020000 		.4byte	0x2cf
+ 443 019a A4010000 		.4byte	0x1a4
+ 444 019e 0B       		.uleb128 0xb
+ 445 019f 01       		.uleb128 0x1
+ 446 01a0 50       		.byte	0x50
+ 447 01a1 01       		.uleb128 0x1
+ 448 01a2 31       		.byte	0x31
+ 449 01a3 00       		.byte	0
+ 450 01a4 0A       		.uleb128 0xa
+ 451 01a5 92000000 		.4byte	.LVL11
+ 452 01a9 AE020000 		.4byte	0x2ae
+ 453 01ad BE010000 		.4byte	0x1be
+ 454 01b1 0B       		.uleb128 0xb
+ 455 01b2 01       		.uleb128 0x1
+ 456 01b3 50       		.byte	0x50
+ 457 01b4 02       		.uleb128 0x2
+ 458 01b5 74       		.byte	0x74
+ 459 01b6 00       		.sleb128 0
+ 460 01b7 0B       		.uleb128 0xb
+ 461 01b8 01       		.uleb128 0x1
+ 462 01b9 51       		.byte	0x51
+ 463 01ba 02       		.uleb128 0x2
+ 464 01bb 74       		.byte	0x74
+ 465 01bc 00       		.sleb128 0
+ 466 01bd 00       		.byte	0
+ 467 01be 0A       		.uleb128 0xa
+ 468 01bf 98000000 		.4byte	.LVL12
+ 469 01c3 B9020000 		.4byte	0x2b9
+ 470 01c7 D2010000 		.4byte	0x1d2
+ 471 01cb 0B       		.uleb128 0xb
+ 472 01cc 01       		.uleb128 0x1
+ 473 01cd 50       		.byte	0x50
+ 474 01ce 02       		.uleb128 0x2
+ 475 01cf 91       		.byte	0x91
+ 476 01d0 64       		.sleb128 -28
+ 477 01d1 00       		.byte	0
+ 478 01d2 0C       		.uleb128 0xc
+ 479 01d3 9E000000 		.4byte	.LVL13
+ 480 01d7 B9020000 		.4byte	0x2b9
+ 481 01db 0B       		.uleb128 0xb
+ 482 01dc 01       		.uleb128 0x1
+ 483 01dd 50       		.byte	0x50
+ 484 01de 05       		.uleb128 0x5
+ 485 01df 03       		.byte	0x3
+ 486 01e0 18000000 		.4byte	.LC2
+ 487 01e4 00       		.byte	0
+ 488 01e5 00       		.byte	0
+ 489 01e6 0D       		.uleb128 0xd
+ 490 01e7 9B000000 		.4byte	0x9b
+ 491 01eb F6010000 		.4byte	0x1f6
+ 492 01ef 0E       		.uleb128 0xe
+ 493 01f0 A9000000 		.4byte	0xa9
+ 494 01f4 0B       		.byte	0xb
+ 495 01f5 00       		.byte	0
+ 496 01f6 09       		.uleb128 0x9
+ 497 01f7 A0010000 		.4byte	.LASF19
+ 498 01fb 01       		.byte	0x1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 12
+
+
+ 499 01fc 19       		.byte	0x19
+ 500 01fd 81000000 		.4byte	0x81
+ 501 0201 05       		.uleb128 0x5
+ 502 0202 03       		.byte	0x3
+ 503 0203 02000000 		.4byte	crabs
+ 504 0207 0F       		.uleb128 0xf
+ 505 0208 90010000 		.4byte	.LASF21
+ 506 020c 01       		.byte	0x1
+ 507 020d 1A       		.byte	0x1a
+ 508 020e 81000000 		.4byte	0x81
+ 509 0212 09       		.uleb128 0x9
+ 510 0213 04020000 		.4byte	.LASF20
+ 511 0217 01       		.byte	0x1
+ 512 0218 1B       		.byte	0x1b
+ 513 0219 81000000 		.4byte	0x81
+ 514 021d 05       		.uleb128 0x5
+ 515 021e 03       		.byte	0x3
+ 516 021f 00000000 		.4byte	levelCounter
+ 517 0223 0F       		.uleb128 0xf
+ 518 0224 11020000 		.4byte	.LASF22
+ 519 0228 01       		.byte	0x1
+ 520 0229 1C       		.byte	0x1c
+ 521 022a 81000000 		.4byte	0x81
+ 522 022e 09       		.uleb128 0x9
+ 523 022f FB010000 		.4byte	.LASF23
+ 524 0233 01       		.byte	0x1
+ 525 0234 1D       		.byte	0x1d
+ 526 0235 81000000 		.4byte	0x81
+ 527 0239 05       		.uleb128 0x5
+ 528 023a 03       		.byte	0x3
+ 529 023b 01000000 		.4byte	oneCount
+ 530 023f 09       		.uleb128 0x9
+ 531 0240 00000000 		.4byte	.LASF24
+ 532 0244 01       		.byte	0x1
+ 533 0245 1E       		.byte	0x1e
+ 534 0246 81000000 		.4byte	0x81
+ 535 024a 05       		.uleb128 0x5
+ 536 024b 03       		.byte	0x3
+ 537 024c 03000000 		.4byte	stopCount
+ 538 0250 10       		.uleb128 0x10
+ 539 0251 83010000 		.4byte	.LASF41
+ 540 0255 0C       		.byte	0xc
+ 541 0256 1207     		.2byte	0x712
+ 542 0258 5C020000 		.4byte	0x25c
+ 543 025c 11       		.uleb128 0x11
+ 544 025d 76000000 		.4byte	0x76
+ 545 0261 12       		.uleb128 0x12
+ 546 0262 26000000 		.4byte	.LASF25
+ 547 0266 26000000 		.4byte	.LASF25
+ 548 026a 05       		.byte	0x5
+ 549 026b 42       		.byte	0x42
+ 550 026c 12       		.uleb128 0x12
+ 551 026d 49000000 		.4byte	.LASF26
+ 552 0271 49000000 		.4byte	.LASF26
+ 553 0275 06       		.byte	0x6
+ 554 0276 92       		.byte	0x92
+ 555 0277 12       		.uleb128 0x12
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 13
+
+
+ 556 0278 AB010000 		.4byte	.LASF27
+ 557 027c AB010000 		.4byte	.LASF27
+ 558 0280 07       		.byte	0x7
+ 559 0281 3C       		.byte	0x3c
+ 560 0282 12       		.uleb128 0x12
+ 561 0283 4F010000 		.4byte	.LASF28
+ 562 0287 4F010000 		.4byte	.LASF28
+ 563 028b 05       		.byte	0x5
+ 564 028c 3F       		.byte	0x3f
+ 565 028d 12       		.uleb128 0x12
+ 566 028e 9D000000 		.4byte	.LASF29
+ 567 0292 9D000000 		.4byte	.LASF29
+ 568 0296 08       		.byte	0x8
+ 569 0297 5A       		.byte	0x5a
+ 570 0298 12       		.uleb128 0x12
+ 571 0299 E9010000 		.4byte	.LASF30
+ 572 029d E9010000 		.4byte	.LASF30
+ 573 02a1 09       		.byte	0x9
+ 574 02a2 18       		.byte	0x18
+ 575 02a3 12       		.uleb128 0x12
+ 576 02a4 3A000000 		.4byte	.LASF31
+ 577 02a8 3A000000 		.4byte	.LASF31
+ 578 02ac 0A       		.byte	0xa
+ 579 02ad 38       		.byte	0x38
+ 580 02ae 12       		.uleb128 0x12
+ 581 02af 0A000000 		.4byte	.LASF32
+ 582 02b3 0A000000 		.4byte	.LASF32
+ 583 02b7 0A       		.byte	0xa
+ 584 02b8 3D       		.byte	0x3d
+ 585 02b9 12       		.uleb128 0x12
+ 586 02ba 6A020000 		.4byte	.LASF33
+ 587 02be 6A020000 		.4byte	.LASF33
+ 588 02c2 0A       		.byte	0xa
+ 589 02c3 3C       		.byte	0x3c
+ 590 02c4 12       		.uleb128 0x12
+ 591 02c5 B8020000 		.4byte	.LASF34
+ 592 02c9 B8020000 		.4byte	.LASF34
+ 593 02cd 0B       		.byte	0xb
+ 594 02ce E7       		.byte	0xe7
+ 595 02cf 12       		.uleb128 0x12
+ 596 02d0 54020000 		.4byte	.LASF35
+ 597 02d4 54020000 		.4byte	.LASF35
+ 598 02d8 0A       		.byte	0xa
+ 599 02d9 3A       		.byte	0x3a
+ 600 02da 00       		.byte	0
+ 601              		.section	.debug_abbrev,"",%progbits
+ 602              	.Ldebug_abbrev0:
+ 603 0000 01       		.uleb128 0x1
+ 604 0001 11       		.uleb128 0x11
+ 605 0002 01       		.byte	0x1
+ 606 0003 25       		.uleb128 0x25
+ 607 0004 0E       		.uleb128 0xe
+ 608 0005 13       		.uleb128 0x13
+ 609 0006 0B       		.uleb128 0xb
+ 610 0007 03       		.uleb128 0x3
+ 611 0008 0E       		.uleb128 0xe
+ 612 0009 1B       		.uleb128 0x1b
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 14
+
+
+ 613 000a 0E       		.uleb128 0xe
+ 614 000b 55       		.uleb128 0x55
+ 615 000c 17       		.uleb128 0x17
+ 616 000d 11       		.uleb128 0x11
+ 617 000e 01       		.uleb128 0x1
+ 618 000f 10       		.uleb128 0x10
+ 619 0010 17       		.uleb128 0x17
+ 620 0011 00       		.byte	0
+ 621 0012 00       		.byte	0
+ 622 0013 02       		.uleb128 0x2
+ 623 0014 24       		.uleb128 0x24
+ 624 0015 00       		.byte	0
+ 625 0016 0B       		.uleb128 0xb
+ 626 0017 0B       		.uleb128 0xb
+ 627 0018 3E       		.uleb128 0x3e
+ 628 0019 0B       		.uleb128 0xb
+ 629 001a 03       		.uleb128 0x3
+ 630 001b 0E       		.uleb128 0xe
+ 631 001c 00       		.byte	0
+ 632 001d 00       		.byte	0
+ 633 001e 03       		.uleb128 0x3
+ 634 001f 16       		.uleb128 0x16
+ 635 0020 00       		.byte	0
+ 636 0021 03       		.uleb128 0x3
+ 637 0022 0E       		.uleb128 0xe
+ 638 0023 3A       		.uleb128 0x3a
+ 639 0024 0B       		.uleb128 0xb
+ 640 0025 3B       		.uleb128 0x3b
+ 641 0026 0B       		.uleb128 0xb
+ 642 0027 49       		.uleb128 0x49
+ 643 0028 13       		.uleb128 0x13
+ 644 0029 00       		.byte	0
+ 645 002a 00       		.byte	0
+ 646 002b 04       		.uleb128 0x4
+ 647 002c 24       		.uleb128 0x24
+ 648 002d 00       		.byte	0
+ 649 002e 0B       		.uleb128 0xb
+ 650 002f 0B       		.uleb128 0xb
+ 651 0030 3E       		.uleb128 0x3e
+ 652 0031 0B       		.uleb128 0xb
+ 653 0032 03       		.uleb128 0x3
+ 654 0033 08       		.uleb128 0x8
+ 655 0034 00       		.byte	0
+ 656 0035 00       		.byte	0
+ 657 0036 05       		.uleb128 0x5
+ 658 0037 16       		.uleb128 0x16
+ 659 0038 00       		.byte	0
+ 660 0039 03       		.uleb128 0x3
+ 661 003a 0E       		.uleb128 0xe
+ 662 003b 3A       		.uleb128 0x3a
+ 663 003c 0B       		.uleb128 0xb
+ 664 003d 3B       		.uleb128 0x3b
+ 665 003e 05       		.uleb128 0x5
+ 666 003f 49       		.uleb128 0x49
+ 667 0040 13       		.uleb128 0x13
+ 668 0041 00       		.byte	0
+ 669 0042 00       		.byte	0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 15
+
+
+ 670 0043 06       		.uleb128 0x6
+ 671 0044 2E       		.uleb128 0x2e
+ 672 0045 01       		.byte	0x1
+ 673 0046 3F       		.uleb128 0x3f
+ 674 0047 19       		.uleb128 0x19
+ 675 0048 03       		.uleb128 0x3
+ 676 0049 0E       		.uleb128 0xe
+ 677 004a 3A       		.uleb128 0x3a
+ 678 004b 0B       		.uleb128 0xb
+ 679 004c 3B       		.uleb128 0x3b
+ 680 004d 0B       		.uleb128 0xb
+ 681 004e 27       		.uleb128 0x27
+ 682 004f 19       		.uleb128 0x19
+ 683 0050 11       		.uleb128 0x11
+ 684 0051 01       		.uleb128 0x1
+ 685 0052 12       		.uleb128 0x12
+ 686 0053 06       		.uleb128 0x6
+ 687 0054 40       		.uleb128 0x40
+ 688 0055 18       		.uleb128 0x18
+ 689 0056 9742     		.uleb128 0x2117
+ 690 0058 19       		.uleb128 0x19
+ 691 0059 01       		.uleb128 0x1
+ 692 005a 13       		.uleb128 0x13
+ 693 005b 00       		.byte	0
+ 694 005c 00       		.byte	0
+ 695 005d 07       		.uleb128 0x7
+ 696 005e 898201   		.uleb128 0x4109
+ 697 0061 00       		.byte	0
+ 698 0062 11       		.uleb128 0x11
+ 699 0063 01       		.uleb128 0x1
+ 700 0064 31       		.uleb128 0x31
+ 701 0065 13       		.uleb128 0x13
+ 702 0066 00       		.byte	0
+ 703 0067 00       		.byte	0
+ 704 0068 08       		.uleb128 0x8
+ 705 0069 2E       		.uleb128 0x2e
+ 706 006a 01       		.byte	0x1
+ 707 006b 3F       		.uleb128 0x3f
+ 708 006c 19       		.uleb128 0x19
+ 709 006d 03       		.uleb128 0x3
+ 710 006e 0E       		.uleb128 0xe
+ 711 006f 3A       		.uleb128 0x3a
+ 712 0070 0B       		.uleb128 0xb
+ 713 0071 3B       		.uleb128 0x3b
+ 714 0072 0B       		.uleb128 0xb
+ 715 0073 27       		.uleb128 0x27
+ 716 0074 19       		.uleb128 0x19
+ 717 0075 49       		.uleb128 0x49
+ 718 0076 13       		.uleb128 0x13
+ 719 0077 8701     		.uleb128 0x87
+ 720 0079 19       		.uleb128 0x19
+ 721 007a 11       		.uleb128 0x11
+ 722 007b 01       		.uleb128 0x1
+ 723 007c 12       		.uleb128 0x12
+ 724 007d 06       		.uleb128 0x6
+ 725 007e 40       		.uleb128 0x40
+ 726 007f 18       		.uleb128 0x18
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 16
+
+
+ 727 0080 9742     		.uleb128 0x2117
+ 728 0082 19       		.uleb128 0x19
+ 729 0083 01       		.uleb128 0x1
+ 730 0084 13       		.uleb128 0x13
+ 731 0085 00       		.byte	0
+ 732 0086 00       		.byte	0
+ 733 0087 09       		.uleb128 0x9
+ 734 0088 34       		.uleb128 0x34
+ 735 0089 00       		.byte	0
+ 736 008a 03       		.uleb128 0x3
+ 737 008b 0E       		.uleb128 0xe
+ 738 008c 3A       		.uleb128 0x3a
+ 739 008d 0B       		.uleb128 0xb
+ 740 008e 3B       		.uleb128 0x3b
+ 741 008f 0B       		.uleb128 0xb
+ 742 0090 49       		.uleb128 0x49
+ 743 0091 13       		.uleb128 0x13
+ 744 0092 02       		.uleb128 0x2
+ 745 0093 18       		.uleb128 0x18
+ 746 0094 00       		.byte	0
+ 747 0095 00       		.byte	0
+ 748 0096 0A       		.uleb128 0xa
+ 749 0097 898201   		.uleb128 0x4109
+ 750 009a 01       		.byte	0x1
+ 751 009b 11       		.uleb128 0x11
+ 752 009c 01       		.uleb128 0x1
+ 753 009d 31       		.uleb128 0x31
+ 754 009e 13       		.uleb128 0x13
+ 755 009f 01       		.uleb128 0x1
+ 756 00a0 13       		.uleb128 0x13
+ 757 00a1 00       		.byte	0
+ 758 00a2 00       		.byte	0
+ 759 00a3 0B       		.uleb128 0xb
+ 760 00a4 8A8201   		.uleb128 0x410a
+ 761 00a7 00       		.byte	0
+ 762 00a8 02       		.uleb128 0x2
+ 763 00a9 18       		.uleb128 0x18
+ 764 00aa 9142     		.uleb128 0x2111
+ 765 00ac 18       		.uleb128 0x18
+ 766 00ad 00       		.byte	0
+ 767 00ae 00       		.byte	0
+ 768 00af 0C       		.uleb128 0xc
+ 769 00b0 898201   		.uleb128 0x4109
+ 770 00b3 01       		.byte	0x1
+ 771 00b4 11       		.uleb128 0x11
+ 772 00b5 01       		.uleb128 0x1
+ 773 00b6 31       		.uleb128 0x31
+ 774 00b7 13       		.uleb128 0x13
+ 775 00b8 00       		.byte	0
+ 776 00b9 00       		.byte	0
+ 777 00ba 0D       		.uleb128 0xd
+ 778 00bb 01       		.uleb128 0x1
+ 779 00bc 01       		.byte	0x1
+ 780 00bd 49       		.uleb128 0x49
+ 781 00be 13       		.uleb128 0x13
+ 782 00bf 01       		.uleb128 0x1
+ 783 00c0 13       		.uleb128 0x13
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 17
+
+
+ 784 00c1 00       		.byte	0
+ 785 00c2 00       		.byte	0
+ 786 00c3 0E       		.uleb128 0xe
+ 787 00c4 21       		.uleb128 0x21
+ 788 00c5 00       		.byte	0
+ 789 00c6 49       		.uleb128 0x49
+ 790 00c7 13       		.uleb128 0x13
+ 791 00c8 2F       		.uleb128 0x2f
+ 792 00c9 0B       		.uleb128 0xb
+ 793 00ca 00       		.byte	0
+ 794 00cb 00       		.byte	0
+ 795 00cc 0F       		.uleb128 0xf
+ 796 00cd 34       		.uleb128 0x34
+ 797 00ce 00       		.byte	0
+ 798 00cf 03       		.uleb128 0x3
+ 799 00d0 0E       		.uleb128 0xe
+ 800 00d1 3A       		.uleb128 0x3a
+ 801 00d2 0B       		.uleb128 0xb
+ 802 00d3 3B       		.uleb128 0x3b
+ 803 00d4 0B       		.uleb128 0xb
+ 804 00d5 49       		.uleb128 0x49
+ 805 00d6 13       		.uleb128 0x13
+ 806 00d7 00       		.byte	0
+ 807 00d8 00       		.byte	0
+ 808 00d9 10       		.uleb128 0x10
+ 809 00da 34       		.uleb128 0x34
+ 810 00db 00       		.byte	0
+ 811 00dc 03       		.uleb128 0x3
+ 812 00dd 0E       		.uleb128 0xe
+ 813 00de 3A       		.uleb128 0x3a
+ 814 00df 0B       		.uleb128 0xb
+ 815 00e0 3B       		.uleb128 0x3b
+ 816 00e1 05       		.uleb128 0x5
+ 817 00e2 49       		.uleb128 0x49
+ 818 00e3 13       		.uleb128 0x13
+ 819 00e4 3F       		.uleb128 0x3f
+ 820 00e5 19       		.uleb128 0x19
+ 821 00e6 3C       		.uleb128 0x3c
+ 822 00e7 19       		.uleb128 0x19
+ 823 00e8 00       		.byte	0
+ 824 00e9 00       		.byte	0
+ 825 00ea 11       		.uleb128 0x11
+ 826 00eb 35       		.uleb128 0x35
+ 827 00ec 00       		.byte	0
+ 828 00ed 49       		.uleb128 0x49
+ 829 00ee 13       		.uleb128 0x13
+ 830 00ef 00       		.byte	0
+ 831 00f0 00       		.byte	0
+ 832 00f1 12       		.uleb128 0x12
+ 833 00f2 2E       		.uleb128 0x2e
+ 834 00f3 00       		.byte	0
+ 835 00f4 3F       		.uleb128 0x3f
+ 836 00f5 19       		.uleb128 0x19
+ 837 00f6 3C       		.uleb128 0x3c
+ 838 00f7 19       		.uleb128 0x19
+ 839 00f8 6E       		.uleb128 0x6e
+ 840 00f9 0E       		.uleb128 0xe
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 18
+
+
+ 841 00fa 03       		.uleb128 0x3
+ 842 00fb 0E       		.uleb128 0xe
+ 843 00fc 3A       		.uleb128 0x3a
+ 844 00fd 0B       		.uleb128 0xb
+ 845 00fe 3B       		.uleb128 0x3b
+ 846 00ff 0B       		.uleb128 0xb
+ 847 0100 00       		.byte	0
+ 848 0101 00       		.byte	0
+ 849 0102 00       		.byte	0
+ 850              		.section	.debug_aranges,"",%progbits
+ 851 0000 24000000 		.4byte	0x24
+ 852 0004 0200     		.2byte	0x2
+ 853 0006 00000000 		.4byte	.Ldebug_info0
+ 854 000a 04       		.byte	0x4
+ 855 000b 00       		.byte	0
+ 856 000c 0000     		.2byte	0
+ 857 000e 0000     		.2byte	0
+ 858 0010 00000000 		.4byte	.LFB65
+ 859 0014 20000000 		.4byte	.LFE65-.LFB65
+ 860 0018 00000000 		.4byte	.LFB64
+ 861 001c B4000000 		.4byte	.LFE64-.LFB64
+ 862 0020 00000000 		.4byte	0
+ 863 0024 00000000 		.4byte	0
+ 864              		.section	.debug_ranges,"",%progbits
+ 865              	.Ldebug_ranges0:
+ 866 0000 00000000 		.4byte	.LFB65
+ 867 0004 20000000 		.4byte	.LFE65
+ 868 0008 00000000 		.4byte	.LFB64
+ 869 000c B4000000 		.4byte	.LFE64
+ 870 0010 00000000 		.4byte	0
+ 871 0014 00000000 		.4byte	0
+ 872              		.section	.debug_line,"",%progbits
+ 873              	.Ldebug_line0:
+ 874 0000 5F020000 		.section	.debug_str,"MS",%progbits,1
+ 874      02001702 
+ 874      00000201 
+ 874      FB0E0D00 
+ 874      01010101 
+ 875              	.LASF24:
+ 876 0000 73746F70 		.ascii	"stopCount\000"
+ 876      436F756E 
+ 876      7400
+ 877              	.LASF32:
+ 878 000a 4C43445F 		.ascii	"LCD_Char_Position\000"
+ 878      43686172 
+ 878      5F506F73 
+ 878      6974696F 
+ 878      6E00
+ 879              	.LASF9:
+ 880 001c 5F5F696E 		.ascii	"__int32_t\000"
+ 880      7433325F 
+ 880      7400
+ 881              	.LASF25:
+ 882 0026 4F75745F 		.ascii	"Out_Comp_GetCompare\000"
+ 882      436F6D70 
+ 882      5F476574 
+ 882      436F6D70 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 19
+
+
+ 882      61726500 
+ 883              	.LASF31:
+ 884 003a 4C43445F 		.ascii	"LCD_Char_Start\000"
+ 884      43686172 
+ 884      5F537461 
+ 884      727400
+ 885              	.LASF26:
+ 886 0049 50574D5F 		.ascii	"PWM_Recon_Start\000"
+ 886      5265636F 
+ 886      6E5F5374 
+ 886      61727400 
+ 887              	.LASF38:
+ 888 0059 433A5C55 		.ascii	"C:\\Users\\sdysart\\Documents\\UACS\\UACS\\HighFreq"
+ 888      73657273 
+ 888      5C736479 
+ 888      73617274 
+ 888      5C446F63 
+ 889 0086 46534B5C 		.ascii	"FSK\\CrabsReceive.cydsn\000"
+ 889      43726162 
+ 889      73526563 
+ 889      65697665 
+ 889      2E637964 
+ 890              	.LASF29:
+ 891 009d 4269745F 		.ascii	"Bit_Timer_Start\000"
+ 891      54696D65 
+ 891      725F5374 
+ 891      61727400 
+ 892              	.LASF12:
+ 893 00ad 666C6F61 		.ascii	"float\000"
+ 893      7400
+ 894              	.LASF1:
+ 895 00b3 756E7369 		.ascii	"unsigned char\000"
+ 895      676E6564 
+ 895      20636861 
+ 895      7200
+ 896              	.LASF36:
+ 897 00c1 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 897      43313120 
+ 897      352E342E 
+ 897      31203230 
+ 897      31363036 
+ 898 00f4 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 898      20726576 
+ 898      6973696F 
+ 898      6E203233 
+ 898      37373135 
+ 899 0127 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 899      66756E63 
+ 899      74696F6E 
+ 899      2D736563 
+ 899      74696F6E 
+ 900              	.LASF28:
+ 901 014f 4F75745F 		.ascii	"Out_Comp_Start\000"
+ 901      436F6D70 
+ 901      5F537461 
+ 901      727400
+ 902              	.LASF5:
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 20
+
+
+ 903 015e 6C6F6E67 		.ascii	"long unsigned int\000"
+ 903      20756E73 
+ 903      69676E65 
+ 903      6420696E 
+ 903      7400
+ 904              	.LASF3:
+ 905 0170 73686F72 		.ascii	"short unsigned int\000"
+ 905      7420756E 
+ 905      7369676E 
+ 905      65642069 
+ 905      6E7400
+ 906              	.LASF41:
+ 907 0183 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 907      52784275 
+ 907      66666572 
+ 907      00
+ 908              	.LASF21:
+ 909 0190 6F6C6443 		.ascii	"oldCrabs\000"
+ 909      72616273 
+ 909      00
+ 910              	.LASF13:
+ 911 0199 646F7562 		.ascii	"double\000"
+ 911      6C6500
+ 912              	.LASF19:
+ 913 01a0 63726162 		.ascii	"crabs\000"
+ 913      7300
+ 914              	.LASF40:
+ 915 01a6 6D61696E 		.ascii	"main\000"
+ 915      00
+ 916              	.LASF27:
+ 917 01ab 53686966 		.ascii	"Shift_Reg_Start\000"
+ 917      745F5265 
+ 917      675F5374 
+ 917      61727400 
+ 918              	.LASF39:
+ 919 01bb 4269745F 		.ascii	"Bit_Timer\000"
+ 919      54696D65 
+ 919      7200
+ 920              	.LASF8:
+ 921 01c5 756E7369 		.ascii	"unsigned int\000"
+ 921      676E6564 
+ 921      20696E74 
+ 921      00
+ 922              	.LASF7:
+ 923 01d2 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 923      206C6F6E 
+ 923      6720756E 
+ 923      7369676E 
+ 923      65642069 
+ 924              	.LASF30:
+ 925 01e9 54696D65 		.ascii	"Timer_ISR_StartEx\000"
+ 925      725F4953 
+ 925      525F5374 
+ 925      61727445 
+ 925      7800
+ 926              	.LASF23:
+ 927 01fb 6F6E6543 		.ascii	"oneCount\000"
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 21
+
+
+ 927      6F756E74 
+ 927      00
+ 928              	.LASF20:
+ 929 0204 6C657665 		.ascii	"levelCounter\000"
+ 929      6C436F75 
+ 929      6E746572 
+ 929      00
+ 930              	.LASF22:
+ 931 0211 63757272 		.ascii	"currentBit\000"
+ 931      656E7442 
+ 931      697400
+ 932              	.LASF10:
+ 933 021c 696E7433 		.ascii	"int32_t\000"
+ 933      325F7400 
+ 934              	.LASF16:
+ 935 0224 73697A65 		.ascii	"sizetype\000"
+ 935      74797065 
+ 935      00
+ 936              	.LASF6:
+ 937 022d 6C6F6E67 		.ascii	"long long int\000"
+ 937      206C6F6E 
+ 937      6720696E 
+ 937      7400
+ 938              	.LASF37:
+ 939 023b 6D61696E 		.ascii	"main.c\000"
+ 939      2E6300
+ 940              	.LASF14:
+ 941 0242 63686172 		.ascii	"char\000"
+ 941      00
+ 942              	.LASF17:
+ 943 0247 4F757470 		.ascii	"OutputString\000"
+ 943      75745374 
+ 943      72696E67 
+ 943      00
+ 944              	.LASF35:
+ 945 0254 4C43445F 		.ascii	"LCD_Char_WriteControl\000"
+ 945      43686172 
+ 945      5F577269 
+ 945      7465436F 
+ 945      6E74726F 
+ 946              	.LASF33:
+ 947 026a 4C43445F 		.ascii	"LCD_Char_PrintString\000"
+ 947      43686172 
+ 947      5F507269 
+ 947      6E745374 
+ 947      72696E67 
+ 948              	.LASF2:
+ 949 027f 73686F72 		.ascii	"short int\000"
+ 949      7420696E 
+ 949      7400
+ 950              	.LASF11:
+ 951 0289 75696E74 		.ascii	"uint8\000"
+ 951      3800
+ 952              	.LASF4:
+ 953 028f 6C6F6E67 		.ascii	"long int\000"
+ 953      20696E74 
+ 953      00
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\cc4ZlwjV.s 			page 22
+
+
+ 954              	.LASF18:
+ 955 0298 64697370 		.ascii	"display\000"
+ 955      6C617900 
+ 956              	.LASF15:
+ 957 02a0 6C6F6E67 		.ascii	"long double\000"
+ 957      20646F75 
+ 957      626C6500 
+ 958              	.LASF0:
+ 959 02ac 7369676E 		.ascii	"signed char\000"
+ 959      65642063 
+ 959      68617200 
+ 960              	.LASF34:
+ 961 02b8 73707269 		.ascii	"sprintf\000"
+ 961      6E746600 
+ 962              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

@@ -15,8 +15,8 @@
 
 /*Definitions*/
 #define CLOCK_FREQ 1000000 //Adjust this to match PWM_Clock in top design
-#define ONE_FREQ 45000 //Frequency sent to give logic 1 (in Hz)
-#define ZERO_FREQ_1 30000 //Frequency sent to give logic 0 (in Hz)
+#define ONE_FREQ 42000 //Frequency sent to give logic 1 (in Hz)
+#define ZERO_FREQ_1 36000 //Frequency sent to give logic 0 (in Hz)
 #define ZERO_FREQ_2 30000 //Frequency sent to give logic 0 (in Hz)
 #define ZERO_FREQ_3 38000 //Frequency sent to give logic 0 (in Hz)
 #define FREQ(x) (CLOCK_FREQ/x)-1 //Converts frequency x to value needed by pwm
@@ -47,9 +47,6 @@ int main(void)
     
     isr_msec_StartEx(isr_msec);
     
-    // Pin 1.6 PWM
-    PWM_Alternating_3_WritePeriod(FREQ(ONE_FREQ));
-    PWM_Alternating_3_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
     
     for(;;)
     {

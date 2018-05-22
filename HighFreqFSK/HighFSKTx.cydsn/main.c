@@ -51,7 +51,6 @@ CY_ISR_PROTO(isr_halfsec); // High F Interrupt
 /*Global Variables*/
 static int bitTime = 0;
 static int prefixTime = 0;
-static int alternating = 0;
 
 int main(void)
 {

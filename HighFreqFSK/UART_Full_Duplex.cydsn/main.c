@@ -265,14 +265,16 @@ int main()
                 CyDelay(20);
                 SignalBase_Write(0);
 
-                //CyDelay(3000);
+                /* Wait for new data before sending out data */
                 while(newDataflag == 0){
                 }
                 
+                /* New data: Turn on circuitry and begin transmission */
                 HighVoltage_Write(1);
-                CyDelay(20);
+                CyDelay(20); // Give voltage booster time to charge up
                 SignalBase_Write(1);
-                bitTime = 0;
+                /* Reset PWM blocks and bitTime for new transmission */
+                bitTime = 0; 
                 PWM_Modulator_Start();
                 PWM_Switch_Timer_Start();
                 break;

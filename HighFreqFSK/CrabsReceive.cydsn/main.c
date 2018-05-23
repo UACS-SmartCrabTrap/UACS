@@ -4,9 +4,9 @@
  * Edited by: Stephanie Salazar
  * Revision: 5/10/18
  * Function: This project takes in a signal from an outside source
- * and reads the data within the signal. This code waits for a pre-fix
- * of 0xFF and then reads the next 4 bits as the data and confirms
- * the message with a post-fix of 0x01. The data is display on an LCD display.
+ * and reads the data within the signal. This code counts crabs
+ * by taking the CRAB_TIME and verifying the signal throughout
+ * counting. The data is display on an LCD display.
  * ========================================
 */
 

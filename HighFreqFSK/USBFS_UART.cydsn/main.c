@@ -26,7 +26,7 @@
 /* Change data size for sending longer data (n-1) */
 #define DATA_SIZE           (7u)
 /* Change max crabs to correlate with data size 2^(n) - 1 */
-#define MAX_CRABS           (15)
+#define MAX_CRABS           (127)
 /* Error used for user error */
 #define ERROR               (333u)
 

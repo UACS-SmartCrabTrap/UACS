@@ -14,9 +14,10 @@
 #include <stdio.h>
 #include "LCD_Char.h"
 
-#define ARRAY_SIZE 12
-#define CRAB_TIME 50 //1 crab per CRAB_TIME
-#define DEBOUNCE_TIME CRAB_TIME/10
+#define ARRAY_SIZE      12
+#define CRAB_TIME       50 //1 crab per CRAB_TIME
+#define DEBOUNCE_TIME   CRAB_TIME/10
+#define ACCURACY        7 // (x/10) demod must be high for a 1
 
 // Interrupt for checking bit
 CY_ISR_PROTO(Bit_Timer);
@@ -58,7 +59,7 @@ int main(void)
     // If levelCounter is 10, we have checked a whole bitTime
     if(levelCounter == 10){
         
-        if(oneCount >= 9){ // 1 bit must be 7/10 = 1 
+        if(oneCount >= ACCURACY){ // 1 bit must be 7/10 = 1 
             // Reset crab count if previously not counting crabs
             currentBit = 0x01;
             crabs = currentBit + crabs;
@@ -76,6 +77,7 @@ int main(void)
         oldCrabs = crabs;
         crabs = 0;
         stopCount = 0;
+        /* Display Crabs on LCD Screen */
         sprintf(OutputString, "%i", oldCrabs);
         LCD_Char_ClearDisplay();
         LCD_Char_Position(0u,0u);

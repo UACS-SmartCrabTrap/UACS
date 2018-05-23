@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 1
 
 
    1              		.syntax unified
@@ -44,89 +44,91 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
   14:main.c        **** #include <stdio.h>
   15:main.c        **** #include "LCD_Char.h"
   16:main.c        **** 
-  17:main.c        **** #define ARRAY_SIZE 12
-  18:main.c        **** #define CRAB_TIME 50 //1 crab per CRAB_TIME
-  19:main.c        **** #define DEBOUNCE_TIME CRAB_TIME/10
-  20:main.c        **** 
-  21:main.c        **** // Interrupt for checking bit
-  22:main.c        **** CY_ISR_PROTO(Bit_Timer);
-  23:main.c        **** 
-  24:main.c        **** // Global Variables
-  25:main.c        **** static uint8 crabs = 0; // 4 bits of data transferred from data variable
-  26:main.c        **** static uint8 oldCrabs = 0;
-  27:main.c        **** static uint8 levelCounter = 0;
-  28:main.c        **** static uint8 currentBit = 0x0;
-  29:main.c        **** static uint8 oneCount = 0;
-  30:main.c        **** static uint8 stopCount = 0;
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 2
+  17:main.c        **** #define ARRAY_SIZE      12
+  18:main.c        **** #define CRAB_TIME       50 //1 crab per CRAB_TIME
+  19:main.c        **** #define DEBOUNCE_TIME   CRAB_TIME/10
+  20:main.c        **** #define ACCURACY        7 // (x/10) demod must be high for a 1
+  21:main.c        **** 
+  22:main.c        **** // Interrupt for checking bit
+  23:main.c        **** CY_ISR_PROTO(Bit_Timer);
+  24:main.c        **** 
+  25:main.c        **** // Global Variables
+  26:main.c        **** static uint8 crabs = 0; // 4 bits of data transferred from data variable
+  27:main.c        **** static uint8 oldCrabs = 0;
+  28:main.c        **** static uint8 levelCounter = 0;
+  29:main.c        **** static uint8 currentBit = 0x0;
+  30:main.c        **** static uint8 oneCount = 0;
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 2
 
 
-  31:main.c        **** 
+  31:main.c        **** static uint8 stopCount = 0;
   32:main.c        **** 
-  33:main.c        **** int main(void)
-  34:main.c        **** {
-  35:main.c        ****     /* Enable global interrupts. */
-  36:main.c        ****     CyGlobalIntEnable; 
-  37:main.c        **** 
-  38:main.c        ****     /* initialization/startup code here */
-  39:main.c        ****     PWM_Recon_Start();
-  40:main.c        ****     Shift_Reg_Start();
-  41:main.c        ****     Out_Comp_Start();
-  42:main.c        ****     Bit_Timer_Start();
-  43:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
-  44:main.c        ****     LCD_Char_Start();
-  45:main.c        ****     
-  46:main.c        ****     //Bit_Timer_WritePeriod(DEBOUNCE_TIME); 
-  47:main.c        **** 
-  48:main.c        ****     // Displays Loading Message before receiving pre-fix
-  49:main.c        ****     char OutputString[ARRAY_SIZE];
-  50:main.c        ****     char display[ARRAY_SIZE];
-  51:main.c        ****     sprintf(display, "counting crabs...");
-  52:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
-  53:main.c        ****     LCD_Char_PrintString(display);
-  54:main.c        **** 
-  55:main.c        ****     for(;;)
-  56:main.c        ****     {
-  57:main.c        ****     // Debouncing
-  58:main.c        ****     // If levelCounter is 10, we have checked a whole bitTime
-  59:main.c        ****     if(levelCounter == 10){
-  60:main.c        ****         
-  61:main.c        ****         if(oneCount >= 9){ // 1 bit must be 7/10 = 1 
-  62:main.c        ****             // Reset crab count if previously not counting crabs
-  63:main.c        ****             currentBit = 0x01;
-  64:main.c        ****             crabs = currentBit + crabs;
-  65:main.c        ****             stopCount = 0; 
-  66:main.c        ****         }else{ // if oneCount <= 7, bit is 0
-  67:main.c        ****             currentBit = 0x00; 
-  68:main.c        ****             stopCount = 1; 
-  69:main.c        ****         }
-  70:main.c        ****         oneCount = 0;
-  71:main.c        ****         levelCounter = 0; // Reset timer bit debouncer  
-  72:main.c        ****         
-  73:main.c        ****     }
-  74:main.c        **** 
-  75:main.c        ****     if(stopCount == 1 && (crabs!= 0)){
-  76:main.c        ****         oldCrabs = crabs;
-  77:main.c        ****         crabs = 0;
-  78:main.c        ****         stopCount = 0;
-  79:main.c        ****         sprintf(OutputString, "%i", oldCrabs);
-  80:main.c        ****         LCD_Char_ClearDisplay();
-  81:main.c        ****         LCD_Char_Position(0u,0u);
-  82:main.c        ****         LCD_Char_PrintString(OutputString);
-  83:main.c        ****         LCD_Char_PrintString(" crabs");
-  84:main.c        ****         oldCrabs = crabs;
-  85:main.c        ****     }
-  86:main.c        **** 
-  87:main.c        ****     } // end of for(;;)
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 3
+  33:main.c        **** 
+  34:main.c        **** int main(void)
+  35:main.c        **** {
+  36:main.c        ****     /* Enable global interrupts. */
+  37:main.c        ****     CyGlobalIntEnable; 
+  38:main.c        **** 
+  39:main.c        ****     /* initialization/startup code here */
+  40:main.c        ****     PWM_Recon_Start();
+  41:main.c        ****     Shift_Reg_Start();
+  42:main.c        ****     Out_Comp_Start();
+  43:main.c        ****     Bit_Timer_Start();
+  44:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
+  45:main.c        ****     LCD_Char_Start();
+  46:main.c        ****     
+  47:main.c        ****     //Bit_Timer_WritePeriod(DEBOUNCE_TIME); 
+  48:main.c        **** 
+  49:main.c        ****     // Displays Loading Message before receiving pre-fix
+  50:main.c        ****     char OutputString[ARRAY_SIZE];
+  51:main.c        ****     char display[ARRAY_SIZE];
+  52:main.c        ****     sprintf(display, "counting crabs...");
+  53:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+  54:main.c        ****     LCD_Char_PrintString(display);
+  55:main.c        **** 
+  56:main.c        ****     for(;;)
+  57:main.c        ****     {
+  58:main.c        ****     // Debouncing
+  59:main.c        ****     // If levelCounter is 10, we have checked a whole bitTime
+  60:main.c        ****     if(levelCounter == 10){
+  61:main.c        ****         
+  62:main.c        ****         if(oneCount >= ACCURACY){ // 1 bit must be 7/10 = 1 
+  63:main.c        ****             // Reset crab count if previously not counting crabs
+  64:main.c        ****             currentBit = 0x01;
+  65:main.c        ****             crabs = currentBit + crabs;
+  66:main.c        ****             stopCount = 0; 
+  67:main.c        ****         }else{ // if oneCount <= 7, bit is 0
+  68:main.c        ****             currentBit = 0x00; 
+  69:main.c        ****             stopCount = 1; 
+  70:main.c        ****         }
+  71:main.c        ****         oneCount = 0;
+  72:main.c        ****         levelCounter = 0; // Reset timer bit debouncer  
+  73:main.c        ****         
+  74:main.c        ****     }
+  75:main.c        **** 
+  76:main.c        ****     if(stopCount == 1 && (crabs!= 0)){
+  77:main.c        ****         oldCrabs = crabs;
+  78:main.c        ****         crabs = 0;
+  79:main.c        ****         stopCount = 0;
+  80:main.c        ****         /* Display Crabs on LCD Screen */
+  81:main.c        ****         sprintf(OutputString, "%i", oldCrabs);
+  82:main.c        ****         LCD_Char_ClearDisplay();
+  83:main.c        ****         LCD_Char_Position(0u,0u);
+  84:main.c        ****         LCD_Char_PrintString(OutputString);
+  85:main.c        ****         LCD_Char_PrintString(" crabs");
+  86:main.c        ****         oldCrabs = crabs;
+  87:main.c        ****     }
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 3
 
 
-  88:main.c        **** } // end of main()
-  89:main.c        ****     
-  90:main.c        **** 
-  91:main.c        **** //will check bit 10 times, to debounce
-  92:main.c        **** CY_ISR(Bit_Timer){
-  28              		.loc 1 92 0
+  88:main.c        **** 
+  89:main.c        ****     } // end of for(;;)
+  90:main.c        **** } // end of main()
+  91:main.c        ****     
+  92:main.c        **** 
+  93:main.c        **** //will check bit 10 times, to debounce
+  94:main.c        **** CY_ISR(Bit_Timer){
+  28              		.loc 1 94 0
   29              		.cfi_startproc
   30              		@ args = 0, pretend = 0, frame = 0
   31              		@ frame_needed = 0, uses_anonymous_args = 0
@@ -134,21 +136,21 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
   33              		.cfi_def_cfa_offset 8
   34              		.cfi_offset 3, -8
   35              		.cfi_offset 14, -4
-  93:main.c        ****     levelCounter++;
-  36              		.loc 1 93 0
+  95:main.c        ****     levelCounter++;
+  36              		.loc 1 95 0
   37 0002 064A     		ldr	r2, .L4
   38 0004 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
   39 0006 0133     		adds	r3, r3, #1
   40 0008 1370     		strb	r3, [r2]
-  94:main.c        ****     
-  95:main.c        ****     // Count whether bit is currently 1 or 0
-  96:main.c        ****     if(Out_Comp_GetCompare() != 0){
-  41              		.loc 1 96 0
+  96:main.c        ****     
+  97:main.c        ****     // Count whether bit is currently 1 or 0
+  98:main.c        ****     if(Out_Comp_GetCompare() != 0){
+  41              		.loc 1 98 0
   42 000a FFF7FEFF 		bl	Out_Comp_GetCompare
   43              	.LVL0:
   44 000e 18B1     		cbz	r0, .L1
-  97:main.c        ****         oneCount++;
-  45              		.loc 1 97 0
+  99:main.c        ****         oneCount++;
+  45              		.loc 1 99 0
   46 0010 024A     		ldr	r2, .L4
   47 0012 5378     		ldrb	r3, [r2, #1]	@ zero_extendqisi2
   48 0014 0133     		adds	r3, r3, #1
@@ -170,162 +172,162 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
   64              		.type	main, %function
   65              	main:
   66              	.LFB64:
-  34:main.c        ****     /* Enable global interrupts. */
-  67              		.loc 1 34 0
+  35:main.c        ****     /* Enable global interrupts. */
+  67              		.loc 1 35 0
   68              		.cfi_startproc
   69              		@ args = 0, pretend = 0, frame = 24
   70              		@ frame_needed = 0, uses_anonymous_args = 0
   71 0000 30B5     		push	{r4, r5, lr}
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 4
+
+
   72              		.cfi_def_cfa_offset 12
   73              		.cfi_offset 4, -12
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 4
-
-
   74              		.cfi_offset 5, -8
   75              		.cfi_offset 14, -4
   76 0002 87B0     		sub	sp, sp, #28
   77              		.cfi_def_cfa_offset 40
-  36:main.c        **** 
-  78              		.loc 1 36 0
+  37:main.c        **** 
+  78              		.loc 1 37 0
   79              		.syntax unified
-  80              	@ 36 "main.c" 1
+  80              	@ 37 "main.c" 1
   81 0004 62B6     		CPSIE   i
   82              	@ 0 "" 2
-  39:main.c        ****     Shift_Reg_Start();
-  83              		.loc 1 39 0
+  40:main.c        ****     Shift_Reg_Start();
+  83              		.loc 1 40 0
   84              		.thumb
   85              		.syntax unified
   86 0006 FFF7FEFF 		bl	PWM_Recon_Start
   87              	.LVL1:
-  40:main.c        ****     Out_Comp_Start();
-  88              		.loc 1 40 0
+  41:main.c        ****     Out_Comp_Start();
+  88              		.loc 1 41 0
   89 000a FFF7FEFF 		bl	Shift_Reg_Start
   90              	.LVL2:
-  41:main.c        ****     Bit_Timer_Start();
-  91              		.loc 1 41 0
+  42:main.c        ****     Bit_Timer_Start();
+  91              		.loc 1 42 0
   92 000e FFF7FEFF 		bl	Out_Comp_Start
   93              	.LVL3:
-  42:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
-  94              		.loc 1 42 0
+  43:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
+  94              		.loc 1 43 0
   95 0012 FFF7FEFF 		bl	Bit_Timer_Start
   96              	.LVL4:
-  43:main.c        ****     LCD_Char_Start();
-  97              		.loc 1 43 0
+  44:main.c        ****     LCD_Char_Start();
+  97              		.loc 1 44 0
   98 0016 2248     		ldr	r0, .L13
   99 0018 FFF7FEFF 		bl	Timer_ISR_StartEx
  100              	.LVL5:
-  44:main.c        ****     
- 101              		.loc 1 44 0
+  45:main.c        ****     
+ 101              		.loc 1 45 0
  102 001c FFF7FEFF 		bl	LCD_Char_Start
  103              	.LVL6:
-  51:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
- 104              		.loc 1 51 0
+  52:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+ 104              		.loc 1 52 0
  105 0020 6C46     		mov	r4, sp
  106 0022 204D     		ldr	r5, .L13+4
  107 0024 0FCD     		ldmia	r5!, {r0, r1, r2, r3}
  108 0026 0FC4     		stmia	r4!, {r0, r1, r2, r3}
  109 0028 2B68     		ldr	r3, [r5]
  110 002a 2380     		strh	r3, [r4]	@ movhi
-  52:main.c        ****     LCD_Char_PrintString(display);
- 111              		.loc 1 52 0
+  53:main.c        ****     LCD_Char_PrintString(display);
+ 111              		.loc 1 53 0
  112 002c 0021     		movs	r1, #0
  113 002e 0846     		mov	r0, r1
  114 0030 FFF7FEFF 		bl	LCD_Char_Position
  115              	.LVL7:
-  53:main.c        **** 
- 116              		.loc 1 53 0
+  54:main.c        **** 
+ 116              		.loc 1 54 0
  117 0034 6846     		mov	r0, sp
  118 0036 FFF7FEFF 		bl	LCD_Char_PrintString
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 5
+
+
  119              	.LVL8:
  120              	.L7:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 5
-
-
-  59:main.c        ****         
- 121              		.loc 1 59 0
+  60:main.c        ****         
+ 121              		.loc 1 60 0
  122 003a 1B4B     		ldr	r3, .L13+8
  123 003c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
  124 003e 0A2B     		cmp	r3, #10
  125 0040 11D1     		bne	.L8
-  61:main.c        ****             // Reset crab count if previously not counting crabs
- 126              		.loc 1 61 0
+  62:main.c        ****             // Reset crab count if previously not counting crabs
+ 126              		.loc 1 62 0
  127 0042 194B     		ldr	r3, .L13+8
  128 0044 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
- 129 0046 082B     		cmp	r3, #8
+ 129 0046 062B     		cmp	r3, #6
  130 0048 06D9     		bls	.L9
-  64:main.c        ****             stopCount = 0; 
- 131              		.loc 1 64 0
+  65:main.c        ****             stopCount = 0; 
+ 131              		.loc 1 65 0
  132 004a 174B     		ldr	r3, .L13+8
  133 004c 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
  134 004e 0132     		adds	r2, r2, #1
  135 0050 9A70     		strb	r2, [r3, #2]
-  65:main.c        ****         }else{ // if oneCount <= 7, bit is 0
- 136              		.loc 1 65 0
+  66:main.c        ****         }else{ // if oneCount <= 7, bit is 0
+ 136              		.loc 1 66 0
  137 0052 0022     		movs	r2, #0
  138 0054 DA70     		strb	r2, [r3, #3]
  139 0056 02E0     		b	.L10
  140              	.L9:
-  68:main.c        ****         }
- 141              		.loc 1 68 0
+  69:main.c        ****         }
+ 141              		.loc 1 69 0
  142 0058 0122     		movs	r2, #1
  143 005a 134B     		ldr	r3, .L13+8
  144 005c DA70     		strb	r2, [r3, #3]
  145              	.L10:
-  70:main.c        ****         levelCounter = 0; // Reset timer bit debouncer  
- 146              		.loc 1 70 0
+  71:main.c        ****         levelCounter = 0; // Reset timer bit debouncer  
+ 146              		.loc 1 71 0
  147 005e 124B     		ldr	r3, .L13+8
  148 0060 0022     		movs	r2, #0
  149 0062 5A70     		strb	r2, [r3, #1]
-  71:main.c        ****         
- 150              		.loc 1 71 0
+  72:main.c        ****         
+ 150              		.loc 1 72 0
  151 0064 1A70     		strb	r2, [r3]
  152              	.L8:
-  75:main.c        ****         oldCrabs = crabs;
- 153              		.loc 1 75 0
+  76:main.c        ****         oldCrabs = crabs;
+ 153              		.loc 1 76 0
  154 0066 104B     		ldr	r3, .L13+8
  155 0068 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
  156 006a 012B     		cmp	r3, #1
  157 006c E5D1     		bne	.L7
-  75:main.c        ****         oldCrabs = crabs;
- 158              		.loc 1 75 0 is_stmt 0 discriminator 1
+  76:main.c        ****         oldCrabs = crabs;
+ 158              		.loc 1 76 0 is_stmt 0 discriminator 1
  159 006e 0E4B     		ldr	r3, .L13+8
  160 0070 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
  161 0072 002A     		cmp	r2, #0
  162 0074 E1D0     		beq	.L7
-  77:main.c        ****         stopCount = 0;
- 163              		.loc 1 77 0 is_stmt 1
+  78:main.c        ****         stopCount = 0;
+ 163              		.loc 1 78 0 is_stmt 1
  164 0076 0024     		movs	r4, #0
  165 0078 9C70     		strb	r4, [r3, #2]
-  78:main.c        ****         sprintf(OutputString, "%i", oldCrabs);
- 166              		.loc 1 78 0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 6
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 6
 
 
+  79:main.c        ****         /* Display Crabs on LCD Screen */
+ 166              		.loc 1 79 0
  167 007a DC70     		strb	r4, [r3, #3]
-  79:main.c        ****         LCD_Char_ClearDisplay();
- 168              		.loc 1 79 0
+  81:main.c        ****         LCD_Char_ClearDisplay();
+ 168              		.loc 1 81 0
  169 007c 0B49     		ldr	r1, .L13+12
  170 007e 03A8     		add	r0, sp, #12
  171 0080 FFF7FEFF 		bl	sprintf
  172              	.LVL9:
-  80:main.c        ****         LCD_Char_Position(0u,0u);
- 173              		.loc 1 80 0
+  82:main.c        ****         LCD_Char_Position(0u,0u);
+ 173              		.loc 1 82 0
  174 0084 0120     		movs	r0, #1
  175 0086 FFF7FEFF 		bl	LCD_Char_WriteControl
  176              	.LVL10:
-  81:main.c        ****         LCD_Char_PrintString(OutputString);
- 177              		.loc 1 81 0
+  83:main.c        ****         LCD_Char_PrintString(OutputString);
+ 177              		.loc 1 83 0
  178 008a 2146     		mov	r1, r4
  179 008c 2046     		mov	r0, r4
  180 008e FFF7FEFF 		bl	LCD_Char_Position
  181              	.LVL11:
-  82:main.c        ****         LCD_Char_PrintString(" crabs");
- 182              		.loc 1 82 0
+  84:main.c        ****         LCD_Char_PrintString(" crabs");
+ 182              		.loc 1 84 0
  183 0092 03A8     		add	r0, sp, #12
  184 0094 FFF7FEFF 		bl	LCD_Char_PrintString
  185              	.LVL12:
-  83:main.c        ****         oldCrabs = crabs;
- 186              		.loc 1 83 0
+  85:main.c        ****         oldCrabs = crabs;
+ 186              		.loc 1 85 0
  187 0098 0548     		ldr	r0, .L13+16
  188 009a FFF7FEFF 		bl	LCD_Char_PrintString
  189              	.LVL13:
@@ -356,11 +358,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  210              	.LC2:
  211 0018 20637261 		.ascii	" crabs\000"
  211      627300
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 7
+
+
  212              		.bss
  213              		.set	.LANCHOR0,. + 0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 7
-
-
  214              		.type	levelCounter, %object
  215              		.size	levelCounter, 1
  216              	levelCounter:
@@ -416,11 +418,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  266 0034 02       		.byte	0x2
  267 0035 05       		.byte	0x5
  268 0036 7F020000 		.4byte	.LASF2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 8
+
+
  269 003a 02       		.uleb128 0x2
  270 003b 02       		.byte	0x2
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 8
-
-
  271 003c 07       		.byte	0x7
  272 003d 70010000 		.4byte	.LASF3
  273 0041 03       		.uleb128 0x3
@@ -476,11 +478,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  323 009e 42020000 		.4byte	.LASF14
  324 00a2 02       		.uleb128 0x2
  325 00a3 08       		.byte	0x8
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 9
+
+
  326 00a4 04       		.byte	0x4
  327 00a5 A0020000 		.4byte	.LASF15
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 9
-
-
  328 00a9 02       		.uleb128 0x2
  329 00aa 04       		.byte	0x4
  330 00ab 07       		.byte	0x7
@@ -488,7 +490,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  332 00b0 06       		.uleb128 0x6
  333 00b1 BB010000 		.4byte	.LASF39
  334 00b5 01       		.byte	0x1
- 335 00b6 5C       		.byte	0x5c
+ 335 00b6 5E       		.byte	0x5e
  336 00b7 00000000 		.4byte	.LFB65
  337 00bb 20000000 		.4byte	.LFE65-.LFB65
  338 00bf 01       		.uleb128 0x1
@@ -501,7 +503,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  345 00cf 08       		.uleb128 0x8
  346 00d0 A6010000 		.4byte	.LASF40
  347 00d4 01       		.byte	0x1
- 348 00d5 21       		.byte	0x21
+ 348 00d5 22       		.byte	0x22
  349 00d6 68000000 		.4byte	0x68
  350 00da 00000000 		.4byte	.LFB64
  351 00de B4000000 		.4byte	.LFE64-.LFB64
@@ -511,7 +513,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  355 00e8 09       		.uleb128 0x9
  356 00e9 47020000 		.4byte	.LASF17
  357 00ed 01       		.byte	0x1
- 358 00ee 31       		.byte	0x31
+ 358 00ee 32       		.byte	0x32
  359 00ef E6010000 		.4byte	0x1e6
  360 00f3 02       		.uleb128 0x2
  361 00f4 91       		.byte	0x91
@@ -519,7 +521,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  363 00f6 09       		.uleb128 0x9
  364 00f7 98020000 		.4byte	.LASF18
  365 00fb 01       		.byte	0x1
- 366 00fc 32       		.byte	0x32
+ 366 00fc 33       		.byte	0x33
  367 00fd E6010000 		.4byte	0x1e6
  368 0101 02       		.uleb128 0x2
  369 0102 91       		.byte	0x91
@@ -536,11 +538,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  380 011f 07       		.uleb128 0x7
  381 0120 16000000 		.4byte	.LVL4
  382 0124 8D020000 		.4byte	0x28d
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 10
+
+
  383 0128 0A       		.uleb128 0xa
  384 0129 1C000000 		.4byte	.LVL5
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 10
-
-
  385 012d 98020000 		.4byte	0x298
  386 0131 3F010000 		.4byte	0x13f
  387 0135 0B       		.uleb128 0xb
@@ -596,11 +598,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  437 018b 03       		.byte	0x3
  438 018c 14000000 		.4byte	.LC1
  439 0190 00       		.byte	0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 11
+
+
  440 0191 0A       		.uleb128 0xa
  441 0192 8A000000 		.4byte	.LVL10
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 11
-
-
  442 0196 CF020000 		.4byte	0x2cf
  443 019a A4010000 		.4byte	0x1a4
  444 019e 0B       		.uleb128 0xb
@@ -656,12 +658,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  494 01f4 0B       		.byte	0xb
  495 01f5 00       		.byte	0
  496 01f6 09       		.uleb128 0x9
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 12
+
+
  497 01f7 A0010000 		.4byte	.LASF19
  498 01fb 01       		.byte	0x1
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 12
-
-
- 499 01fc 19       		.byte	0x19
+ 499 01fc 1A       		.byte	0x1a
  500 01fd 81000000 		.4byte	0x81
  501 0201 05       		.uleb128 0x5
  502 0202 03       		.byte	0x3
@@ -669,12 +671,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  504 0207 0F       		.uleb128 0xf
  505 0208 90010000 		.4byte	.LASF21
  506 020c 01       		.byte	0x1
- 507 020d 1A       		.byte	0x1a
+ 507 020d 1B       		.byte	0x1b
  508 020e 81000000 		.4byte	0x81
  509 0212 09       		.uleb128 0x9
  510 0213 04020000 		.4byte	.LASF20
  511 0217 01       		.byte	0x1
- 512 0218 1B       		.byte	0x1b
+ 512 0218 1C       		.byte	0x1c
  513 0219 81000000 		.4byte	0x81
  514 021d 05       		.uleb128 0x5
  515 021e 03       		.byte	0x3
@@ -682,12 +684,12 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  517 0223 0F       		.uleb128 0xf
  518 0224 11020000 		.4byte	.LASF22
  519 0228 01       		.byte	0x1
- 520 0229 1C       		.byte	0x1c
+ 520 0229 1D       		.byte	0x1d
  521 022a 81000000 		.4byte	0x81
  522 022e 09       		.uleb128 0x9
  523 022f FB010000 		.4byte	.LASF23
  524 0233 01       		.byte	0x1
- 525 0234 1D       		.byte	0x1d
+ 525 0234 1E       		.byte	0x1e
  526 0235 81000000 		.4byte	0x81
  527 0239 05       		.uleb128 0x5
  528 023a 03       		.byte	0x3
@@ -695,7 +697,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  530 023f 09       		.uleb128 0x9
  531 0240 00000000 		.4byte	.LASF24
  532 0244 01       		.byte	0x1
- 533 0245 1E       		.byte	0x1e
+ 533 0245 1F       		.byte	0x1f
  534 0246 81000000 		.4byte	0x81
  535 024a 05       		.uleb128 0x5
  536 024b 03       		.byte	0x3
@@ -716,11 +718,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  551 026d 49000000 		.4byte	.LASF26
  552 0271 49000000 		.4byte	.LASF26
  553 0275 06       		.byte	0x6
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 13
+
+
  554 0276 92       		.byte	0x92
  555 0277 12       		.uleb128 0x12
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 13
-
-
  556 0278 AB010000 		.4byte	.LASF27
  557 027c AB010000 		.4byte	.LASF27
  558 0280 07       		.byte	0x7
@@ -776,11 +778,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  608 0005 13       		.uleb128 0x13
  609 0006 0B       		.uleb128 0xb
  610 0007 03       		.uleb128 0x3
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 14
+
+
  611 0008 0E       		.uleb128 0xe
  612 0009 1B       		.uleb128 0x1b
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 14
-
-
  613 000a 0E       		.uleb128 0xe
  614 000b 55       		.uleb128 0x55
  615 000c 17       		.uleb128 0x17
@@ -836,11 +838,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  665 003e 05       		.uleb128 0x5
  666 003f 49       		.uleb128 0x49
  667 0040 13       		.uleb128 0x13
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 15
+
+
  668 0041 00       		.byte	0
  669 0042 00       		.byte	0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 15
-
-
  670 0043 06       		.uleb128 0x6
  671 0044 2E       		.uleb128 0x2e
  672 0045 01       		.byte	0x1
@@ -896,11 +898,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  722 007b 01       		.uleb128 0x1
  723 007c 12       		.uleb128 0x12
  724 007d 06       		.uleb128 0x6
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 16
+
+
  725 007e 40       		.uleb128 0x40
  726 007f 18       		.uleb128 0x18
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 16
-
-
  727 0080 9742     		.uleb128 0x2117
  728 0082 19       		.uleb128 0x19
  729 0083 01       		.uleb128 0x1
@@ -956,11 +958,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  779 00bc 01       		.byte	0x1
  780 00bd 49       		.uleb128 0x49
  781 00be 13       		.uleb128 0x13
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 17
+
+
  782 00bf 01       		.uleb128 0x1
  783 00c0 13       		.uleb128 0x13
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 17
-
-
  784 00c1 00       		.byte	0
  785 00c2 00       		.byte	0
  786 00c3 0E       		.uleb128 0xe
@@ -1016,11 +1018,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  836 00f5 19       		.uleb128 0x19
  837 00f6 3C       		.uleb128 0x3c
  838 00f7 19       		.uleb128 0x19
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 18
+
+
  839 00f8 6E       		.uleb128 0x6e
  840 00f9 0E       		.uleb128 0xe
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 18
-
-
  841 00fa 03       		.uleb128 0x3
  842 00fb 0E       		.uleb128 0xe
  843 00fc 3A       		.uleb128 0x3a
@@ -1076,11 +1078,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  881              	.LASF25:
  882 0026 4F75745F 		.ascii	"Out_Comp_GetCompare\000"
  882      436F6D70 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 19
+
+
  882      5F476574 
  882      436F6D70 
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 19
-
-
  882      61726500 
  883              	.LASF31:
  884 003a 4C43445F 		.ascii	"LCD_Char_Start\000"
@@ -1136,11 +1138,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  901 014f 4F75745F 		.ascii	"Out_Comp_Start\000"
  901      436F6D70 
  901      5F537461 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 20
+
+
  901      727400
  902              	.LASF5:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 20
-
-
  903 015e 6C6F6E67 		.ascii	"long unsigned int\000"
  903      20756E73 
  903      69676E65 
@@ -1196,11 +1198,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  925      525F5374 
  925      61727445 
  925      7800
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 21
+
+
  926              	.LASF23:
  927 01fb 6F6E6543 		.ascii	"oneCount\000"
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 21
-
-
  927      6F756E74 
  927      00
  928              	.LASF20:
@@ -1256,11 +1258,11 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 1
  951      3800
  952              	.LASF4:
  953 028f 6C6F6E67 		.ascii	"long int\000"
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccQ1DY8P.s 			page 22
+
+
  953      20696E74 
  953      00
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccKeys3N.s 			page 22
-
-
  954              	.LASF18:
  955 0298 64697370 		.ascii	"display\000"
  955      6C617900 

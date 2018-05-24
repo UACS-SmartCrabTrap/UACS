@@ -168,7 +168,7 @@ void Bit_Timer_Wakeup(void)        ;
 *    Initialial Parameter Constants
 ***************************************/
 
-#define Bit_Timer_INIT_PERIOD             99u
+#define Bit_Timer_INIT_PERIOD             49u
 #define Bit_Timer_INIT_CAPTURE_MODE       ((uint8)((uint8)0u << Bit_Timer_CTRL_CAP_MODE_SHIFT))
 #define Bit_Timer_INIT_TRIGGER_MODE       ((uint8)((uint8)0u << Bit_Timer_CTRL_TRIG_MODE_SHIFT))
 #if (Bit_Timer_UsingFixedFunction)

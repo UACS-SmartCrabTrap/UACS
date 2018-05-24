@@ -15,6 +15,8 @@
 #include "LCD_Char.h"
 
 #define ARRAY_SIZE 12
+#define COUNT      100
+#define ACCURACY   70
 
 // Interrupt for switching bits 100 ms
 CY_ISR_PROTO(Bit_Timer);
@@ -22,7 +24,7 @@ CY_ISR_PROTO(Bit_Timer);
 // Global Variables
 static uint16 levelCounter = 0; // Timer counter to debounce bit
 static uint8 zeroCount = 0; // 0 count used in timer counter debounce
-static uint8 oneCount = 0; // 1 count used in timer counter debounce
+static uint16 oneCount = 0; // 1 count used in timer counter debounce
 static uint8 currentBit = 0; // x/10 bit decision for 500 ms bit
 static uint8 dataCount = 0; // which bit of data we are looking at
 static uint8 data = 0; // 4 bits of data
@@ -107,8 +109,8 @@ CY_ISR(Bit_Timer){
     }
     
     // Debouncing
-    if(levelCounter == 10){
-        if(oneCount >= 7){ // 1 bit must be 7/10 = 1 
+    if(levelCounter == COUNT){
+        if(oneCount >= ACCURACY){ // 1 bit must be 7/10 = 1 
             currentBit = 0x01;
             oneCount = 0;
         
@@ -154,5 +156,10 @@ CY_ISR(Bit_Timer){
         }
     } // end of if(levelCounter == 10)
 } // end of CY_ISR(HighF_LevelCount)
+
+
+// Transition time = 10ms
+CY_ISR(Bit_Transition){
+} // end of CY_ISR(Bit_Transistion)
 
 /* [] END OF FILE */

@@ -29,16 +29,22 @@
 #define ONE 1
 #define ZERO 0
 
+/* Function Prototypes */
 CY_ISR_PROTO(isr_sec); // High F Interrupt
+CY_ISR_PROTO(sleep_interrupt);
 
 /*Global Variables*/
-int stop = ZERO;
+int stop = ONE;
 uint8 newDataflag = 0;
 uint8 errorStatus = 0u;
 uint8 rxData = 0;
 int crabs = 0; // How many crabs are in the trap?
 int dataCount = 0;
 
+/*
+ * RxIsr interrupt
+ * Interrupt triggered when rx 
+ */
 CY_ISR(RxIsr)
 {
     uint8 rxStatus;  
@@ -71,8 +77,11 @@ CY_ISR(RxIsr)
     }while((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u); //read until empty
 }
 
-// Interrupt triggered on a CRAB_TIME timer timeout
-// This will turn PWM signal off
+/*
+ * isr_sec interrupt
+ * Interrupt triggered on a CRAB_TIME timer timeout
+ * This will turn PWM signal off
+ */
 CY_ISR(isr_sec)
 {
 #if(UART == ENABLED)
@@ -80,9 +89,35 @@ CY_ISR(isr_sec)
 #else 
     newDataflag = 1 ^ newDataflag;
 #endif /* UART == ENABLED */
-    
 }//end CY_ISR(isr_sec)
+                                                                                                                                                                                                                                                                                                                                                        
+/*
+ * isr_sec interrupt
+ * Interrupt triggered on a CRAB_TIME timer timeout
+ * This will turn PWM signal off
+ */
+CY_ISR(rx_test)
+{
+    HighVoltage_Write(1);
+}//end CY_ISR(rx_test)
 
+/*
+ * WakeupIsr interrupt
+ * PSoC turns on and checks for signal
+ */
+CY_ISR(sleep_interrupt)
+{
+    SleepTimer_GetStatus(); // Clears the sleep timer interrupt
+} // end CY_ISR(WakeupIsr)
+    
+
+/*
+ * function: main()
+ * parameters: none
+ * returns: int (Should never return)
+ * description: toggles a pin off and on every four seconds and sends a 40k PWM
+ *      signal 
+ */
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
@@ -95,6 +130,8 @@ int main(void)
     PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
     PWM_Switch_Timer_Start();
     PWM_Switch_Timer_WritePeriod(CRAB_TIME*42); 
+    sleep_interrupt_StartEx(sleep_interrupt);
+    SleepTimer_Start();
     // Testing PWMs
     PWM_1_Start();
     PWM_2_Start();
@@ -119,6 +156,11 @@ int main(void)
     isr_rx_StartEx(RxIsr);
 #endif /* INTERRUPT_CODE_ENABLED == ENABLED */
 
+    // PSoC Sleep command. To adjust sleep time, change in the hardware
+    //  block. No sleep time parameters taken in PSoC5LP.
+    //  PM_SLEEP_TIME_NONE is a relic of PSoC3
+    CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
+
     for(;;)
     {
         if(errorStatus != 0u){
@@ -130,8 +172,10 @@ int main(void)
         /* If new data is received from UART */
         if(newDataflag == 1){
             stop = ZERO;
-            HighVoltage_Write(1); //Turn boost converter on
+            //HighVoltage_Write(1); //Turn boost converter on
             /* Need to turn PWM and timer on again to send data */
+            PWM_Modulator_Wakeup();
+            PWM_Switch_Timer_Wakeup();
             PWM_Modulator_Start();
             PWM_Switch_Timer_Start();
             PWM_Switch_Timer_WritePeriod(CRAB_TIME*crabs); //send over amount of crabs (1 crab = CRAB_TIME)
@@ -140,13 +184,20 @@ int main(void)
         }else if(stop == ONE){
             PWM_Modulator_Stop(); //Turn PWM off
             PWM_Switch_Timer_Stop(); //Turn timer off until new data
-            HighVoltage_Write(0); //Turn boost converter off
+            PWM_Modulator_Sleep(); //Turn PWM off
+            PWM_Switch_Timer_Sleep(); //Turn timer off until new data
+            //HighVoltage_Write(0); //Turn boost converter off
+            CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW); //Back to sleep mode
         }
+        
 #else   /* Testing mode */
         /* Timer will switch between 1 and 0 depending on TEST_VALUE */
         if(newDataflag == 1){
             HighVoltage_Write(1); //Turn boost converter on
             stop = ZERO;
+            // Need to wakeup and start hardware blocks
+            PWM_Modulator_Wakeup();
+            PWM_Switch_Timer_Wakeup();
             PWM_Modulator_Start();
             PWM_Switch_Timer_WritePeriod(CRAB_TIME*TEST_VALUE); 
         }else if(newDataflag == 0){

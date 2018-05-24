@@ -1,5 +1,5 @@
 -- Project:   CrabsTransmit
--- Generated: 05/22/2018 17:31:08
+-- Generated: 05/23/2018 00:52:51
 -- PSoC Creator  4.1 Update 1
 
 ENTITY CrabsTransmit IS
@@ -23,6 +23,7 @@ ENTITY CrabsTransmit IS
 END CrabsTransmit;
 
 ARCHITECTURE __DEFAULT__ OF CrabsTransmit IS
+    SIGNAL CTW_OUT : bit;
     SIGNAL ClockBlock_100k : bit;
     SIGNAL ClockBlock_1k : bit;
     SIGNAL ClockBlock_32k : bit;
@@ -638,6 +639,14 @@ ARCHITECTURE __DEFAULT__ OF CrabsTransmit IS
     ATTRIBUTE udb_chain OF macrocell : COMPONENT IS "cin,cout";
     ATTRIBUTE chain_lsb OF macrocell : COMPONENT IS "cin";
     ATTRIBUTE chain_msb OF macrocell : COMPONENT IS "cout";
+    COMPONENT pmcell
+        PORT (
+            ctw_int : OUT std_ulogic;
+            ftw_int : OUT std_ulogic;
+            limact_int : OUT std_ulogic;
+            onepps_int : OUT std_ulogic;
+            pm_int : OUT std_ulogic);
+    END COMPONENT;
     COMPONENT statusicell
         PORT (
             status_0 : IN std_ulogic;
@@ -2347,6 +2356,22 @@ BEGIN
             sor => \PWM_3:PWMUDB:sP16:pwmdp:u1.sor__sig\,
             cmsbo => \PWM_3:PWMUDB:sP16:pwmdp:u1.cmsbo__sig\);
 
+    sleep_interrupt:interrupt
+        GENERIC MAP(
+            int_type => "10",
+            is_nmi => 0)
+        PORT MAP(
+            interrupt => CTW_OUT,
+            clock => ClockBlock_BUS_CLK);
+
+    test_rx:interrupt
+        GENERIC MAP(
+            int_type => "00",
+            is_nmi => 0)
+        PORT MAP(
+            interrupt => Net_537,
+            clock => ClockBlock_BUS_CLK);
+
     \PWM_Modulator:PWMUDB:runmode_enable\:macrocell
         GENERIC MAP(
             eqn_main => "(main_0)",
@@ -2793,5 +2818,9 @@ BEGIN
             clock_0 => Net_1758,
             main_0 => \PWM_3:PWMUDB:runmode_enable\,
             main_1 => \PWM_3:PWMUDB:cmp1_less\);
+
+    PM:pmcell
+        PORT MAP(
+            ctw_int => CTW_OUT);
 
 END __DEFAULT__;

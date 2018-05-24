@@ -1,6 +1,6 @@
 // ======================================================================
 // CrabsTransmit.v generated from TopDesign.cysch
-// 05/22/2018 at 17:31
+// 05/23/2018 at 00:52
 // This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 // ======================================================================
 
@@ -746,61 +746,78 @@ module PWM_v3_30_5 (
 
 endmodule
 
+// SleepTimer_v3_20(EnableInt=true, Interval=12, CY_API_CALLBACK_HEADER_INCLUDE=#include "cyapicallbacks.h", CY_COMMENT=, CY_COMPONENT_NAME=SleepTimer_v3_20, CY_CONST_CONFIG=true, CY_CONTROL_FILE=<:default:>, CY_DATASHEET_FILE=<:default:>, CY_FITTER_NAME=SleepTimer, CY_INSTANCE_SHORT_NAME=SleepTimer, CY_MAJOR_VERSION=3, CY_MINOR_VERSION=20, CY_PDL_DRIVER_NAME=, CY_PDL_DRIVER_REQ_VERSION=, CY_PDL_DRIVER_SUBGROUP=, CY_PDL_DRIVER_VARIANT=, CY_REMOVE=false, CY_SUPPRESS_API_GEN=false, CY_VERSION=PSoC Creator  4.1 Update 1, INSTANCE_NAME=SleepTimer, )
+module SleepTimer_v3_20_6 (
+    interrupt);
+    output      interrupt;
+
+
+
+
+	cy_gsref_v1_0
+		#(.guid("0335EFD7-9943-4db5-B556-454A5AD8A118"))
+		gsRef_1
+		 (.sig_out(interrupt));
+
+
+
+
+endmodule
+
 // top
 module top ;
 
           wire  Net_1770;
-          wire  Net_1965;
-          wire  Net_1964;
+          wire  Net_2829;
+          wire  Net_2828;
           wire  Net_1914;
-          wire  Net_1963;
-          wire  Net_1962;
-          wire  Net_1961;
-          wire  Net_1960;
-          wire  Net_1959;
-          wire  Net_1958;
-          wire  Net_1957;
-          wire  Net_1956;
-          wire  Net_1955;
+          wire  Net_2827;
+          wire  Net_2826;
+          wire  Net_2825;
+          wire  Net_2824;
+          wire  Net_2823;
+          wire  Net_2822;
+          wire  Net_2821;
+          wire  Net_2820;
+          wire  Net_2819;
           wire  Net_1758;
-          wire  Net_1954;
+          wire  Net_2818;
           wire  Net_1756;
           wire  Net_1755;
-          wire  Net_1953;
-          wire  Net_1952;
+          wire  Net_2817;
+          wire  Net_2816;
           wire  Net_1853;
-          wire  Net_1951;
-          wire  Net_1950;
-          wire  Net_1949;
-          wire  Net_1948;
-          wire  Net_1947;
-          wire  Net_1946;
-          wire  Net_1945;
-          wire  Net_1944;
-          wire  Net_1943;
+          wire  Net_2815;
+          wire  Net_2814;
+          wire  Net_2813;
+          wire  Net_2812;
+          wire  Net_2811;
+          wire  Net_2810;
+          wire  Net_2809;
+          wire  Net_2808;
+          wire  Net_2807;
           wire  Net_1743;
-          wire  Net_1942;
-          wire  Net_1941;
-          wire  Net_1940;
+          wire  Net_2806;
+          wire  Net_2805;
+          wire  Net_2804;
           wire  Net_1939;
-          wire  Net_1938;
-          wire  Net_1937;
-          wire  Net_1936;
-          wire  Net_1935;
-          wire  Net_1934;
-          wire  Net_1933;
-          wire  Net_1932;
-          wire  Net_1931;
-          wire  Net_1930;
+          wire  Net_2803;
+          wire  Net_2802;
+          wire  Net_2801;
+          wire  Net_2800;
+          wire  Net_2799;
+          wire  Net_2798;
+          wire  Net_2797;
+          wire  Net_2796;
+          wire  Net_2795;
           wire  Net_1730;
-          wire  Net_1929;
+          wire  Net_2794;
           wire  Net_543;
           wire  Net_542;
           wire  Net_541;
           wire  Net_540;
           wire  Net_539;
           wire  Net_538;
-          wire  Net_537;
           wire  Net_536;
           wire  Net_535;
           wire  Net_534;
@@ -814,18 +831,20 @@ module top ;
           wire  Net_17;
           wire  Net_35;
           wire  Net_34;
-          wire  Net_1928;
-          wire  Net_1927;
-          wire  Net_1926;
-          wire  Net_1925;
-          wire  Net_1924;
-          wire  Net_1923;
-          wire  Net_1922;
-          wire  Net_1921;
-          wire  Net_1920;
-          wire  Net_1919;
-          wire  Net_1918;
-          wire  Net_1917;
+          wire  Net_2793;
+          wire  Net_2792;
+          wire  Net_2791;
+          wire  Net_2790;
+          wire  Net_2789;
+          wire  Net_2788;
+          wire  Net_2787;
+          wire  Net_2786;
+          wire  Net_2785;
+          wire  Net_2784;
+          wire  Net_2783;
+          wire  Net_2782;
+          wire  Net_537;
+          wire  Net_2;
           wire  Net_14;
           wire  Net_145;
           wire  Net_16;
@@ -835,18 +854,18 @@ module top ;
     PWM_v3_30_0 PWM_Modulator (
         .reset(1'b0),
         .clock(Net_46),
-        .tc(Net_1918),
-        .pwm1(Net_1919),
-        .pwm2(Net_1920),
-        .interrupt(Net_1921),
+        .tc(Net_2783),
+        .pwm1(Net_2784),
+        .pwm2(Net_2785),
+        .interrupt(Net_2786),
         .capture(1'b0),
         .kill(1'b1),
         .enable(1'b1),
         .trigger(1'b0),
         .cmp_sel(1'b0),
         .pwm(Net_87),
-        .ph1(Net_1927),
-        .ph2(Net_1928));
+        .ph1(Net_2792),
+        .ph2(Net_2793));
     defparam PWM_Modulator.Resolution = 8;
 
 
@@ -1311,35 +1330,35 @@ module top ;
     PWM_v3_30_3 PWM_1 (
         .reset(1'b0),
         .clock(Net_1730),
-        .tc(Net_1930),
-        .pwm1(Net_1931),
-        .pwm2(Net_1932),
-        .interrupt(Net_1933),
+        .tc(Net_2795),
+        .pwm1(Net_2796),
+        .pwm2(Net_2797),
+        .interrupt(Net_2798),
         .capture(1'b0),
         .kill(1'b1),
         .enable(1'b1),
         .trigger(1'b0),
         .cmp_sel(1'b0),
         .pwm(Net_1939),
-        .ph1(Net_1940),
-        .ph2(Net_1941));
+        .ph1(Net_2804),
+        .ph2(Net_2805));
     defparam PWM_1.Resolution = 16;
 
     PWM_v3_30_4 PWM_2 (
         .reset(1'b0),
         .clock(Net_1743),
-        .tc(Net_1943),
-        .pwm1(Net_1944),
-        .pwm2(Net_1945),
-        .interrupt(Net_1946),
+        .tc(Net_2807),
+        .pwm1(Net_2808),
+        .pwm2(Net_2809),
+        .interrupt(Net_2810),
         .capture(1'b0),
         .kill(1'b1),
         .enable(1'b1),
         .trigger(1'b0),
         .cmp_sel(1'b0),
         .pwm(Net_1853),
-        .ph1(Net_1952),
-        .ph2(Net_1953));
+        .ph1(Net_2816),
+        .ph2(Net_2817));
     defparam PWM_2.Resolution = 16;
 
 
@@ -1519,18 +1538,18 @@ module top ;
     PWM_v3_30_5 PWM_3 (
         .reset(1'b0),
         .clock(Net_1758),
-        .tc(Net_1955),
-        .pwm1(Net_1956),
-        .pwm2(Net_1957),
-        .interrupt(Net_1958),
+        .tc(Net_2819),
+        .pwm1(Net_2820),
+        .pwm2(Net_2821),
+        .interrupt(Net_2822),
         .capture(1'b0),
         .kill(1'b1),
         .enable(1'b1),
         .trigger(1'b0),
         .cmp_sel(1'b0),
         .pwm(Net_1914),
-        .ph1(Net_1964),
-        .ph2(Net_1965));
+        .ph1(Net_2828),
+        .ph2(Net_2829));
     defparam PWM_3.Resolution = 16;
 
 	wire [0:0] tmpOE__pin_36kHz_net;
@@ -1618,6 +1637,23 @@ module top ;
 		  .is_digital(1))
 		Clock_3
 		 (.clock_out(Net_1758));
+
+
+
+	cy_isr_v1_0
+		#(.int_type(2'b10))
+		sleep_interrupt
+		 (.int_signal(Net_2));
+
+
+    SleepTimer_v3_20_6 SleepTimer (
+        .interrupt(Net_2));
+
+
+	cy_isr_v1_0
+		#(.int_type(2'b00))
+		test_rx
+		 (.int_signal(Net_537));
 
 
 

@@ -17,12 +17,14 @@
 #define ARRAY_SIZE 12
 #define COUNT      100
 #define ACCURACY   70
+#define FiveSecs 5000
 
 /*Function Prototypes*/
 void Display(void);
 
 // Interrupt for switching bits 100 ms
 CY_ISR_PROTO(Bit_Timer);
+CY_ISR_PROTO(watchDogCheck);
 
 // Global Variables
 static uint16 levelCounter = 0; // Timer counter to debounce bit
@@ -34,6 +36,7 @@ static uint8 data = 0; // 4 bits of data
 static uint8 crabs = 0; // 4 bits of data transferred from data variable
 static uint8 dataFlag = 0; // Flag to start looking for data
 static uint8 decodeFlag = 0; // Flag to start looking for post-fix
+//static uint8 watchDogCount = 0; //counter to reset watch dog timer after 3 rounds 
 
 // LCD String Variables
 char OutputString[ARRAY_SIZE];
@@ -49,7 +52,20 @@ static uint8 decodeWrong = 0;
 int main(void)
 {
     /* Enable global interrupts. */
-    CyGlobalIntEnable; 
+    LCD_Char_Start();
+    sprintf(display, "Staring Module!");
+    LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+    LCD_Char_PrintString(display);
+    CyDelay(FiveSecs);
+    
+    LCD_Char_ClearDisplay();
+    
+    CyGlobalIntEnable;
+    checkWatchDogTimer_Start();
+    watchDogCheck_StartEx(watchDogCheck);
+    
+    CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE); 
+    
 
     /* initialization/startup code here */
     PWM_Recon_Start();
@@ -58,7 +74,7 @@ int main(void)
     Out_Comp_Start();
     Bit_Timer_Start();
     Timer_ISR_StartEx(Bit_Timer);
-    LCD_Char_Start();
+   
 
     // Displays Loading Message before receiving pre-fix=
     sprintf(display, "counting crabs...");
@@ -133,6 +149,15 @@ CY_ISR(Bit_Timer){
         }
     } // end of if(levelCounter == 10)
 } // end of CY_ISR(HighF_LevelCount)
+
+
+//Clears watchdog timer to avoid reset unless timing has drifted
+CY_ISR_PROTO(watchDogCheck){
+    
+    CyWdtClear(); 
+        
+
+}
 
 
 //// Transition time = 10ms

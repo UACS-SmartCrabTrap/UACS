@@ -1,5 +1,5 @@
 -- Project:   HighFSKRx
--- Generated: 05/24/2018 14:51:10
+-- Generated: 05/24/2018 19:10:32
 -- PSoC Creator  4.1 Update 1
 
 ENTITY HighFSKRx IS
@@ -58,6 +58,7 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     SIGNAL Net_185 : bit;
     SIGNAL Net_185__SYNC_OUT : bit;
     SIGNAL Net_191 : bit;
+    SIGNAL Net_212 : bit;
     SIGNAL Net_75 : bit;
     ATTRIBUTE udbclken_assigned OF Net_75 : SIGNAL IS "True";
     ATTRIBUTE global_signal OF Net_75 : SIGNAL IS true;
@@ -117,6 +118,8 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     SIGNAL \Shift_Reg:bSR:status_4\ : bit;
     SIGNAL \Shift_Reg:bSR:status_5\ : bit;
     SIGNAL \Shift_Reg:bSR:status_6\ : bit;
+    SIGNAL \checkWatchDogTimer:Net_261\ : bit;
+    SIGNAL \checkWatchDogTimer:Net_57\ : bit;
     SIGNAL __ONE__ : bit;
     ATTRIBUTE POWER OF __ONE__ : SIGNAL IS true;
     SIGNAL __ZERO__ : bit;
@@ -125,6 +128,7 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     ATTRIBUTE POWER OF tmpOE__LPF_In_net_0 : SIGNAL IS true;
     SIGNAL zero : bit;
     ATTRIBUTE GROUND OF zero : SIGNAL IS true;
+    SIGNAL \ClockBlock.clk_bus_glb_ff__sig\ : bit;
     SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.ce0__sig\ : bit;
     SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.cl0__sig\ : bit;
     SIGNAL \Shift_Reg:bSR:sC32:BShiftRegDp:u0.z0__sig\ : bit;
@@ -222,6 +226,7 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     ATTRIBUTE lib_model OF \Bit_Timer:TimerUDB:status_tc\ : LABEL IS "macrocell2";
     ATTRIBUTE lib_model OF Net_191 : LABEL IS "macrocell3";
     ATTRIBUTE Location OF \Out_Comp:ctComp\ : LABEL IS "F(Comparator,0)";
+    ATTRIBUTE lib_model OF __ONE__ : LABEL IS "macrocell4";
     ATTRIBUTE lib_model OF \Shift_Reg:bSR:SyncCtl:CtrlReg\ : LABEL IS "controlcell1";
     ATTRIBUTE lib_model OF \Shift_Reg:bSR:StsReg\ : LABEL IS "statusicell1";
     ATTRIBUTE lib_model OF \Shift_Reg:bSR:sC32:BShiftRegDp:u0\ : LABEL IS "datapathcell1";
@@ -236,11 +241,11 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     ATTRIBUTE lib_model OF \Bit_Timer:TimerUDB:rstSts:stsreg\ : LABEL IS "statusicell3";
     ATTRIBUTE lib_model OF \Bit_Timer:TimerUDB:sT16:timerdp:u0\ : LABEL IS "datapathcell7";
     ATTRIBUTE lib_model OF \Bit_Timer:TimerUDB:sT16:timerdp:u1\ : LABEL IS "datapathcell8";
-    ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:runmode_enable\ : LABEL IS "macrocell4";
-    ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:prevCompare1\ : LABEL IS "macrocell5";
-    ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:status_0\ : LABEL IS "macrocell6";
-    ATTRIBUTE lib_model OF Net_122 : LABEL IS "macrocell7";
-    ATTRIBUTE lib_model OF Net_145 : LABEL IS "macrocell8";
+    ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:runmode_enable\ : LABEL IS "macrocell5";
+    ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:prevCompare1\ : LABEL IS "macrocell6";
+    ATTRIBUTE lib_model OF \PWM_Recon:PWMUDB:status_0\ : LABEL IS "macrocell7";
+    ATTRIBUTE lib_model OF Net_122 : LABEL IS "macrocell8";
+    ATTRIBUTE lib_model OF Net_145 : LABEL IS "macrocell9";
     COMPONENT clockblockcell
         PORT (
             dclk_0 : OUT std_ulogic;
@@ -561,6 +566,17 @@ ARCHITECTURE __DEFAULT__ OF HighFSKRx IS
     END COMPONENT;
     ATTRIBUTE udb_clk OF synccell : COMPONENT IS "clock,clock_n,extclk,extclk_n";
     ATTRIBUTE udb_clken OF synccell : COMPONENT IS "clk_en";
+    COMPONENT timercell
+        PORT (
+            clock : IN std_ulogic;
+            kill : IN std_ulogic;
+            enable : IN std_ulogic;
+            capture : IN std_ulogic;
+            timer_reset : IN std_ulogic;
+            tc : OUT std_ulogic;
+            cmp : OUT std_ulogic;
+            irq : OUT std_ulogic);
+    END COMPONENT;
 BEGIN
 
     ClockBlock:clockblockcell
@@ -581,7 +597,8 @@ BEGIN
             dclk_glb_0 => Net_75,
             dclk_0 => Net_75_local,
             dclk_glb_1 => Net_134,
-            dclk_1 => Net_134_local);
+            dclk_1 => Net_134_local,
+            clk_bus_glb_ff => \ClockBlock.clk_bus_glb_ff__sig\);
 
     LPF_In:logicalport
         GENERIC MAP(
@@ -1655,6 +1672,14 @@ BEGIN
         PORT MAP(
             out => Net_180);
 
+    __ONE__:macrocell
+        GENERIC MAP(
+            eqn_main => "1'b0",
+            regmode => 0,
+            clken_mode => 1)
+        PORT MAP(
+            q => __ONE__);
+
     \Shift_Reg:bSR:SyncCtl:CtrlReg\:controlcell
         GENERIC MAP(
             cy_ctrl_mode_0 => "00000001",
@@ -2189,6 +2214,27 @@ BEGIN
             cfbi => \Bit_Timer:TimerUDB:sT16:timerdp:u0.cfbo__sig\,
             sor => \Bit_Timer:TimerUDB:sT16:timerdp:u1.sor__sig\,
             cmsbo => \Bit_Timer:TimerUDB:sT16:timerdp:u1.cmsbo__sig\);
+
+    \checkWatchDogTimer:TimerHW\:timercell
+        GENERIC MAP(
+            cy_registers => "")
+        PORT MAP(
+            clock => \ClockBlock.clk_bus_glb_ff__sig\,
+            kill => open,
+            enable => __ONE__,
+            capture => open,
+            timer_reset => open,
+            tc => Net_212,
+            cmp => \checkWatchDogTimer:Net_261\,
+            irq => \checkWatchDogTimer:Net_57\);
+
+    watchDogCheck:interrupt
+        GENERIC MAP(
+            int_type => "10",
+            is_nmi => 0)
+        PORT MAP(
+            interrupt => Net_212,
+            clock => ClockBlock_BUS_CLK);
 
     \PWM_Recon:PWMUDB:runmode_enable\:macrocell
         GENERIC MAP(

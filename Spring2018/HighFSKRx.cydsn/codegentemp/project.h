@@ -45,6 +45,8 @@
 #include "Demod_Out_Test.h"
 #include "XOR_Out_LPF_aliases.h"
 #include "XOR_Out_LPF.h"
+#include "checkWatchDogTimer.h"
+#include "watchDogCheck.h"
 #include "LCD_Char_LCDPort_aliases.h"
 #include "LCD_Char_LCDPort.h"
 #include "core_cm3_psoc5.h"

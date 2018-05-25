@@ -1,0 +1,3363 @@
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.isr_sec,"ax",%progbits
+  20              		.align	2
+  21              		.global	isr_sec
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	isr_sec, %function
+  25              	isr_sec:
+  26              	.LFB65:
+  27              		.file 1 "main.c"
+   1:main.c        **** /*****************************************************************************
+   2:main.c        **** * File Name: main.c
+   3:main.c        **** *
+   4:main.c        **** * Created: 5/16/18
+   5:main.c        **** * Revised: 5/17/18
+   6:main.c        **** * Revised by: Stephanie Salazar
+   7:main.c        **** *
+   8:main.c        **** * Description: 
+   9:main.c        **** *  This project communicates via UART in Full duplex mode. The UART has
+  10:main.c        **** * receiver(RX) and transmitter(TX)]. The data received by RX is used for
+  11:main.c        **** * FSK transmission. 
+  12:main.c        **** *
+  13:main.c        **** *  This code has been modified from PSoC's UART_Full_Duplex example code.
+  14:main.c        **** *  This code example project demonstrates how to communicate between 
+  15:main.c        **** *  the PC and UART component in Full duplex mode. The UART has receiver(RX) and 
+  16:main.c        **** *  transmitter(TX) part. The data received by RX is looped back to the TX.
+  17:main.c        **** *
+  18:main.c        **** *******************************************************************************
+  19:main.c        **** * Copyright (2017), Cypress Semiconductor Corporation. All rights reserved.
+  20:main.c        **** *******************************************************************************
+  21:main.c        **** *
+  22:main.c        **** * Related Document: 
+  23:main.c        **** * CE210741_UART_Full_Duplex_and_printf_Support_with_PSoC_3_4_5LP.pdf
+  24:main.c        **** *
+  25:main.c        **** * Hardware Dependency: See 
+  26:main.c        **** * CE210741_UART_Full_Duplex_and_printf_Support_with_PSoC_3_4_5LP.pdf
+  27:main.c        **** *
+  28:main.c        **** *******************************************************************************
+  29:main.c        **** */
+  30:main.c        **** 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 2
+
+
+  31:main.c        **** #include <project.h>
+  32:main.c        **** #include <stdio.h>
+  33:main.c        **** #include "stdlib.h"
+  34:main.c        **** 
+  35:main.c        **** /***************************************
+  36:main.c        **** * Conditional Compilation Parameters
+  37:main.c        **** ***************************************/
+  38:main.c        **** #define UART    ENABLED
+  39:main.c        **** 
+  40:main.c        **** /* Character LCD String Length */
+  41:main.c        **** #define LINE_STR_LENGTH     (20u)
+  42:main.c        **** /* Change data size for sending longer data (n-1) */
+  43:main.c        **** #define DATA_SIZE           (7u)
+  44:main.c        **** /* Change max crabs to correlate with data size 2^(n) - 1 */
+  45:main.c        **** #define MAX_CRABS           (15)
+  46:main.c        **** /* Error used for user error */
+  47:main.c        **** #define ERROR               (333u)
+  48:main.c        **** 
+  49:main.c        **** /*Definitions*/
+  50:main.c        **** #define CLOCK_FREQ 1000000
+  51:main.c        **** #define FREQ(x) (CLOCK_FREQ/x)-1
+  52:main.c        **** 
+  53:main.c        **** /*PWM Frequencies*/
+  54:main.c        **** #define ONE_FREQ     42000
+  55:main.c        **** #define ZERO_FREQ    37000
+  56:main.c        **** #define AUDIBLE_FREQ 12000
+  57:main.c        **** 
+  58:main.c        **** #define BIT_0_MASK 0x01
+  59:main.c        **** #define BIT_1_MASK 0x02
+  60:main.c        **** #define BIT_2_MASK 0x04
+  61:main.c        **** #define BIT_3_MASK 0x08
+  62:main.c        **** #define BIT_4_MASK 0x10
+  63:main.c        **** #define BIT_5_MASK 0x20
+  64:main.c        **** #define BIT_6_MASK 0x40
+  65:main.c        **** #define BIT_7_MASK 0x80
+  66:main.c        **** 
+  67:main.c        **** #define ZERO              0x0
+  68:main.c        **** #define ONE               0x1
+  69:main.c        **** #define TRUE              0x1
+  70:main.c        **** #define FALSE             0x0
+  71:main.c        **** #define ENABLED           1u
+  72:main.c        **** #define DISABLED          0u
+  73:main.c        **** #define DATA_LENGTH       4
+  74:main.c        **** #define DECODE_VALUE      0x01
+  75:main.c        **** #define PREFIX_BIT_LENGTH 6
+  76:main.c        **** #define PREFIX_MESSAGE    0xFF
+  77:main.c        **** #define FiveSecs 5000
+  78:main.c        **** 
+  79:main.c        **** /*Function Prototypes*/
+  80:main.c        **** int Data(unsigned int hex_value, int bT);
+  81:main.c        **** int Decode(unsigned int hex_value, int bT);
+  82:main.c        **** int PreFix(unsigned int hex_value, int prefixCount);
+  83:main.c        **** CY_ISR_PROTO(isr_sec); // High F Interrupt
+  84:main.c        **** CY_ISR_PROTO(watchDogCheck); //reset watchDog timer before reset
+  85:main.c        **** CY_ISR_PROTO(RxIsr); // High F Interrupt
+  86:main.c        **** 
+  87:main.c        **** /*Global Variables*/
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 3
+
+
+  88:main.c        **** int error = 0; // flag for input error
+  89:main.c        **** int i = 2; // to iterate through data array
+  90:main.c        **** uint16 count;
+  91:main.c        **** char8 lineStr[LINE_STR_LENGTH];
+  92:main.c        **** char8 data[LINE_STR_LENGTH];
+  93:main.c        **** uint8 newDataflag = 0;
+  94:main.c        **** static int bitTime = 0;
+  95:main.c        **** static int prefixTime = 0;
+  96:main.c        **** 
+  97:main.c        **** /* UART Global Variables */
+  98:main.c        **** uint8 errorStatus = 0u;
+  99:main.c        **** uint8 crabsToSend = 1;
+ 100:main.c        **** 
+ 101:main.c        **** 
+ 102:main.c        **** 
+ 103:main.c        **** 
+ 104:main.c        **** 
+ 105:main.c        **** /*******************************************************************************
+ 106:main.c        **** * Function Name: main()
+ 107:main.c        **** *******************************************************************************/
+ 108:main.c        **** int main()
+ 109:main.c        **** {
+ 110:main.c        ****     /*Variable initializations*/
+ 111:main.c        ****     int bitCase = 0;
+ 112:main.c        ****     int data_turn = 0;
+ 113:main.c        **** 
+ 114:main.c        **** #if(UART == ENABLED)
+ 115:main.c        ****     isr_rx_StartEx(RxIsr);
+ 116:main.c        **** #endif /* INTERRUPT_CODE_ENABLED == ENABLED */
+ 117:main.c        ****     
+ 118:main.c        ****     /* Enable global interrupts. */
+ 119:main.c        ****     CyGlobalIntEnable;   
+ 120:main.c        **** 
+ 121:main.c        ****     
+ 122:main.c        ****     CyGlobalIntEnable;
+ 123:main.c        ****     checkWatchDogTimer_Start();
+ 124:main.c        ****     watchDogCheck_StartEx(watchDogCheck);
+ 125:main.c        ****     
+ 126:main.c        ****     /*Block initializations*/
+ 127:main.c        ****     UART_Start(); 
+ 128:main.c        ****     LCD_Start();
+ 129:main.c        ****     PWM_Modulator_Start();
+ 130:main.c        ****     PWM_1_Start();
+ 131:main.c        ****     PWM_2_Start();
+ 132:main.c        ****     PWM_3_Start();
+ 133:main.c        ****     PWM_Switch_Timer_Start();
+ 134:main.c        ****     isr_sec_StartEx(isr_sec);
+ 135:main.c        ****     
+ 136:main.c        ****     // Set PWM to AUDIBLE_FREQ
+ 137:main.c        ****     PWM_1_WritePeriod(FREQ(AUDIBLE_FREQ));
+ 138:main.c        ****     PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
+ 139:main.c        ****     
+ 140:main.c        ****     // Set PWM to ONE_FREQ
+ 141:main.c        ****     PWM_2_WritePeriod(FREQ(ONE_FREQ));
+ 142:main.c        ****     PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+ 143:main.c        ****     
+ 144:main.c        ****     // Set PWM to ZERO_FREQ
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 4
+
+
+ 145:main.c        ****     PWM_3_WritePeriod(FREQ(ZERO_FREQ));
+ 146:main.c        ****     PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
+ 147:main.c        ****     
+ 148:main.c        ****     /* Clear LCD line. */
+ 149:main.c        ****     LCD_Position(0u, 0u);
+ 150:main.c        ****     LCD_PrintString("                    ");
+ 151:main.c        **** 
+ 152:main.c        ****     /* Output string on LCD. */
+ 153:main.c        ****     LCD_Position(0u, 0u);
+ 154:main.c        ****     LCD_PrintString("Hello");
+ 155:main.c        **** 
+ 156:main.c        ****     for(;;)
+ 157:main.c        ****     {
+ 158:main.c        ****         if(errorStatus != 0u)
+ 159:main.c        ****         {
+ 160:main.c        ****             /* Clear error status */
+ 161:main.c        ****             errorStatus = 0u;
+ 162:main.c        ****         }
+ 163:main.c        ****         switch(bitTime){
+ 164:main.c        ****             // ENCODE
+ 165:main.c        ****             case 0:
+ 166:main.c        ****                 bitCase = PreFix(PREFIX_MESSAGE , prefixTime);
+ 167:main.c        ****                 break; 
+ 168:main.c        ****             // DATA
+ 169:main.c        ****             case 1:
+ 170:main.c        ****             case 2:
+ 171:main.c        ****             case 3:
+ 172:main.c        ****             case 4:
+ 173:main.c        ****                 //rxData is data received from UART
+ 174:main.c        ****                 bitCase = Data(crabsToSend, bitTime); 
+ 175:main.c        ****                 break; 
+ 176:main.c        ****             // DECODE
+ 177:main.c        ****             case 5:    
+ 178:main.c        ****             case 6:
+ 179:main.c        ****             case 7:    
+ 180:main.c        ****             case 8:
+ 181:main.c        ****             case 9:
+ 182:main.c        ****             case 10:
+ 183:main.c        ****             case 11:
+ 184:main.c        ****             case 12:
+ 185:main.c        ****                 bitCase = Decode(DECODE_VALUE, bitTime);
+ 186:main.c        ****                 break;
+ 187:main.c        ****             case 13:
+ 188:main.c        ****                 // Turn sending off until new data
+ 189:main.c        ****                 newDataflag = 0;
+ 190:main.c        ****                 //encode used to transmit 7 1's for the prefix 
+ 191:main.c        ****                 //reset here to be ready for case 0 
+ 192:main.c        ****                 prefixTime = 0;
+ 193:main.c        ****                 data_turn++;
+ 194:main.c        ****                 
+ 195:main.c        **** #if(UART == ENABLED)
+ 196:main.c        ****                 if (data_turn == DATA_LENGTH) {
+ 197:main.c        ****                     data_turn = 0;
+ 198:main.c        ****                 }
+ 199:main.c        ****                 crabsToSend <<= 1; 
+ 200:main.c        **** #else 
+ 201:main.c        ****                 //Once data to be sent can't be contained in a nibble, reset to 0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 5
+
+
+ 202:main.c        ****                 if (data_turn == DATA_LENGTH) {
+ 203:main.c        ****                     data_turn = 0;
+ 204:main.c        ****                     crabsToSend = ONE;
+ 205:main.c        ****                 }
+ 206:main.c        **** #endif /* UART == ENABLED */
+ 207:main.c        **** 
+ 208:main.c        ****                 PWM_Modulator_Stop();
+ 209:main.c        ****                 // Turn High Voltage off while delaying
+ 210:main.c        ****                 PWM_Switch_Timer_Stop();
+ 211:main.c        ****                 // Turn High Voltage Back On
+ 212:main.c        ****                 HighVoltage_Write(0);
+ 213:main.c        ****                 CyDelay(20);
+ 214:main.c        ****                 SignalBase_Write(0);
+ 215:main.c        **** 
+ 216:main.c        **** #if(UART == ENABLED)
+ 217:main.c        ****                 /* Wait for new data before sending out data */
+ 218:main.c        ****                 while(newDataflag == 0){
+ 219:main.c        ****                 }
+ 220:main.c        **** #else 
+ 221:main.c        ****                 /* Delay in ms and send data after without waiting for UART */
+ 222:main.c        ****                 CyDelay(1000);
+ 223:main.c        **** #endif /* UART == ENABLED */
+ 224:main.c        **** 
+ 225:main.c        ****                 /* New data: Turn on circuitry and begin transmission */
+ 226:main.c        ****                 HighVoltage_Write(1);
+ 227:main.c        ****                 CyDelay(20); // Give voltage booster time to charge up
+ 228:main.c        ****                 SignalBase_Write(1);
+ 229:main.c        ****                 /* Reset PWM blocks and bitTime for new transmission */
+ 230:main.c        ****                 bitTime = 0; 
+ 231:main.c        ****                 PWM_Modulator_Start();
+ 232:main.c        ****                 PWM_Switch_Timer_Start();
+ 233:main.c        ****                 break;
+ 234:main.c        ****             default:
+ 235:main.c        ****                 break; 
+ 236:main.c        ****          } //end switch(bitTime) 
+ 237:main.c        ****         
+ 238:main.c        ****         /* Send out frequency depending on bit is 1 or 0 */
+ 239:main.c        ****         if(bitCase == ONE){
+ 240:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
+ 241:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
+ 242:main.c        ****         }else if(bitCase == ZERO){
+ 243:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
+ 244:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+ 245:main.c        ****         }
+ 246:main.c        ****         
+ 247:main.c        ****        
+ 248:main.c        ****        
+ 249:main.c        ****     }
+ 250:main.c        **** }
+ 251:main.c        **** /*******************************************************************************
+ 252:main.c        **** * Function Name: isr_sec
+ 253:main.c        **** ********************************************************************************
+ 254:main.c        **** *
+ 255:main.c        **** * Summary:
+ 256:main.c        **** * Interrupt triggered on a 0.1s timer timeout
+ 257:main.c        **** * Will increment prefixTime counter for the 1st 8 bits
+ 258:main.c        **** * Then move on to incrementing the message bit counter
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 6
+
+
+ 259:main.c        **** *
+ 260:main.c        **** * Parameters:
+ 261:main.c        **** *  None.
+ 262:main.c        **** *
+ 263:main.c        **** * Return:
+ 264:main.c        **** *  None.
+ 265:main.c        **** *
+ 266:main.c        **** *******************************************************************************/
+ 267:main.c        **** CY_ISR(isr_sec)
+ 268:main.c        **** {
+  28              		.loc 1 268 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+ 269:main.c        ****     if((bitTime == 0) && (prefixTime <= PREFIX_BIT_LENGTH)){
+  33              		.loc 1 269 0
+  34 0000 094B     		ldr	r3, .L4
+  35 0002 1B68     		ldr	r3, [r3]
+  36 0004 3BB9     		cbnz	r3, .L2
+  37              		.loc 1 269 0 is_stmt 0 discriminator 1
+  38 0006 084A     		ldr	r2, .L4
+  39 0008 5268     		ldr	r2, [r2, #4]
+  40 000a 062A     		cmp	r2, #6
+  41 000c 03DC     		bgt	.L2
+ 270:main.c        ****         prefixTime++;
+  42              		.loc 1 270 0 is_stmt 1
+  43 000e 0132     		adds	r2, r2, #1
+  44 0010 054B     		ldr	r3, .L4
+  45 0012 5A60     		str	r2, [r3, #4]
+  46 0014 7047     		bx	lr
+  47              	.L2:
+ 271:main.c        ****     }
+ 272:main.c        ****     else if(prefixTime > PREFIX_BIT_LENGTH){
+  48              		.loc 1 272 0
+  49 0016 044A     		ldr	r2, .L4
+  50 0018 5268     		ldr	r2, [r2, #4]
+  51 001a 062A     		cmp	r2, #6
+  52 001c 02DD     		ble	.L1
+ 273:main.c        ****         bitTime++;
+  53              		.loc 1 273 0
+  54 001e 0133     		adds	r3, r3, #1
+  55 0020 014A     		ldr	r2, .L4
+  56 0022 1360     		str	r3, [r2]
+  57              	.L1:
+  58 0024 7047     		bx	lr
+  59              	.L5:
+  60 0026 00BF     		.align	2
+  61              	.L4:
+  62 0028 00000000 		.word	.LANCHOR0
+  63              		.cfi_endproc
+  64              	.LFE65:
+  65              		.size	isr_sec, .-isr_sec
+  66              		.section	.text.watchDogCheck,"ax",%progbits
+  67              		.align	2
+  68              		.global	watchDogCheck
+  69              		.thumb
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 7
+
+
+  70              		.thumb_func
+  71              		.type	watchDogCheck, %function
+  72              	watchDogCheck:
+  73              	.LFB66:
+ 274:main.c        ****     }
+ 275:main.c        **** }//end CY_ISR(isr_sec)
+ 276:main.c        **** /*******************************************************************************
+ 277:main.c        **** * Function Name: watchDogCheck
+ 278:main.c        **** ********************************************************************************
+ 279:main.c        **** *
+ 280:main.c        **** * Summary:
+ 281:main.c        **** * Reset watchDog timer every 2.1ms
+ 282:main.c        **** * Watchdog should reset system between 12 - 24ms
+ 283:main.c        **** * Should not get triggered if system experiencing drift 
+ 284:main.c        **** *
+ 285:main.c        **** * Parameters:
+ 286:main.c        **** *  None.
+ 287:main.c        **** *
+ 288:main.c        **** * Return:
+ 289:main.c        **** *  None.
+ 290:main.c        **** *
+ 291:main.c        **** *******************************************************************************/
+ 292:main.c        **** CY_ISR_PROTO(watchDogCheck){
+  74              		.loc 1 292 0
+  75              		.cfi_startproc
+  76              		@ args = 0, pretend = 0, frame = 0
+  77              		@ frame_needed = 0, uses_anonymous_args = 0
+  78 0000 08B5     		push	{r3, lr}
+  79              		.cfi_def_cfa_offset 8
+  80              		.cfi_offset 3, -8
+  81              		.cfi_offset 14, -4
+ 293:main.c        ****     
+ 294:main.c        ****     CyWdtClear(); 
+  82              		.loc 1 294 0
+  83 0002 FFF7FEFF 		bl	CyWdtClear
+  84              	.LVL0:
+  85 0006 08BD     		pop	{r3, pc}
+  86              		.cfi_endproc
+  87              	.LFE66:
+  88              		.size	watchDogCheck, .-watchDogCheck
+  89              		.section	.text.RxIsr,"ax",%progbits
+  90              		.align	2
+  91              		.global	RxIsr
+  92              		.thumb
+  93              		.thumb_func
+  94              		.type	RxIsr, %function
+  95              	RxIsr:
+  96              	.LFB67:
+ 295:main.c        ****         
+ 296:main.c        **** 
+ 297:main.c        **** }
+ 298:main.c        **** 
+ 299:main.c        **** /*******************************************************************************
+ 300:main.c        **** * Function Name: RxIsr
+ 301:main.c        **** ********************************************************************************
+ 302:main.c        **** *
+ 303:main.c        **** * Summary:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 8
+
+
+ 304:main.c        **** *  Interrupt Service Routine for RX portion of the UART taken from
+ 305:main.c        **** *  example code and edited for storing data to send
+ 306:main.c        **** *
+ 307:main.c        **** * Parameters:
+ 308:main.c        **** *  None.
+ 309:main.c        **** *
+ 310:main.c        **** * Return:
+ 311:main.c        **** *  None.
+ 312:main.c        **** *
+ 313:main.c        **** *******************************************************************************/
+ 314:main.c        **** CY_ISR(RxIsr)
+ 315:main.c        **** {
+  97              		.loc 1 315 0
+  98              		.cfi_startproc
+  99              		@ args = 0, pretend = 0, frame = 0
+ 100              		@ frame_needed = 0, uses_anonymous_args = 0
+ 101 0000 38B5     		push	{r3, r4, r5, lr}
+ 102              		.cfi_def_cfa_offset 16
+ 103              		.cfi_offset 3, -16
+ 104              		.cfi_offset 4, -12
+ 105              		.cfi_offset 5, -8
+ 106              		.cfi_offset 14, -4
+ 316:main.c        ****     uint8 rxStatus;         
+ 317:main.c        ****     newDataflag = 1;
+ 107              		.loc 1 317 0
+ 108 0002 0122     		movs	r2, #1
+ 109 0004 1A4B     		ldr	r3, .L13
+ 110 0006 1A72     		strb	r2, [r3, #8]
+ 111              	.L11:
+ 318:main.c        ****     do
+ 319:main.c        ****     {
+ 320:main.c        ****         /* Read receiver status register */
+ 321:main.c        ****         rxStatus = UART_RXSTATUS_REG;
+ 112              		.loc 1 321 0
+ 113 0008 1A4B     		ldr	r3, .L13+4
+ 114 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 115 000c DBB2     		uxtb	r3, r3
+ 116              	.LVL1:
+ 322:main.c        **** 
+ 323:main.c        ****         if((rxStatus & (UART_RX_STS_BREAK      | UART_RX_STS_PAR_ERROR |
+ 117              		.loc 1 323 0
+ 118 000e 13F01E0F 		tst	r3, #30
+ 119 0012 05D0     		beq	.L9
+ 324:main.c        ****                         UART_RX_STS_STOP_ERROR | UART_RX_STS_OVERRUN)) != 0u)
+ 325:main.c        ****         {
+ 326:main.c        ****             /* ERROR handling. */
+ 327:main.c        ****             errorStatus |= rxStatus & ( UART_RX_STS_BREAK      | UART_RX_STS_PAR_ERROR | 
+ 120              		.loc 1 327 0
+ 121 0014 1648     		ldr	r0, .L13
+ 122 0016 03F01E02 		and	r2, r3, #30
+ 123 001a 417A     		ldrb	r1, [r0, #9]	@ zero_extendqisi2
+ 124 001c 0A43     		orrs	r2, r2, r1
+ 125 001e 4272     		strb	r2, [r0, #9]
+ 126              	.L9:
+ 127 0020 03F02003 		and	r3, r3, #32
+ 128              	.LVL2:
+ 328:main.c        ****                                         UART_RX_STS_STOP_ERROR | UART_RX_STS_OVERRUN);
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 9
+
+
+ 329:main.c        ****         }
+ 330:main.c        ****         
+ 331:main.c        ****         if((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u)
+ 129              		.loc 1 331 0
+ 130 0024 03F0FF04 		and	r4, r3, #255
+ 131 0028 F3B1     		cbz	r3, .L10
+ 332:main.c        ****         {
+ 333:main.c        ****             /* Read data from the RX data register */
+ 334:main.c        ****             crabsToSend = UART_RXDATA_REG;
+ 132              		.loc 1 334 0
+ 133 002a 134B     		ldr	r3, .L13+8
+ 134 002c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 135 002e DBB2     		uxtb	r3, r3
+ 136 0030 124A     		ldr	r2, .L13+12
+ 137 0032 1370     		strb	r3, [r2]
+ 335:main.c        ****             if(errorStatus == 0u)
+ 138              		.loc 1 335 0
+ 139 0034 0E4A     		ldr	r2, .L13
+ 140 0036 527A     		ldrb	r2, [r2, #9]	@ zero_extendqisi2
+ 141 0038 B2B9     		cbnz	r2, .L10
+ 336:main.c        ****             {
+ 337:main.c        ****                 /* Send data backward */
+ 338:main.c        ****                 UART_TXDATA_REG = crabsToSend;
+ 142              		.loc 1 338 0
+ 143 003a 114A     		ldr	r2, .L13+16
+ 144 003c 1370     		strb	r3, [r2]
+ 339:main.c        ****                 /* Clear LCD line. */
+ 340:main.c        ****                 LCD_Position(0u, 0u);
+ 145              		.loc 1 340 0
+ 146 003e 0021     		movs	r1, #0
+ 147 0040 0846     		mov	r0, r1
+ 148 0042 FFF7FEFF 		bl	LCD_Position
+ 149              	.LVL3:
+ 341:main.c        ****                 sprintf(data,"Crabs: %d", crabsToSend);
+ 150              		.loc 1 341 0
+ 151 0046 0F4D     		ldr	r5, .L13+20
+ 152 0048 0C4B     		ldr	r3, .L13+12
+ 153 004a 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 154 004c 0E49     		ldr	r1, .L13+24
+ 155 004e 2846     		mov	r0, r5
+ 156 0050 FFF7FEFF 		bl	sprintf
+ 157              	.LVL4:
+ 342:main.c        ****                 LCD_PrintString("             ");
+ 158              		.loc 1 342 0
+ 159 0054 0D48     		ldr	r0, .L13+28
+ 160 0056 FFF7FEFF 		bl	LCD_PrintString
+ 161              	.LVL5:
+ 343:main.c        **** 
+ 344:main.c        ****                 /* Output string on LCD. */
+ 345:main.c        ****                 LCD_Position(0u, 0u);
+ 162              		.loc 1 345 0
+ 163 005a 0021     		movs	r1, #0
+ 164 005c 0846     		mov	r0, r1
+ 165 005e FFF7FEFF 		bl	LCD_Position
+ 166              	.LVL6:
+ 346:main.c        ****                 LCD_PrintString(data);
+ 167              		.loc 1 346 0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 10
+
+
+ 168 0062 2846     		mov	r0, r5
+ 169 0064 FFF7FEFF 		bl	LCD_PrintString
+ 170              	.LVL7:
+ 171              	.L10:
+ 347:main.c        ****             }
+ 348:main.c        ****         }
+ 349:main.c        ****     }while((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u);
+ 172              		.loc 1 349 0
+ 173 0068 002C     		cmp	r4, #0
+ 174 006a CDD1     		bne	.L11
+ 350:main.c        **** }
+ 175              		.loc 1 350 0
+ 176 006c 38BD     		pop	{r3, r4, r5, pc}
+ 177              	.L14:
+ 178 006e 00BF     		.align	2
+ 179              	.L13:
+ 180 0070 00000000 		.word	.LANCHOR0
+ 181 0074 6C640040 		.word	1073767532
+ 182 0078 48650040 		.word	1073767752
+ 183 007c 00000000 		.word	.LANCHOR1
+ 184 0080 4B650040 		.word	1073767755
+ 185 0084 00000000 		.word	data
+ 186 0088 00000000 		.word	.LC0
+ 187 008c 0C000000 		.word	.LC1
+ 188              		.cfi_endproc
+ 189              	.LFE67:
+ 190              		.size	RxIsr, .-RxIsr
+ 191              		.section	.text.Data,"ax",%progbits
+ 192              		.align	2
+ 193              		.global	Data
+ 194              		.thumb
+ 195              		.thumb_func
+ 196              		.type	Data, %function
+ 197              	Data:
+ 198              	.LFB68:
+ 351:main.c        ****     
+ 352:main.c        **** 
+ 353:main.c        **** 
+ 354:main.c        **** /*
+ 355:main.c        ****  * function: int Data(unsigned int hex_value, int bT)
+ 356:main.c        ****  * parameters: hex_value - a four bit value specifying what data you want to send
+ 357:main.c        ****  *             bT - the current bit time
+ 358:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
+ 359:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
+ 360:main.c        ****  *  low signal depending on the bit time. Used only to set desired data nibble.
+ 361:main.c        ****  */
+ 362:main.c        **** int Data(unsigned int hex_value, int bT)
+ 363:main.c        **** {
+ 199              		.loc 1 363 0
+ 200              		.cfi_startproc
+ 201              		@ args = 0, pretend = 0, frame = 0
+ 202              		@ frame_needed = 0, uses_anonymous_args = 0
+ 203              		@ link register save eliminated.
+ 204              	.LVL8:
+ 364:main.c        ****     int bitCase;
+ 365:main.c        ****     switch(bT){
+ 205              		.loc 1 365 0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 11
+
+
+ 206 0000 0139     		subs	r1, r1, #1
+ 207              	.LVL9:
+ 208 0002 0329     		cmp	r1, #3
+ 209 0004 0ED8     		bhi	.L16
+ 210 0006 DFE801F0 		tbb	[pc, r1]
+ 211              	.L18:
+ 212 000a 02       		.byte	(.L17-.L18)/2
+ 213 000b 05       		.byte	(.L19-.L18)/2
+ 214 000c 08       		.byte	(.L20-.L18)/2
+ 215 000d 0B       		.byte	(.L21-.L18)/2
+ 216              		.p2align 1
+ 217              	.L17:
+ 366:main.c        ****         case 1:
+ 367:main.c        ****             bitCase = (hex_value & BIT_3_MASK) >> 3;
+ 218              		.loc 1 367 0
+ 219 000e C0F3C003 		ubfx	r3, r0, #3, #1
+ 220              	.LVL10:
+ 368:main.c        ****             break; 
+ 221              		.loc 1 368 0
+ 222 0012 07E0     		b	.L16
+ 223              	.LVL11:
+ 224              	.L19:
+ 369:main.c        ****         case 2:
+ 370:main.c        ****             bitCase = (hex_value & BIT_2_MASK) >> 2;
+ 225              		.loc 1 370 0
+ 226 0014 C0F38003 		ubfx	r3, r0, #2, #1
+ 227              	.LVL12:
+ 371:main.c        ****             break; 
+ 228              		.loc 1 371 0
+ 229 0018 04E0     		b	.L16
+ 230              	.LVL13:
+ 231              	.L20:
+ 372:main.c        ****         case 3:
+ 373:main.c        ****             bitCase = (hex_value & BIT_1_MASK) >> 1;
+ 232              		.loc 1 373 0
+ 233 001a C0F34003 		ubfx	r3, r0, #1, #1
+ 234              	.LVL14:
+ 374:main.c        ****             break; 
+ 235              		.loc 1 374 0
+ 236 001e 01E0     		b	.L16
+ 237              	.LVL15:
+ 238              	.L21:
+ 375:main.c        ****         case 4:
+ 376:main.c        ****             bitCase = (hex_value & BIT_0_MASK);
+ 239              		.loc 1 376 0
+ 240 0020 00F00103 		and	r3, r0, #1
+ 241              	.LVL16:
+ 242              	.L16:
+ 377:main.c        ****             break;
+ 378:main.c        ****         default:
+ 379:main.c        ****             break;
+ 380:main.c        ****     } //end switch(bT)
+ 381:main.c        ****     return bitCase;
+ 382:main.c        **** }//end Data()
+ 243              		.loc 1 382 0
+ 244 0024 1846     		mov	r0, r3
+ 245              	.LVL17:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 12
+
+
+ 246 0026 7047     		bx	lr
+ 247              		.cfi_endproc
+ 248              	.LFE68:
+ 249              		.size	Data, .-Data
+ 250              		.section	.text.Decode,"ax",%progbits
+ 251              		.align	2
+ 252              		.global	Decode
+ 253              		.thumb
+ 254              		.thumb_func
+ 255              		.type	Decode, %function
+ 256              	Decode:
+ 257              	.LFB69:
+ 383:main.c        **** 
+ 384:main.c        **** 
+ 385:main.c        **** /*
+ 386:main.c        ****  * function: int Decode(unsigned int hex_value, int bT)
+ 387:main.c        ****  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
+ 388:main.c        ****  *             bT - the current bit time
+ 389:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
+ 390:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
+ 391:main.c        ****  *  low signal depending on the bit time. Used only to set desired decode encryption.
+ 392:main.c        ****  */
+ 393:main.c        **** int Decode(unsigned int hex_value, int bT)
+ 394:main.c        **** {
+ 258              		.loc 1 394 0
+ 259              		.cfi_startproc
+ 260              		@ args = 0, pretend = 0, frame = 0
+ 261              		@ frame_needed = 0, uses_anonymous_args = 0
+ 262              		@ link register save eliminated.
+ 263              	.LVL18:
+ 395:main.c        ****     int bitCase;
+ 396:main.c        ****     switch(bT){
+ 264              		.loc 1 396 0
+ 265 0000 0539     		subs	r1, r1, #5
+ 266              	.LVL19:
+ 267 0002 0729     		cmp	r1, #7
+ 268 0004 1CD8     		bhi	.L23
+ 269 0006 DFE801F0 		tbb	[pc, r1]
+ 270              	.L25:
+ 271 000a 04       		.byte	(.L24-.L25)/2
+ 272 000b 07       		.byte	(.L26-.L25)/2
+ 273 000c 0A       		.byte	(.L27-.L25)/2
+ 274 000d 0D       		.byte	(.L28-.L25)/2
+ 275 000e 10       		.byte	(.L29-.L25)/2
+ 276 000f 13       		.byte	(.L30-.L25)/2
+ 277 0010 16       		.byte	(.L31-.L25)/2
+ 278 0011 19       		.byte	(.L32-.L25)/2
+ 279              		.p2align 1
+ 280              	.L24:
+ 397:main.c        ****         case 5:
+ 398:main.c        ****             bitCase = (hex_value & BIT_7_MASK) >> 7;
+ 281              		.loc 1 398 0
+ 282 0012 C0F3C013 		ubfx	r3, r0, #7, #1
+ 283              	.LVL20:
+ 399:main.c        ****             break;
+ 284              		.loc 1 399 0
+ 285 0016 13E0     		b	.L23
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 13
+
+
+ 286              	.LVL21:
+ 287              	.L26:
+ 400:main.c        ****         case 6:
+ 401:main.c        ****             bitCase = (hex_value & BIT_6_MASK) >> 6;
+ 288              		.loc 1 401 0
+ 289 0018 C0F38013 		ubfx	r3, r0, #6, #1
+ 290              	.LVL22:
+ 402:main.c        ****             break; 
+ 291              		.loc 1 402 0
+ 292 001c 10E0     		b	.L23
+ 293              	.LVL23:
+ 294              	.L27:
+ 403:main.c        ****         case 7:
+ 404:main.c        ****             bitCase = (hex_value & BIT_5_MASK) >> 5;
+ 295              		.loc 1 404 0
+ 296 001e C0F34013 		ubfx	r3, r0, #5, #1
+ 297              	.LVL24:
+ 405:main.c        ****             break; 
+ 298              		.loc 1 405 0
+ 299 0022 0DE0     		b	.L23
+ 300              	.LVL25:
+ 301              	.L28:
+ 406:main.c        ****         case 8:
+ 407:main.c        ****             bitCase = (hex_value & BIT_4_MASK) >> 4;
+ 302              		.loc 1 407 0
+ 303 0024 C0F30013 		ubfx	r3, r0, #4, #1
+ 304              	.LVL26:
+ 408:main.c        ****             break;
+ 305              		.loc 1 408 0
+ 306 0028 0AE0     		b	.L23
+ 307              	.LVL27:
+ 308              	.L29:
+ 409:main.c        ****         case 9:
+ 410:main.c        ****             bitCase = (hex_value & BIT_3_MASK) >> 3;
+ 309              		.loc 1 410 0
+ 310 002a C0F3C003 		ubfx	r3, r0, #3, #1
+ 311              	.LVL28:
+ 411:main.c        ****             break; 
+ 312              		.loc 1 411 0
+ 313 002e 07E0     		b	.L23
+ 314              	.LVL29:
+ 315              	.L30:
+ 412:main.c        ****         case 10:
+ 413:main.c        ****             bitCase = (hex_value & BIT_2_MASK) >> 2;
+ 316              		.loc 1 413 0
+ 317 0030 C0F38003 		ubfx	r3, r0, #2, #1
+ 318              	.LVL30:
+ 414:main.c        ****             break; 
+ 319              		.loc 1 414 0
+ 320 0034 04E0     		b	.L23
+ 321              	.LVL31:
+ 322              	.L31:
+ 415:main.c        ****         case 11:
+ 416:main.c        ****             bitCase = (hex_value & BIT_1_MASK) >> 1;
+ 323              		.loc 1 416 0
+ 324 0036 C0F34003 		ubfx	r3, r0, #1, #1
+ 325              	.LVL32:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 14
+
+
+ 417:main.c        ****             break; 
+ 326              		.loc 1 417 0
+ 327 003a 01E0     		b	.L23
+ 328              	.LVL33:
+ 329              	.L32:
+ 418:main.c        ****         case 12:
+ 419:main.c        ****             bitCase = (hex_value & BIT_0_MASK);
+ 330              		.loc 1 419 0
+ 331 003c 00F00103 		and	r3, r0, #1
+ 332              	.LVL34:
+ 333              	.L23:
+ 420:main.c        ****             break;
+ 421:main.c        ****         default:
+ 422:main.c        ****             break;
+ 423:main.c        ****     } //end switch(bT)
+ 424:main.c        ****     return bitCase;
+ 425:main.c        **** }//end Decode()
+ 334              		.loc 1 425 0
+ 335 0040 1846     		mov	r0, r3
+ 336              	.LVL35:
+ 337 0042 7047     		bx	lr
+ 338              		.cfi_endproc
+ 339              	.LFE69:
+ 340              		.size	Decode, .-Decode
+ 341              		.section	.text.PreFix,"ax",%progbits
+ 342              		.align	2
+ 343              		.global	PreFix
+ 344              		.thumb
+ 345              		.thumb_func
+ 346              		.type	PreFix, %function
+ 347              	PreFix:
+ 348              	.LFB70:
+ 426:main.c        **** 
+ 427:main.c        **** 
+ 428:main.c        **** /*
+ 429:main.c        ****  * function: int PreFix(unsigned int hex_value, int bT)
+ 430:main.c        ****  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
+ 431:main.c        ****  *             bT - the current bit time
+ 432:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
+ 433:main.c        ****  * description: This function takes in a hex value and sends it out a bit at a time as a high or
+ 434:main.c        ****  *  low signal depending on the bit time. Used only to set desired decode encryption.
+ 435:main.c        ****  */
+ 436:main.c        **** int PreFix(unsigned int hex_value, int prefixCount)
+ 437:main.c        **** {   
+ 349              		.loc 1 437 0
+ 350              		.cfi_startproc
+ 351              		@ args = 0, pretend = 0, frame = 0
+ 352              		@ frame_needed = 0, uses_anonymous_args = 0
+ 353              		@ link register save eliminated.
+ 354              	.LVL36:
+ 438:main.c        ****     int prefixBit;
+ 439:main.c        ****     
+ 440:main.c        ****     switch(prefixCount){
+ 355              		.loc 1 440 0
+ 356 0000 0729     		cmp	r1, #7
+ 357 0002 1CD8     		bhi	.L34
+ 358 0004 DFE801F0 		tbb	[pc, r1]
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 15
+
+
+ 359              	.L36:
+ 360 0008 04       		.byte	(.L35-.L36)/2
+ 361 0009 07       		.byte	(.L37-.L36)/2
+ 362 000a 0A       		.byte	(.L38-.L36)/2
+ 363 000b 0D       		.byte	(.L39-.L36)/2
+ 364 000c 10       		.byte	(.L40-.L36)/2
+ 365 000d 13       		.byte	(.L41-.L36)/2
+ 366 000e 16       		.byte	(.L42-.L36)/2
+ 367 000f 19       		.byte	(.L43-.L36)/2
+ 368              		.p2align 1
+ 369              	.L35:
+ 441:main.c        ****         case 0:
+ 442:main.c        ****            prefixBit = (hex_value & BIT_7_MASK) >> 7;
+ 370              		.loc 1 442 0
+ 371 0010 C0F3C013 		ubfx	r3, r0, #7, #1
+ 372              	.LVL37:
+ 443:main.c        ****             break;
+ 373              		.loc 1 443 0
+ 374 0014 13E0     		b	.L34
+ 375              	.LVL38:
+ 376              	.L37:
+ 444:main.c        ****         case 1:
+ 445:main.c        ****             prefixBit = (hex_value & BIT_6_MASK) >> 6;
+ 377              		.loc 1 445 0
+ 378 0016 C0F38013 		ubfx	r3, r0, #6, #1
+ 379              	.LVL39:
+ 446:main.c        ****             break; 
+ 380              		.loc 1 446 0
+ 381 001a 10E0     		b	.L34
+ 382              	.LVL40:
+ 383              	.L38:
+ 447:main.c        ****         case 2:
+ 448:main.c        ****             prefixBit = (hex_value & BIT_5_MASK) >> 5;
+ 384              		.loc 1 448 0
+ 385 001c C0F34013 		ubfx	r3, r0, #5, #1
+ 386              	.LVL41:
+ 449:main.c        ****             break; 
+ 387              		.loc 1 449 0
+ 388 0020 0DE0     		b	.L34
+ 389              	.LVL42:
+ 390              	.L39:
+ 450:main.c        ****         case 3:
+ 451:main.c        ****             prefixBit = (hex_value & BIT_4_MASK) >> 4;
+ 391              		.loc 1 451 0
+ 392 0022 C0F30013 		ubfx	r3, r0, #4, #1
+ 393              	.LVL43:
+ 452:main.c        ****             break;
+ 394              		.loc 1 452 0
+ 395 0026 0AE0     		b	.L34
+ 396              	.LVL44:
+ 397              	.L40:
+ 453:main.c        ****         case 4:
+ 454:main.c        ****             prefixBit = (hex_value & BIT_3_MASK) >> 3;
+ 398              		.loc 1 454 0
+ 399 0028 C0F3C003 		ubfx	r3, r0, #3, #1
+ 400              	.LVL45:
+ 455:main.c        ****             break; 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 16
+
+
+ 401              		.loc 1 455 0
+ 402 002c 07E0     		b	.L34
+ 403              	.LVL46:
+ 404              	.L41:
+ 456:main.c        ****         case 5:
+ 457:main.c        ****             prefixBit = (hex_value & BIT_2_MASK) >> 2;
+ 405              		.loc 1 457 0
+ 406 002e C0F38003 		ubfx	r3, r0, #2, #1
+ 407              	.LVL47:
+ 458:main.c        ****             break; 
+ 408              		.loc 1 458 0
+ 409 0032 04E0     		b	.L34
+ 410              	.LVL48:
+ 411              	.L42:
+ 459:main.c        ****         case 6:
+ 460:main.c        ****             prefixBit = (hex_value & BIT_1_MASK) >> 1;
+ 412              		.loc 1 460 0
+ 413 0034 C0F34003 		ubfx	r3, r0, #1, #1
+ 414              	.LVL49:
+ 461:main.c        ****             break; 
+ 415              		.loc 1 461 0
+ 416 0038 01E0     		b	.L34
+ 417              	.LVL50:
+ 418              	.L43:
+ 462:main.c        ****         case 7:
+ 463:main.c        ****             prefixBit = (hex_value & BIT_0_MASK);
+ 419              		.loc 1 463 0
+ 420 003a 00F00103 		and	r3, r0, #1
+ 421              	.LVL51:
+ 422              	.L34:
+ 464:main.c        ****             break;
+ 465:main.c        ****         default:
+ 466:main.c        ****             break;
+ 467:main.c        ****  
+ 468:main.c        ****     }
+ 469:main.c        ****     
+ 470:main.c        ****     return prefixBit; 
+ 471:main.c        **** 
+ 472:main.c        **** }
+ 423              		.loc 1 472 0
+ 424 003e 1846     		mov	r0, r3
+ 425              	.LVL52:
+ 426 0040 7047     		bx	lr
+ 427              		.cfi_endproc
+ 428              	.LFE70:
+ 429              		.size	PreFix, .-PreFix
+ 430 0042 00BF     		.section	.text.main,"ax",%progbits
+ 431              		.align	2
+ 432              		.global	main
+ 433              		.thumb
+ 434              		.thumb_func
+ 435              		.type	main, %function
+ 436              	main:
+ 437              	.LFB64:
+ 109:main.c        ****     /*Variable initializations*/
+ 438              		.loc 1 109 0
+ 439              		.cfi_startproc
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 17
+
+
+ 440              		@ args = 0, pretend = 0, frame = 0
+ 441              		@ frame_needed = 0, uses_anonymous_args = 0
+ 442 0000 38B5     		push	{r3, r4, r5, lr}
+ 443              		.cfi_def_cfa_offset 16
+ 444              		.cfi_offset 3, -16
+ 445              		.cfi_offset 4, -12
+ 446              		.cfi_offset 5, -8
+ 447              		.cfi_offset 14, -4
+ 448              	.LVL53:
+ 115:main.c        **** #endif /* INTERRUPT_CODE_ENABLED == ENABLED */
+ 449              		.loc 1 115 0
+ 450 0002 5048     		ldr	r0, .L59
+ 451 0004 FFF7FEFF 		bl	isr_rx_StartEx
+ 452              	.LVL54:
+ 119:main.c        **** 
+ 453              		.loc 1 119 0
+ 454              		.syntax unified
+ 455              	@ 119 "main.c" 1
+ 456 0008 62B6     		CPSIE   i
+ 457              	@ 0 "" 2
+ 122:main.c        ****     checkWatchDogTimer_Start();
+ 458              		.loc 1 122 0
+ 459              	@ 122 "main.c" 1
+ 460 000a 62B6     		CPSIE   i
+ 461              	@ 0 "" 2
+ 123:main.c        ****     watchDogCheck_StartEx(watchDogCheck);
+ 462              		.loc 1 123 0
+ 463              		.thumb
+ 464              		.syntax unified
+ 465 000c FFF7FEFF 		bl	checkWatchDogTimer_Start
+ 466              	.LVL55:
+ 124:main.c        ****     
+ 467              		.loc 1 124 0
+ 468 0010 4D48     		ldr	r0, .L59+4
+ 469 0012 FFF7FEFF 		bl	watchDogCheck_StartEx
+ 470              	.LVL56:
+ 127:main.c        ****     LCD_Start();
+ 471              		.loc 1 127 0
+ 472 0016 FFF7FEFF 		bl	UART_Start
+ 473              	.LVL57:
+ 128:main.c        ****     PWM_Modulator_Start();
+ 474              		.loc 1 128 0
+ 475 001a FFF7FEFF 		bl	LCD_Start
+ 476              	.LVL58:
+ 129:main.c        ****     PWM_1_Start();
+ 477              		.loc 1 129 0
+ 478 001e FFF7FEFF 		bl	PWM_Modulator_Start
+ 479              	.LVL59:
+ 130:main.c        ****     PWM_2_Start();
+ 480              		.loc 1 130 0
+ 481 0022 FFF7FEFF 		bl	PWM_1_Start
+ 482              	.LVL60:
+ 131:main.c        ****     PWM_3_Start();
+ 483              		.loc 1 131 0
+ 484 0026 FFF7FEFF 		bl	PWM_2_Start
+ 485              	.LVL61:
+ 132:main.c        ****     PWM_Switch_Timer_Start();
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 18
+
+
+ 486              		.loc 1 132 0
+ 487 002a FFF7FEFF 		bl	PWM_3_Start
+ 488              	.LVL62:
+ 133:main.c        ****     isr_sec_StartEx(isr_sec);
+ 489              		.loc 1 133 0
+ 490 002e FFF7FEFF 		bl	PWM_Switch_Timer_Start
+ 491              	.LVL63:
+ 134:main.c        ****     
+ 492              		.loc 1 134 0
+ 493 0032 4648     		ldr	r0, .L59+8
+ 494 0034 FFF7FEFF 		bl	isr_sec_StartEx
+ 495              	.LVL64:
+ 137:main.c        ****     PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
+ 496              		.loc 1 137 0
+ 497 0038 5220     		movs	r0, #82
+ 498 003a FFF7FEFF 		bl	PWM_1_WritePeriod
+ 499              	.LVL65:
+ 138:main.c        ****     
+ 500              		.loc 1 138 0
+ 501 003e 2920     		movs	r0, #41
+ 502 0040 FFF7FEFF 		bl	PWM_1_WriteCompare
+ 503              	.LVL66:
+ 141:main.c        ****     PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+ 504              		.loc 1 141 0
+ 505 0044 1620     		movs	r0, #22
+ 506 0046 FFF7FEFF 		bl	PWM_2_WritePeriod
+ 507              	.LVL67:
+ 142:main.c        ****     
+ 508              		.loc 1 142 0
+ 509 004a 0B20     		movs	r0, #11
+ 510 004c FFF7FEFF 		bl	PWM_2_WriteCompare
+ 511              	.LVL68:
+ 145:main.c        ****     PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
+ 512              		.loc 1 145 0
+ 513 0050 1A20     		movs	r0, #26
+ 514 0052 FFF7FEFF 		bl	PWM_3_WritePeriod
+ 515              	.LVL69:
+ 146:main.c        ****     
+ 516              		.loc 1 146 0
+ 517 0056 0D20     		movs	r0, #13
+ 518 0058 FFF7FEFF 		bl	PWM_3_WriteCompare
+ 519              	.LVL70:
+ 149:main.c        ****     LCD_PrintString("                    ");
+ 520              		.loc 1 149 0
+ 521 005c 0021     		movs	r1, #0
+ 522 005e 0846     		mov	r0, r1
+ 523 0060 FFF7FEFF 		bl	LCD_Position
+ 524              	.LVL71:
+ 150:main.c        **** 
+ 525              		.loc 1 150 0
+ 526 0064 3A48     		ldr	r0, .L59+12
+ 527 0066 FFF7FEFF 		bl	LCD_PrintString
+ 528              	.LVL72:
+ 153:main.c        ****     LCD_PrintString("Hello");
+ 529              		.loc 1 153 0
+ 530 006a 0021     		movs	r1, #0
+ 531 006c 0846     		mov	r0, r1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 19
+
+
+ 532 006e FFF7FEFF 		bl	LCD_Position
+ 533              	.LVL73:
+ 154:main.c        **** 
+ 534              		.loc 1 154 0
+ 535 0072 3848     		ldr	r0, .L59+16
+ 536 0074 FFF7FEFF 		bl	LCD_PrintString
+ 537              	.LVL74:
+ 112:main.c        **** 
+ 538              		.loc 1 112 0
+ 539 0078 0025     		movs	r5, #0
+ 111:main.c        ****     int data_turn = 0;
+ 540              		.loc 1 111 0
+ 541 007a 2C46     		mov	r4, r5
+ 542              	.LVL75:
+ 543              	.L45:
+ 158:main.c        ****         {
+ 544              		.loc 1 158 0
+ 545 007c 364B     		ldr	r3, .L59+20
+ 546 007e 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 547 0080 13B1     		cbz	r3, .L46
+ 161:main.c        ****         }
+ 548              		.loc 1 161 0
+ 549 0082 0022     		movs	r2, #0
+ 550 0084 344B     		ldr	r3, .L59+20
+ 551 0086 5A72     		strb	r2, [r3, #9]
+ 552              	.L46:
+ 163:main.c        ****             // ENCODE
+ 553              		.loc 1 163 0
+ 554 0088 334B     		ldr	r3, .L59+20
+ 555 008a 1968     		ldr	r1, [r3]
+ 556 008c 0D29     		cmp	r1, #13
+ 557 008e 47D8     		bhi	.L47
+ 558 0090 DFE801F0 		tbb	[pc, r1]
+ 559              	.L49:
+ 560 0094 07       		.byte	(.L48-.L49)/2
+ 561 0095 0E       		.byte	(.L50-.L49)/2
+ 562 0096 0E       		.byte	(.L50-.L49)/2
+ 563 0097 0E       		.byte	(.L50-.L49)/2
+ 564 0098 0E       		.byte	(.L50-.L49)/2
+ 565 0099 14       		.byte	(.L51-.L49)/2
+ 566 009a 14       		.byte	(.L51-.L49)/2
+ 567 009b 14       		.byte	(.L51-.L49)/2
+ 568 009c 14       		.byte	(.L51-.L49)/2
+ 569 009d 14       		.byte	(.L51-.L49)/2
+ 570 009e 14       		.byte	(.L51-.L49)/2
+ 571 009f 14       		.byte	(.L51-.L49)/2
+ 572 00a0 14       		.byte	(.L51-.L49)/2
+ 573 00a1 19       		.byte	(.L52-.L49)/2
+ 574              		.p2align 1
+ 575              	.L48:
+ 166:main.c        ****                 break; 
+ 576              		.loc 1 166 0
+ 577 00a2 2D4B     		ldr	r3, .L59+20
+ 578 00a4 5968     		ldr	r1, [r3, #4]
+ 579 00a6 FF20     		movs	r0, #255
+ 580 00a8 FFF7FEFF 		bl	PreFix
+ 581              	.LVL76:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 20
+
+
+ 582 00ac 0446     		mov	r4, r0
+ 583              	.LVL77:
+ 167:main.c        ****             // DATA
+ 584              		.loc 1 167 0
+ 585 00ae 37E0     		b	.L47
+ 586              	.LVL78:
+ 587              	.L50:
+ 174:main.c        ****                 break; 
+ 588              		.loc 1 174 0
+ 589 00b0 2A4B     		ldr	r3, .L59+24
+ 590 00b2 1878     		ldrb	r0, [r3]	@ zero_extendqisi2
+ 591 00b4 FFF7FEFF 		bl	Data
+ 592              	.LVL79:
+ 593 00b8 0446     		mov	r4, r0
+ 594              	.LVL80:
+ 175:main.c        ****             // DECODE
+ 595              		.loc 1 175 0
+ 596 00ba 31E0     		b	.L47
+ 597              	.LVL81:
+ 598              	.L51:
+ 185:main.c        ****                 break;
+ 599              		.loc 1 185 0
+ 600 00bc 0120     		movs	r0, #1
+ 601 00be FFF7FEFF 		bl	Decode
+ 602              	.LVL82:
+ 603 00c2 0446     		mov	r4, r0
+ 604              	.LVL83:
+ 186:main.c        ****             case 13:
+ 605              		.loc 1 186 0
+ 606 00c4 2CE0     		b	.L47
+ 607              	.LVL84:
+ 608              	.L52:
+ 189:main.c        ****                 //encode used to transmit 7 1's for the prefix 
+ 609              		.loc 1 189 0
+ 610 00c6 244B     		ldr	r3, .L59+20
+ 611 00c8 0022     		movs	r2, #0
+ 612 00ca 1A72     		strb	r2, [r3, #8]
+ 192:main.c        ****                 data_turn++;
+ 613              		.loc 1 192 0
+ 614 00cc 5A60     		str	r2, [r3, #4]
+ 193:main.c        ****                 
+ 615              		.loc 1 193 0
+ 616 00ce 0135     		adds	r5, r5, #1
+ 617              	.LVL85:
+ 196:main.c        ****                     data_turn = 0;
+ 618              		.loc 1 196 0
+ 619 00d0 042D     		cmp	r5, #4
+ 620 00d2 00D1     		bne	.L53
+ 197:main.c        ****                 }
+ 621              		.loc 1 197 0
+ 622 00d4 1546     		mov	r5, r2
+ 623              	.LVL86:
+ 624              	.L53:
+ 199:main.c        **** #else 
+ 625              		.loc 1 199 0
+ 626 00d6 214A     		ldr	r2, .L59+24
+ 627 00d8 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 21
+
+
+ 628 00da 5B00     		lsls	r3, r3, #1
+ 629 00dc 1370     		strb	r3, [r2]
+ 208:main.c        ****                 // Turn High Voltage off while delaying
+ 630              		.loc 1 208 0
+ 631 00de FFF7FEFF 		bl	PWM_Modulator_Stop
+ 632              	.LVL87:
+ 210:main.c        ****                 // Turn High Voltage Back On
+ 633              		.loc 1 210 0
+ 634 00e2 FFF7FEFF 		bl	PWM_Switch_Timer_Stop
+ 635              	.LVL88:
+ 212:main.c        ****                 CyDelay(20);
+ 636              		.loc 1 212 0
+ 637 00e6 0020     		movs	r0, #0
+ 638 00e8 FFF7FEFF 		bl	HighVoltage_Write
+ 639              	.LVL89:
+ 213:main.c        ****                 SignalBase_Write(0);
+ 640              		.loc 1 213 0
+ 641 00ec 1420     		movs	r0, #20
+ 642 00ee FFF7FEFF 		bl	CyDelay
+ 643              	.LVL90:
+ 214:main.c        **** 
+ 644              		.loc 1 214 0
+ 645 00f2 0020     		movs	r0, #0
+ 646 00f4 FFF7FEFF 		bl	SignalBase_Write
+ 647              	.LVL91:
+ 648              	.L54:
+ 218:main.c        ****                 }
+ 649              		.loc 1 218 0 discriminator 1
+ 650 00f8 174B     		ldr	r3, .L59+20
+ 651 00fa 1B7A     		ldrb	r3, [r3, #8]	@ zero_extendqisi2
+ 652 00fc 002B     		cmp	r3, #0
+ 653 00fe FBD0     		beq	.L54
+ 226:main.c        ****                 CyDelay(20); // Give voltage booster time to charge up
+ 654              		.loc 1 226 0
+ 655 0100 0120     		movs	r0, #1
+ 656 0102 FFF7FEFF 		bl	HighVoltage_Write
+ 657              	.LVL92:
+ 227:main.c        ****                 SignalBase_Write(1);
+ 658              		.loc 1 227 0
+ 659 0106 1420     		movs	r0, #20
+ 660 0108 FFF7FEFF 		bl	CyDelay
+ 661              	.LVL93:
+ 228:main.c        ****                 /* Reset PWM blocks and bitTime for new transmission */
+ 662              		.loc 1 228 0
+ 663 010c 0120     		movs	r0, #1
+ 664 010e FFF7FEFF 		bl	SignalBase_Write
+ 665              	.LVL94:
+ 230:main.c        ****                 PWM_Modulator_Start();
+ 666              		.loc 1 230 0
+ 667 0112 0022     		movs	r2, #0
+ 668 0114 104B     		ldr	r3, .L59+20
+ 669 0116 1A60     		str	r2, [r3]
+ 231:main.c        ****                 PWM_Switch_Timer_Start();
+ 670              		.loc 1 231 0
+ 671 0118 FFF7FEFF 		bl	PWM_Modulator_Start
+ 672              	.LVL95:
+ 232:main.c        ****                 break;
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 22
+
+
+ 673              		.loc 1 232 0
+ 674 011c FFF7FEFF 		bl	PWM_Switch_Timer_Start
+ 675              	.LVL96:
+ 676              	.L47:
+ 239:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
+ 677              		.loc 1 239 0
+ 678 0120 012C     		cmp	r4, #1
+ 679 0122 06D1     		bne	.L55
+ 240:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
+ 680              		.loc 1 240 0
+ 681 0124 1620     		movs	r0, #22
+ 682 0126 FFF7FEFF 		bl	PWM_Modulator_WritePeriod
+ 683              	.LVL97:
+ 241:main.c        ****         }else if(bitCase == ZERO){
+ 684              		.loc 1 241 0
+ 685 012a 0B20     		movs	r0, #11
+ 686 012c FFF7FEFF 		bl	PWM_Modulator_WriteCompare
+ 687              	.LVL98:
+ 688 0130 A4E7     		b	.L45
+ 689              	.L55:
+ 242:main.c        ****             PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
+ 690              		.loc 1 242 0
+ 691 0132 002C     		cmp	r4, #0
+ 692 0134 A2D1     		bne	.L45
+ 243:main.c        ****             PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+ 693              		.loc 1 243 0
+ 694 0136 1A20     		movs	r0, #26
+ 695 0138 FFF7FEFF 		bl	PWM_Modulator_WritePeriod
+ 696              	.LVL99:
+ 244:main.c        ****         }
+ 697              		.loc 1 244 0
+ 698 013c 0D20     		movs	r0, #13
+ 699 013e FFF7FEFF 		bl	PWM_Modulator_WriteCompare
+ 700              	.LVL100:
+ 701 0142 9BE7     		b	.L45
+ 702              	.L60:
+ 703              		.align	2
+ 704              	.L59:
+ 705 0144 00000000 		.word	RxIsr
+ 706 0148 00000000 		.word	watchDogCheck
+ 707 014c 00000000 		.word	isr_sec
+ 708 0150 1C000000 		.word	.LC2
+ 709 0154 34000000 		.word	.LC3
+ 710 0158 00000000 		.word	.LANCHOR0
+ 711 015c 00000000 		.word	.LANCHOR1
+ 712              		.cfi_endproc
+ 713              	.LFE64:
+ 714              		.size	main, .-main
+ 715              		.global	crabsToSend
+ 716              		.global	errorStatus
+ 717              		.global	newDataflag
+ 718              		.comm	data,20,4
+ 719              		.comm	lineStr,20,4
+ 720              		.comm	count,2,2
+ 721              		.global	i
+ 722              		.global	error
+ 723              		.data
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 23
+
+
+ 724              		.align	2
+ 725              		.set	.LANCHOR1,. + 0
+ 726              		.type	crabsToSend, %object
+ 727              		.size	crabsToSend, 1
+ 728              	crabsToSend:
+ 729 0000 01       		.byte	1
+ 730 0001 000000   		.space	3
+ 731              		.type	i, %object
+ 732              		.size	i, 4
+ 733              	i:
+ 734 0004 02000000 		.word	2
+ 735              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 736              		.align	2
+ 737              	.LC0:
+ 738 0000 43726162 		.ascii	"Crabs: %d\000"
+ 738      733A2025 
+ 738      6400
+ 739 000a 0000     		.space	2
+ 740              	.LC1:
+ 741 000c 20202020 		.ascii	"             \000"
+ 741      20202020 
+ 741      20202020 
+ 741      2000
+ 742 001a 0000     		.space	2
+ 743              	.LC2:
+ 744 001c 20202020 		.ascii	"                    \000"
+ 744      20202020 
+ 744      20202020 
+ 744      20202020 
+ 744      20202020 
+ 745 0031 000000   		.space	3
+ 746              	.LC3:
+ 747 0034 48656C6C 		.ascii	"Hello\000"
+ 747      6F00
+ 748              		.bss
+ 749              		.align	2
+ 750              		.set	.LANCHOR0,. + 0
+ 751              		.type	bitTime, %object
+ 752              		.size	bitTime, 4
+ 753              	bitTime:
+ 754 0000 00000000 		.space	4
+ 755              		.type	prefixTime, %object
+ 756              		.size	prefixTime, 4
+ 757              	prefixTime:
+ 758 0004 00000000 		.space	4
+ 759              		.type	newDataflag, %object
+ 760              		.size	newDataflag, 1
+ 761              	newDataflag:
+ 762 0008 00       		.space	1
+ 763              		.type	errorStatus, %object
+ 764              		.size	errorStatus, 1
+ 765              	errorStatus:
+ 766 0009 00       		.space	1
+ 767 000a 0000     		.space	2
+ 768              		.type	error, %object
+ 769              		.size	error, 4
+ 770              	error:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 24
+
+
+ 771 000c 00000000 		.space	4
+ 772              		.text
+ 773              	.Letext0:
+ 774              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 775              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 776              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 777              		.file 5 "Generated_Source\\PSoC5/core_cm3.h"
+ 778              		.file 6 "Generated_Source\\PSoC5/CyLib.h"
+ 779              		.file 7 "Generated_Source\\PSoC5/LCD.h"
+ 780              		.file 8 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 781              		.file 9 "Generated_Source\\PSoC5/isr_rx.h"
+ 782              		.file 10 "Generated_Source\\PSoC5/checkWatchDogTimer.h"
+ 783              		.file 11 "Generated_Source\\PSoC5/watchDogCheck.h"
+ 784              		.file 12 "Generated_Source\\PSoC5/UART.h"
+ 785              		.file 13 "Generated_Source\\PSoC5/PWM_Modulator.h"
+ 786              		.file 14 "Generated_Source\\PSoC5/PWM_1.h"
+ 787              		.file 15 "Generated_Source\\PSoC5/PWM_2.h"
+ 788              		.file 16 "Generated_Source\\PSoC5/PWM_3.h"
+ 789              		.file 17 "Generated_Source\\PSoC5/PWM_Switch_Timer.h"
+ 790              		.file 18 "Generated_Source\\PSoC5/isr_sec.h"
+ 791              		.file 19 "Generated_Source\\PSoC5/HighVoltage.h"
+ 792              		.file 20 "Generated_Source\\PSoC5/SignalBase.h"
+ 793              		.section	.debug_info,"",%progbits
+ 794              	.Ldebug_info0:
+ 795 0000 22070000 		.4byte	0x722
+ 796 0004 0400     		.2byte	0x4
+ 797 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 798 000a 04       		.byte	0x4
+ 799 000b 01       		.uleb128 0x1
+ 800 000c 8D030000 		.4byte	.LASF70
+ 801 0010 0C       		.byte	0xc
+ 802 0011 04030000 		.4byte	.LASF71
+ 803 0015 69010000 		.4byte	.LASF72
+ 804 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 805 001d 00000000 		.4byte	0
+ 806 0021 00000000 		.4byte	.Ldebug_line0
+ 807 0025 02       		.uleb128 0x2
+ 808 0026 01       		.byte	0x1
+ 809 0027 06       		.byte	0x6
+ 810 0028 12020000 		.4byte	.LASF0
+ 811 002c 02       		.uleb128 0x2
+ 812 002d 01       		.byte	0x1
+ 813 002e 08       		.byte	0x8
+ 814 002f EE010000 		.4byte	.LASF1
+ 815 0033 02       		.uleb128 0x2
+ 816 0034 02       		.byte	0x2
+ 817 0035 05       		.byte	0x5
+ 818 0036 46000000 		.4byte	.LASF2
+ 819 003a 02       		.uleb128 0x2
+ 820 003b 02       		.byte	0x2
+ 821 003c 07       		.byte	0x7
+ 822 003d 9B020000 		.4byte	.LASF3
+ 823 0041 03       		.uleb128 0x3
+ 824 0042 48030000 		.4byte	.LASF9
+ 825 0046 02       		.byte	0x2
+ 826 0047 3F       		.byte	0x3f
+ 827 0048 4C000000 		.4byte	0x4c
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 25
+
+
+ 828 004c 02       		.uleb128 0x2
+ 829 004d 04       		.byte	0x4
+ 830 004e 05       		.byte	0x5
+ 831 004f 31010000 		.4byte	.LASF4
+ 832 0053 02       		.uleb128 0x2
+ 833 0054 04       		.byte	0x4
+ 834 0055 07       		.byte	0x7
+ 835 0056 77020000 		.4byte	.LASF5
+ 836 005a 02       		.uleb128 0x2
+ 837 005b 08       		.byte	0x8
+ 838 005c 05       		.byte	0x5
+ 839 005d 0A010000 		.4byte	.LASF6
+ 840 0061 02       		.uleb128 0x2
+ 841 0062 08       		.byte	0x8
+ 842 0063 07       		.byte	0x7
+ 843 0064 28020000 		.4byte	.LASF7
+ 844 0068 04       		.uleb128 0x4
+ 845 0069 04       		.byte	0x4
+ 846 006a 05       		.byte	0x5
+ 847 006b 696E7400 		.ascii	"int\000"
+ 848 006f 02       		.uleb128 0x2
+ 849 0070 04       		.byte	0x4
+ 850 0071 07       		.byte	0x7
+ 851 0072 3F020000 		.4byte	.LASF8
+ 852 0076 03       		.uleb128 0x3
+ 853 0077 C9020000 		.4byte	.LASF10
+ 854 007b 03       		.byte	0x3
+ 855 007c 2C       		.byte	0x2c
+ 856 007d 41000000 		.4byte	0x41
+ 857 0081 05       		.uleb128 0x5
+ 858 0082 A4000000 		.4byte	.LASF11
+ 859 0086 04       		.byte	0x4
+ 860 0087 9201     		.2byte	0x192
+ 861 0089 2C000000 		.4byte	0x2c
+ 862 008d 05       		.uleb128 0x5
+ 863 008e 9D000000 		.4byte	.LASF12
+ 864 0092 04       		.byte	0x4
+ 865 0093 9301     		.2byte	0x193
+ 866 0095 3A000000 		.4byte	0x3a
+ 867 0099 02       		.uleb128 0x2
+ 868 009a 04       		.byte	0x4
+ 869 009b 04       		.byte	0x4
+ 870 009c E7000000 		.4byte	.LASF13
+ 871 00a0 02       		.uleb128 0x2
+ 872 00a1 08       		.byte	0x8
+ 873 00a2 04       		.byte	0x4
+ 874 00a3 79030000 		.4byte	.LASF14
+ 875 00a7 05       		.uleb128 0x5
+ 876 00a8 D1020000 		.4byte	.LASF15
+ 877 00ac 04       		.byte	0x4
+ 878 00ad A301     		.2byte	0x1a3
+ 879 00af B3000000 		.4byte	0xb3
+ 880 00b3 02       		.uleb128 0x2
+ 881 00b4 01       		.byte	0x1
+ 882 00b5 08       		.byte	0x8
+ 883 00b6 B9020000 		.4byte	.LASF16
+ 884 00ba 05       		.uleb128 0x5
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 26
+
+
+ 885 00bb 0B030000 		.4byte	.LASF17
+ 886 00bf 04       		.byte	0x4
+ 887 00c0 3C02     		.2byte	0x23c
+ 888 00c2 C6000000 		.4byte	0xc6
+ 889 00c6 06       		.uleb128 0x6
+ 890 00c7 81000000 		.4byte	0x81
+ 891 00cb 02       		.uleb128 0x2
+ 892 00cc 08       		.byte	0x8
+ 893 00cd 04       		.byte	0x4
+ 894 00ce D9010000 		.4byte	.LASF18
+ 895 00d2 02       		.uleb128 0x2
+ 896 00d3 04       		.byte	0x4
+ 897 00d4 07       		.byte	0x7
+ 898 00d5 50000000 		.4byte	.LASF19
+ 899 00d9 07       		.uleb128 0x7
+ 900 00da 52030000 		.4byte	.LASF73
+ 901 00de 01       		.byte	0x1
+ 902 00df 0B01     		.2byte	0x10b
+ 903 00e1 00000000 		.4byte	.LFB65
+ 904 00e5 2C000000 		.4byte	.LFE65-.LFB65
+ 905 00e9 01       		.uleb128 0x1
+ 906 00ea 9C       		.byte	0x9c
+ 907 00eb 08       		.uleb128 0x8
+ 908 00ec FC010000 		.4byte	.LASF20
+ 909 00f0 01       		.byte	0x1
+ 910 00f1 2401     		.2byte	0x124
+ 911 00f3 00000000 		.4byte	.LFB66
+ 912 00f7 08000000 		.4byte	.LFE66-.LFB66
+ 913 00fb 01       		.uleb128 0x1
+ 914 00fc 9C       		.byte	0x9c
+ 915 00fd 0B010000 		.4byte	0x10b
+ 916 0101 09       		.uleb128 0x9
+ 917 0102 06000000 		.4byte	.LVL0
+ 918 0106 F1050000 		.4byte	0x5f1
+ 919 010a 00       		.byte	0
+ 920 010b 08       		.uleb128 0x8
+ 921 010c 89020000 		.4byte	.LASF21
+ 922 0110 01       		.byte	0x1
+ 923 0111 3A01     		.2byte	0x13a
+ 924 0113 00000000 		.4byte	.LFB67
+ 925 0117 90000000 		.4byte	.LFE67-.LFB67
+ 926 011b 01       		.uleb128 0x1
+ 927 011c 9C       		.byte	0x9c
+ 928 011d A6010000 		.4byte	0x1a6
+ 929 0121 0A       		.uleb128 0xa
+ 930 0122 E5010000 		.4byte	.LASF23
+ 931 0126 01       		.byte	0x1
+ 932 0127 3C01     		.2byte	0x13c
+ 933 0129 81000000 		.4byte	0x81
+ 934 012d 00000000 		.4byte	.LLST0
+ 935 0131 0B       		.uleb128 0xb
+ 936 0132 46000000 		.4byte	.LVL3
+ 937 0136 FC050000 		.4byte	0x5fc
+ 938 013a 49010000 		.4byte	0x149
+ 939 013e 0C       		.uleb128 0xc
+ 940 013f 01       		.uleb128 0x1
+ 941 0140 50       		.byte	0x50
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 27
+
+
+ 942 0141 01       		.uleb128 0x1
+ 943 0142 30       		.byte	0x30
+ 944 0143 0C       		.uleb128 0xc
+ 945 0144 01       		.uleb128 0x1
+ 946 0145 51       		.byte	0x51
+ 947 0146 01       		.uleb128 0x1
+ 948 0147 30       		.byte	0x30
+ 949 0148 00       		.byte	0
+ 950 0149 0B       		.uleb128 0xb
+ 951 014a 54000000 		.4byte	.LVL4
+ 952 014e 07060000 		.4byte	0x607
+ 953 0152 66010000 		.4byte	0x166
+ 954 0156 0C       		.uleb128 0xc
+ 955 0157 01       		.uleb128 0x1
+ 956 0158 50       		.byte	0x50
+ 957 0159 02       		.uleb128 0x2
+ 958 015a 75       		.byte	0x75
+ 959 015b 00       		.sleb128 0
+ 960 015c 0C       		.uleb128 0xc
+ 961 015d 01       		.uleb128 0x1
+ 962 015e 51       		.byte	0x51
+ 963 015f 05       		.uleb128 0x5
+ 964 0160 03       		.byte	0x3
+ 965 0161 00000000 		.4byte	.LC0
+ 966 0165 00       		.byte	0
+ 967 0166 0B       		.uleb128 0xb
+ 968 0167 5A000000 		.4byte	.LVL5
+ 969 016b 12060000 		.4byte	0x612
+ 970 016f 7D010000 		.4byte	0x17d
+ 971 0173 0C       		.uleb128 0xc
+ 972 0174 01       		.uleb128 0x1
+ 973 0175 50       		.byte	0x50
+ 974 0176 05       		.uleb128 0x5
+ 975 0177 03       		.byte	0x3
+ 976 0178 0C000000 		.4byte	.LC1
+ 977 017c 00       		.byte	0
+ 978 017d 0B       		.uleb128 0xb
+ 979 017e 62000000 		.4byte	.LVL6
+ 980 0182 FC050000 		.4byte	0x5fc
+ 981 0186 95010000 		.4byte	0x195
+ 982 018a 0C       		.uleb128 0xc
+ 983 018b 01       		.uleb128 0x1
+ 984 018c 50       		.byte	0x50
+ 985 018d 01       		.uleb128 0x1
+ 986 018e 30       		.byte	0x30
+ 987 018f 0C       		.uleb128 0xc
+ 988 0190 01       		.uleb128 0x1
+ 989 0191 51       		.byte	0x51
+ 990 0192 01       		.uleb128 0x1
+ 991 0193 30       		.byte	0x30
+ 992 0194 00       		.byte	0
+ 993 0195 0D       		.uleb128 0xd
+ 994 0196 68000000 		.4byte	.LVL7
+ 995 019a 12060000 		.4byte	0x612
+ 996 019e 0C       		.uleb128 0xc
+ 997 019f 01       		.uleb128 0x1
+ 998 01a0 50       		.byte	0x50
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 28
+
+
+ 999 01a1 02       		.uleb128 0x2
+ 1000 01a2 75       		.byte	0x75
+ 1001 01a3 00       		.sleb128 0
+ 1002 01a4 00       		.byte	0
+ 1003 01a5 00       		.byte	0
+ 1004 01a6 0E       		.uleb128 0xe
+ 1005 01a7 52010000 		.4byte	.LASF25
+ 1006 01ab 01       		.byte	0x1
+ 1007 01ac 6A01     		.2byte	0x16a
+ 1008 01ae 68000000 		.4byte	0x68
+ 1009 01b2 00000000 		.4byte	.LFB68
+ 1010 01b6 28000000 		.4byte	.LFE68-.LFB68
+ 1011 01ba 01       		.uleb128 0x1
+ 1012 01bb 9C       		.byte	0x9c
+ 1013 01bc F0010000 		.4byte	0x1f0
+ 1014 01c0 0F       		.uleb128 0xf
+ 1015 01c1 7D000000 		.4byte	.LASF22
+ 1016 01c5 01       		.byte	0x1
+ 1017 01c6 6A01     		.2byte	0x16a
+ 1018 01c8 6F000000 		.4byte	0x6f
+ 1019 01cc 13000000 		.4byte	.LLST1
+ 1020 01d0 10       		.uleb128 0x10
+ 1021 01d1 625400   		.ascii	"bT\000"
+ 1022 01d4 01       		.byte	0x1
+ 1023 01d5 6A01     		.2byte	0x16a
+ 1024 01d7 68000000 		.4byte	0x68
+ 1025 01db 34000000 		.4byte	.LLST2
+ 1026 01df 0A       		.uleb128 0xa
+ 1027 01e0 3A010000 		.4byte	.LASF24
+ 1028 01e4 01       		.byte	0x1
+ 1029 01e5 6C01     		.2byte	0x16c
+ 1030 01e7 68000000 		.4byte	0x68
+ 1031 01eb 54000000 		.4byte	.LLST3
+ 1032 01ef 00       		.byte	0
+ 1033 01f0 0E       		.uleb128 0xe
+ 1034 01f1 87000000 		.4byte	.LASF26
+ 1035 01f5 01       		.byte	0x1
+ 1036 01f6 8901     		.2byte	0x189
+ 1037 01f8 68000000 		.4byte	0x68
+ 1038 01fc 00000000 		.4byte	.LFB69
+ 1039 0200 44000000 		.4byte	.LFE69-.LFB69
+ 1040 0204 01       		.uleb128 0x1
+ 1041 0205 9C       		.byte	0x9c
+ 1042 0206 3A020000 		.4byte	0x23a
+ 1043 020a 0F       		.uleb128 0xf
+ 1044 020b 7D000000 		.4byte	.LASF22
+ 1045 020f 01       		.byte	0x1
+ 1046 0210 8901     		.2byte	0x189
+ 1047 0212 6F000000 		.4byte	0x6f
+ 1048 0216 88000000 		.4byte	.LLST4
+ 1049 021a 10       		.uleb128 0x10
+ 1050 021b 625400   		.ascii	"bT\000"
+ 1051 021e 01       		.byte	0x1
+ 1052 021f 8901     		.2byte	0x189
+ 1053 0221 68000000 		.4byte	0x68
+ 1054 0225 A9000000 		.4byte	.LLST5
+ 1055 0229 0A       		.uleb128 0xa
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 29
+
+
+ 1056 022a 3A010000 		.4byte	.LASF24
+ 1057 022e 01       		.byte	0x1
+ 1058 022f 8B01     		.2byte	0x18b
+ 1059 0231 68000000 		.4byte	0x68
+ 1060 0235 C9000000 		.4byte	.LLST6
+ 1061 0239 00       		.byte	0
+ 1062 023a 0E       		.uleb128 0xe
+ 1063 023b ED000000 		.4byte	.LASF27
+ 1064 023f 01       		.byte	0x1
+ 1065 0240 B401     		.2byte	0x1b4
+ 1066 0242 68000000 		.4byte	0x68
+ 1067 0246 00000000 		.4byte	.LFB70
+ 1068 024a 42000000 		.4byte	.LFE70-.LFB70
+ 1069 024e 01       		.uleb128 0x1
+ 1070 024f 9C       		.byte	0x9c
+ 1071 0250 83020000 		.4byte	0x283
+ 1072 0254 0F       		.uleb128 0xf
+ 1073 0255 7D000000 		.4byte	.LASF22
+ 1074 0259 01       		.byte	0x1
+ 1075 025a B401     		.2byte	0x1b4
+ 1076 025c 6F000000 		.4byte	0x6f
+ 1077 0260 29010000 		.4byte	.LLST7
+ 1078 0264 11       		.uleb128 0x11
+ 1079 0265 E1020000 		.4byte	.LASF28
+ 1080 0269 01       		.byte	0x1
+ 1081 026a B401     		.2byte	0x1b4
+ 1082 026c 68000000 		.4byte	0x68
+ 1083 0270 01       		.uleb128 0x1
+ 1084 0271 51       		.byte	0x51
+ 1085 0272 0A       		.uleb128 0xa
+ 1086 0273 D7020000 		.4byte	.LASF29
+ 1087 0277 01       		.byte	0x1
+ 1088 0278 B601     		.2byte	0x1b6
+ 1089 027a 68000000 		.4byte	0x68
+ 1090 027e 4A010000 		.4byte	.LLST8
+ 1091 0282 00       		.byte	0
+ 1092 0283 12       		.uleb128 0x12
+ 1093 0284 65000000 		.4byte	.LASF30
+ 1094 0288 01       		.byte	0x1
+ 1095 0289 6C       		.byte	0x6c
+ 1096 028a 68000000 		.4byte	0x68
+ 1097 028e 00000000 		.4byte	.LFB64
+ 1098 0292 60010000 		.4byte	.LFE64-.LFB64
+ 1099 0296 01       		.uleb128 0x1
+ 1100 0297 9C       		.byte	0x9c
+ 1101 0298 28050000 		.4byte	0x528
+ 1102 029c 13       		.uleb128 0x13
+ 1103 029d 3A010000 		.4byte	.LASF24
+ 1104 02a1 01       		.byte	0x1
+ 1105 02a2 6F       		.byte	0x6f
+ 1106 02a3 68000000 		.4byte	0x68
+ 1107 02a7 AA010000 		.4byte	.LLST9
+ 1108 02ab 13       		.uleb128 0x13
+ 1109 02ac 1E020000 		.4byte	.LASF31
+ 1110 02b0 01       		.byte	0x1
+ 1111 02b1 70       		.byte	0x70
+ 1112 02b2 68000000 		.4byte	0x68
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 30
+
+
+ 1113 02b6 0B020000 		.4byte	.LLST10
+ 1114 02ba 0B       		.uleb128 0xb
+ 1115 02bb 08000000 		.4byte	.LVL54
+ 1116 02bf 1D060000 		.4byte	0x61d
+ 1117 02c3 D1020000 		.4byte	0x2d1
+ 1118 02c7 0C       		.uleb128 0xc
+ 1119 02c8 01       		.uleb128 0x1
+ 1120 02c9 50       		.byte	0x50
+ 1121 02ca 05       		.uleb128 0x5
+ 1122 02cb 03       		.byte	0x3
+ 1123 02cc 00000000 		.4byte	RxIsr
+ 1124 02d0 00       		.byte	0
+ 1125 02d1 09       		.uleb128 0x9
+ 1126 02d2 10000000 		.4byte	.LVL55
+ 1127 02d6 28060000 		.4byte	0x628
+ 1128 02da 0B       		.uleb128 0xb
+ 1129 02db 16000000 		.4byte	.LVL56
+ 1130 02df 33060000 		.4byte	0x633
+ 1131 02e3 F1020000 		.4byte	0x2f1
+ 1132 02e7 0C       		.uleb128 0xc
+ 1133 02e8 01       		.uleb128 0x1
+ 1134 02e9 50       		.byte	0x50
+ 1135 02ea 05       		.uleb128 0x5
+ 1136 02eb 03       		.byte	0x3
+ 1137 02ec 00000000 		.4byte	watchDogCheck
+ 1138 02f0 00       		.byte	0
+ 1139 02f1 09       		.uleb128 0x9
+ 1140 02f2 1A000000 		.4byte	.LVL57
+ 1141 02f6 3E060000 		.4byte	0x63e
+ 1142 02fa 09       		.uleb128 0x9
+ 1143 02fb 1E000000 		.4byte	.LVL58
+ 1144 02ff 49060000 		.4byte	0x649
+ 1145 0303 09       		.uleb128 0x9
+ 1146 0304 22000000 		.4byte	.LVL59
+ 1147 0308 54060000 		.4byte	0x654
+ 1148 030c 09       		.uleb128 0x9
+ 1149 030d 26000000 		.4byte	.LVL60
+ 1150 0311 5F060000 		.4byte	0x65f
+ 1151 0315 09       		.uleb128 0x9
+ 1152 0316 2A000000 		.4byte	.LVL61
+ 1153 031a 6A060000 		.4byte	0x66a
+ 1154 031e 09       		.uleb128 0x9
+ 1155 031f 2E000000 		.4byte	.LVL62
+ 1156 0323 75060000 		.4byte	0x675
+ 1157 0327 09       		.uleb128 0x9
+ 1158 0328 32000000 		.4byte	.LVL63
+ 1159 032c 80060000 		.4byte	0x680
+ 1160 0330 0B       		.uleb128 0xb
+ 1161 0331 38000000 		.4byte	.LVL64
+ 1162 0335 8B060000 		.4byte	0x68b
+ 1163 0339 47030000 		.4byte	0x347
+ 1164 033d 0C       		.uleb128 0xc
+ 1165 033e 01       		.uleb128 0x1
+ 1166 033f 50       		.byte	0x50
+ 1167 0340 05       		.uleb128 0x5
+ 1168 0341 03       		.byte	0x3
+ 1169 0342 00000000 		.4byte	isr_sec
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 31
+
+
+ 1170 0346 00       		.byte	0
+ 1171 0347 0B       		.uleb128 0xb
+ 1172 0348 3E000000 		.4byte	.LVL65
+ 1173 034c 96060000 		.4byte	0x696
+ 1174 0350 5B030000 		.4byte	0x35b
+ 1175 0354 0C       		.uleb128 0xc
+ 1176 0355 01       		.uleb128 0x1
+ 1177 0356 50       		.byte	0x50
+ 1178 0357 02       		.uleb128 0x2
+ 1179 0358 08       		.byte	0x8
+ 1180 0359 52       		.byte	0x52
+ 1181 035a 00       		.byte	0
+ 1182 035b 0B       		.uleb128 0xb
+ 1183 035c 44000000 		.4byte	.LVL66
+ 1184 0360 A1060000 		.4byte	0x6a1
+ 1185 0364 6F030000 		.4byte	0x36f
+ 1186 0368 0C       		.uleb128 0xc
+ 1187 0369 01       		.uleb128 0x1
+ 1188 036a 50       		.byte	0x50
+ 1189 036b 02       		.uleb128 0x2
+ 1190 036c 08       		.byte	0x8
+ 1191 036d 29       		.byte	0x29
+ 1192 036e 00       		.byte	0
+ 1193 036f 0B       		.uleb128 0xb
+ 1194 0370 4A000000 		.4byte	.LVL67
+ 1195 0374 AC060000 		.4byte	0x6ac
+ 1196 0378 82030000 		.4byte	0x382
+ 1197 037c 0C       		.uleb128 0xc
+ 1198 037d 01       		.uleb128 0x1
+ 1199 037e 50       		.byte	0x50
+ 1200 037f 01       		.uleb128 0x1
+ 1201 0380 46       		.byte	0x46
+ 1202 0381 00       		.byte	0
+ 1203 0382 0B       		.uleb128 0xb
+ 1204 0383 50000000 		.4byte	.LVL68
+ 1205 0387 B7060000 		.4byte	0x6b7
+ 1206 038b 95030000 		.4byte	0x395
+ 1207 038f 0C       		.uleb128 0xc
+ 1208 0390 01       		.uleb128 0x1
+ 1209 0391 50       		.byte	0x50
+ 1210 0392 01       		.uleb128 0x1
+ 1211 0393 3B       		.byte	0x3b
+ 1212 0394 00       		.byte	0
+ 1213 0395 0B       		.uleb128 0xb
+ 1214 0396 56000000 		.4byte	.LVL69
+ 1215 039a C2060000 		.4byte	0x6c2
+ 1216 039e A8030000 		.4byte	0x3a8
+ 1217 03a2 0C       		.uleb128 0xc
+ 1218 03a3 01       		.uleb128 0x1
+ 1219 03a4 50       		.byte	0x50
+ 1220 03a5 01       		.uleb128 0x1
+ 1221 03a6 4A       		.byte	0x4a
+ 1222 03a7 00       		.byte	0
+ 1223 03a8 0B       		.uleb128 0xb
+ 1224 03a9 5C000000 		.4byte	.LVL70
+ 1225 03ad CD060000 		.4byte	0x6cd
+ 1226 03b1 BB030000 		.4byte	0x3bb
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 32
+
+
+ 1227 03b5 0C       		.uleb128 0xc
+ 1228 03b6 01       		.uleb128 0x1
+ 1229 03b7 50       		.byte	0x50
+ 1230 03b8 01       		.uleb128 0x1
+ 1231 03b9 3D       		.byte	0x3d
+ 1232 03ba 00       		.byte	0
+ 1233 03bb 0B       		.uleb128 0xb
+ 1234 03bc 64000000 		.4byte	.LVL71
+ 1235 03c0 FC050000 		.4byte	0x5fc
+ 1236 03c4 D3030000 		.4byte	0x3d3
+ 1237 03c8 0C       		.uleb128 0xc
+ 1238 03c9 01       		.uleb128 0x1
+ 1239 03ca 50       		.byte	0x50
+ 1240 03cb 01       		.uleb128 0x1
+ 1241 03cc 30       		.byte	0x30
+ 1242 03cd 0C       		.uleb128 0xc
+ 1243 03ce 01       		.uleb128 0x1
+ 1244 03cf 51       		.byte	0x51
+ 1245 03d0 01       		.uleb128 0x1
+ 1246 03d1 30       		.byte	0x30
+ 1247 03d2 00       		.byte	0
+ 1248 03d3 0B       		.uleb128 0xb
+ 1249 03d4 6A000000 		.4byte	.LVL72
+ 1250 03d8 12060000 		.4byte	0x612
+ 1251 03dc EA030000 		.4byte	0x3ea
+ 1252 03e0 0C       		.uleb128 0xc
+ 1253 03e1 01       		.uleb128 0x1
+ 1254 03e2 50       		.byte	0x50
+ 1255 03e3 05       		.uleb128 0x5
+ 1256 03e4 03       		.byte	0x3
+ 1257 03e5 1C000000 		.4byte	.LC2
+ 1258 03e9 00       		.byte	0
+ 1259 03ea 0B       		.uleb128 0xb
+ 1260 03eb 72000000 		.4byte	.LVL73
+ 1261 03ef FC050000 		.4byte	0x5fc
+ 1262 03f3 02040000 		.4byte	0x402
+ 1263 03f7 0C       		.uleb128 0xc
+ 1264 03f8 01       		.uleb128 0x1
+ 1265 03f9 50       		.byte	0x50
+ 1266 03fa 01       		.uleb128 0x1
+ 1267 03fb 30       		.byte	0x30
+ 1268 03fc 0C       		.uleb128 0xc
+ 1269 03fd 01       		.uleb128 0x1
+ 1270 03fe 51       		.byte	0x51
+ 1271 03ff 01       		.uleb128 0x1
+ 1272 0400 30       		.byte	0x30
+ 1273 0401 00       		.byte	0
+ 1274 0402 0B       		.uleb128 0xb
+ 1275 0403 78000000 		.4byte	.LVL74
+ 1276 0407 12060000 		.4byte	0x612
+ 1277 040b 19040000 		.4byte	0x419
+ 1278 040f 0C       		.uleb128 0xc
+ 1279 0410 01       		.uleb128 0x1
+ 1280 0411 50       		.byte	0x50
+ 1281 0412 05       		.uleb128 0x5
+ 1282 0413 03       		.byte	0x3
+ 1283 0414 34000000 		.4byte	.LC3
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 33
+
+
+ 1284 0418 00       		.byte	0
+ 1285 0419 0B       		.uleb128 0xb
+ 1286 041a AC000000 		.4byte	.LVL76
+ 1287 041e 3A020000 		.4byte	0x23a
+ 1288 0422 2D040000 		.4byte	0x42d
+ 1289 0426 0C       		.uleb128 0xc
+ 1290 0427 01       		.uleb128 0x1
+ 1291 0428 50       		.byte	0x50
+ 1292 0429 02       		.uleb128 0x2
+ 1293 042a 08       		.byte	0x8
+ 1294 042b FF       		.byte	0xff
+ 1295 042c 00       		.byte	0
+ 1296 042d 09       		.uleb128 0x9
+ 1297 042e B8000000 		.4byte	.LVL79
+ 1298 0432 A6010000 		.4byte	0x1a6
+ 1299 0436 0B       		.uleb128 0xb
+ 1300 0437 C2000000 		.4byte	.LVL82
+ 1301 043b F0010000 		.4byte	0x1f0
+ 1302 043f 49040000 		.4byte	0x449
+ 1303 0443 0C       		.uleb128 0xc
+ 1304 0444 01       		.uleb128 0x1
+ 1305 0445 50       		.byte	0x50
+ 1306 0446 01       		.uleb128 0x1
+ 1307 0447 31       		.byte	0x31
+ 1308 0448 00       		.byte	0
+ 1309 0449 09       		.uleb128 0x9
+ 1310 044a E2000000 		.4byte	.LVL87
+ 1311 044e D8060000 		.4byte	0x6d8
+ 1312 0452 09       		.uleb128 0x9
+ 1313 0453 E6000000 		.4byte	.LVL88
+ 1314 0457 E3060000 		.4byte	0x6e3
+ 1315 045b 0B       		.uleb128 0xb
+ 1316 045c EC000000 		.4byte	.LVL89
+ 1317 0460 EE060000 		.4byte	0x6ee
+ 1318 0464 6E040000 		.4byte	0x46e
+ 1319 0468 0C       		.uleb128 0xc
+ 1320 0469 01       		.uleb128 0x1
+ 1321 046a 50       		.byte	0x50
+ 1322 046b 01       		.uleb128 0x1
+ 1323 046c 30       		.byte	0x30
+ 1324 046d 00       		.byte	0
+ 1325 046e 0B       		.uleb128 0xb
+ 1326 046f F2000000 		.4byte	.LVL90
+ 1327 0473 F9060000 		.4byte	0x6f9
+ 1328 0477 81040000 		.4byte	0x481
+ 1329 047b 0C       		.uleb128 0xc
+ 1330 047c 01       		.uleb128 0x1
+ 1331 047d 50       		.byte	0x50
+ 1332 047e 01       		.uleb128 0x1
+ 1333 047f 44       		.byte	0x44
+ 1334 0480 00       		.byte	0
+ 1335 0481 0B       		.uleb128 0xb
+ 1336 0482 F8000000 		.4byte	.LVL91
+ 1337 0486 04070000 		.4byte	0x704
+ 1338 048a 94040000 		.4byte	0x494
+ 1339 048e 0C       		.uleb128 0xc
+ 1340 048f 01       		.uleb128 0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 34
+
+
+ 1341 0490 50       		.byte	0x50
+ 1342 0491 01       		.uleb128 0x1
+ 1343 0492 30       		.byte	0x30
+ 1344 0493 00       		.byte	0
+ 1345 0494 0B       		.uleb128 0xb
+ 1346 0495 06010000 		.4byte	.LVL92
+ 1347 0499 EE060000 		.4byte	0x6ee
+ 1348 049d A7040000 		.4byte	0x4a7
+ 1349 04a1 0C       		.uleb128 0xc
+ 1350 04a2 01       		.uleb128 0x1
+ 1351 04a3 50       		.byte	0x50
+ 1352 04a4 01       		.uleb128 0x1
+ 1353 04a5 31       		.byte	0x31
+ 1354 04a6 00       		.byte	0
+ 1355 04a7 0B       		.uleb128 0xb
+ 1356 04a8 0C010000 		.4byte	.LVL93
+ 1357 04ac F9060000 		.4byte	0x6f9
+ 1358 04b0 BA040000 		.4byte	0x4ba
+ 1359 04b4 0C       		.uleb128 0xc
+ 1360 04b5 01       		.uleb128 0x1
+ 1361 04b6 50       		.byte	0x50
+ 1362 04b7 01       		.uleb128 0x1
+ 1363 04b8 44       		.byte	0x44
+ 1364 04b9 00       		.byte	0
+ 1365 04ba 0B       		.uleb128 0xb
+ 1366 04bb 12010000 		.4byte	.LVL94
+ 1367 04bf 04070000 		.4byte	0x704
+ 1368 04c3 CD040000 		.4byte	0x4cd
+ 1369 04c7 0C       		.uleb128 0xc
+ 1370 04c8 01       		.uleb128 0x1
+ 1371 04c9 50       		.byte	0x50
+ 1372 04ca 01       		.uleb128 0x1
+ 1373 04cb 31       		.byte	0x31
+ 1374 04cc 00       		.byte	0
+ 1375 04cd 09       		.uleb128 0x9
+ 1376 04ce 1C010000 		.4byte	.LVL95
+ 1377 04d2 54060000 		.4byte	0x654
+ 1378 04d6 09       		.uleb128 0x9
+ 1379 04d7 20010000 		.4byte	.LVL96
+ 1380 04db 80060000 		.4byte	0x680
+ 1381 04df 0B       		.uleb128 0xb
+ 1382 04e0 2A010000 		.4byte	.LVL97
+ 1383 04e4 0F070000 		.4byte	0x70f
+ 1384 04e8 F2040000 		.4byte	0x4f2
+ 1385 04ec 0C       		.uleb128 0xc
+ 1386 04ed 01       		.uleb128 0x1
+ 1387 04ee 50       		.byte	0x50
+ 1388 04ef 01       		.uleb128 0x1
+ 1389 04f0 46       		.byte	0x46
+ 1390 04f1 00       		.byte	0
+ 1391 04f2 0B       		.uleb128 0xb
+ 1392 04f3 30010000 		.4byte	.LVL98
+ 1393 04f7 1A070000 		.4byte	0x71a
+ 1394 04fb 05050000 		.4byte	0x505
+ 1395 04ff 0C       		.uleb128 0xc
+ 1396 0500 01       		.uleb128 0x1
+ 1397 0501 50       		.byte	0x50
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 35
+
+
+ 1398 0502 01       		.uleb128 0x1
+ 1399 0503 3B       		.byte	0x3b
+ 1400 0504 00       		.byte	0
+ 1401 0505 0B       		.uleb128 0xb
+ 1402 0506 3C010000 		.4byte	.LVL99
+ 1403 050a 0F070000 		.4byte	0x70f
+ 1404 050e 18050000 		.4byte	0x518
+ 1405 0512 0C       		.uleb128 0xc
+ 1406 0513 01       		.uleb128 0x1
+ 1407 0514 50       		.byte	0x50
+ 1408 0515 01       		.uleb128 0x1
+ 1409 0516 4A       		.byte	0x4a
+ 1410 0517 00       		.byte	0
+ 1411 0518 0D       		.uleb128 0xd
+ 1412 0519 42010000 		.4byte	.LVL100
+ 1413 051d 1A070000 		.4byte	0x71a
+ 1414 0521 0C       		.uleb128 0xc
+ 1415 0522 01       		.uleb128 0x1
+ 1416 0523 50       		.byte	0x50
+ 1417 0524 01       		.uleb128 0x1
+ 1418 0525 3D       		.byte	0x3d
+ 1419 0526 00       		.byte	0
+ 1420 0527 00       		.byte	0
+ 1421 0528 14       		.uleb128 0x14
+ 1422 0529 AA000000 		.4byte	.LASF32
+ 1423 052d 01       		.byte	0x1
+ 1424 052e 5E       		.byte	0x5e
+ 1425 052f 68000000 		.4byte	0x68
+ 1426 0533 05       		.uleb128 0x5
+ 1427 0534 03       		.byte	0x3
+ 1428 0535 00000000 		.4byte	bitTime
+ 1429 0539 14       		.uleb128 0x14
+ 1430 053a AE020000 		.4byte	.LASF33
+ 1431 053e 01       		.byte	0x1
+ 1432 053f 5F       		.byte	0x5f
+ 1433 0540 68000000 		.4byte	0x68
+ 1434 0544 05       		.uleb128 0x5
+ 1435 0545 03       		.byte	0x3
+ 1436 0546 04000000 		.4byte	prefixTime
+ 1437 054a 15       		.uleb128 0x15
+ 1438 054b 80030000 		.4byte	.LASF34
+ 1439 054f 05       		.byte	0x5
+ 1440 0550 1207     		.2byte	0x712
+ 1441 0552 56050000 		.4byte	0x556
+ 1442 0556 06       		.uleb128 0x6
+ 1443 0557 76000000 		.4byte	0x76
+ 1444 055b 16       		.uleb128 0x16
+ 1445 055c 73030000 		.4byte	.LASF35
+ 1446 0560 01       		.byte	0x1
+ 1447 0561 58       		.byte	0x58
+ 1448 0562 68000000 		.4byte	0x68
+ 1449 0566 05       		.uleb128 0x5
+ 1450 0567 03       		.byte	0x3
+ 1451 0568 00000000 		.4byte	error
+ 1452 056c 17       		.uleb128 0x17
+ 1453 056d 6900     		.ascii	"i\000"
+ 1454 056f 01       		.byte	0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 36
+
+
+ 1455 0570 59       		.byte	0x59
+ 1456 0571 68000000 		.4byte	0x68
+ 1457 0575 05       		.uleb128 0x5
+ 1458 0576 03       		.byte	0x3
+ 1459 0577 00000000 		.4byte	i
+ 1460 057b 16       		.uleb128 0x16
+ 1461 057c 36030000 		.4byte	.LASF36
+ 1462 0580 01       		.byte	0x1
+ 1463 0581 5A       		.byte	0x5a
+ 1464 0582 8D000000 		.4byte	0x8d
+ 1465 0586 05       		.uleb128 0x5
+ 1466 0587 03       		.byte	0x3
+ 1467 0588 00000000 		.4byte	count
+ 1468 058c 18       		.uleb128 0x18
+ 1469 058d A7000000 		.4byte	0xa7
+ 1470 0591 9C050000 		.4byte	0x59c
+ 1471 0595 19       		.uleb128 0x19
+ 1472 0596 D2000000 		.4byte	0xd2
+ 1473 059a 13       		.byte	0x13
+ 1474 059b 00       		.byte	0
+ 1475 059c 16       		.uleb128 0x16
+ 1476 059d 23040000 		.4byte	.LASF37
+ 1477 05a1 01       		.byte	0x1
+ 1478 05a2 5B       		.byte	0x5b
+ 1479 05a3 8C050000 		.4byte	0x58c
+ 1480 05a7 05       		.uleb128 0x5
+ 1481 05a8 03       		.byte	0x3
+ 1482 05a9 00000000 		.4byte	lineStr
+ 1483 05ad 16       		.uleb128 0x16
+ 1484 05ae ED020000 		.4byte	.LASF38
+ 1485 05b2 01       		.byte	0x1
+ 1486 05b3 5C       		.byte	0x5c
+ 1487 05b4 8C050000 		.4byte	0x58c
+ 1488 05b8 05       		.uleb128 0x5
+ 1489 05b9 03       		.byte	0x3
+ 1490 05ba 00000000 		.4byte	data
+ 1491 05be 16       		.uleb128 0x16
+ 1492 05bf 3C030000 		.4byte	.LASF39
+ 1493 05c3 01       		.byte	0x1
+ 1494 05c4 5D       		.byte	0x5d
+ 1495 05c5 81000000 		.4byte	0x81
+ 1496 05c9 05       		.uleb128 0x5
+ 1497 05ca 03       		.byte	0x3
+ 1498 05cb 00000000 		.4byte	newDataflag
+ 1499 05cf 16       		.uleb128 0x16
+ 1500 05d0 C8000000 		.4byte	.LASF40
+ 1501 05d4 01       		.byte	0x1
+ 1502 05d5 62       		.byte	0x62
+ 1503 05d6 81000000 		.4byte	0x81
+ 1504 05da 05       		.uleb128 0x5
+ 1505 05db 03       		.byte	0x3
+ 1506 05dc 00000000 		.4byte	errorStatus
+ 1507 05e0 16       		.uleb128 0x16
+ 1508 05e1 5A030000 		.4byte	.LASF41
+ 1509 05e5 01       		.byte	0x1
+ 1510 05e6 63       		.byte	0x63
+ 1511 05e7 81000000 		.4byte	0x81
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 37
+
+
+ 1512 05eb 05       		.uleb128 0x5
+ 1513 05ec 03       		.byte	0x3
+ 1514 05ed 00000000 		.4byte	crabsToSend
+ 1515 05f1 1A       		.uleb128 0x1a
+ 1516 05f2 2B040000 		.4byte	.LASF42
+ 1517 05f6 2B040000 		.4byte	.LASF42
+ 1518 05fa 06       		.byte	0x6
+ 1519 05fb 73       		.byte	0x73
+ 1520 05fc 1A       		.uleb128 0x1a
+ 1521 05fd 66030000 		.4byte	.LASF43
+ 1522 0601 66030000 		.4byte	.LASF43
+ 1523 0605 07       		.byte	0x7
+ 1524 0606 3D       		.byte	0x3d
+ 1525 0607 1A       		.uleb128 0x1a
+ 1526 0608 0A020000 		.4byte	.LASF44
+ 1527 060c 0A020000 		.4byte	.LASF44
+ 1528 0610 08       		.byte	0x8
+ 1529 0611 E7       		.byte	0xe7
+ 1530 0612 1A       		.uleb128 0x1a
+ 1531 0613 4C020000 		.4byte	.LASF45
+ 1532 0617 4C020000 		.4byte	.LASF45
+ 1533 061b 07       		.byte	0x7
+ 1534 061c 3C       		.byte	0x3c
+ 1535 061d 1A       		.uleb128 0x1a
+ 1536 061e 8E000000 		.4byte	.LASF46
+ 1537 0622 8E000000 		.4byte	.LASF46
+ 1538 0626 09       		.byte	0x9
+ 1539 0627 18       		.byte	0x18
+ 1540 0628 1A       		.uleb128 0x1a
+ 1541 0629 18010000 		.4byte	.LASF47
+ 1542 062d 18010000 		.4byte	.LASF47
+ 1543 0631 0A       		.byte	0xa
+ 1544 0632 5A       		.byte	0x5a
+ 1545 0633 1A       		.uleb128 0x1a
+ 1546 0634 F4000000 		.4byte	.LASF48
+ 1547 0638 F4000000 		.4byte	.LASF48
+ 1548 063c 0B       		.byte	0xb
+ 1549 063d 18       		.byte	0x18
+ 1550 063e 1A       		.uleb128 0x1a
+ 1551 063f BE020000 		.4byte	.LASF49
+ 1552 0643 BE020000 		.4byte	.LASF49
+ 1553 0647 0C       		.byte	0xc
+ 1554 0648 54       		.byte	0x54
+ 1555 0649 1A       		.uleb128 0x1a
+ 1556 064a A9010000 		.4byte	.LASF50
+ 1557 064e A9010000 		.4byte	.LASF50
+ 1558 0652 07       		.byte	0x7
+ 1559 0653 38       		.byte	0x38
+ 1560 0654 1A       		.uleb128 0x1a
+ 1561 0655 10030000 		.4byte	.LASF51
+ 1562 0659 10030000 		.4byte	.LASF51
+ 1563 065d 0D       		.byte	0xd
+ 1564 065e 92       		.byte	0x92
+ 1565 065f 1A       		.uleb128 0x1a
+ 1566 0660 28000000 		.4byte	.LASF52
+ 1567 0664 28000000 		.4byte	.LASF52
+ 1568 0668 0E       		.byte	0xe
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 38
+
+
+ 1569 0669 92       		.byte	0x92
+ 1570 066a 1A       		.uleb128 0x1a
+ 1571 066b 8F020000 		.4byte	.LASF53
+ 1572 066f 8F020000 		.4byte	.LASF53
+ 1573 0673 0F       		.byte	0xf
+ 1574 0674 92       		.byte	0x92
+ 1575 0675 1A       		.uleb128 0x1a
+ 1576 0676 59000000 		.4byte	.LASF54
+ 1577 067a 59000000 		.4byte	.LASF54
+ 1578 067e 10       		.byte	0x10
+ 1579 067f 92       		.byte	0x92
+ 1580 0680 1A       		.uleb128 0x1a
+ 1581 0681 11000000 		.4byte	.LASF55
+ 1582 0685 11000000 		.4byte	.LASF55
+ 1583 0689 11       		.byte	0x11
+ 1584 068a 5A       		.byte	0x5a
+ 1585 068b 1A       		.uleb128 0x1a
+ 1586 068c 42010000 		.4byte	.LASF56
+ 1587 0690 42010000 		.4byte	.LASF56
+ 1588 0694 12       		.byte	0x12
+ 1589 0695 18       		.byte	0x18
+ 1590 0696 1A       		.uleb128 0x1a
+ 1591 0697 F2020000 		.4byte	.LASF57
+ 1592 069b F2020000 		.4byte	.LASF57
+ 1593 069f 0E       		.byte	0xe
+ 1594 06a0 BE       		.byte	0xbe
+ 1595 06a1 1A       		.uleb128 0x1a
+ 1596 06a2 B3010000 		.4byte	.LASF58
+ 1597 06a6 B3010000 		.4byte	.LASF58
+ 1598 06aa 0E       		.byte	0xe
+ 1599 06ab C3       		.byte	0xc3
+ 1600 06ac 1A       		.uleb128 0x1a
+ 1601 06ad 57010000 		.4byte	.LASF59
+ 1602 06b1 57010000 		.4byte	.LASF59
+ 1603 06b5 0F       		.byte	0xf
+ 1604 06b6 BE       		.byte	0xbe
+ 1605 06b7 1A       		.uleb128 0x1a
+ 1606 06b8 D4000000 		.4byte	.LASF60
+ 1607 06bc D4000000 		.4byte	.LASF60
+ 1608 06c0 0F       		.byte	0xf
+ 1609 06c1 C3       		.byte	0xc3
+ 1610 06c2 1A       		.uleb128 0x1a
+ 1611 06c3 24030000 		.4byte	.LASF61
+ 1612 06c7 24030000 		.4byte	.LASF61
+ 1613 06cb 10       		.byte	0x10
+ 1614 06cc BE       		.byte	0xbe
+ 1615 06cd 1A       		.uleb128 0x1a
+ 1616 06ce 6A000000 		.4byte	.LASF62
+ 1617 06d2 6A000000 		.4byte	.LASF62
+ 1618 06d6 10       		.byte	0x10
+ 1619 06d7 C3       		.byte	0xc3
+ 1620 06d8 1A       		.uleb128 0x1a
+ 1621 06d9 C6010000 		.4byte	.LASF63
+ 1622 06dd C6010000 		.4byte	.LASF63
+ 1623 06e1 0D       		.byte	0xd
+ 1624 06e2 93       		.byte	0x93
+ 1625 06e3 1A       		.uleb128 0x1a
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 39
+
+
+ 1626 06e4 B2000000 		.4byte	.LASF64
+ 1627 06e8 B2000000 		.4byte	.LASF64
+ 1628 06ec 11       		.byte	0x11
+ 1629 06ed 5B       		.byte	0x5b
+ 1630 06ee 1A       		.uleb128 0x1a
+ 1631 06ef 34000000 		.4byte	.LASF65
+ 1632 06f3 34000000 		.4byte	.LASF65
+ 1633 06f7 13       		.byte	0x13
+ 1634 06f8 26       		.byte	0x26
+ 1635 06f9 1A       		.uleb128 0x1a
+ 1636 06fa 1B040000 		.4byte	.LASF66
+ 1637 06fe 1B040000 		.4byte	.LASF66
+ 1638 0702 06       		.byte	0x6
+ 1639 0703 76       		.byte	0x76
+ 1640 0704 1A       		.uleb128 0x1a
+ 1641 0705 00000000 		.4byte	.LASF67
+ 1642 0709 00000000 		.4byte	.LASF67
+ 1643 070d 14       		.byte	0x14
+ 1644 070e 26       		.byte	0x26
+ 1645 070f 1A       		.uleb128 0x1a
+ 1646 0710 36040000 		.4byte	.LASF68
+ 1647 0714 36040000 		.4byte	.LASF68
+ 1648 0718 0D       		.byte	0xd
+ 1649 0719 BE       		.byte	0xbe
+ 1650 071a 1A       		.uleb128 0x1a
+ 1651 071b 5C020000 		.4byte	.LASF69
+ 1652 071f 5C020000 		.4byte	.LASF69
+ 1653 0723 0D       		.byte	0xd
+ 1654 0724 C3       		.byte	0xc3
+ 1655 0725 00       		.byte	0
+ 1656              		.section	.debug_abbrev,"",%progbits
+ 1657              	.Ldebug_abbrev0:
+ 1658 0000 01       		.uleb128 0x1
+ 1659 0001 11       		.uleb128 0x11
+ 1660 0002 01       		.byte	0x1
+ 1661 0003 25       		.uleb128 0x25
+ 1662 0004 0E       		.uleb128 0xe
+ 1663 0005 13       		.uleb128 0x13
+ 1664 0006 0B       		.uleb128 0xb
+ 1665 0007 03       		.uleb128 0x3
+ 1666 0008 0E       		.uleb128 0xe
+ 1667 0009 1B       		.uleb128 0x1b
+ 1668 000a 0E       		.uleb128 0xe
+ 1669 000b 55       		.uleb128 0x55
+ 1670 000c 17       		.uleb128 0x17
+ 1671 000d 11       		.uleb128 0x11
+ 1672 000e 01       		.uleb128 0x1
+ 1673 000f 10       		.uleb128 0x10
+ 1674 0010 17       		.uleb128 0x17
+ 1675 0011 00       		.byte	0
+ 1676 0012 00       		.byte	0
+ 1677 0013 02       		.uleb128 0x2
+ 1678 0014 24       		.uleb128 0x24
+ 1679 0015 00       		.byte	0
+ 1680 0016 0B       		.uleb128 0xb
+ 1681 0017 0B       		.uleb128 0xb
+ 1682 0018 3E       		.uleb128 0x3e
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 40
+
+
+ 1683 0019 0B       		.uleb128 0xb
+ 1684 001a 03       		.uleb128 0x3
+ 1685 001b 0E       		.uleb128 0xe
+ 1686 001c 00       		.byte	0
+ 1687 001d 00       		.byte	0
+ 1688 001e 03       		.uleb128 0x3
+ 1689 001f 16       		.uleb128 0x16
+ 1690 0020 00       		.byte	0
+ 1691 0021 03       		.uleb128 0x3
+ 1692 0022 0E       		.uleb128 0xe
+ 1693 0023 3A       		.uleb128 0x3a
+ 1694 0024 0B       		.uleb128 0xb
+ 1695 0025 3B       		.uleb128 0x3b
+ 1696 0026 0B       		.uleb128 0xb
+ 1697 0027 49       		.uleb128 0x49
+ 1698 0028 13       		.uleb128 0x13
+ 1699 0029 00       		.byte	0
+ 1700 002a 00       		.byte	0
+ 1701 002b 04       		.uleb128 0x4
+ 1702 002c 24       		.uleb128 0x24
+ 1703 002d 00       		.byte	0
+ 1704 002e 0B       		.uleb128 0xb
+ 1705 002f 0B       		.uleb128 0xb
+ 1706 0030 3E       		.uleb128 0x3e
+ 1707 0031 0B       		.uleb128 0xb
+ 1708 0032 03       		.uleb128 0x3
+ 1709 0033 08       		.uleb128 0x8
+ 1710 0034 00       		.byte	0
+ 1711 0035 00       		.byte	0
+ 1712 0036 05       		.uleb128 0x5
+ 1713 0037 16       		.uleb128 0x16
+ 1714 0038 00       		.byte	0
+ 1715 0039 03       		.uleb128 0x3
+ 1716 003a 0E       		.uleb128 0xe
+ 1717 003b 3A       		.uleb128 0x3a
+ 1718 003c 0B       		.uleb128 0xb
+ 1719 003d 3B       		.uleb128 0x3b
+ 1720 003e 05       		.uleb128 0x5
+ 1721 003f 49       		.uleb128 0x49
+ 1722 0040 13       		.uleb128 0x13
+ 1723 0041 00       		.byte	0
+ 1724 0042 00       		.byte	0
+ 1725 0043 06       		.uleb128 0x6
+ 1726 0044 35       		.uleb128 0x35
+ 1727 0045 00       		.byte	0
+ 1728 0046 49       		.uleb128 0x49
+ 1729 0047 13       		.uleb128 0x13
+ 1730 0048 00       		.byte	0
+ 1731 0049 00       		.byte	0
+ 1732 004a 07       		.uleb128 0x7
+ 1733 004b 2E       		.uleb128 0x2e
+ 1734 004c 00       		.byte	0
+ 1735 004d 3F       		.uleb128 0x3f
+ 1736 004e 19       		.uleb128 0x19
+ 1737 004f 03       		.uleb128 0x3
+ 1738 0050 0E       		.uleb128 0xe
+ 1739 0051 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 41
+
+
+ 1740 0052 0B       		.uleb128 0xb
+ 1741 0053 3B       		.uleb128 0x3b
+ 1742 0054 05       		.uleb128 0x5
+ 1743 0055 27       		.uleb128 0x27
+ 1744 0056 19       		.uleb128 0x19
+ 1745 0057 11       		.uleb128 0x11
+ 1746 0058 01       		.uleb128 0x1
+ 1747 0059 12       		.uleb128 0x12
+ 1748 005a 06       		.uleb128 0x6
+ 1749 005b 40       		.uleb128 0x40
+ 1750 005c 18       		.uleb128 0x18
+ 1751 005d 9742     		.uleb128 0x2117
+ 1752 005f 19       		.uleb128 0x19
+ 1753 0060 00       		.byte	0
+ 1754 0061 00       		.byte	0
+ 1755 0062 08       		.uleb128 0x8
+ 1756 0063 2E       		.uleb128 0x2e
+ 1757 0064 01       		.byte	0x1
+ 1758 0065 3F       		.uleb128 0x3f
+ 1759 0066 19       		.uleb128 0x19
+ 1760 0067 03       		.uleb128 0x3
+ 1761 0068 0E       		.uleb128 0xe
+ 1762 0069 3A       		.uleb128 0x3a
+ 1763 006a 0B       		.uleb128 0xb
+ 1764 006b 3B       		.uleb128 0x3b
+ 1765 006c 05       		.uleb128 0x5
+ 1766 006d 27       		.uleb128 0x27
+ 1767 006e 19       		.uleb128 0x19
+ 1768 006f 11       		.uleb128 0x11
+ 1769 0070 01       		.uleb128 0x1
+ 1770 0071 12       		.uleb128 0x12
+ 1771 0072 06       		.uleb128 0x6
+ 1772 0073 40       		.uleb128 0x40
+ 1773 0074 18       		.uleb128 0x18
+ 1774 0075 9742     		.uleb128 0x2117
+ 1775 0077 19       		.uleb128 0x19
+ 1776 0078 01       		.uleb128 0x1
+ 1777 0079 13       		.uleb128 0x13
+ 1778 007a 00       		.byte	0
+ 1779 007b 00       		.byte	0
+ 1780 007c 09       		.uleb128 0x9
+ 1781 007d 898201   		.uleb128 0x4109
+ 1782 0080 00       		.byte	0
+ 1783 0081 11       		.uleb128 0x11
+ 1784 0082 01       		.uleb128 0x1
+ 1785 0083 31       		.uleb128 0x31
+ 1786 0084 13       		.uleb128 0x13
+ 1787 0085 00       		.byte	0
+ 1788 0086 00       		.byte	0
+ 1789 0087 0A       		.uleb128 0xa
+ 1790 0088 34       		.uleb128 0x34
+ 1791 0089 00       		.byte	0
+ 1792 008a 03       		.uleb128 0x3
+ 1793 008b 0E       		.uleb128 0xe
+ 1794 008c 3A       		.uleb128 0x3a
+ 1795 008d 0B       		.uleb128 0xb
+ 1796 008e 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 42
+
+
+ 1797 008f 05       		.uleb128 0x5
+ 1798 0090 49       		.uleb128 0x49
+ 1799 0091 13       		.uleb128 0x13
+ 1800 0092 02       		.uleb128 0x2
+ 1801 0093 17       		.uleb128 0x17
+ 1802 0094 00       		.byte	0
+ 1803 0095 00       		.byte	0
+ 1804 0096 0B       		.uleb128 0xb
+ 1805 0097 898201   		.uleb128 0x4109
+ 1806 009a 01       		.byte	0x1
+ 1807 009b 11       		.uleb128 0x11
+ 1808 009c 01       		.uleb128 0x1
+ 1809 009d 31       		.uleb128 0x31
+ 1810 009e 13       		.uleb128 0x13
+ 1811 009f 01       		.uleb128 0x1
+ 1812 00a0 13       		.uleb128 0x13
+ 1813 00a1 00       		.byte	0
+ 1814 00a2 00       		.byte	0
+ 1815 00a3 0C       		.uleb128 0xc
+ 1816 00a4 8A8201   		.uleb128 0x410a
+ 1817 00a7 00       		.byte	0
+ 1818 00a8 02       		.uleb128 0x2
+ 1819 00a9 18       		.uleb128 0x18
+ 1820 00aa 9142     		.uleb128 0x2111
+ 1821 00ac 18       		.uleb128 0x18
+ 1822 00ad 00       		.byte	0
+ 1823 00ae 00       		.byte	0
+ 1824 00af 0D       		.uleb128 0xd
+ 1825 00b0 898201   		.uleb128 0x4109
+ 1826 00b3 01       		.byte	0x1
+ 1827 00b4 11       		.uleb128 0x11
+ 1828 00b5 01       		.uleb128 0x1
+ 1829 00b6 31       		.uleb128 0x31
+ 1830 00b7 13       		.uleb128 0x13
+ 1831 00b8 00       		.byte	0
+ 1832 00b9 00       		.byte	0
+ 1833 00ba 0E       		.uleb128 0xe
+ 1834 00bb 2E       		.uleb128 0x2e
+ 1835 00bc 01       		.byte	0x1
+ 1836 00bd 3F       		.uleb128 0x3f
+ 1837 00be 19       		.uleb128 0x19
+ 1838 00bf 03       		.uleb128 0x3
+ 1839 00c0 0E       		.uleb128 0xe
+ 1840 00c1 3A       		.uleb128 0x3a
+ 1841 00c2 0B       		.uleb128 0xb
+ 1842 00c3 3B       		.uleb128 0x3b
+ 1843 00c4 05       		.uleb128 0x5
+ 1844 00c5 27       		.uleb128 0x27
+ 1845 00c6 19       		.uleb128 0x19
+ 1846 00c7 49       		.uleb128 0x49
+ 1847 00c8 13       		.uleb128 0x13
+ 1848 00c9 11       		.uleb128 0x11
+ 1849 00ca 01       		.uleb128 0x1
+ 1850 00cb 12       		.uleb128 0x12
+ 1851 00cc 06       		.uleb128 0x6
+ 1852 00cd 40       		.uleb128 0x40
+ 1853 00ce 18       		.uleb128 0x18
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 43
+
+
+ 1854 00cf 9742     		.uleb128 0x2117
+ 1855 00d1 19       		.uleb128 0x19
+ 1856 00d2 01       		.uleb128 0x1
+ 1857 00d3 13       		.uleb128 0x13
+ 1858 00d4 00       		.byte	0
+ 1859 00d5 00       		.byte	0
+ 1860 00d6 0F       		.uleb128 0xf
+ 1861 00d7 05       		.uleb128 0x5
+ 1862 00d8 00       		.byte	0
+ 1863 00d9 03       		.uleb128 0x3
+ 1864 00da 0E       		.uleb128 0xe
+ 1865 00db 3A       		.uleb128 0x3a
+ 1866 00dc 0B       		.uleb128 0xb
+ 1867 00dd 3B       		.uleb128 0x3b
+ 1868 00de 05       		.uleb128 0x5
+ 1869 00df 49       		.uleb128 0x49
+ 1870 00e0 13       		.uleb128 0x13
+ 1871 00e1 02       		.uleb128 0x2
+ 1872 00e2 17       		.uleb128 0x17
+ 1873 00e3 00       		.byte	0
+ 1874 00e4 00       		.byte	0
+ 1875 00e5 10       		.uleb128 0x10
+ 1876 00e6 05       		.uleb128 0x5
+ 1877 00e7 00       		.byte	0
+ 1878 00e8 03       		.uleb128 0x3
+ 1879 00e9 08       		.uleb128 0x8
+ 1880 00ea 3A       		.uleb128 0x3a
+ 1881 00eb 0B       		.uleb128 0xb
+ 1882 00ec 3B       		.uleb128 0x3b
+ 1883 00ed 05       		.uleb128 0x5
+ 1884 00ee 49       		.uleb128 0x49
+ 1885 00ef 13       		.uleb128 0x13
+ 1886 00f0 02       		.uleb128 0x2
+ 1887 00f1 17       		.uleb128 0x17
+ 1888 00f2 00       		.byte	0
+ 1889 00f3 00       		.byte	0
+ 1890 00f4 11       		.uleb128 0x11
+ 1891 00f5 05       		.uleb128 0x5
+ 1892 00f6 00       		.byte	0
+ 1893 00f7 03       		.uleb128 0x3
+ 1894 00f8 0E       		.uleb128 0xe
+ 1895 00f9 3A       		.uleb128 0x3a
+ 1896 00fa 0B       		.uleb128 0xb
+ 1897 00fb 3B       		.uleb128 0x3b
+ 1898 00fc 05       		.uleb128 0x5
+ 1899 00fd 49       		.uleb128 0x49
+ 1900 00fe 13       		.uleb128 0x13
+ 1901 00ff 02       		.uleb128 0x2
+ 1902 0100 18       		.uleb128 0x18
+ 1903 0101 00       		.byte	0
+ 1904 0102 00       		.byte	0
+ 1905 0103 12       		.uleb128 0x12
+ 1906 0104 2E       		.uleb128 0x2e
+ 1907 0105 01       		.byte	0x1
+ 1908 0106 3F       		.uleb128 0x3f
+ 1909 0107 19       		.uleb128 0x19
+ 1910 0108 03       		.uleb128 0x3
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 44
+
+
+ 1911 0109 0E       		.uleb128 0xe
+ 1912 010a 3A       		.uleb128 0x3a
+ 1913 010b 0B       		.uleb128 0xb
+ 1914 010c 3B       		.uleb128 0x3b
+ 1915 010d 0B       		.uleb128 0xb
+ 1916 010e 49       		.uleb128 0x49
+ 1917 010f 13       		.uleb128 0x13
+ 1918 0110 8701     		.uleb128 0x87
+ 1919 0112 19       		.uleb128 0x19
+ 1920 0113 11       		.uleb128 0x11
+ 1921 0114 01       		.uleb128 0x1
+ 1922 0115 12       		.uleb128 0x12
+ 1923 0116 06       		.uleb128 0x6
+ 1924 0117 40       		.uleb128 0x40
+ 1925 0118 18       		.uleb128 0x18
+ 1926 0119 9742     		.uleb128 0x2117
+ 1927 011b 19       		.uleb128 0x19
+ 1928 011c 01       		.uleb128 0x1
+ 1929 011d 13       		.uleb128 0x13
+ 1930 011e 00       		.byte	0
+ 1931 011f 00       		.byte	0
+ 1932 0120 13       		.uleb128 0x13
+ 1933 0121 34       		.uleb128 0x34
+ 1934 0122 00       		.byte	0
+ 1935 0123 03       		.uleb128 0x3
+ 1936 0124 0E       		.uleb128 0xe
+ 1937 0125 3A       		.uleb128 0x3a
+ 1938 0126 0B       		.uleb128 0xb
+ 1939 0127 3B       		.uleb128 0x3b
+ 1940 0128 0B       		.uleb128 0xb
+ 1941 0129 49       		.uleb128 0x49
+ 1942 012a 13       		.uleb128 0x13
+ 1943 012b 02       		.uleb128 0x2
+ 1944 012c 17       		.uleb128 0x17
+ 1945 012d 00       		.byte	0
+ 1946 012e 00       		.byte	0
+ 1947 012f 14       		.uleb128 0x14
+ 1948 0130 34       		.uleb128 0x34
+ 1949 0131 00       		.byte	0
+ 1950 0132 03       		.uleb128 0x3
+ 1951 0133 0E       		.uleb128 0xe
+ 1952 0134 3A       		.uleb128 0x3a
+ 1953 0135 0B       		.uleb128 0xb
+ 1954 0136 3B       		.uleb128 0x3b
+ 1955 0137 0B       		.uleb128 0xb
+ 1956 0138 49       		.uleb128 0x49
+ 1957 0139 13       		.uleb128 0x13
+ 1958 013a 02       		.uleb128 0x2
+ 1959 013b 18       		.uleb128 0x18
+ 1960 013c 00       		.byte	0
+ 1961 013d 00       		.byte	0
+ 1962 013e 15       		.uleb128 0x15
+ 1963 013f 34       		.uleb128 0x34
+ 1964 0140 00       		.byte	0
+ 1965 0141 03       		.uleb128 0x3
+ 1966 0142 0E       		.uleb128 0xe
+ 1967 0143 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 45
+
+
+ 1968 0144 0B       		.uleb128 0xb
+ 1969 0145 3B       		.uleb128 0x3b
+ 1970 0146 05       		.uleb128 0x5
+ 1971 0147 49       		.uleb128 0x49
+ 1972 0148 13       		.uleb128 0x13
+ 1973 0149 3F       		.uleb128 0x3f
+ 1974 014a 19       		.uleb128 0x19
+ 1975 014b 3C       		.uleb128 0x3c
+ 1976 014c 19       		.uleb128 0x19
+ 1977 014d 00       		.byte	0
+ 1978 014e 00       		.byte	0
+ 1979 014f 16       		.uleb128 0x16
+ 1980 0150 34       		.uleb128 0x34
+ 1981 0151 00       		.byte	0
+ 1982 0152 03       		.uleb128 0x3
+ 1983 0153 0E       		.uleb128 0xe
+ 1984 0154 3A       		.uleb128 0x3a
+ 1985 0155 0B       		.uleb128 0xb
+ 1986 0156 3B       		.uleb128 0x3b
+ 1987 0157 0B       		.uleb128 0xb
+ 1988 0158 49       		.uleb128 0x49
+ 1989 0159 13       		.uleb128 0x13
+ 1990 015a 3F       		.uleb128 0x3f
+ 1991 015b 19       		.uleb128 0x19
+ 1992 015c 02       		.uleb128 0x2
+ 1993 015d 18       		.uleb128 0x18
+ 1994 015e 00       		.byte	0
+ 1995 015f 00       		.byte	0
+ 1996 0160 17       		.uleb128 0x17
+ 1997 0161 34       		.uleb128 0x34
+ 1998 0162 00       		.byte	0
+ 1999 0163 03       		.uleb128 0x3
+ 2000 0164 08       		.uleb128 0x8
+ 2001 0165 3A       		.uleb128 0x3a
+ 2002 0166 0B       		.uleb128 0xb
+ 2003 0167 3B       		.uleb128 0x3b
+ 2004 0168 0B       		.uleb128 0xb
+ 2005 0169 49       		.uleb128 0x49
+ 2006 016a 13       		.uleb128 0x13
+ 2007 016b 3F       		.uleb128 0x3f
+ 2008 016c 19       		.uleb128 0x19
+ 2009 016d 02       		.uleb128 0x2
+ 2010 016e 18       		.uleb128 0x18
+ 2011 016f 00       		.byte	0
+ 2012 0170 00       		.byte	0
+ 2013 0171 18       		.uleb128 0x18
+ 2014 0172 01       		.uleb128 0x1
+ 2015 0173 01       		.byte	0x1
+ 2016 0174 49       		.uleb128 0x49
+ 2017 0175 13       		.uleb128 0x13
+ 2018 0176 01       		.uleb128 0x1
+ 2019 0177 13       		.uleb128 0x13
+ 2020 0178 00       		.byte	0
+ 2021 0179 00       		.byte	0
+ 2022 017a 19       		.uleb128 0x19
+ 2023 017b 21       		.uleb128 0x21
+ 2024 017c 00       		.byte	0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 46
+
+
+ 2025 017d 49       		.uleb128 0x49
+ 2026 017e 13       		.uleb128 0x13
+ 2027 017f 2F       		.uleb128 0x2f
+ 2028 0180 0B       		.uleb128 0xb
+ 2029 0181 00       		.byte	0
+ 2030 0182 00       		.byte	0
+ 2031 0183 1A       		.uleb128 0x1a
+ 2032 0184 2E       		.uleb128 0x2e
+ 2033 0185 00       		.byte	0
+ 2034 0186 3F       		.uleb128 0x3f
+ 2035 0187 19       		.uleb128 0x19
+ 2036 0188 3C       		.uleb128 0x3c
+ 2037 0189 19       		.uleb128 0x19
+ 2038 018a 6E       		.uleb128 0x6e
+ 2039 018b 0E       		.uleb128 0xe
+ 2040 018c 03       		.uleb128 0x3
+ 2041 018d 0E       		.uleb128 0xe
+ 2042 018e 3A       		.uleb128 0x3a
+ 2043 018f 0B       		.uleb128 0xb
+ 2044 0190 3B       		.uleb128 0x3b
+ 2045 0191 0B       		.uleb128 0xb
+ 2046 0192 00       		.byte	0
+ 2047 0193 00       		.byte	0
+ 2048 0194 00       		.byte	0
+ 2049              		.section	.debug_loc,"",%progbits
+ 2050              	.Ldebug_loc0:
+ 2051              	.LLST0:
+ 2052 0000 0E000000 		.4byte	.LVL1
+ 2053 0004 24000000 		.4byte	.LVL2
+ 2054 0008 0100     		.2byte	0x1
+ 2055 000a 53       		.byte	0x53
+ 2056 000b 00000000 		.4byte	0
+ 2057 000f 00000000 		.4byte	0
+ 2058              	.LLST1:
+ 2059 0013 00000000 		.4byte	.LVL8
+ 2060 0017 26000000 		.4byte	.LVL17
+ 2061 001b 0100     		.2byte	0x1
+ 2062 001d 50       		.byte	0x50
+ 2063 001e 26000000 		.4byte	.LVL17
+ 2064 0022 28000000 		.4byte	.LFE68
+ 2065 0026 0400     		.2byte	0x4
+ 2066 0028 F3       		.byte	0xf3
+ 2067 0029 01       		.uleb128 0x1
+ 2068 002a 50       		.byte	0x50
+ 2069 002b 9F       		.byte	0x9f
+ 2070 002c 00000000 		.4byte	0
+ 2071 0030 00000000 		.4byte	0
+ 2072              	.LLST2:
+ 2073 0034 00000000 		.4byte	.LVL8
+ 2074 0038 02000000 		.4byte	.LVL9
+ 2075 003c 0100     		.2byte	0x1
+ 2076 003e 51       		.byte	0x51
+ 2077 003f 02000000 		.4byte	.LVL9
+ 2078 0043 28000000 		.4byte	.LFE68
+ 2079 0047 0300     		.2byte	0x3
+ 2080 0049 71       		.byte	0x71
+ 2081 004a 01       		.sleb128 1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 47
+
+
+ 2082 004b 9F       		.byte	0x9f
+ 2083 004c 00000000 		.4byte	0
+ 2084 0050 00000000 		.4byte	0
+ 2085              	.LLST3:
+ 2086 0054 12000000 		.4byte	.LVL10
+ 2087 0058 14000000 		.4byte	.LVL11
+ 2088 005c 0100     		.2byte	0x1
+ 2089 005e 53       		.byte	0x53
+ 2090 005f 18000000 		.4byte	.LVL12
+ 2091 0063 1A000000 		.4byte	.LVL13
+ 2092 0067 0100     		.2byte	0x1
+ 2093 0069 53       		.byte	0x53
+ 2094 006a 1E000000 		.4byte	.LVL14
+ 2095 006e 20000000 		.4byte	.LVL15
+ 2096 0072 0100     		.2byte	0x1
+ 2097 0074 53       		.byte	0x53
+ 2098 0075 24000000 		.4byte	.LVL16
+ 2099 0079 28000000 		.4byte	.LFE68
+ 2100 007d 0100     		.2byte	0x1
+ 2101 007f 53       		.byte	0x53
+ 2102 0080 00000000 		.4byte	0
+ 2103 0084 00000000 		.4byte	0
+ 2104              	.LLST4:
+ 2105 0088 00000000 		.4byte	.LVL18
+ 2106 008c 42000000 		.4byte	.LVL35
+ 2107 0090 0100     		.2byte	0x1
+ 2108 0092 50       		.byte	0x50
+ 2109 0093 42000000 		.4byte	.LVL35
+ 2110 0097 44000000 		.4byte	.LFE69
+ 2111 009b 0400     		.2byte	0x4
+ 2112 009d F3       		.byte	0xf3
+ 2113 009e 01       		.uleb128 0x1
+ 2114 009f 50       		.byte	0x50
+ 2115 00a0 9F       		.byte	0x9f
+ 2116 00a1 00000000 		.4byte	0
+ 2117 00a5 00000000 		.4byte	0
+ 2118              	.LLST5:
+ 2119 00a9 00000000 		.4byte	.LVL18
+ 2120 00ad 02000000 		.4byte	.LVL19
+ 2121 00b1 0100     		.2byte	0x1
+ 2122 00b3 51       		.byte	0x51
+ 2123 00b4 02000000 		.4byte	.LVL19
+ 2124 00b8 44000000 		.4byte	.LFE69
+ 2125 00bc 0300     		.2byte	0x3
+ 2126 00be 71       		.byte	0x71
+ 2127 00bf 05       		.sleb128 5
+ 2128 00c0 9F       		.byte	0x9f
+ 2129 00c1 00000000 		.4byte	0
+ 2130 00c5 00000000 		.4byte	0
+ 2131              	.LLST6:
+ 2132 00c9 16000000 		.4byte	.LVL20
+ 2133 00cd 18000000 		.4byte	.LVL21
+ 2134 00d1 0100     		.2byte	0x1
+ 2135 00d3 53       		.byte	0x53
+ 2136 00d4 1C000000 		.4byte	.LVL22
+ 2137 00d8 1E000000 		.4byte	.LVL23
+ 2138 00dc 0100     		.2byte	0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 48
+
+
+ 2139 00de 53       		.byte	0x53
+ 2140 00df 22000000 		.4byte	.LVL24
+ 2141 00e3 24000000 		.4byte	.LVL25
+ 2142 00e7 0100     		.2byte	0x1
+ 2143 00e9 53       		.byte	0x53
+ 2144 00ea 28000000 		.4byte	.LVL26
+ 2145 00ee 2A000000 		.4byte	.LVL27
+ 2146 00f2 0100     		.2byte	0x1
+ 2147 00f4 53       		.byte	0x53
+ 2148 00f5 2E000000 		.4byte	.LVL28
+ 2149 00f9 30000000 		.4byte	.LVL29
+ 2150 00fd 0100     		.2byte	0x1
+ 2151 00ff 53       		.byte	0x53
+ 2152 0100 34000000 		.4byte	.LVL30
+ 2153 0104 36000000 		.4byte	.LVL31
+ 2154 0108 0100     		.2byte	0x1
+ 2155 010a 53       		.byte	0x53
+ 2156 010b 3A000000 		.4byte	.LVL32
+ 2157 010f 3C000000 		.4byte	.LVL33
+ 2158 0113 0100     		.2byte	0x1
+ 2159 0115 53       		.byte	0x53
+ 2160 0116 40000000 		.4byte	.LVL34
+ 2161 011a 44000000 		.4byte	.LFE69
+ 2162 011e 0100     		.2byte	0x1
+ 2163 0120 53       		.byte	0x53
+ 2164 0121 00000000 		.4byte	0
+ 2165 0125 00000000 		.4byte	0
+ 2166              	.LLST7:
+ 2167 0129 00000000 		.4byte	.LVL36
+ 2168 012d 40000000 		.4byte	.LVL52
+ 2169 0131 0100     		.2byte	0x1
+ 2170 0133 50       		.byte	0x50
+ 2171 0134 40000000 		.4byte	.LVL52
+ 2172 0138 42000000 		.4byte	.LFE70
+ 2173 013c 0400     		.2byte	0x4
+ 2174 013e F3       		.byte	0xf3
+ 2175 013f 01       		.uleb128 0x1
+ 2176 0140 50       		.byte	0x50
+ 2177 0141 9F       		.byte	0x9f
+ 2178 0142 00000000 		.4byte	0
+ 2179 0146 00000000 		.4byte	0
+ 2180              	.LLST8:
+ 2181 014a 14000000 		.4byte	.LVL37
+ 2182 014e 16000000 		.4byte	.LVL38
+ 2183 0152 0100     		.2byte	0x1
+ 2184 0154 53       		.byte	0x53
+ 2185 0155 1A000000 		.4byte	.LVL39
+ 2186 0159 1C000000 		.4byte	.LVL40
+ 2187 015d 0100     		.2byte	0x1
+ 2188 015f 53       		.byte	0x53
+ 2189 0160 20000000 		.4byte	.LVL41
+ 2190 0164 22000000 		.4byte	.LVL42
+ 2191 0168 0100     		.2byte	0x1
+ 2192 016a 53       		.byte	0x53
+ 2193 016b 26000000 		.4byte	.LVL43
+ 2194 016f 28000000 		.4byte	.LVL44
+ 2195 0173 0100     		.2byte	0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 49
+
+
+ 2196 0175 53       		.byte	0x53
+ 2197 0176 2C000000 		.4byte	.LVL45
+ 2198 017a 2E000000 		.4byte	.LVL46
+ 2199 017e 0100     		.2byte	0x1
+ 2200 0180 53       		.byte	0x53
+ 2201 0181 32000000 		.4byte	.LVL47
+ 2202 0185 34000000 		.4byte	.LVL48
+ 2203 0189 0100     		.2byte	0x1
+ 2204 018b 53       		.byte	0x53
+ 2205 018c 38000000 		.4byte	.LVL49
+ 2206 0190 3A000000 		.4byte	.LVL50
+ 2207 0194 0100     		.2byte	0x1
+ 2208 0196 53       		.byte	0x53
+ 2209 0197 3E000000 		.4byte	.LVL51
+ 2210 019b 42000000 		.4byte	.LFE70
+ 2211 019f 0100     		.2byte	0x1
+ 2212 01a1 53       		.byte	0x53
+ 2213 01a2 00000000 		.4byte	0
+ 2214 01a6 00000000 		.4byte	0
+ 2215              	.LLST9:
+ 2216 01aa 02000000 		.4byte	.LVL53
+ 2217 01ae 7C000000 		.4byte	.LVL75
+ 2218 01b2 0200     		.2byte	0x2
+ 2219 01b4 30       		.byte	0x30
+ 2220 01b5 9F       		.byte	0x9f
+ 2221 01b6 7C000000 		.4byte	.LVL75
+ 2222 01ba AE000000 		.4byte	.LVL77
+ 2223 01be 0100     		.2byte	0x1
+ 2224 01c0 54       		.byte	0x54
+ 2225 01c1 AE000000 		.4byte	.LVL77
+ 2226 01c5 B0000000 		.4byte	.LVL78
+ 2227 01c9 0100     		.2byte	0x1
+ 2228 01cb 50       		.byte	0x50
+ 2229 01cc B0000000 		.4byte	.LVL78
+ 2230 01d0 BA000000 		.4byte	.LVL80
+ 2231 01d4 0100     		.2byte	0x1
+ 2232 01d6 54       		.byte	0x54
+ 2233 01d7 BA000000 		.4byte	.LVL80
+ 2234 01db BC000000 		.4byte	.LVL81
+ 2235 01df 0100     		.2byte	0x1
+ 2236 01e1 50       		.byte	0x50
+ 2237 01e2 BC000000 		.4byte	.LVL81
+ 2238 01e6 C4000000 		.4byte	.LVL83
+ 2239 01ea 0100     		.2byte	0x1
+ 2240 01ec 54       		.byte	0x54
+ 2241 01ed C4000000 		.4byte	.LVL83
+ 2242 01f1 C6000000 		.4byte	.LVL84
+ 2243 01f5 0100     		.2byte	0x1
+ 2244 01f7 50       		.byte	0x50
+ 2245 01f8 C6000000 		.4byte	.LVL84
+ 2246 01fc 60010000 		.4byte	.LFE64
+ 2247 0200 0100     		.2byte	0x1
+ 2248 0202 54       		.byte	0x54
+ 2249 0203 00000000 		.4byte	0
+ 2250 0207 00000000 		.4byte	0
+ 2251              	.LLST10:
+ 2252 020b 02000000 		.4byte	.LVL53
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 50
+
+
+ 2253 020f 7C000000 		.4byte	.LVL75
+ 2254 0213 0200     		.2byte	0x2
+ 2255 0215 30       		.byte	0x30
+ 2256 0216 9F       		.byte	0x9f
+ 2257 0217 7C000000 		.4byte	.LVL75
+ 2258 021b 60010000 		.4byte	.LFE64
+ 2259 021f 0100     		.2byte	0x1
+ 2260 0221 55       		.byte	0x55
+ 2261 0222 00000000 		.4byte	0
+ 2262 0226 00000000 		.4byte	0
+ 2263              		.section	.debug_aranges,"",%progbits
+ 2264 0000 4C000000 		.4byte	0x4c
+ 2265 0004 0200     		.2byte	0x2
+ 2266 0006 00000000 		.4byte	.Ldebug_info0
+ 2267 000a 04       		.byte	0x4
+ 2268 000b 00       		.byte	0
+ 2269 000c 0000     		.2byte	0
+ 2270 000e 0000     		.2byte	0
+ 2271 0010 00000000 		.4byte	.LFB65
+ 2272 0014 2C000000 		.4byte	.LFE65-.LFB65
+ 2273 0018 00000000 		.4byte	.LFB66
+ 2274 001c 08000000 		.4byte	.LFE66-.LFB66
+ 2275 0020 00000000 		.4byte	.LFB67
+ 2276 0024 90000000 		.4byte	.LFE67-.LFB67
+ 2277 0028 00000000 		.4byte	.LFB68
+ 2278 002c 28000000 		.4byte	.LFE68-.LFB68
+ 2279 0030 00000000 		.4byte	.LFB69
+ 2280 0034 44000000 		.4byte	.LFE69-.LFB69
+ 2281 0038 00000000 		.4byte	.LFB70
+ 2282 003c 42000000 		.4byte	.LFE70-.LFB70
+ 2283 0040 00000000 		.4byte	.LFB64
+ 2284 0044 60010000 		.4byte	.LFE64-.LFB64
+ 2285 0048 00000000 		.4byte	0
+ 2286 004c 00000000 		.4byte	0
+ 2287              		.section	.debug_ranges,"",%progbits
+ 2288              	.Ldebug_ranges0:
+ 2289 0000 00000000 		.4byte	.LFB65
+ 2290 0004 2C000000 		.4byte	.LFE65
+ 2291 0008 00000000 		.4byte	.LFB66
+ 2292 000c 08000000 		.4byte	.LFE66
+ 2293 0010 00000000 		.4byte	.LFB67
+ 2294 0014 90000000 		.4byte	.LFE67
+ 2295 0018 00000000 		.4byte	.LFB68
+ 2296 001c 28000000 		.4byte	.LFE68
+ 2297 0020 00000000 		.4byte	.LFB69
+ 2298 0024 44000000 		.4byte	.LFE69
+ 2299 0028 00000000 		.4byte	.LFB70
+ 2300 002c 42000000 		.4byte	.LFE70
+ 2301 0030 00000000 		.4byte	.LFB64
+ 2302 0034 60010000 		.4byte	.LFE64
+ 2303 0038 00000000 		.4byte	0
+ 2304 003c 00000000 		.4byte	0
+ 2305              		.section	.debug_line,"",%progbits
+ 2306              	.Ldebug_line0:
+ 2307 0000 90030000 		.section	.debug_str,"MS",%progbits,1
+ 2307      02008C02 
+ 2307      00000201 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 51
+
+
+ 2307      FB0E0D00 
+ 2307      01010101 
+ 2308              	.LASF67:
+ 2309 0000 5369676E 		.ascii	"SignalBase_Write\000"
+ 2309      616C4261 
+ 2309      73655F57 
+ 2309      72697465 
+ 2309      00
+ 2310              	.LASF55:
+ 2311 0011 50574D5F 		.ascii	"PWM_Switch_Timer_Start\000"
+ 2311      53776974 
+ 2311      63685F54 
+ 2311      696D6572 
+ 2311      5F537461 
+ 2312              	.LASF52:
+ 2313 0028 50574D5F 		.ascii	"PWM_1_Start\000"
+ 2313      315F5374 
+ 2313      61727400 
+ 2314              	.LASF65:
+ 2315 0034 48696768 		.ascii	"HighVoltage_Write\000"
+ 2315      566F6C74 
+ 2315      6167655F 
+ 2315      57726974 
+ 2315      6500
+ 2316              	.LASF2:
+ 2317 0046 73686F72 		.ascii	"short int\000"
+ 2317      7420696E 
+ 2317      7400
+ 2318              	.LASF19:
+ 2319 0050 73697A65 		.ascii	"sizetype\000"
+ 2319      74797065 
+ 2319      00
+ 2320              	.LASF54:
+ 2321 0059 50574D5F 		.ascii	"PWM_3_Start\000"
+ 2321      335F5374 
+ 2321      61727400 
+ 2322              	.LASF30:
+ 2323 0065 6D61696E 		.ascii	"main\000"
+ 2323      00
+ 2324              	.LASF62:
+ 2325 006a 50574D5F 		.ascii	"PWM_3_WriteCompare\000"
+ 2325      335F5772 
+ 2325      69746543 
+ 2325      6F6D7061 
+ 2325      726500
+ 2326              	.LASF22:
+ 2327 007d 6865785F 		.ascii	"hex_value\000"
+ 2327      76616C75 
+ 2327      6500
+ 2328              	.LASF26:
+ 2329 0087 4465636F 		.ascii	"Decode\000"
+ 2329      646500
+ 2330              	.LASF46:
+ 2331 008e 6973725F 		.ascii	"isr_rx_StartEx\000"
+ 2331      72785F53 
+ 2331      74617274 
+ 2331      457800
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 52
+
+
+ 2332              	.LASF12:
+ 2333 009d 75696E74 		.ascii	"uint16\000"
+ 2333      313600
+ 2334              	.LASF11:
+ 2335 00a4 75696E74 		.ascii	"uint8\000"
+ 2335      3800
+ 2336              	.LASF32:
+ 2337 00aa 62697454 		.ascii	"bitTime\000"
+ 2337      696D6500 
+ 2338              	.LASF64:
+ 2339 00b2 50574D5F 		.ascii	"PWM_Switch_Timer_Stop\000"
+ 2339      53776974 
+ 2339      63685F54 
+ 2339      696D6572 
+ 2339      5F53746F 
+ 2340              	.LASF40:
+ 2341 00c8 6572726F 		.ascii	"errorStatus\000"
+ 2341      72537461 
+ 2341      74757300 
+ 2342              	.LASF60:
+ 2343 00d4 50574D5F 		.ascii	"PWM_2_WriteCompare\000"
+ 2343      325F5772 
+ 2343      69746543 
+ 2343      6F6D7061 
+ 2343      726500
+ 2344              	.LASF13:
+ 2345 00e7 666C6F61 		.ascii	"float\000"
+ 2345      7400
+ 2346              	.LASF27:
+ 2347 00ed 50726546 		.ascii	"PreFix\000"
+ 2347      697800
+ 2348              	.LASF48:
+ 2349 00f4 77617463 		.ascii	"watchDogCheck_StartEx\000"
+ 2349      68446F67 
+ 2349      43686563 
+ 2349      6B5F5374 
+ 2349      61727445 
+ 2350              	.LASF6:
+ 2351 010a 6C6F6E67 		.ascii	"long long int\000"
+ 2351      206C6F6E 
+ 2351      6720696E 
+ 2351      7400
+ 2352              	.LASF47:
+ 2353 0118 63686563 		.ascii	"checkWatchDogTimer_Start\000"
+ 2353      6B576174 
+ 2353      6368446F 
+ 2353      6754696D 
+ 2353      65725F53 
+ 2354              	.LASF4:
+ 2355 0131 6C6F6E67 		.ascii	"long int\000"
+ 2355      20696E74 
+ 2355      00
+ 2356              	.LASF24:
+ 2357 013a 62697443 		.ascii	"bitCase\000"
+ 2357      61736500 
+ 2358              	.LASF56:
+ 2359 0142 6973725F 		.ascii	"isr_sec_StartEx\000"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 53
+
+
+ 2359      7365635F 
+ 2359      53746172 
+ 2359      74457800 
+ 2360              	.LASF25:
+ 2361 0152 44617461 		.ascii	"Data\000"
+ 2361      00
+ 2362              	.LASF59:
+ 2363 0157 50574D5F 		.ascii	"PWM_2_WritePeriod\000"
+ 2363      325F5772 
+ 2363      69746550 
+ 2363      6572696F 
+ 2363      6400
+ 2364              	.LASF72:
+ 2365 0169 433A5C53 		.ascii	"C:\\SPB_Data\\Documents\\UACSCode\\UACS\\Spring2018"
+ 2365      50425F44 
+ 2365      6174615C 
+ 2365      446F6375 
+ 2365      6D656E74 
+ 2366 0197 5C554152 		.ascii	"\\UART_FSKTx.cydsn\000"
+ 2366      545F4653 
+ 2366      4B54782E 
+ 2366      63796473 
+ 2366      6E00
+ 2367              	.LASF50:
+ 2368 01a9 4C43445F 		.ascii	"LCD_Start\000"
+ 2368      53746172 
+ 2368      7400
+ 2369              	.LASF58:
+ 2370 01b3 50574D5F 		.ascii	"PWM_1_WriteCompare\000"
+ 2370      315F5772 
+ 2370      69746543 
+ 2370      6F6D7061 
+ 2370      726500
+ 2371              	.LASF63:
+ 2372 01c6 50574D5F 		.ascii	"PWM_Modulator_Stop\000"
+ 2372      4D6F6475 
+ 2372      6C61746F 
+ 2372      725F5374 
+ 2372      6F7000
+ 2373              	.LASF18:
+ 2374 01d9 6C6F6E67 		.ascii	"long double\000"
+ 2374      20646F75 
+ 2374      626C6500 
+ 2375              	.LASF23:
+ 2376 01e5 72785374 		.ascii	"rxStatus\000"
+ 2376      61747573 
+ 2376      00
+ 2377              	.LASF1:
+ 2378 01ee 756E7369 		.ascii	"unsigned char\000"
+ 2378      676E6564 
+ 2378      20636861 
+ 2378      7200
+ 2379              	.LASF20:
+ 2380 01fc 77617463 		.ascii	"watchDogCheck\000"
+ 2380      68446F67 
+ 2380      43686563 
+ 2380      6B00
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 54
+
+
+ 2381              	.LASF44:
+ 2382 020a 73707269 		.ascii	"sprintf\000"
+ 2382      6E746600 
+ 2383              	.LASF0:
+ 2384 0212 7369676E 		.ascii	"signed char\000"
+ 2384      65642063 
+ 2384      68617200 
+ 2385              	.LASF31:
+ 2386 021e 64617461 		.ascii	"data_turn\000"
+ 2386      5F747572 
+ 2386      6E00
+ 2387              	.LASF7:
+ 2388 0228 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2388      206C6F6E 
+ 2388      6720756E 
+ 2388      7369676E 
+ 2388      65642069 
+ 2389              	.LASF8:
+ 2390 023f 756E7369 		.ascii	"unsigned int\000"
+ 2390      676E6564 
+ 2390      20696E74 
+ 2390      00
+ 2391              	.LASF45:
+ 2392 024c 4C43445F 		.ascii	"LCD_PrintString\000"
+ 2392      5072696E 
+ 2392      74537472 
+ 2392      696E6700 
+ 2393              	.LASF69:
+ 2394 025c 50574D5F 		.ascii	"PWM_Modulator_WriteCompare\000"
+ 2394      4D6F6475 
+ 2394      6C61746F 
+ 2394      725F5772 
+ 2394      69746543 
+ 2395              	.LASF5:
+ 2396 0277 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2396      20756E73 
+ 2396      69676E65 
+ 2396      6420696E 
+ 2396      7400
+ 2397              	.LASF21:
+ 2398 0289 52784973 		.ascii	"RxIsr\000"
+ 2398      7200
+ 2399              	.LASF53:
+ 2400 028f 50574D5F 		.ascii	"PWM_2_Start\000"
+ 2400      325F5374 
+ 2400      61727400 
+ 2401              	.LASF3:
+ 2402 029b 73686F72 		.ascii	"short unsigned int\000"
+ 2402      7420756E 
+ 2402      7369676E 
+ 2402      65642069 
+ 2402      6E7400
+ 2403              	.LASF33:
+ 2404 02ae 70726566 		.ascii	"prefixTime\000"
+ 2404      69785469 
+ 2404      6D6500
+ 2405              	.LASF16:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 55
+
+
+ 2406 02b9 63686172 		.ascii	"char\000"
+ 2406      00
+ 2407              	.LASF49:
+ 2408 02be 55415254 		.ascii	"UART_Start\000"
+ 2408      5F537461 
+ 2408      727400
+ 2409              	.LASF10:
+ 2410 02c9 696E7433 		.ascii	"int32_t\000"
+ 2410      325F7400 
+ 2411              	.LASF15:
+ 2412 02d1 63686172 		.ascii	"char8\000"
+ 2412      3800
+ 2413              	.LASF29:
+ 2414 02d7 70726566 		.ascii	"prefixBit\000"
+ 2414      69784269 
+ 2414      7400
+ 2415              	.LASF28:
+ 2416 02e1 70726566 		.ascii	"prefixCount\000"
+ 2416      6978436F 
+ 2416      756E7400 
+ 2417              	.LASF38:
+ 2418 02ed 64617461 		.ascii	"data\000"
+ 2418      00
+ 2419              	.LASF57:
+ 2420 02f2 50574D5F 		.ascii	"PWM_1_WritePeriod\000"
+ 2420      315F5772 
+ 2420      69746550 
+ 2420      6572696F 
+ 2420      6400
+ 2421              	.LASF71:
+ 2422 0304 6D61696E 		.ascii	"main.c\000"
+ 2422      2E6300
+ 2423              	.LASF17:
+ 2424 030b 72656738 		.ascii	"reg8\000"
+ 2424      00
+ 2425              	.LASF51:
+ 2426 0310 50574D5F 		.ascii	"PWM_Modulator_Start\000"
+ 2426      4D6F6475 
+ 2426      6C61746F 
+ 2426      725F5374 
+ 2426      61727400 
+ 2427              	.LASF61:
+ 2428 0324 50574D5F 		.ascii	"PWM_3_WritePeriod\000"
+ 2428      335F5772 
+ 2428      69746550 
+ 2428      6572696F 
+ 2428      6400
+ 2429              	.LASF36:
+ 2430 0336 636F756E 		.ascii	"count\000"
+ 2430      7400
+ 2431              	.LASF39:
+ 2432 033c 6E657744 		.ascii	"newDataflag\000"
+ 2432      61746166 
+ 2432      6C616700 
+ 2433              	.LASF9:
+ 2434 0348 5F5F696E 		.ascii	"__int32_t\000"
+ 2434      7433325F 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 56
+
+
+ 2434      7400
+ 2435              	.LASF73:
+ 2436 0352 6973725F 		.ascii	"isr_sec\000"
+ 2436      73656300 
+ 2437              	.LASF41:
+ 2438 035a 63726162 		.ascii	"crabsToSend\000"
+ 2438      73546F53 
+ 2438      656E6400 
+ 2439              	.LASF43:
+ 2440 0366 4C43445F 		.ascii	"LCD_Position\000"
+ 2440      506F7369 
+ 2440      74696F6E 
+ 2440      00
+ 2441              	.LASF35:
+ 2442 0373 6572726F 		.ascii	"error\000"
+ 2442      7200
+ 2443              	.LASF14:
+ 2444 0379 646F7562 		.ascii	"double\000"
+ 2444      6C6500
+ 2445              	.LASF34:
+ 2446 0380 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 2446      52784275 
+ 2446      66666572 
+ 2446      00
+ 2447              	.LASF70:
+ 2448 038d 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 2448      43313120 
+ 2448      352E342E 
+ 2448      31203230 
+ 2448      31363036 
+ 2449 03c0 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 2449      20726576 
+ 2449      6973696F 
+ 2449      6E203233 
+ 2449      37373135 
+ 2450 03f3 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 2450      66756E63 
+ 2450      74696F6E 
+ 2450      2D736563 
+ 2450      74696F6E 
+ 2451              	.LASF66:
+ 2452 041b 43794465 		.ascii	"CyDelay\000"
+ 2452      6C617900 
+ 2453              	.LASF37:
+ 2454 0423 6C696E65 		.ascii	"lineStr\000"
+ 2454      53747200 
+ 2455              	.LASF42:
+ 2456 042b 43795764 		.ascii	"CyWdtClear\000"
+ 2456      74436C65 
+ 2456      617200
+ 2457              	.LASF68:
+ 2458 0436 50574D5F 		.ascii	"PWM_Modulator_WritePeriod\000"
+ 2458      4D6F6475 
+ 2458      6C61746F 
+ 2458      725F5772 
+ 2458      69746550 
+ 2459              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cciiijgr.s 			page 57
+
+

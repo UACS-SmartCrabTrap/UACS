@@ -14,7 +14,7 @@ function BatteryLife = TxBatteryLife(OnTime) %OnTime in seconds (0-86400)
 c = 675; %Battery capacity in mAh
 p = 2.5; %Power consumed from active transmitter in watts
 v = 9.9; %Voltage supply to the transmitter circuitry in volts
-i_s = 7; %PSoC sleep current in mA
+i_s = 0.5; %PSoC sleep current in mA
 i = (p / v) * 1000; %Current draw from active transmitter in mA
 s = 86400; %Seconds in a day
 

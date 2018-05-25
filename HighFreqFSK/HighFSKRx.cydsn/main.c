@@ -18,6 +18,9 @@
 #define COUNT      100
 #define ACCURACY   70
 
+/*Function Prototypes*/
+void Display(void);
+
 // Interrupt for switching bits 100 ms
 CY_ISR_PROTO(Bit_Timer);
 
@@ -32,6 +35,9 @@ static uint8 crabs = 0; // 4 bits of data transferred from data variable
 static uint8 dataFlag = 0; // Flag to start looking for data
 static uint8 decodeFlag = 0; // Flag to start looking for post-fix
 
+// LCD String Variables
+char OutputString[ARRAY_SIZE];
+char display[ARRAY_SIZE];
 
 // FLAGS for turning on messages on LCD screen
 static uint8 lcdFlagEncode = 0; // Turns on pre-fix message
@@ -54,46 +60,17 @@ int main(void)
     Timer_ISR_StartEx(Bit_Timer);
     LCD_Char_Start();
 
-    // Displays Loading Message before receiving pre-fix
-    char OutputString[ARRAY_SIZE];
-    char display[ARRAY_SIZE];
+    // Displays Loading Message before receiving pre-fix=
     sprintf(display, "counting crabs...");
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
     LCD_Char_PrintString(display);
 
     for(;;)
     {
-        // LCD Screen Messages
-        // If encode is received, display message
-        if(lcdFlagEncode == 1){
-            LCD_Char_ClearDisplay();
-            LCD_Char_PrintString("0xFF pre-fix");
-            lcdFlagEncode = 0; 
-        // When 4 bits are received, data will display at top of screen
-        }else if(lcdFlagData == 1){
-            sprintf(OutputString, "%i", crabs);
-            LCD_Char_ClearDisplay();
-            LCD_Char_Position(0u,0u);
-            LCD_Char_PrintString(OutputString);
-            LCD_Char_PrintString(" crabs");
-            dataFlag = 0;
-            lcdFlagData = 0;
-        // Postfix will display good or bad below data on screen
-        }else if(lcdFlagDecode == 1){
-            LCD_Char_Position(1u,0u);
-            char8 displayG[] = "good";
-            LCD_Char_PrintString(displayG);
-            dataFlag = 0;
-            lcdFlagDecode = 0;
-        }else if(decodeWrong == 1){
-            LCD_Char_Position(1u,0u);
-            char8 displayB[] = "bad";
-            LCD_Char_PrintString(displayB);
-            decodeWrong = 0;
-        }
+        Display();
     } // end of for(;;)
 } // end of main()
-    
+
 
 //Bit length = 100 ms
 //timer period = 10 ms
@@ -158,8 +135,48 @@ CY_ISR(Bit_Timer){
 } // end of CY_ISR(HighF_LevelCount)
 
 
-// Transition time = 10ms
-CY_ISR(Bit_Transition){
-} // end of CY_ISR(Bit_Transistion)
+//// Transition time = 10ms
+//CY_ISR(Bit_Transition){
+//} // end of CY_ISR(Bit_Transistion)
+
+/*
+ * function: void Display(void)
+ * parameters: void
+ * returns: void
+ * description: Displays current data on LCD display depending
+ * on what flags are set
+ */
+void Display()
+{
+    // LCD Screen Messages
+    // If encode is received, display message
+    if(lcdFlagEncode == 1){
+        LCD_Char_ClearDisplay();
+        LCD_Char_PrintString("0xFF pre-fix");
+        lcdFlagEncode = 0; 
+    // When 4 bits are received, data will display at top of screen
+    }else if(lcdFlagData == 1){
+        sprintf(OutputString, "%i", crabs);
+        LCD_Char_ClearDisplay();
+        LCD_Char_Position(0u,0u);
+        LCD_Char_PrintString(OutputString);
+        LCD_Char_PrintString(" crabs");
+        dataFlag = 0;
+        lcdFlagData = 0;
+    // Postfix will display good or bad below data on screen
+    }else if(lcdFlagDecode == 1){
+        LCD_Char_Position(1u,0u);
+        char8 displayG[] = "good";
+        LCD_Char_PrintString(displayG);
+        dataFlag = 0;
+        lcdFlagDecode = 0;
+    }else if(decodeWrong == 1){
+        LCD_Char_Position(1u,0u);
+        char8 displayB[] = "bad";
+        LCD_Char_PrintString(displayB);
+        decodeWrong = 0;
+    }
+}//end Display()
+    
 
 /* [] END OF FILE */

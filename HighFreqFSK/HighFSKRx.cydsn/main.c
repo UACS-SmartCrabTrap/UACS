@@ -21,7 +21,7 @@
 /*Function Prototypes*/
 void Display(void);
 
-// Interrupt for switching bits 100 ms
+// Interrupt for switching bits 5 ms
 CY_ISR_PROTO(Bit_Timer);
 
 // Global Variables
@@ -53,7 +53,6 @@ int main(void)
 
     /* initialization/startup code here */
     PWM_Recon_Start();
-    //BPF_Comp_Start();
     Shift_Reg_Start();
     Out_Comp_Start();
     Bit_Timer_Start();
@@ -131,13 +130,9 @@ CY_ISR(Bit_Timer){
             decodeFlag = 0;
             dataFlag = 0; //Don't want to check for data anymore
         }
-    } // end of if(levelCounter == 10)
+    } // end of if(levelCounter == COUNT)
 } // end of CY_ISR(HighF_LevelCount)
 
-
-//// Transition time = 10ms
-//CY_ISR(Bit_Transition){
-//} // end of CY_ISR(Bit_Transistion)
 
 /*
  * function: void Display(void)

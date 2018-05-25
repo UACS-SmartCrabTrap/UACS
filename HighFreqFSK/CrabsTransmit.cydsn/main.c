@@ -6,6 +6,8 @@
  * Description: Receives amount of crabs via UART and sends
  * amount by 1 crab per CRAB_TIME
  *
+ * Code taken from UART_Full_Duplex for RxIsr and common.h
+ *
  * ========================================
 */
 #include "project.h"

@@ -5,10 +5,33 @@
 * Revision: 5/15/18
 *
 * Description:
+*   Receives data from the hyper terminal up to MAX_CRABS.
+*   FSK is then started using the input data and then prompts the user for
+*   more data. The LCD Display shows the number of crabs sent.
+*
+* This code was taken from PSoC's USBFS_UART example code and edited to store
+* a number for sending to another PSoC
+*
+* Description:
 *   The component is enumerated as a Virtual Com port. Receives data from the 
-*   hyper terminal, then sends back the received data. FSK is then started
-*   using the input data and then prompts the user for more data.
-*   The LCD Display shows the number of crabs sent.
+*   hyper terminal, then sends back the received data.
+*   For PSoC3/PSoC5LP, the LCD shows the line settings.
+*
+* Related Document:
+*  Universal Serial Bus Specification Revision 2.0
+*  Universal Serial Bus Class Definitions for Communications Devices
+*  Revision 1.2
+*
+********************************************************************************
+* Copyright 2015, Cypress Semiconductor Corporation. All rights reserved.
+* This software is owned by Cypress Semiconductor Corporation and is protected
+* by and subject to worldwide patent and copyright laws and treaties.
+* Therefore, you may use this software only as provided in the license agreement
+* accompanying the software package from which you obtained this software.
+* CYPRESS AND ITS SUPPLIERS MAKE NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+* WITH REGARD TO THIS SOFTWARE, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT,
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+********************************************************************************
 */
 
 

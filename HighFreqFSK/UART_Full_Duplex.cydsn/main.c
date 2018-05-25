@@ -10,6 +10,15 @@
 * receiver(RX) and transmitter(TX)]. The data received by RX is used for
 * FSK transmission. 
 *
+*  This code has been modified from PSoC's UART_Full_Duplex example code.
+*  This code example project demonstrates how to communicate between 
+*  the PC and UART component in Full duplex mode. The UART has receiver(RX) and 
+*  transmitter(TX) part. The data received by RX is looped back to the TX.
+*
+*******************************************************************************
+* Copyright (2017), Cypress Semiconductor Corporation. All rights reserved.
+*******************************************************************************
+*
 * Related Document: 
 * CE210741_UART_Full_Duplex_and_printf_Support_with_PSoC_3_4_5LP.pdf
 *

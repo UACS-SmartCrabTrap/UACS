@@ -26,6 +26,7 @@
 
 /*PWM Frequencies*/
 #define ONE_FREQ 42000
+#define ZERO_FREQ 37000
 #define AUDIBLE_FREQ 12000
 #define ONE 1
 #define ZERO 0

@@ -30,14 +30,12 @@
 
 #include <project.h>
 #include <stdio.h>
-#include "common.h"
 #include "stdlib.h"
 
 /***************************************
 * Conditional Compilation Parameters
 ***************************************/
-#define INTERRUPT_CODE_ENABLED      ENABLED
-#define UART                        ENABLED
+#define UART    ENABLED
 
 /* Character LCD String Length */
 #define LINE_STR_LENGTH     (20u)
@@ -53,8 +51,8 @@
 #define FREQ(x) (CLOCK_FREQ/x)-1
 
 /*PWM Frequencies*/
-#define ONE_FREQ 42000
-#define ZERO_FREQ 37000
+#define ONE_FREQ     42000
+#define ZERO_FREQ    37000
 #define AUDIBLE_FREQ 12000
 
 #define BIT_0_MASK 0x01
@@ -66,14 +64,16 @@
 #define BIT_6_MASK 0x40
 #define BIT_7_MASK 0x80
 
-#define ZERO 0x0
-#define ONE 0x1
-#define TRUE 0x1
-#define FALSE 0x0
-#define DATA_LENGTH 4
-#define DECODE_VALUE 0x01
+#define ZERO              0x0
+#define ONE               0x1
+#define TRUE              0x1
+#define FALSE             0x0
+#define ENABLED           1u
+#define DISABLED          0u
+#define DATA_LENGTH       4
+#define DECODE_VALUE      0x01
 #define PREFIX_BIT_LENGTH 6
-#define PREFIX_MESSAGE 0xFF
+#define PREFIX_MESSAGE    0xFF
 
 /*Function Prototypes*/
 int Data(unsigned int hex_value, int bT);
@@ -93,7 +93,7 @@ static int prefixTime = 0;
 
 /* UART Global Variables */
 uint8 errorStatus = 0u;
-uint8 crabsToSend = 0;
+uint8 crabsToSend = 1;
 
 
 /*******************************************************************************
@@ -141,7 +141,6 @@ CY_ISR(RxIsr)
 {
     uint8 rxStatus;         
     newDataflag = 1;
-    HighVoltage_Write(1);
     do
     {
         /* Read receiver status register */
@@ -186,7 +185,7 @@ int main()
     int bitCase = 0;
     int data_turn = 0;
 
-#if(INTERRUPT_CODE_ENABLED == ENABLED)
+#if(UART == ENABLED)
     isr_rx_StartEx(RxIsr);
 #endif /* INTERRUPT_CODE_ENABLED == ENABLED */
     
@@ -261,9 +260,20 @@ int main()
                 //reset here to be ready for case 0 
                 prefixTime = 0;
                 data_turn++;
+                
+#if(UART == ENABLED)
                 if (data_turn == DATA_LENGTH) {
                     data_turn = 0;
                 }
+                crabsToSend <<= 1; 
+#else 
+                //Once data to be sent can't be contained in a nibble, reset to 0x1
+                if (data_turn == DATA_LENGTH) {
+                    data_turn = 0;
+                    crabsToSend = ONE;
+                }
+#endif /* UART == ENABLED */
+
                 PWM_Modulator_Stop();
                 // Turn High Voltage off while delaying
                 PWM_Switch_Timer_Stop();
@@ -277,8 +287,8 @@ int main()
                 while(newDataflag == 0){
                 }
 #else 
-                /* Delay and send data after without waiting for UART */
-                CyDelay(3000);
+                /* Delay in ms and send data after without waiting for UART */
+                CyDelay(1000);
 #endif /* UART == ENABLED */
 
                 /* New data: Turn on circuitry and begin transmission */

@@ -35,7 +35,7 @@
 /***************************************
 * Conditional Compilation Parameters
 ***************************************/
-#define UART    ENABLED
+#define UART    DISABLED
 
 /* Character LCD String Length */
 #define LINE_STR_LENGTH     (20u)
@@ -74,6 +74,7 @@
 #define DECODE_VALUE      0x01
 #define PREFIX_BIT_LENGTH 6
 #define PREFIX_MESSAGE    0xFF
+#define MAX_DATA_SENDING  3
 
 /*Function Prototypes*/
 int Data(unsigned int hex_value, int bT);
@@ -90,6 +91,7 @@ char8 data[LINE_STR_LENGTH];
 uint8 newDataflag = 0;
 static int bitTime = 0;
 static int prefixTime = 0;
+static int sendDataCount = 0;
 
 /* UART Global Variables */
 uint8 errorStatus = 0u;
@@ -254,6 +256,7 @@ int main()
                 bitCase = Decode(DECODE_VALUE, bitTime);
                 break;
             case 13:
+                sendDataCount++;
                 // Turn sending off until new data
                 newDataflag = 0;
                 //encode used to transmit 7 1's for the prefix 
@@ -265,26 +268,33 @@ int main()
                 if (data_turn == DATA_LENGTH) {
                     data_turn = 0;
                 }
-                crabsToSend <<= 1; 
 #else 
                 //Once data to be sent can't be contained in a nibble, reset to 0x1
                 if (data_turn == DATA_LENGTH) {
                     data_turn = 0;
                     crabsToSend = ONE;
                 }
+                if(sendDataCount >= MAX_DATA_SENDING){
+                    crabsToSend <<= 1; 
+                }
 #endif /* UART == ENABLED */
 
+                // Turn off PWM and stop timer 
                 PWM_Modulator_Stop();
-                // Turn High Voltage off while delaying
                 PWM_Switch_Timer_Stop();
-                // Turn High Voltage Back On
-                HighVoltage_Write(0);
+                HighVoltage_Write(0); // Turn High Voltage off while delaying
                 CyDelay(20);
                 SignalBase_Write(0);
 
 #if(UART == ENABLED)
-                /* Wait for new data before sending out data */
-                while(newDataflag == 0){
+                /* Check if data has been sent 3 time */
+                if(sendDataCount >= MAX_DATA_SENDING){
+                    /* Wait for new data before sending out data */
+                    while(newDataflag == 0){
+                    }
+                }else{
+                    /* Delay 1 s before sending out ECC Data */
+                    CyDelay(1000);
                 }
 #else 
                 /* Delay in ms and send data after without waiting for UART */

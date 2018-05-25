@@ -12,6 +12,7 @@
 * This code was taken from PSoC's USBFS_UART example code and edited to store
 * a number for sending to another PSoC
 *
+********************************************************************************
 * Description:
 *   The component is enumerated as a Virtual Com port. Receives data from the 
 *   hyper terminal, then sends back the received data.

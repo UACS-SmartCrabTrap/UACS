@@ -33,18 +33,13 @@
 #include "common.h"
 #include "stdlib.h"
 
+/***************************************
+* Conditional Compilation Parameters
+***************************************/
+#define INTERRUPT_CODE_ENABLED      ENABLED
+#define UART                        ENABLED
+
 /* Character LCD String Length */
-#define LINE_STR_LENGTH     (20u)
-
-/* Global Variables */
-uint8 errorStatus = 0u;
-char8 data[LINE_STR_LENGTH];
-uint8 rxData = 0;
-
-/* The buffer size is equal to the maximum packet size of the IN and OUT bulk
-* endpoints.
-*/
-#define USBUART_BUFFER_SIZE (64u)
 #define LINE_STR_LENGTH     (20u)
 /* Change data size for sending longer data (n-1) */
 #define DATA_SIZE           (7u)
@@ -52,7 +47,6 @@ uint8 rxData = 0;
 #define MAX_CRABS           (15)
 /* Error used for user error */
 #define ERROR               (333u)
-
 
 /*Definitions*/
 #define CLOCK_FREQ 1000000
@@ -78,10 +72,8 @@ uint8 rxData = 0;
 #define FALSE 0x0
 #define DATA_LENGTH 4
 #define DECODE_VALUE 0x01
-//
 #define PREFIX_BIT_LENGTH 6
 #define PREFIX_MESSAGE 0xFF
-
 
 /*Function Prototypes*/
 int Data(unsigned int hex_value, int bT);
@@ -90,29 +82,28 @@ int PreFix(unsigned int hex_value, int prefixCount);
 CY_ISR_PROTO(isr_sec); // High F Interrupt
 
 /*Global Variables*/
-int prompt = 1;
-int endFlag = 0; // flag for end of user input
-int oneDigit = 0; // flag for end of input with one character
-int twoDigit = 0; // flag for end of input with two characters
 int error = 0; // flag for input error
 int i = 2; // to iterate through data array
 uint16 count;
 char8 lineStr[LINE_STR_LENGTH];
-uint8 buffer[USBUART_BUFFER_SIZE];
+char8 data[LINE_STR_LENGTH];
 uint8 newDataflag = 0;
-
-/*Global Variables*/
 static int bitTime = 0;
 static int prefixTime = 0;
 
+/* UART Global Variables */
+uint8 errorStatus = 0u;
+uint8 crabsToSend = 0;
 
 
 /*******************************************************************************
-* Function Name: RxIsr
+* Function Name: isr_sec
 ********************************************************************************
 *
 * Summary:
-*  Interrupt Service Routine for RX portion of the UART
+* Interrupt triggered on a 0.1s timer timeout
+* Will increment prefixTime counter for the 1st 8 bits
+* Then move on to incrementing the message bit counter
 *
 * Parameters:
 *  None.
@@ -121,10 +112,6 @@ static int prefixTime = 0;
 *  None.
 *
 *******************************************************************************/
-
-// Interrupt triggered on a 0.1s timer timeout
-// Will increment prefixTime counter for the 1st 8 bits
-// Then move on to incrementing the message bit counter
 CY_ISR(isr_sec)
 {
     if((bitTime == 0) && (prefixTime <= PREFIX_BIT_LENGTH)){
@@ -135,6 +122,21 @@ CY_ISR(isr_sec)
     }
 }//end CY_ISR(isr_sec)
 
+/*******************************************************************************
+* Function Name: RxIsr
+********************************************************************************
+*
+* Summary:
+*  Interrupt Service Routine for RX portion of the UART taken from
+*  example code and edited for storing data to send
+*
+* Parameters:
+*  None.
+*
+* Return:
+*  None.
+*
+*******************************************************************************/
 CY_ISR(RxIsr)
 {
     uint8 rxStatus;         
@@ -156,14 +158,14 @@ CY_ISR(RxIsr)
         if((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u)
         {
             /* Read data from the RX data register */
-            rxData = UART_RXDATA_REG;
+            crabsToSend = UART_RXDATA_REG;
             if(errorStatus == 0u)
             {
                 /* Send data backward */
-                UART_TXDATA_REG = rxData;
+                UART_TXDATA_REG = crabsToSend;
                 /* Clear LCD line. */
                 LCD_Position(0u, 0u);
-                sprintf(data,"Crabs: %d", rxData);
+                sprintf(data,"Crabs: %d", crabsToSend);
                 LCD_PrintString("             ");
 
                 /* Output string on LCD. */
@@ -172,7 +174,6 @@ CY_ISR(RxIsr)
             }
         }
     }while((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u);
-
 }
     
 
@@ -184,20 +185,17 @@ int main()
     /*Variable initializations*/
     int bitCase = 0;
     int data_turn = 0;
-    unsigned int data_to_be_sent = ONE;
-    
-    UART_Start();           /* Start communication component */
-    UART_PutString("UART Full Duplex and printf() support Code Example Project \r\n");
 
 #if(INTERRUPT_CODE_ENABLED == ENABLED)
     isr_rx_StartEx(RxIsr);
 #endif /* INTERRUPT_CODE_ENABLED == ENABLED */
     
-    CyGlobalIntEnable;      /* Enable global interrupts. */
-    /*Block initializations*/
-    LCD_Start();
+    /* Enable global interrupts. */
+    CyGlobalIntEnable;    
     
     /*Block initializations*/
+    UART_Start(); 
+    LCD_Start();
     PWM_Modulator_Start();
     PWM_1_Start();
     PWM_2_Start();
@@ -242,7 +240,8 @@ int main()
             case 2:
             case 3:
             case 4:
-                bitCase = Data(rxData, bitTime); 
+                //rxData is data received from UART
+                bitCase = Data(crabsToSend, bitTime); 
                 break; 
             // DECODE
             case 5:    
@@ -269,15 +268,19 @@ int main()
                 // Turn High Voltage off while delaying
                 PWM_Switch_Timer_Stop();
                 // Turn High Voltage Back On
-
                 HighVoltage_Write(0);
                 CyDelay(20);
                 SignalBase_Write(0);
 
+#if(UART == ENABLED)
                 /* Wait for new data before sending out data */
                 while(newDataflag == 0){
                 }
-                
+#else 
+                /* Delay and send data after without waiting for UART */
+                CyDelay(3000);
+#endif /* UART == ENABLED */
+
                 /* New data: Turn on circuitry and begin transmission */
                 HighVoltage_Write(1);
                 CyDelay(20); // Give voltage booster time to charge up

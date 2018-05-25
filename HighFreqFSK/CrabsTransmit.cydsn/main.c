@@ -26,7 +26,6 @@
 
 /*PWM Frequencies*/
 #define ONE_FREQ 42000
-#define ZERO_FREQ 37000
 #define AUDIBLE_FREQ 12000
 #define ONE 1
 #define ZERO 0
@@ -36,12 +35,13 @@ CY_ISR_PROTO(isr_sec); // High F Interrupt
 CY_ISR_PROTO(sleep_interrupt);
 
 /*Global Variables*/
-int stop = ONE;
+int stop = ONE; // variable to stop sending PWM
+int crabs = 0; // How many crabs are in the trap?
+int dataCount = 0;
 uint8 newDataflag = 0;
 uint8 errorStatus = 0u;
 uint8 rxData = 0;
-int crabs = 0; // How many crabs are in the trap?
-int dataCount = 0;
+
 
 /*
  * RxIsr interrupt

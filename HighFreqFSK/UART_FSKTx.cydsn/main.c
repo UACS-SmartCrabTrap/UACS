@@ -35,7 +35,7 @@
 /***************************************
 * Conditional Compilation Parameters
 ***************************************/
-#define UART    ENABLED
+#define UART    DISABLED
 
 /* Character LCD String Length */
 #define LINE_STR_LENGTH     (20u)
@@ -98,9 +98,9 @@ char8 lineStr[LINE_STR_LENGTH];
 char8 data[LINE_STR_LENGTH];
 uint8 newDataflag = 0;
 static int bitTime = 0;
-static int currentByte = 5;
+static int currentByte = Encoding_Byte1;
 static int prefixTime = 0;
-static int sendDataCount = MAX_DATA_SENDING;
+static int sendDataCount = 0;
 static int ParityFlag = 0;
 
 /* UART Global Variables */
@@ -196,13 +196,22 @@ int main()
                     sendDataCount = 0;
                     crabsToSend <<= 1; // Move over data a bit
                     data_turn++;
-                    CyDelay(2000);
-                    //Once data to be sent can't be contained in a nibble, reset to 0x1
-                    if (data_turn == DATA_LENGTH) {
-                        data_turn = 0;
-                        crabsToSend = ONE;
-                    }
+                    CyDelay(2000); // 2 second delay between new data
                 }
+                //Once data to be sent can't be contained in a byte, reset to 0x1
+                if (data_turn >= DATA_LENGTH-1) {
+                    data_turn = 0;
+                    crabsToSend = ONE;
+                }
+                
+                /* Clear LCD line. */
+                LCD_Position(0u, 0u);
+                sprintf(data,"Crabs: %d", crabsToSend);
+                LCD_PrintString("             ");
+
+                /* Output string on LCD. */
+                LCD_Position(0u, 0u);
+                LCD_PrintString(data);
  
 #endif /* UART == ENABLED */
 
@@ -243,11 +252,13 @@ int main()
         
         /* Send out frequency depending on bit is 1 or 0 */
         if(bitCase == ONE){
+            SignalBase_Write(1);
             PWM_Modulator_Start();
             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
         }else if(bitCase == ZERO){
             PWM_Modulator_Stop();
+            SignalBase_Write(0);
         } // end if statement
     } // end for loop
 } // end main

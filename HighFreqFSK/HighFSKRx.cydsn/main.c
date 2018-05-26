@@ -32,12 +32,12 @@ CY_ISR_PROTO(Bit_Timer);
 
 // Global Variables
 static uint16 levelCounter = 0; // Timer counter to debounce bit
-static uint8 zeroCount = 0; // 0 count used in timer counter debounce
+static uint16 zeroCount = 0; // 0 count used in timer counter debounce
 static uint16 oneCount = 0; // 1 count used in timer counter debounce
-static uint8 currentBit = 0; // x/10 bit decision for 500 ms bit
-static uint8 dataCount = 0; // which bit of data we are looking at
-static uint8 data = 0; // 4 bits of data
-static uint8 crabs = 0; // 4 bits of data transferred from data variable
+static uint16 currentBit = 0; // x/10 bit decision for 500 ms bit
+static uint16 dataCount = 0; // which bit of data we are looking at
+static uint16 data = 0; // byte bits of data
+static uint16 crabs = 0; // byte of data transferred from data variable
 static uint8 dataFlag = 0; // Flag to start looking for data
 static uint8 decodeFlag = 0; // Flag to start looking for post-fix
 
@@ -96,20 +96,24 @@ CY_ISR(Bit_Timer){
             if(oneCount >= PREFIX_ACCURACY){ // 1 bit must be Accuracy/100 = 1 
                 currentBit = 0x01;
                 oneCount = 0;
+                Count_Out_Write(1);
         
             }else{ // if oneCount <= 7, bit is 0
                 currentBit = 0x00; 
                 zeroCount = 0; 
+                Count_Out_Write(0);
             
             }
         }else{ // looking for data bits, can have less accuracy
             if(oneCount >= DATA_ACCURACY){ // 1 bit must be Accuracy/100 = 1 
                 currentBit = 0x01;
                 oneCount = 0;
+                Count_Out_Write(1);
         
             }else{ // if oneCount <= 7, bit is 0
                 currentBit = 0x00; 
                 zeroCount = 0; 
+                Count_Out_Write(0);
             
             }
         }
@@ -121,7 +125,7 @@ CY_ISR(Bit_Timer){
         data = data | currentBit;
         // Check if data is prefix(oxFF) but we are not looking for data or decode
         if((data == 0xff) && (dataFlag == 0) && (decodeFlag == 0)){ 
-            Count_Out_Write(1);
+            
             dataCount = 0;
             data = 0x00;
             dataFlag = 1; //Start looking for data
@@ -172,11 +176,10 @@ void Display()
     }else if(lcdFlagData == 1){
         int paritySuccess = CheckParity(crabs);
         crabs = crabs >> 1;
-        sprintf(OutputString, "P = %i, %i", paritySuccess,crabs);
+        sprintf(OutputString, "Crabs:%i Err:%i",crabs, !paritySuccess);
         LCD_Char_ClearDisplay();
         LCD_Char_Position(0u,0u);
         LCD_Char_PrintString(OutputString);
-        LCD_Char_PrintString(" crabs");
         dataFlag = 0;
         lcdFlagData = 0;
     // Postfix will display good or bad below data on screen

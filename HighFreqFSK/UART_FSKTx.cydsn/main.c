@@ -122,7 +122,9 @@ int main()
 #endif /* INTERRUPT_CODE_ENABLED == ENABLED */
     
     /* Enable global interrupts. */
-    CyGlobalIntEnable;    
+    CyGlobalIntEnable;
+    checkWatchDogTimer_Start();
+    watchDogCheck_StartEx(watchDogCheck);
     
     /*Block initializations*/
     UART_Start(); 

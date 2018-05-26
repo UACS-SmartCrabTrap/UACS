@@ -35,7 +35,7 @@
 /***************************************
 * Conditional Compilation Parameters
 ***************************************/
-#define UART    DISABLED
+#define UART    ENABLED
 
 /* Character LCD String Length */
 #define LINE_STR_LENGTH     (20u)
@@ -70,18 +70,25 @@
 #define FALSE             0x0
 #define ENABLED           1u
 #define DISABLED          0u
-#define DATA_LENGTH       4
+#define DATA_LENGTH       8
 #define DECODE_VALUE      0x01
 #define PREFIX_BIT_LENGTH 6
 #define PREFIX_MESSAGE    0xFF
 #define MAX_DATA_SENDING  3
 
+/*Enumerations*/
+enum state{
+    Encoding_Byte1,
+    Data,
+    Parity,
+    Decoding_Byte1,
+};
+
 /*Function Prototypes*/
 int Byte(unsigned int hex_value, int bT);
-int Decode(unsigned int hex_value, int bT);
-int PreFix(unsigned int hex_value, int prefixCount);
-void FindParity(void);
+int FindParity(void);
 CY_ISR_PROTO(isr_sec); // High F Interrupt
+CY_ISR_PROTO(RxIsr); // RX Interrupt
 
 /*Global Variables*/
 int error = 0; // flag for input error
@@ -91,16 +98,15 @@ char8 lineStr[LINE_STR_LENGTH];
 char8 data[LINE_STR_LENGTH];
 uint8 newDataflag = 0;
 static int bitTime = 0;
+static int currentByte = 5;
 static int prefixTime = 0;
-static int sendDataCount = 0;
-int parity = 0; // error checking even or odd parity
+static int sendDataCount = MAX_DATA_SENDING;
+static int ParityFlag = 0;
 
 /* UART Global Variables */
 uint8 errorStatus = 0u;
 uint8 crabsToSend = 0x1;
 
-
-    
 
 /*******************************************************************************
 * Function Name: main()
@@ -155,41 +161,32 @@ int main()
             /* Clear error status */
             errorStatus = 0u;
         }
-        switch(bitTime){
-            // ENCODE
-            case 0:
-                bitCase = PreFix(PREFIX_MESSAGE , prefixTime);
-                break; 
-            // DATA
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-                //rxData is data received from UART
-                bitCase = Byte(crabsToSend, bitTime);
-                break; 
-            // DECODE
-            case 5:    
-            case 6:
-            case 7:    
-            case 8:
-            case 9:
-            case 10:
-            case 11:
-            case 12:
-                bitCase = Decode(DECODE_VALUE, bitTime);
+        switch(currentByte){
+            case Encoding_Byte1:
+                bitCase = Byte(PREFIX_MESSAGE, bitTime);
                 break;
-            case 13:
+            case Data:
+                bitCase = Byte(crabsToSend, bitTime);
+                break;
+            case Parity:
+                ParityFlag = TRUE;
+                bitCase = FindParity();
+                break;
+            case Decoding_Byte1:
+                bitCase = Byte(DECODE_VALUE, bitTime);
+                break;
+ 
+            default:
                 sendDataCount++; // count how many times we send data
                 // Turn sending off until new data from UART
                 newDataflag = 0;
                 //encode used to transmit 7 1's for the prefix 
                 //reset here to be ready for case 0 
                 prefixTime = 0;
-                parity = 0;
                 FindParity();
                 
 #if(UART == ENABLED)
+                data_turn++;
                 if (data_turn == DATA_LENGTH) {
                     data_turn = 0;
                 }
@@ -199,6 +196,7 @@ int main()
                     sendDataCount = 0;
                     crabsToSend <<= 1; // Move over data a bit
                     data_turn++;
+                    CyDelay(2000);
                     //Once data to be sent can't be contained in a nibble, reset to 0x1
                     if (data_turn == DATA_LENGTH) {
                         data_turn = 0;
@@ -239,18 +237,17 @@ int main()
                 bitTime = 0; 
                 PWM_Modulator_Start();
                 PWM_Switch_Timer_Start();
+                currentByte = Encoding_Byte1;
                 break;
-            default:
-                break; 
          } //end switch(bitTime) 
         
         /* Send out frequency depending on bit is 1 or 0 */
         if(bitCase == ONE){
+            PWM_Modulator_Start();
             PWM_Modulator_WritePeriod(FREQ(ONE_FREQ));
             PWM_Modulator_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width
         }else if(bitCase == ZERO){
-            PWM_Modulator_WritePeriod(FREQ(ZERO_FREQ));
-            PWM_Modulator_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width
+            PWM_Modulator_Stop();
         } // end if statement
     } // end for loop
 } // end main
@@ -299,120 +296,31 @@ int Byte(unsigned int hex_value, int bT)
 
 
 /*
- * function: int Decode(unsigned int hex_value, int bT)
- * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
- *             bT - the current bit time
- * returns: bitCase - a high or low signal to be sent to an output pin
- * description: This function takes in a hex value and sends it out a bit at a time as a high or
- *  low signal depending on the bit time. Used only to set desired decode encryption.
- */
-int Decode(unsigned int hex_value, int bT)
-{
-    int bitCase = 0;
-    switch(bT){
-        case 5:
-            bitCase = (hex_value & BIT_7_MASK) >> 7;
-            break;
-        case 6:
-            bitCase = (hex_value & BIT_6_MASK) >> 6;
-            break; 
-        case 7:
-            bitCase = (hex_value & BIT_5_MASK) >> 5;
-            break; 
-        case 8:
-            bitCase = (hex_value & BIT_4_MASK) >> 4;
-            break;
-        case 9:
-            bitCase = (hex_value & BIT_3_MASK) >> 3;
-            break; 
-        case 10:
-            bitCase = (hex_value & BIT_2_MASK) >> 2;
-            break; 
-        case 11:
-            bitCase = (hex_value & BIT_1_MASK) >> 1;
-            break; 
-        case 12:
-            bitCase = (hex_value & BIT_0_MASK);
-            break;
-        default:
-            break;
-    } //end switch(bT)
-    return bitCase;
-}//end Decode()
-
-
-/*
- * function: int PreFix(unsigned int hex_value, int bT)
- * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
- *             bT - the current bit time
- * returns: bitCase - a high or low signal to be sent to an output pin
- * description: This function takes in a hex value and sends it out a bit at a time as a high or
- *  low signal depending on the bit time. Used only to set desired decode encryption.
- */
-int PreFix(unsigned int hex_value, int prefixCount)
-{   
-    int prefixBit = 0;
-    
-    switch(prefixCount){
-        case 0:
-           prefixBit = (hex_value & BIT_7_MASK) >> 7;
-            break;
-        case 1:
-            prefixBit = (hex_value & BIT_6_MASK) >> 6;
-            break; 
-        case 2:
-            prefixBit = (hex_value & BIT_5_MASK) >> 5;
-            break; 
-        case 3:
-            prefixBit = (hex_value & BIT_4_MASK) >> 4;
-            break;
-        case 4:
-            prefixBit = (hex_value & BIT_3_MASK) >> 3;
-            break; 
-        case 5:
-            prefixBit = (hex_value & BIT_2_MASK) >> 2;
-            break; 
-        case 6:
-            prefixBit = (hex_value & BIT_1_MASK) >> 1;
-            break; 
-        case 7:
-            prefixBit = (hex_value & BIT_0_MASK);
-            break;
-        default:
-            break;
- 
-    }
-    
-    return prefixBit; 
-
-}
-
-/*
  * function: void FindParity(void)
  * parameters: void
  * returns: void
  * description: XORs each bit of data to get even or odd parity for
  * error checking
  */
-void FindParity()
+int FindParity()
 {
-    
-    crabsToSend = 12;
-    int bitToCheck = crabsToSend;
+    uint8 bitToCheck = crabsToSend; // store crabsToSend in new variable to manipulate
     int i = 0;
-    for(i = 0; i < 4; i++){
-        parity = (bitToCheck & 0x1) ^ parity;
-        bitToCheck = crabsToSend >> 1; // shift mask over
-
+    int parity = (bitToCheck & BIT_0_MASK);
+    for(i = 0; i < DATA_LENGTH; i++){
+        bitToCheck = bitToCheck >> 1; // shift mask over
+        parity = (bitToCheck & BIT_0_MASK) ^ parity; // XOR new bit
     }
-    /* Clear LCD line. */
-    LCD_Position(0u, 0u);
-    LCD_PrintString("                    ");
-
-    /* Output string on LCD. */
-    LCD_Position(0u, 0u);
-    sprintf(data, "Crabs %d P = %d", crabsToSend,parity);
-    LCD_PrintString(data);
+    return parity;
+//    
+//    /* Clear LCD line. */
+//    LCD_Position(0u, 0u);
+//    LCD_PrintString("                    ");
+//
+//    /* Output string on LCD. */
+//    LCD_Position(0u, 0u);
+//    sprintf(data, "Crabs %d P = %d", crabsToSend,parity);
+//    LCD_PrintString(data);
 }   
     
 /* [] END OF FILE */
@@ -424,8 +332,9 @@ void FindParity()
 *
 * Summary:
 * Interrupt triggered on a 0.1s timer timeout
-* Will increment prefixTime counter for the 1st 8 bits
-* Then move on to incrementing the message bit counter
+ * This ISR will activate every half second and keep track of what
+ *  current bit we are on within a byte. After every 8th bit, it resets and
+ *  moves on to a new byte.
 *
 * Parameters:
 *  None.
@@ -436,11 +345,15 @@ void FindParity()
 *******************************************************************************/
 CY_ISR(isr_sec)
 {
-    if((bitTime == 0) && (prefixTime <= PREFIX_BIT_LENGTH)){
-        prefixTime++;
+    bitTime++;
+    if(ParityFlag == TRUE){
+        bitTime = 0;
+        currentByte++;
+        ParityFlag = FALSE;
     }
-    else if(prefixTime > PREFIX_BIT_LENGTH){
-        bitTime++;
+    if (bitTime == 8){
+        bitTime = 0;
+        currentByte++;
     }
 }//end CY_ISR(isr_sec)
 

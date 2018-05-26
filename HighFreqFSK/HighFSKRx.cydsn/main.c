@@ -14,12 +14,18 @@
 #include <stdio.h>
 #include "LCD_Char.h"
 
-#define ARRAY_SIZE 12
-#define COUNT      100
-#define ACCURACY   70
+#define ARRAY_SIZE        12
+#define COUNT             100
+#define PREFIX_ACCURACY   90
+#define DATA_ACCURACY     70
+#define DATA_LENGTH       7
+#define BIT_0_MASK        0x1
+#define SUCCESS           0x1
+#define FAILURE           0x0
 
 /*Function Prototypes*/
 void Display(void);
+int CheckParity(int);
 
 // Interrupt for switching bits 5 ms
 CY_ISR_PROTO(Bit_Timer);
@@ -86,13 +92,26 @@ CY_ISR(Bit_Timer){
     
     // Debouncing
     if(levelCounter == COUNT){
-        if(oneCount >= ACCURACY){ // 1 bit must be 7/10 = 1 
-            currentBit = 0x01;
-            oneCount = 0;
+        if(dataFlag == 0){ //looking for prefix
+            if(oneCount >= PREFIX_ACCURACY){ // 1 bit must be Accuracy/100 = 1 
+                currentBit = 0x01;
+                oneCount = 0;
         
-        }else{ // if oneCount <= 7, bit is 0
-            currentBit = 0x00; 
-            zeroCount = 0; 
+            }else{ // if oneCount <= 7, bit is 0
+                currentBit = 0x00; 
+                zeroCount = 0; 
+            
+            }
+        }else{ // looking for data bits, can have less accuracy
+            if(oneCount >= DATA_ACCURACY){ // 1 bit must be Accuracy/100 = 1 
+                currentBit = 0x01;
+                oneCount = 0;
+        
+            }else{ // if oneCount <= 7, bit is 0
+                currentBit = 0x00; 
+                zeroCount = 0; 
+            
+            }
         }
         dataCount++; // Keep track of what bit we are on
         levelCounter = 0; // Reset timer bit debouncer  
@@ -107,27 +126,17 @@ CY_ISR(Bit_Timer){
             data = 0x00;
             dataFlag = 1; //Start looking for data
             lcdFlagEncode = 1; //Display pre-fix on lcd
-
         
-        // Look for 4 bits of data
-        }else if((dataFlag == 1) && (dataCount > 3)){
-            crabs = data;
-            data = 0; //Restart data for decode
-            dataCount = 0; 
-            lcdFlagEncode = 0; //Turn off encode message
-            lcdFlagData = 1; //Display data
-            decodeFlag = 1; //Now go to decode stage
-        }
-        //Check data by checking next 8 bits after the encoding
-        }else if((dataFlag == 1) && (dataCount > 7)){
+        
+        //Check data by checking next 8 bits and parity (9 bits) after the encoding
+        }else if((dataFlag == 1) && (dataCount > 8)){
             crabs = data;
             data = 0; //Restart data for decode
             dataCount = 0; 
             lcdFlagEncode = 0; //Turn off encode message
             lcdFlagData = 1; //Display data
             decodeFlag = 1;
-            dataFlag = 0;
-        
+        }
         
         // Check for 8 bits of post-fix
         if(decodeFlag == 1 && (dataCount > 7)){
@@ -159,9 +168,11 @@ void Display()
         LCD_Char_ClearDisplay();
         LCD_Char_PrintString("0xFF pre-fix");
         lcdFlagEncode = 0; 
-    // When 4 bits are received, data will display at top of screen
+    // When 9 bits are received, data will display at top of screen
     }else if(lcdFlagData == 1){
-        sprintf(OutputString, "%i", crabs);
+        int paritySuccess = CheckParity(crabs);
+        crabs = crabs >> 1;
+        sprintf(OutputString, "P = %i, %i", paritySuccess,crabs);
         LCD_Char_ClearDisplay();
         LCD_Char_Position(0u,0u);
         LCD_Char_PrintString(OutputString);
@@ -182,6 +193,30 @@ void Display()
         decodeWrong = 0;
     }
 }//end Display()
+
+/*
+ * function: void CheckParity(void)
+ * parameters: void
+ * returns: void
+ * description: XORs each bit of data to get even or odd parity for
+ * error checking
+ */
+int CheckParity(crabs)
+{
+    int i = 0;
+    int bitToCheck = crabs >> 1; // Remove parity from data
+    int receivedParity = (crabs & BIT_0_MASK); //Save parity from data received
+    int parity = bitToCheck & BIT_0_MASK; // Get first bit of data to XOR
+    for(i = 0; i < DATA_LENGTH; i++){
+        bitToCheck = bitToCheck >> 1; // shift mask over
+        parity = (bitToCheck & BIT_0_MASK) ^ parity; // XOR new bit
+    }
+    if(parity == receivedParity){
+        return SUCCESS;
+    }else{
+        return FAILURE;
+    }
+}   
     
 
 /* [] END OF FILE */

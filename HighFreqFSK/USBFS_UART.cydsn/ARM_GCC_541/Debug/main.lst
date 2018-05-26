@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 1
 
 
    1              		.syntax unified
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
   55              		.size	i, 4
   56              	i:
   57 0004 02000000 		.word	2
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 2
 
 
   58              		.comm	count,2,2
@@ -99,69 +99,96 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
    5:main.c        **** * Revision: 5/15/18
    6:main.c        **** *
    7:main.c        **** * Description:
-   8:main.c        **** *   The component is enumerated as a Virtual Com port. Receives data from the 
-   9:main.c        **** *   hyper terminal, then sends back the received data. FSK is then started
-  10:main.c        **** *   using the input data and then prompts the user for more data.
-  11:main.c        **** *   The LCD Display shows the number of crabs sent.
-  12:main.c        **** */
-  13:main.c        **** 
-  14:main.c        **** 
-  15:main.c        **** #include <project.h>
-  16:main.c        **** #include "stdio.h"
-  17:main.c        **** #include "stdlib.h"
-  18:main.c        **** 
-  19:main.c        **** #define USBFS_DEVICE    (0u)
-  20:main.c        **** 
-  21:main.c        **** /* The buffer size is equal to the maximum packet size of the IN and OUT bulk
-  22:main.c        **** * endpoints.
-  23:main.c        **** */
-  24:main.c        **** #define USBUART_BUFFER_SIZE (64u)
-  25:main.c        **** #define LINE_STR_LENGTH     (20u)
-  26:main.c        **** /* Change data size for sending longer data (n-1) */
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 3
+   8:main.c        **** *   Receives data from the hyper terminal up to MAX_CRABS.
+   9:main.c        **** *   FSK is then started using the input data and then prompts the user for
+  10:main.c        **** *   more data. The LCD Display shows the number of crabs sent.
+  11:main.c        **** *
+  12:main.c        **** * This code was taken from PSoC's USBFS_UART example code and edited to store
+  13:main.c        **** * a number for sending to another PSoC
+  14:main.c        **** *
+  15:main.c        **** ********************************************************************************
+  16:main.c        **** * Description:
+  17:main.c        **** *   The component is enumerated as a Virtual Com port. Receives data from the 
+  18:main.c        **** *   hyper terminal, then sends back the received data.
+  19:main.c        **** *   For PSoC3/PSoC5LP, the LCD shows the line settings.
+  20:main.c        **** *
+  21:main.c        **** * Related Document:
+  22:main.c        **** *  Universal Serial Bus Specification Revision 2.0
+  23:main.c        **** *  Universal Serial Bus Class Definitions for Communications Devices
+  24:main.c        **** *  Revision 1.2
+  25:main.c        **** *
+  26:main.c        **** ********************************************************************************
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 3
 
 
-  27:main.c        **** #define DATA_SIZE           (7u)
-  28:main.c        **** /* Change max crabs to correlate with data size 2^(n) - 1 */
-  29:main.c        **** #define MAX_CRABS           (127)
-  30:main.c        **** /* Error used for user error */
-  31:main.c        **** #define ERROR               (333u)
-  32:main.c        **** 
-  33:main.c        **** #define ZERO 0x0
-  34:main.c        **** #define ONE 0x1
-  35:main.c        **** #define TRUE 0x1
-  36:main.c        **** #define FALSE 0x0
-  37:main.c        **** #define DATA_LENGTH 4
-  38:main.c        **** #define DECODE_VALUE 0x01
-  39:main.c        **** //
-  40:main.c        **** #define PREFIX_BIT_LENGTH 6
-  41:main.c        **** #define PREFIX_MESSAGE 0xFF
+  27:main.c        **** * Copyright 2015, Cypress Semiconductor Corporation. All rights reserved.
+  28:main.c        **** * This software is owned by Cypress Semiconductor Corporation and is protected
+  29:main.c        **** * by and subject to worldwide patent and copyright laws and treaties.
+  30:main.c        **** * Therefore, you may use this software only as provided in the license agreement
+  31:main.c        **** * accompanying the software package from which you obtained this software.
+  32:main.c        **** * CYPRESS AND ITS SUPPLIERS MAKE NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  33:main.c        **** * WITH REGARD TO THIS SOFTWARE, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT,
+  34:main.c        **** * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+  35:main.c        **** ********************************************************************************
+  36:main.c        **** */
+  37:main.c        **** 
+  38:main.c        **** 
+  39:main.c        **** #include <project.h>
+  40:main.c        **** #include "stdio.h"
+  41:main.c        **** #include "stdlib.h"
   42:main.c        **** 
-  43:main.c        **** /*Function Prototypes*/
-  44:main.c        **** int GetCrabs(void);
-  45:main.c        **** int CalculateCrabs(void);
-  46:main.c        **** void DisplayCrabs(int);
-  47:main.c        **** 
-  48:main.c        **** /*Global Variables*/
-  49:main.c        **** int prompt = 1;
-  50:main.c        **** int endFlag = 0; // flag for end of user input
-  51:main.c        **** int oneDigit = 0; // flag for end of input with one character
-  52:main.c        **** int twoDigit = 0; // flag for end of input with two characters
-  53:main.c        **** int error = 0; // flag for input error
-  54:main.c        **** int i = 2; // to iterate through data array
-  55:main.c        **** uint16 count;
-  56:main.c        **** char8 lineStr[LINE_STR_LENGTH];
-  57:main.c        **** uint8 buffer[USBUART_BUFFER_SIZE];
-  58:main.c        **** uint8 data[3] = {0};
-  59:main.c        **** 
-  60:main.c        **** 
-  61:main.c        **** /*******************************************************************************
-  62:main.c        **** * Function Name: main
-  63:main.c        **** ********************************************************************************
-  64:main.c        **** */
-  65:main.c        **** int main()
-  66:main.c        **** {
-  84              		.loc 1 66 0
+  43:main.c        **** #define USBFS_DEVICE    (0u)
+  44:main.c        **** 
+  45:main.c        **** /* The buffer size is equal to the maximum packet size of the IN and OUT bulk
+  46:main.c        **** * endpoints.
+  47:main.c        **** */
+  48:main.c        **** #define USBUART_BUFFER_SIZE (64u)
+  49:main.c        **** #define LINE_STR_LENGTH     (20u)
+  50:main.c        **** /* Change data size for sending longer data (n-1) */
+  51:main.c        **** #define DATA_SIZE           (7u)
+  52:main.c        **** /* Change max crabs to correlate with data size 2^(n) - 1 */
+  53:main.c        **** #define MAX_CRABS           (127)
+  54:main.c        **** /* Error used for user error */
+  55:main.c        **** #define ERROR               (333u)
+  56:main.c        **** 
+  57:main.c        **** #define ZERO 0x0
+  58:main.c        **** #define ONE 0x1
+  59:main.c        **** #define TRUE 0x1
+  60:main.c        **** #define FALSE 0x0
+  61:main.c        **** #define DATA_LENGTH 4
+  62:main.c        **** #define DECODE_VALUE 0x01
+  63:main.c        **** //
+  64:main.c        **** #define PREFIX_BIT_LENGTH 6
+  65:main.c        **** #define PREFIX_MESSAGE 0xFF
+  66:main.c        **** 
+  67:main.c        **** /*Function Prototypes*/
+  68:main.c        **** int GetCrabs(void);
+  69:main.c        **** int CalculateCrabs(void);
+  70:main.c        **** void DisplayCrabs(int);
+  71:main.c        **** 
+  72:main.c        **** /*Global Variables*/
+  73:main.c        **** int prompt = 1;
+  74:main.c        **** int endFlag = 0; // flag for end of user input
+  75:main.c        **** int oneDigit = 0; // flag for end of input with one character
+  76:main.c        **** int twoDigit = 0; // flag for end of input with two characters
+  77:main.c        **** int error = 0; // flag for input error
+  78:main.c        **** int i = 2; // to iterate through data array
+  79:main.c        **** uint16 count;
+  80:main.c        **** char8 lineStr[LINE_STR_LENGTH];
+  81:main.c        **** uint8 buffer[USBUART_BUFFER_SIZE];
+  82:main.c        **** uint8 data[3] = {0};
+  83:main.c        **** 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 4
+
+
+  84:main.c        **** 
+  85:main.c        **** /*******************************************************************************
+  86:main.c        **** * Function Name: main
+  87:main.c        **** ********************************************************************************
+  88:main.c        **** */
+  89:main.c        **** int main()
+  90:main.c        **** {
+  84              		.loc 1 90 0
   85              		.cfi_startproc
   86              		@ args = 0, pretend = 0, frame = 8
   87              		@ frame_needed = 1, uses_anonymous_args = 0
@@ -173,123 +200,123 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
   93              		.cfi_def_cfa_offset 16
   94 0004 00AF     		add	r7, sp, #0
   95              		.cfi_def_cfa_register 7
-  67:main.c        ****     int crabs = 0;
-  96              		.loc 1 67 0
+  91:main.c        ****     int crabs = 0;
+  96              		.loc 1 91 0
   97 0006 0023     		movs	r3, #0
   98 0008 7B60     		str	r3, [r7, #4]
-  68:main.c        ****     int gettingData = TRUE;
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 4
-
-
-  99              		.loc 1 68 0
+  92:main.c        ****     int gettingData = TRUE;
+  99              		.loc 1 92 0
  100 000a 0123     		movs	r3, #1
  101 000c 3B60     		str	r3, [r7]
-  69:main.c        **** 
-  70:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
- 102              		.loc 1 70 0
+  93:main.c        **** 
+  94:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+ 102              		.loc 1 94 0
  103              		.syntax unified
- 104              	@ 70 "main.c" 1
+ 104              	@ 94 "main.c" 1
  105 000e 62B6     		CPSIE   i
  106              	@ 0 "" 2
-  71:main.c        ****     /*Block initializations*/
-  72:main.c        ****     LCD_Start();
- 107              		.loc 1 72 0
+  95:main.c        ****     /*Block initializations*/
+  96:main.c        ****     LCD_Start();
+ 107              		.loc 1 96 0
  108              		.thumb
  109              		.syntax unified
  110 0010 FFF7FEFF 		bl	LCD_Start
-  73:main.c        **** 
-  74:main.c        ****     /* Start USBFS operation with 5-V operation. */
-  75:main.c        ****     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
- 111              		.loc 1 75 0
+  97:main.c        **** 
+  98:main.c        ****     /* Start USBFS operation with 5-V operation. */
+  99:main.c        ****     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
+ 111              		.loc 1 99 0
  112 0014 0121     		movs	r1, #1
  113 0016 0020     		movs	r0, #0
  114 0018 FFF7FEFF 		bl	USBUART_Start
-  76:main.c        ****     UART_Start();           /* Start communication component */
- 115              		.loc 1 76 0
+ 100:main.c        ****     UART_Start();           /* Start communication component */
+ 115              		.loc 1 100 0
  116 001c FFF7FEFF 		bl	UART_Start
-  77:main.c        **** 
-  78:main.c        ****     /* Clear LCD line. */
-  79:main.c        ****     LCD_Position(0u, 0u);
- 117              		.loc 1 79 0
+ 101:main.c        **** 
+ 102:main.c        ****     /* Clear LCD line. */
+ 103:main.c        ****     LCD_Position(0u, 0u);
+ 117              		.loc 1 103 0
  118 0020 0021     		movs	r1, #0
  119 0022 0020     		movs	r0, #0
  120 0024 FFF7FEFF 		bl	LCD_Position
-  80:main.c        ****     LCD_PrintString("                    ");
- 121              		.loc 1 80 0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 5
+
+
+ 104:main.c        ****     LCD_PrintString("                    ");
+ 121              		.loc 1 104 0
  122 0028 1448     		ldr	r0, .L6
  123 002a FFF7FEFF 		bl	LCD_PrintString
-  81:main.c        **** 
-  82:main.c        ****     /* Output string on LCD. */
-  83:main.c        ****     LCD_Position(0u, 0u);
- 124              		.loc 1 83 0
+ 105:main.c        **** 
+ 106:main.c        ****     /* Output string on LCD. */
+ 107:main.c        ****     LCD_Position(0u, 0u);
+ 124              		.loc 1 107 0
  125 002e 0021     		movs	r1, #0
  126 0030 0020     		movs	r0, #0
  127 0032 FFF7FEFF 		bl	LCD_Position
-  84:main.c        ****     LCD_PrintString("Hello");
- 128              		.loc 1 84 0
+ 108:main.c        ****     LCD_PrintString("Hello");
+ 128              		.loc 1 108 0
  129 0036 1248     		ldr	r0, .L6+4
  130 0038 FFF7FEFF 		bl	LCD_PrintString
  131              	.L5:
-  85:main.c        ****     
-  86:main.c        **** 
-  87:main.c        ****     for(;;)
-  88:main.c        ****     {
-  89:main.c        ****         gettingData = 1;
- 132              		.loc 1 89 0
+ 109:main.c        ****     
+ 110:main.c        **** 
+ 111:main.c        ****     for(;;)
+ 112:main.c        ****     {
+ 113:main.c        ****         gettingData = 1;
+ 132              		.loc 1 113 0
  133 003c 0123     		movs	r3, #1
  134 003e 3B60     		str	r3, [r7]
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 5
-
-
-  90:main.c        ****         /* Start UART interface and fill array with 3 parameters until valid */
-  91:main.c        ****         while(gettingData){
- 135              		.loc 1 91 0
+ 114:main.c        ****         /* Start UART interface and fill array with 3 parameters until valid */
+ 115:main.c        ****         while(gettingData){
+ 135              		.loc 1 115 0
  136 0040 12E0     		b	.L2
  137              	.L4:
-  92:main.c        ****             while(0u == GetCrabs()){
- 138              		.loc 1 92 0
+ 116:main.c        ****             while(0u == GetCrabs()){
+ 138              		.loc 1 116 0
  139 0042 00BF     		nop
  140              	.L3:
- 141              		.loc 1 92 0 is_stmt 0 discriminator 1
+ 141              		.loc 1 116 0 is_stmt 0 discriminator 1
  142 0044 FFF7FEFF 		bl	GetCrabs
  143 0048 0346     		mov	r3, r0
  144 004a 002B     		cmp	r3, #0
  145 004c FAD0     		beq	.L3
-  93:main.c        ****             };
-  94:main.c        ****             crabs = CalculateCrabs();
- 146              		.loc 1 94 0 is_stmt 1
+ 117:main.c        ****             };
+ 118:main.c        ****             crabs = CalculateCrabs();
+ 146              		.loc 1 118 0 is_stmt 1
  147 004e FFF7FEFF 		bl	CalculateCrabs
  148 0052 7860     		str	r0, [r7, #4]
-  95:main.c        ****             if(crabs != ERROR){
- 149              		.loc 1 95 0
+ 119:main.c        ****             if(crabs != ERROR){
+ 149              		.loc 1 119 0
  150 0054 7B68     		ldr	r3, [r7, #4]
  151 0056 40F24D12 		movw	r2, #333
  152 005a 9342     		cmp	r3, r2
  153 005c 04D0     		beq	.L2
-  96:main.c        ****                 DisplayCrabs(crabs);
- 154              		.loc 1 96 0
+ 120:main.c        ****                 DisplayCrabs(crabs);
+ 154              		.loc 1 120 0
  155 005e 7868     		ldr	r0, [r7, #4]
  156 0060 FFF7FEFF 		bl	DisplayCrabs
-  97:main.c        ****                 gettingData = 0;
- 157              		.loc 1 97 0
+ 121:main.c        ****                 gettingData = 0;
+ 157              		.loc 1 121 0
  158 0064 0023     		movs	r3, #0
  159 0066 3B60     		str	r3, [r7]
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 6
+
+
  160              	.L2:
-  91:main.c        ****             while(0u == GetCrabs()){
- 161              		.loc 1 91 0
+ 115:main.c        ****             while(0u == GetCrabs()){
+ 161              		.loc 1 115 0
  162 0068 3B68     		ldr	r3, [r7]
  163 006a 002B     		cmp	r3, #0
  164 006c E9D1     		bne	.L4
-  98:main.c        ****                 }
-  99:main.c        ****             }
- 100:main.c        ****             UART_WriteTxData(crabs);
- 165              		.loc 1 100 0
+ 122:main.c        ****                 }
+ 123:main.c        ****             }
+ 124:main.c        ****             UART_WriteTxData(crabs);
+ 165              		.loc 1 124 0
  166 006e 7B68     		ldr	r3, [r7, #4]
  167 0070 DBB2     		uxtb	r3, r3
  168 0072 1846     		mov	r0, r3
  169 0074 FFF7FEFF 		bl	UART_WriteTxData
- 101:main.c        ****     } // end for(;;)
- 170              		.loc 1 101 0
+ 125:main.c        ****     } // end for(;;)
+ 170              		.loc 1 125 0
  171 0078 E0E7     		b	.L5
  172              	.L7:
  173 007a 00BF     		.align	2
@@ -298,9 +325,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  176 0080 18000000 		.word	.LC1
  177              		.cfi_endproc
  178              	.LFE64:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 6
-
-
  179              		.size	main, .-main
  180              		.section	.rodata
  181 001e 0000     		.align	2
@@ -334,21 +358,24 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  197              		.type	GetCrabs, %function
  198              	GetCrabs:
  199              	.LFB65:
- 102:main.c        **** } // end main
- 103:main.c        **** 
- 104:main.c        **** 
- 105:main.c        **** /*******************************************************************************************
- 106:main.c        ****  * function: int GetCrabs()
- 107:main.c        ****  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
- 108:main.c        ****  *             bT - the current bit time
- 109:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
- 110:main.c        ****  * description: This function starts UART interface and waits for a valid amount of crabs
- 111:main.c        ****  * entered by user
- 112:main.c        ****  *******************************************************************************************
- 113:main.c        ****  */
- 114:main.c        **** int GetCrabs()
- 115:main.c        **** {
- 200              		.loc 1 115 0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 7
+
+
+ 126:main.c        **** } // end main
+ 127:main.c        **** 
+ 128:main.c        **** 
+ 129:main.c        **** /*******************************************************************************************
+ 130:main.c        ****  * function: int GetCrabs()
+ 131:main.c        ****  * parameters: hex_value - an 8 bit (1 byte) value specifying what data you want to send
+ 132:main.c        ****  *             bT - the current bit time
+ 133:main.c        ****  * returns: bitCase - a high or low signal to be sent to an output pin
+ 134:main.c        ****  * description: This function starts UART interface and waits for a valid amount of crabs
+ 135:main.c        ****  * entered by user
+ 136:main.c        ****  *******************************************************************************************
+ 137:main.c        ****  */
+ 138:main.c        **** int GetCrabs()
+ 139:main.c        **** {
+ 200              		.loc 1 139 0
  201              		.cfi_startproc
  202              		@ args = 0, pretend = 0, frame = 8
  203              		@ frame_needed = 1, uses_anonymous_args = 0
@@ -358,176 +385,176 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  207              		.cfi_offset 7, -8
  208              		.cfi_offset 14, -4
  209 0002 83B0     		sub	sp, sp, #12
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 7
-
-
  210              		.cfi_def_cfa_offset 24
  211 0004 00AF     		add	r7, sp, #0
  212              		.cfi_def_cfa_register 7
- 116:main.c        ****     uint16 crabs = 0;
- 213              		.loc 1 116 0
+ 140:main.c        ****     uint16 crabs = 0;
+ 213              		.loc 1 140 0
  214 0006 0023     		movs	r3, #0
  215 0008 FB80     		strh	r3, [r7, #6]	@ movhi
- 117:main.c        ****     /* Host can send double SET_INTERFACE request. */
- 118:main.c        ****     if (0u != USBUART_IsConfigurationChanged())
- 216              		.loc 1 118 0
+ 141:main.c        ****     /* Host can send double SET_INTERFACE request. */
+ 142:main.c        ****     if (0u != USBUART_IsConfigurationChanged())
+ 216              		.loc 1 142 0
  217 000a FFF7FEFF 		bl	USBUART_IsConfigurationChanged
  218 000e 0346     		mov	r3, r0
  219 0010 002B     		cmp	r3, #0
  220 0012 06D0     		beq	.L9
- 119:main.c        ****     {
- 120:main.c        ****         /* Initialize IN endpoints when device is configured. */
- 121:main.c        ****         if (0u != USBUART_GetConfiguration())
- 221              		.loc 1 121 0
+ 143:main.c        ****     {
+ 144:main.c        ****         /* Initialize IN endpoints when device is configured. */
+ 145:main.c        ****         if (0u != USBUART_GetConfiguration())
+ 221              		.loc 1 145 0
  222 0014 FFF7FEFF 		bl	USBUART_GetConfiguration
  223 0018 0346     		mov	r3, r0
  224 001a 002B     		cmp	r3, #0
  225 001c 01D0     		beq	.L9
- 122:main.c        ****         {
- 123:main.c        ****             /* Enumeration is done, enable OUT endpoint to receive data 
- 124:main.c        ****             * from host. */
- 125:main.c        ****             USBUART_CDC_Init();
- 226              		.loc 1 125 0
+ 146:main.c        ****         {
+ 147:main.c        ****             /* Enumeration is done, enable OUT endpoint to receive data 
+ 148:main.c        ****             * from host. */
+ 149:main.c        ****             USBUART_CDC_Init();
+ 226              		.loc 1 149 0
  227 001e FFF7FEFF 		bl	USBUART_CDC_Init
  228              	.L9:
- 126:main.c        ****             }
- 127:main.c        ****         }
- 128:main.c        ****         
- 129:main.c        ****         /* Service USB CDC when device is configured. */
- 130:main.c        ****         if (0u != USBUART_GetConfiguration())
- 229              		.loc 1 130 0
+ 150:main.c        ****             }
+ 151:main.c        ****         }
+ 152:main.c        ****         
+ 153:main.c        ****         /* Service USB CDC when device is configured. */
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 8
+
+
+ 154:main.c        ****         if (0u != USBUART_GetConfiguration())
+ 229              		.loc 1 154 0
  230 0022 FFF7FEFF 		bl	USBUART_GetConfiguration
  231 0026 0346     		mov	r3, r0
  232 0028 002B     		cmp	r3, #0
  233 002a 77D0     		beq	.L10
- 131:main.c        ****         {
- 132:main.c        ****             /* Wait until component is ready to send data to host. */
- 133:main.c        ****             while (0u == USBUART_CDCIsReady())
- 234              		.loc 1 133 0
+ 155:main.c        ****         {
+ 156:main.c        ****             /* Wait until component is ready to send data to host. */
+ 157:main.c        ****             while (0u == USBUART_CDCIsReady())
+ 234              		.loc 1 157 0
  235 002c 00BF     		nop
  236              	.L11:
- 237              		.loc 1 133 0 is_stmt 0 discriminator 1
+ 237              		.loc 1 157 0 is_stmt 0 discriminator 1
  238 002e FFF7FEFF 		bl	USBUART_CDCIsReady
  239 0032 0346     		mov	r3, r0
  240 0034 002B     		cmp	r3, #0
  241 0036 FAD0     		beq	.L11
- 134:main.c        ****                 {
- 135:main.c        ****                 }
- 136:main.c        ****                 if(prompt == 1){
- 242              		.loc 1 136 0 is_stmt 1
+ 158:main.c        ****                 {
+ 159:main.c        ****                 }
+ 160:main.c        ****                 if(prompt == 1){
+ 242              		.loc 1 160 0 is_stmt 1
  243 0038 3E4B     		ldr	r3, .L26
  244 003a 1B68     		ldr	r3, [r3]
  245 003c 012B     		cmp	r3, #1
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 8
-
-
  246 003e 02D1     		bne	.L25
- 137:main.c        ****                     USBUART_PutString("Please enter amount of crabs (up to 127). Terminates with ca
- 247              		.loc 1 137 0
+ 161:main.c        ****                     USBUART_PutString("Please enter amount of crabs (up to 127). Terminates with ca
+ 247              		.loc 1 161 0
  248 0040 3D48     		ldr	r0, .L26+4
  249 0042 FFF7FEFF 		bl	USBUART_PutString
  250              	.L25:
- 138:main.c        ****                 }
- 139:main.c        ****             /* Wait until component is ready to send data to host. */
- 140:main.c        ****             while (0u == USBUART_CDCIsReady())
- 251              		.loc 1 140 0
+ 162:main.c        ****                 }
+ 163:main.c        ****             /* Wait until component is ready to send data to host. */
+ 164:main.c        ****             while (0u == USBUART_CDCIsReady())
+ 251              		.loc 1 164 0
  252 0046 00BF     		nop
  253              	.L13:
- 254              		.loc 1 140 0 is_stmt 0 discriminator 1
+ 254              		.loc 1 164 0 is_stmt 0 discriminator 1
  255 0048 FFF7FEFF 		bl	USBUART_CDCIsReady
  256 004c 0346     		mov	r3, r0
  257 004e 002B     		cmp	r3, #0
  258 0050 FAD0     		beq	.L13
- 141:main.c        ****                 {
- 142:main.c        ****                 }
- 143:main.c        ****                 if(prompt == 1){
- 259              		.loc 1 143 0 is_stmt 1
+ 165:main.c        ****                 {
+ 166:main.c        ****                 }
+ 167:main.c        ****                 if(prompt == 1){
+ 259              		.loc 1 167 0 is_stmt 1
  260 0052 384B     		ldr	r3, .L26
  261 0054 1B68     		ldr	r3, [r3]
  262 0056 012B     		cmp	r3, #1
  263 0058 04D1     		bne	.L14
- 144:main.c        ****                     USBUART_PutCRLF();
- 264              		.loc 1 144 0
+ 168:main.c        ****                     USBUART_PutCRLF();
+ 264              		.loc 1 168 0
  265 005a FFF7FEFF 		bl	USBUART_PutCRLF
- 145:main.c        ****                     prompt = 0;
- 266              		.loc 1 145 0
+ 169:main.c        ****                     prompt = 0;
+ 266              		.loc 1 169 0
  267 005e 354B     		ldr	r3, .L26
  268 0060 0022     		movs	r2, #0
  269 0062 1A60     		str	r2, [r3]
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 9
+
+
  270              	.L14:
- 146:main.c        ****                 }
- 147:main.c        ****                 
- 148:main.c        ****             /* Check for input data from host. */
- 149:main.c        ****             if (0u != USBUART_DataIsReady())
- 271              		.loc 1 149 0
+ 170:main.c        ****                 }
+ 171:main.c        ****                 
+ 172:main.c        ****             /* Check for input data from host. */
+ 173:main.c        ****             if (0u != USBUART_DataIsReady())
+ 271              		.loc 1 173 0
  272 0064 FFF7FEFF 		bl	USBUART_DataIsReady
  273 0068 0346     		mov	r3, r0
  274 006a 002B     		cmp	r3, #0
  275 006c 56D0     		beq	.L10
- 150:main.c        ****             {
- 151:main.c        ****                 /* Read received data and re-enable OUT endpoint. */
- 152:main.c        ****                 count = USBUART_GetAll(buffer);
- 276              		.loc 1 152 0
+ 174:main.c        ****             {
+ 175:main.c        ****                 /* Read received data and re-enable OUT endpoint. */
+ 176:main.c        ****                 count = USBUART_GetAll(buffer);
+ 276              		.loc 1 176 0
  277 006e 3348     		ldr	r0, .L26+8
  278 0070 FFF7FEFF 		bl	USBUART_GetAll
  279 0074 0346     		mov	r3, r0
  280 0076 1A46     		mov	r2, r3
  281 0078 314B     		ldr	r3, .L26+12
  282 007a 1A80     		strh	r2, [r3]	@ movhi
- 153:main.c        ****     
- 154:main.c        ****                 if (strncmp (buffer,"0",1) == 0){
- 155:main.c        ****                     //USBUART_PutString("True Zero");
- 156:main.c        ****                 }
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 9
-
-
- 157:main.c        ****                 if (strncmp (buffer,"\r",1) == 0){
- 283              		.loc 1 157 0
+ 177:main.c        ****     
+ 178:main.c        ****                 if (strncmp (buffer,"0",1) == 0){
+ 179:main.c        ****                     //USBUART_PutString("True Zero");
+ 180:main.c        ****                 }
+ 181:main.c        ****                 if (strncmp (buffer,"\r",1) == 0){
+ 283              		.loc 1 181 0
  284 007c 2F4B     		ldr	r3, .L26+8
  285 007e 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
  286 0080 304B     		ldr	r3, .L26+16
  287 0082 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
  288 0084 9A42     		cmp	r2, r3
  289 0086 12D1     		bne	.L15
- 158:main.c        ****                     //USBUART_PutString("Carriage Return");
- 159:main.c        **** 
- 160:main.c        ****                     if(i == 1){
- 290              		.loc 1 160 0
+ 182:main.c        ****                     //USBUART_PutString("Carriage Return");
+ 183:main.c        **** 
+ 184:main.c        ****                     if(i == 1){
+ 290              		.loc 1 184 0
  291 0088 2F4B     		ldr	r3, .L26+20
  292 008a 1B68     		ldr	r3, [r3]
  293 008c 012B     		cmp	r3, #1
  294 008e 03D1     		bne	.L16
- 161:main.c        ****                         oneDigit = 1;
- 295              		.loc 1 161 0
+ 185:main.c        ****                         oneDigit = 1;
+ 295              		.loc 1 185 0
  296 0090 2E4B     		ldr	r3, .L26+24
  297 0092 0122     		movs	r2, #1
  298 0094 1A60     		str	r2, [r3]
  299 0096 06E0     		b	.L17
  300              	.L16:
- 162:main.c        ****                     }else if(i == 0){
- 301              		.loc 1 162 0
+ 186:main.c        ****                     }else if(i == 0){
+ 301              		.loc 1 186 0
  302 0098 2B4B     		ldr	r3, .L26+20
  303 009a 1B68     		ldr	r3, [r3]
  304 009c 002B     		cmp	r3, #0
  305 009e 02D1     		bne	.L17
- 163:main.c        ****                         twoDigit = 1;
- 306              		.loc 1 163 0
+ 187:main.c        ****                         twoDigit = 1;
+ 306              		.loc 1 187 0
  307 00a0 2B4B     		ldr	r3, .L26+28
  308 00a2 0122     		movs	r2, #1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 10
+
+
  309 00a4 1A60     		str	r2, [r3]
  310              	.L17:
- 164:main.c        ****                     }
- 165:main.c        ****                     endFlag = 1; // set flag to add numbers
- 311              		.loc 1 165 0
+ 188:main.c        ****                     }
+ 189:main.c        ****                     endFlag = 1; // set flag to add numbers
+ 311              		.loc 1 189 0
  312 00a6 2B4B     		ldr	r3, .L26+32
  313 00a8 0122     		movs	r2, #1
  314 00aa 1A60     		str	r2, [r3]
  315 00ac 08E0     		b	.L18
  316              	.L15:
- 166:main.c        ****                 }else{
- 167:main.c        ****                     // Convert string to int
- 168:main.c        ****                     data[i] = (uint8)atoi(buffer);
- 317              		.loc 1 168 0
+ 190:main.c        ****                 }else{
+ 191:main.c        ****                     // Convert string to int
+ 192:main.c        ****                     data[i] = (uint8)atoi(buffer);
+ 317              		.loc 1 192 0
  318 00ae 264B     		ldr	r3, .L26+20
  319 00b0 1C68     		ldr	r4, [r3]
  320 00b2 2248     		ldr	r0, .L26+8
@@ -537,132 +564,129 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  324 00bc 264B     		ldr	r3, .L26+36
  325 00be 1A55     		strb	r2, [r3, r4]
  326              	.L18:
- 169:main.c        ****                 }
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 10
-
-
- 170:main.c        ****                 
- 171:main.c        ****                 /* Make sure data array stays in bounds (size = 3) */
- 172:main.c        ****                 if(i == 0){
- 327              		.loc 1 172 0
+ 193:main.c        ****                 }
+ 194:main.c        ****                 
+ 195:main.c        ****                 /* Make sure data array stays in bounds (size = 3) */
+ 196:main.c        ****                 if(i == 0){
+ 327              		.loc 1 196 0
  328 00c0 214B     		ldr	r3, .L26+20
  329 00c2 1B68     		ldr	r3, [r3]
  330 00c4 002B     		cmp	r3, #0
  331 00c6 06D1     		bne	.L19
- 173:main.c        ****                     i = 2;
- 332              		.loc 1 173 0
+ 197:main.c        ****                     i = 2;
+ 332              		.loc 1 197 0
  333 00c8 1F4B     		ldr	r3, .L26+20
  334 00ca 0222     		movs	r2, #2
  335 00cc 1A60     		str	r2, [r3]
- 174:main.c        ****                     endFlag = 1; // 3 characters have been entered
- 336              		.loc 1 174 0
+ 198:main.c        ****                     endFlag = 1; // 3 characters have been entered
+ 336              		.loc 1 198 0
  337 00ce 214B     		ldr	r3, .L26+32
  338 00d0 0122     		movs	r2, #1
  339 00d2 1A60     		str	r2, [r3]
  340 00d4 04E0     		b	.L20
  341              	.L19:
- 175:main.c        ****                 }else{
- 176:main.c        ****                     i--;
- 342              		.loc 1 176 0
+ 199:main.c        ****                 }else{
+ 200:main.c        ****                     i--;
+ 342              		.loc 1 200 0
  343 00d6 1C4B     		ldr	r3, .L26+20
  344 00d8 1B68     		ldr	r3, [r3]
  345 00da 013B     		subs	r3, r3, #1
  346 00dc 1A4A     		ldr	r2, .L26+20
  347 00de 1360     		str	r3, [r2]
  348              	.L20:
- 177:main.c        ****                 }
- 178:main.c        ****                 
- 179:main.c        ****                  if (0u != count)
- 349              		.loc 1 179 0
+ 201:main.c        ****                 }
+ 202:main.c        ****                 
+ 203:main.c        ****                  if (0u != count)
+ 349              		.loc 1 203 0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 11
+
+
  350 00e0 174B     		ldr	r3, .L26+12
  351 00e2 1B88     		ldrh	r3, [r3]
  352 00e4 002B     		cmp	r3, #0
  353 00e6 19D0     		beq	.L10
- 180:main.c        ****                 {
- 181:main.c        ****                     /* Wait until component is ready to send data to host. */
- 182:main.c        ****                     while (0u == USBUART_CDCIsReady())
- 354              		.loc 1 182 0
+ 204:main.c        ****                 {
+ 205:main.c        ****                     /* Wait until component is ready to send data to host. */
+ 206:main.c        ****                     while (0u == USBUART_CDCIsReady())
+ 354              		.loc 1 206 0
  355 00e8 00BF     		nop
  356              	.L21:
- 357              		.loc 1 182 0 is_stmt 0 discriminator 1
+ 357              		.loc 1 206 0 is_stmt 0 discriminator 1
  358 00ea FFF7FEFF 		bl	USBUART_CDCIsReady
  359 00ee 0346     		mov	r3, r0
  360 00f0 002B     		cmp	r3, #0
  361 00f2 FAD0     		beq	.L21
- 183:main.c        ****                     {
- 184:main.c        ****                     }
- 185:main.c        **** 
- 186:main.c        ****                     /* Send data back to host. */
- 187:main.c        ****                     USBUART_PutData(buffer, count);
- 362              		.loc 1 187 0 is_stmt 1
+ 207:main.c        ****                     {
+ 208:main.c        ****                     }
+ 209:main.c        **** 
+ 210:main.c        ****                     /* Send data back to host. */
+ 211:main.c        ****                     USBUART_PutData(buffer, count);
+ 362              		.loc 1 211 0 is_stmt 1
  363 00f4 124B     		ldr	r3, .L26+12
  364 00f6 1B88     		ldrh	r3, [r3]
  365 00f8 1946     		mov	r1, r3
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 11
-
-
  366 00fa 1048     		ldr	r0, .L26+8
  367 00fc FFF7FEFF 		bl	USBUART_PutData
- 188:main.c        **** 
- 189:main.c        **** 
- 190:main.c        ****                     /* If the last sent packet is exactly the maximum packet 
- 191:main.c        ****                     *  size, it is followed by a zero-length packet to assure
- 192:main.c        ****                     *  that the end of the segment is properly identified by 
- 193:main.c        ****                     *  the terminal.
- 194:main.c        ****                     */
- 195:main.c        ****                     if (USBUART_BUFFER_SIZE == count)
- 368              		.loc 1 195 0
+ 212:main.c        **** 
+ 213:main.c        **** 
+ 214:main.c        ****                     /* If the last sent packet is exactly the maximum packet 
+ 215:main.c        ****                     *  size, it is followed by a zero-length packet to assure
+ 216:main.c        ****                     *  that the end of the segment is properly identified by 
+ 217:main.c        ****                     *  the terminal.
+ 218:main.c        ****                     */
+ 219:main.c        ****                     if (USBUART_BUFFER_SIZE == count)
+ 368              		.loc 1 219 0
  369 0100 0F4B     		ldr	r3, .L26+12
  370 0102 1B88     		ldrh	r3, [r3]
  371 0104 402B     		cmp	r3, #64
  372 0106 09D1     		bne	.L10
- 196:main.c        ****                     {
- 197:main.c        ****                         /* Wait until component is ready to send data to PC. */
- 198:main.c        ****                         while (0u == USBUART_CDCIsReady())
- 373              		.loc 1 198 0
+ 220:main.c        ****                     {
+ 221:main.c        ****                         /* Wait until component is ready to send data to PC. */
+ 222:main.c        ****                         while (0u == USBUART_CDCIsReady())
+ 373              		.loc 1 222 0
  374 0108 00BF     		nop
  375              	.L22:
- 376              		.loc 1 198 0 is_stmt 0 discriminator 1
+ 376              		.loc 1 222 0 is_stmt 0 discriminator 1
  377 010a FFF7FEFF 		bl	USBUART_CDCIsReady
  378 010e 0346     		mov	r3, r0
  379 0110 002B     		cmp	r3, #0
  380 0112 FAD0     		beq	.L22
- 199:main.c        ****                         {
- 200:main.c        ****                         }
- 201:main.c        **** 
- 202:main.c        ****                         /* Send zero-length packet to PC. */
- 203:main.c        ****                         USBUART_PutData(NULL, 0u);
- 381              		.loc 1 203 0 is_stmt 1
+ 223:main.c        ****                         {
+ 224:main.c        ****                         }
+ 225:main.c        **** 
+ 226:main.c        ****                         /* Send zero-length packet to PC. */
+ 227:main.c        ****                         USBUART_PutData(NULL, 0u);
+ 381              		.loc 1 227 0 is_stmt 1
  382 0114 0021     		movs	r1, #0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 12
+
+
  383 0116 0020     		movs	r0, #0
  384 0118 FFF7FEFF 		bl	USBUART_PutData
  385              	.L10:
- 204:main.c        ****                     }
- 205:main.c        ****                 }
- 206:main.c        ****             } // end (0u != USBUART_DataIsReady())
- 207:main.c        ****         } // end (0u != USBUART_GetConfiguration())
- 208:main.c        ****         if(endFlag == 1){
- 386              		.loc 1 208 0
+ 228:main.c        ****                     }
+ 229:main.c        ****                 }
+ 230:main.c        ****             } // end (0u != USBUART_DataIsReady())
+ 231:main.c        ****         } // end (0u != USBUART_GetConfiguration())
+ 232:main.c        ****         if(endFlag == 1){
+ 386              		.loc 1 232 0
  387 011c 0D4B     		ldr	r3, .L26+32
  388 011e 1B68     		ldr	r3, [r3]
  389 0120 012B     		cmp	r3, #1
  390 0122 01D1     		bne	.L23
- 209:main.c        ****             return 1;
- 391              		.loc 1 209 0
+ 233:main.c        ****             return 1;
+ 391              		.loc 1 233 0
  392 0124 0123     		movs	r3, #1
  393 0126 00E0     		b	.L24
  394              	.L23:
- 210:main.c        ****         }else{
- 211:main.c        ****             return 0;
- 395              		.loc 1 211 0
+ 234:main.c        ****         }else{
+ 235:main.c        ****             return 0;
+ 395              		.loc 1 235 0
  396 0128 0023     		movs	r3, #0
  397              	.L24:
- 212:main.c        ****         }
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 12
-
-
- 213:main.c        **** }//end GetCrabs()
- 398              		.loc 1 213 0
+ 236:main.c        ****         }
+ 237:main.c        **** }//end GetCrabs()
+ 398              		.loc 1 237 0
  399 012a 1846     		mov	r0, r3
  400 012c 0C37     		adds	r7, r7, #12
  401              		.cfi_def_cfa_offset 12
@@ -694,6 +718,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  425      6C656173 
  425      6520656E 
  425      74657220 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 13
+
+
  426              		.section	.text.CalculateCrabs,"ax",%progbits
  427              		.align	2
  428              		.global	CalculateCrabs
@@ -702,118 +729,118 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  431              		.type	CalculateCrabs, %function
  432              	CalculateCrabs:
  433              	.LFB66:
- 214:main.c        **** 
- 215:main.c        **** /*
- 216:main.c        ****  * function: int CalculateCrabs()
- 217:main.c        ****  * parameters: none
- 218:main.c        ****  * returns: int crabs - amount of crabs from user input 
- 219:main.c        ****  * description: This function takes an array of size three and converts
- 220:main.c        ****  * to a single number
- 221:main.c        ****  */
- 222:main.c        **** int CalculateCrabs()
- 223:main.c        **** {
- 434              		.loc 1 223 0
+ 238:main.c        **** 
+ 239:main.c        **** /*
+ 240:main.c        ****  * function: int CalculateCrabs()
+ 241:main.c        ****  * parameters: none
+ 242:main.c        ****  * returns: int crabs - amount of crabs from user input 
+ 243:main.c        ****  * description: This function takes an array of size three and converts
+ 244:main.c        ****  * to a single number
+ 245:main.c        ****  */
+ 246:main.c        **** int CalculateCrabs()
+ 247:main.c        **** {
+ 434              		.loc 1 247 0
  435              		.cfi_startproc
  436              		@ args = 0, pretend = 0, frame = 8
  437              		@ frame_needed = 1, uses_anonymous_args = 0
  438 0000 80B5     		push	{r7, lr}
  439              		.cfi_def_cfa_offset 8
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 13
-
-
  440              		.cfi_offset 7, -8
  441              		.cfi_offset 14, -4
  442 0002 82B0     		sub	sp, sp, #8
  443              		.cfi_def_cfa_offset 16
  444 0004 00AF     		add	r7, sp, #0
  445              		.cfi_def_cfa_register 7
- 224:main.c        ****     int crabs;
- 225:main.c        ****     /* Wait until component is ready to send data to host. */
- 226:main.c        ****     while (0u == USBUART_CDCIsReady())
- 446              		.loc 1 226 0
+ 248:main.c        ****     int crabs;
+ 249:main.c        ****     /* Wait until component is ready to send data to host. */
+ 250:main.c        ****     while (0u == USBUART_CDCIsReady())
+ 446              		.loc 1 250 0
  447 0006 00BF     		nop
  448              	.L29:
- 449              		.loc 1 226 0 is_stmt 0 discriminator 1
+ 449              		.loc 1 250 0 is_stmt 0 discriminator 1
  450 0008 FFF7FEFF 		bl	USBUART_CDCIsReady
  451 000c 0346     		mov	r3, r0
  452 000e 002B     		cmp	r3, #0
  453 0010 FAD0     		beq	.L29
- 227:main.c        ****     {
- 228:main.c        ****     }
- 229:main.c        ****     USBUART_PutCRLF();
- 454              		.loc 1 229 0 is_stmt 1
+ 251:main.c        ****     {
+ 252:main.c        ****     }
+ 253:main.c        ****     USBUART_PutCRLF();
+ 454              		.loc 1 253 0 is_stmt 1
  455 0012 FFF7FEFF 		bl	USBUART_PutCRLF
- 230:main.c        ****     /* Shift data if carriage return was pressed */
- 231:main.c        ****     if(oneDigit == 1){
- 456              		.loc 1 231 0
+ 254:main.c        ****     /* Shift data if carriage return was pressed */
+ 255:main.c        ****     if(oneDigit == 1){
+ 456              		.loc 1 255 0
  457 0016 404B     		ldr	r3, .L37
  458 0018 1B68     		ldr	r3, [r3]
  459 001a 012B     		cmp	r3, #1
  460 001c 0AD1     		bne	.L30
- 232:main.c        ****         //USBUART_PutString("one digit");
- 233:main.c        ****         data[0] = data[2];
- 461              		.loc 1 233 0
+ 256:main.c        ****         //USBUART_PutString("one digit");
+ 257:main.c        ****         data[0] = data[2];
+ 461              		.loc 1 257 0
  462 001e 3F4B     		ldr	r3, .L37+4
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 14
+
+
  463 0020 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
  464 0022 3E4B     		ldr	r3, .L37+4
  465 0024 1A70     		strb	r2, [r3]
- 234:main.c        ****         data[2] = 0;
- 466              		.loc 1 234 0
+ 258:main.c        ****         data[2] = 0;
+ 466              		.loc 1 258 0
  467 0026 3D4B     		ldr	r3, .L37+4
  468 0028 0022     		movs	r2, #0
  469 002a 9A70     		strb	r2, [r3, #2]
- 235:main.c        ****         oneDigit = 0;
- 470              		.loc 1 235 0
+ 259:main.c        ****         oneDigit = 0;
+ 470              		.loc 1 259 0
  471 002c 3A4B     		ldr	r3, .L37
  472 002e 0022     		movs	r2, #0
  473 0030 1A60     		str	r2, [r3]
  474 0032 11E0     		b	.L31
  475              	.L30:
- 236:main.c        ****     }else if(twoDigit == 1){
- 476              		.loc 1 236 0
+ 260:main.c        ****     }else if(twoDigit == 1){
+ 476              		.loc 1 260 0
  477 0034 3A4B     		ldr	r3, .L37+8
  478 0036 1B68     		ldr	r3, [r3]
  479 0038 012B     		cmp	r3, #1
  480 003a 0DD1     		bne	.L31
- 237:main.c        ****         //USBUART_PutString("two digits");
- 238:main.c        ****         data[0] = data[1];
- 481              		.loc 1 238 0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 14
-
-
+ 261:main.c        ****         //USBUART_PutString("two digits");
+ 262:main.c        ****         data[0] = data[1];
+ 481              		.loc 1 262 0
  482 003c 374B     		ldr	r3, .L37+4
  483 003e 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
  484 0040 364B     		ldr	r3, .L37+4
  485 0042 1A70     		strb	r2, [r3]
- 239:main.c        ****         data[1] = data[2];
- 486              		.loc 1 239 0
+ 263:main.c        ****         data[1] = data[2];
+ 486              		.loc 1 263 0
  487 0044 354B     		ldr	r3, .L37+4
  488 0046 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
  489 0048 344B     		ldr	r3, .L37+4
  490 004a 5A70     		strb	r2, [r3, #1]
- 240:main.c        ****         data[2] = 0;
- 491              		.loc 1 240 0
+ 264:main.c        ****         data[2] = 0;
+ 491              		.loc 1 264 0
  492 004c 334B     		ldr	r3, .L37+4
  493 004e 0022     		movs	r2, #0
  494 0050 9A70     		strb	r2, [r3, #2]
- 241:main.c        ****         twoDigit = 0;
- 495              		.loc 1 241 0
+ 265:main.c        ****         twoDigit = 0;
+ 495              		.loc 1 265 0
  496 0052 334B     		ldr	r3, .L37+8
  497 0054 0022     		movs	r2, #0
  498 0056 1A60     		str	r2, [r3]
  499              	.L31:
- 242:main.c        ****     }
- 243:main.c        ****     /* Apply digit place to integer */
- 244:main.c        ****     data[0] = data[0] * 1;
- 500              		.loc 1 244 0
+ 266:main.c        ****     }
+ 267:main.c        ****     /* Apply digit place to integer */
+ 268:main.c        ****     data[0] = data[0] * 1;
+ 500              		.loc 1 268 0
  501 0058 304B     		ldr	r3, .L37+4
  502 005a 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
  503 005c 2F4B     		ldr	r3, .L37+4
  504 005e 1A70     		strb	r2, [r3]
- 245:main.c        ****     data[1] = data[1] * 10;
- 505              		.loc 1 245 0
+ 269:main.c        ****     data[1] = data[1] * 10;
+ 505              		.loc 1 269 0
  506 0060 2E4B     		ldr	r3, .L37+4
  507 0062 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 15
+
+
  508 0064 1A46     		mov	r2, r3
  509 0066 9200     		lsls	r2, r2, #2
  510 0068 1344     		add	r3, r3, r2
@@ -821,8 +848,8 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  512 006c DAB2     		uxtb	r2, r3
  513 006e 2B4B     		ldr	r3, .L37+4
  514 0070 5A70     		strb	r2, [r3, #1]
- 246:main.c        ****     data[2] = data[2] * 100;
- 515              		.loc 1 246 0
+ 270:main.c        ****     data[2] = data[2] * 100;
+ 515              		.loc 1 270 0
  516 0072 2A4B     		ldr	r3, .L37+4
  517 0074 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
  518 0076 1A46     		mov	r2, r3
@@ -837,11 +864,8 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  527 0088 DAB2     		uxtb	r2, r3
  528 008a 244B     		ldr	r3, .L37+4
  529 008c 9A70     		strb	r2, [r3, #2]
- 247:main.c        ****     crabs = data[0] + data[1] + data[2];
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 15
-
-
- 530              		.loc 1 247 0
+ 271:main.c        ****     crabs = data[0] + data[1] + data[2];
+ 530              		.loc 1 271 0
  531 008e 234B     		ldr	r3, .L37+4
  532 0090 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
  533 0092 1A46     		mov	r2, r3
@@ -852,116 +876,116 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  538 009c 9278     		ldrb	r2, [r2, #2]	@ zero_extendqisi2
  539 009e 1344     		add	r3, r3, r2
  540 00a0 7B60     		str	r3, [r7, #4]
- 248:main.c        ****     if(crabs > MAX_CRABS){
- 541              		.loc 1 248 0
+ 272:main.c        ****     if(crabs > MAX_CRABS){
+ 541              		.loc 1 272 0
  542 00a2 7B68     		ldr	r3, [r7, #4]
  543 00a4 7F2B     		cmp	r3, #127
  544 00a6 15DD     		ble	.L32
- 249:main.c        ****         crabs = 0;
- 545              		.loc 1 249 0
+ 273:main.c        ****         crabs = 0;
+ 545              		.loc 1 273 0
  546 00a8 0023     		movs	r3, #0
  547 00aa 7B60     		str	r3, [r7, #4]
- 250:main.c        ****         error = 1;
- 548              		.loc 1 250 0
+ 274:main.c        ****         error = 1;
+ 548              		.loc 1 274 0
  549 00ac 1D4B     		ldr	r3, .L37+12
  550 00ae 0122     		movs	r2, #1
  551 00b0 1A60     		str	r2, [r3]
- 251:main.c        ****         /* Wait until component is ready to send data to host. */
- 252:main.c        ****         while (0u == USBUART_CDCIsReady())
- 552              		.loc 1 252 0
+ 275:main.c        ****         /* Wait until component is ready to send data to host. */
+ 276:main.c        ****         while (0u == USBUART_CDCIsReady())
+ 552              		.loc 1 276 0
  553 00b2 00BF     		nop
  554              	.L33:
- 555              		.loc 1 252 0 is_stmt 0 discriminator 1
+ 555              		.loc 1 276 0 is_stmt 0 discriminator 1
  556 00b4 FFF7FEFF 		bl	USBUART_CDCIsReady
  557 00b8 0346     		mov	r3, r0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 16
+
+
  558 00ba 002B     		cmp	r3, #0
  559 00bc FAD0     		beq	.L33
- 253:main.c        ****         {
- 254:main.c        ****         }
- 255:main.c        ****         USBUART_PutString("Error. Please enter a number UP TO 127");
- 560              		.loc 1 255 0 is_stmt 1
+ 277:main.c        ****         {
+ 278:main.c        ****         }
+ 279:main.c        ****         USBUART_PutString("Error. Please enter a number UP TO 127");
+ 560              		.loc 1 279 0 is_stmt 1
  561 00be 1A48     		ldr	r0, .L37+16
  562 00c0 FFF7FEFF 		bl	USBUART_PutString
- 256:main.c        ****         /* Wait until component is ready to send data to host. */
- 257:main.c        ****         while (0u == USBUART_CDCIsReady())
- 563              		.loc 1 257 0
+ 280:main.c        ****         /* Wait until component is ready to send data to host. */
+ 281:main.c        ****         while (0u == USBUART_CDCIsReady())
+ 563              		.loc 1 281 0
  564 00c4 00BF     		nop
  565              	.L34:
- 566              		.loc 1 257 0 is_stmt 0 discriminator 1
+ 566              		.loc 1 281 0 is_stmt 0 discriminator 1
  567 00c6 FFF7FEFF 		bl	USBUART_CDCIsReady
  568 00ca 0346     		mov	r3, r0
  569 00cc 002B     		cmp	r3, #0
  570 00ce FAD0     		beq	.L34
- 258:main.c        ****         {
- 259:main.c        ****         }
- 260:main.c        ****         USBUART_PutCRLF();
- 571              		.loc 1 260 0 is_stmt 1
+ 282:main.c        ****         {
+ 283:main.c        ****         }
+ 284:main.c        ****         USBUART_PutCRLF();
+ 571              		.loc 1 284 0 is_stmt 1
  572 00d0 FFF7FEFF 		bl	USBUART_PutCRLF
  573              	.L32:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 16
-
-
- 261:main.c        ****     }
- 262:main.c        ****     /* reset array */
- 263:main.c        ****     data[0] = 0; 
- 574              		.loc 1 263 0
+ 285:main.c        ****     }
+ 286:main.c        ****     /* reset array */
+ 287:main.c        ****     data[0] = 0; 
+ 574              		.loc 1 287 0
  575 00d4 114B     		ldr	r3, .L37+4
  576 00d6 0022     		movs	r2, #0
  577 00d8 1A70     		strb	r2, [r3]
- 264:main.c        ****     data[1] = 0;
- 578              		.loc 1 264 0
+ 288:main.c        ****     data[1] = 0;
+ 578              		.loc 1 288 0
  579 00da 104B     		ldr	r3, .L37+4
  580 00dc 0022     		movs	r2, #0
  581 00de 5A70     		strb	r2, [r3, #1]
- 265:main.c        ****     data[2] = 0;
- 582              		.loc 1 265 0
+ 289:main.c        ****     data[2] = 0;
+ 582              		.loc 1 289 0
  583 00e0 0E4B     		ldr	r3, .L37+4
  584 00e2 0022     		movs	r2, #0
  585 00e4 9A70     		strb	r2, [r3, #2]
- 266:main.c        ****     i = 2; // reset indexing for array
- 586              		.loc 1 266 0
+ 290:main.c        ****     i = 2; // reset indexing for array
+ 586              		.loc 1 290 0
  587 00e6 114B     		ldr	r3, .L37+20
  588 00e8 0222     		movs	r2, #2
  589 00ea 1A60     		str	r2, [r3]
- 267:main.c        ****     endFlag = 0; // reset endFlag for gathering new data
- 590              		.loc 1 267 0
+ 291:main.c        ****     endFlag = 0; // reset endFlag for gathering new data
+ 590              		.loc 1 291 0
  591 00ec 104B     		ldr	r3, .L37+24
  592 00ee 0022     		movs	r2, #0
  593 00f0 1A60     		str	r2, [r3]
- 268:main.c        ****                     
- 269:main.c        ****     if(error == 1){
- 594              		.loc 1 269 0
+ 292:main.c        ****                     
+ 293:main.c        ****     if(error == 1){
+ 594              		.loc 1 293 0
  595 00f2 0C4B     		ldr	r3, .L37+12
  596 00f4 1B68     		ldr	r3, [r3]
  597 00f6 012B     		cmp	r3, #1
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 17
+
+
  598 00f8 05D1     		bne	.L35
- 270:main.c        ****         error = 0; // reset error checking
- 599              		.loc 1 270 0
+ 294:main.c        ****         error = 0; // reset error checking
+ 599              		.loc 1 294 0
  600 00fa 0A4B     		ldr	r3, .L37+12
  601 00fc 0022     		movs	r2, #0
  602 00fe 1A60     		str	r2, [r3]
- 271:main.c        ****         return ERROR;
- 603              		.loc 1 271 0
+ 295:main.c        ****         return ERROR;
+ 603              		.loc 1 295 0
  604 0100 40F24D13 		movw	r3, #333
  605 0104 03E0     		b	.L36
  606              	.L35:
- 272:main.c        **** 
- 273:main.c        ****     }else{
- 274:main.c        ****         prompt = 1;
- 607              		.loc 1 274 0
+ 296:main.c        **** 
+ 297:main.c        ****     }else{
+ 298:main.c        ****         prompt = 1;
+ 607              		.loc 1 298 0
  608 0106 0B4B     		ldr	r3, .L37+28
  609 0108 0122     		movs	r2, #1
  610 010a 1A60     		str	r2, [r3]
- 275:main.c        ****         return crabs;
- 611              		.loc 1 275 0
+ 299:main.c        ****         return crabs;
+ 611              		.loc 1 299 0
  612 010c 7B68     		ldr	r3, [r7, #4]
  613              	.L36:
- 276:main.c        ****     }
- 277:main.c        **** } /* END OF CalculateCrabs() */
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 17
-
-
- 614              		.loc 1 277 0
+ 300:main.c        ****     }
+ 301:main.c        **** } /* END OF CalculateCrabs() */
+ 614              		.loc 1 301 0
  615 010e 1846     		mov	r0, r3
  616 0110 0837     		adds	r7, r7, #8
  617              		.cfi_def_cfa_offset 8
@@ -994,6 +1018,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  642 00e8 43726162 		.ascii	"Crabs: %d\000"
  642      733A2025 
  642      6400
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 18
+
+
  643              		.section	.text.DisplayCrabs,"ax",%progbits
  644              		.align	2
  645              		.global	DisplayCrabs
@@ -1002,15 +1029,15 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  648              		.type	DisplayCrabs, %function
  649              	DisplayCrabs:
  650              	.LFB67:
- 278:main.c        **** 
- 279:main.c        **** /*
- 280:main.c        ****  * function: void DisplayCrabs()
- 281:main.c        ****  * parameters: int crabs
- 282:main.c        ****  * returns: void
- 283:main.c        ****  * description: Displays the number of crabs on LCD Display
- 284:main.c        ****  */
- 285:main.c        **** void DisplayCrabs(int crabs){
- 651              		.loc 1 285 0
+ 302:main.c        **** 
+ 303:main.c        **** /*
+ 304:main.c        ****  * function: void DisplayCrabs()
+ 305:main.c        ****  * parameters: int crabs
+ 306:main.c        ****  * returns: void
+ 307:main.c        ****  * description: Displays the number of crabs on LCD Display
+ 308:main.c        ****  */
+ 309:main.c        **** void DisplayCrabs(int crabs){
+ 651              		.loc 1 309 0
  652              		.cfi_startproc
  653              		@ args = 0, pretend = 0, frame = 8
  654              		@ frame_needed = 1, uses_anonymous_args = 0
@@ -1018,43 +1045,43 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  656              		.cfi_def_cfa_offset 8
  657              		.cfi_offset 7, -8
  658              		.cfi_offset 14, -4
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 18
-
-
  659 0002 82B0     		sub	sp, sp, #8
  660              		.cfi_def_cfa_offset 16
  661 0004 00AF     		add	r7, sp, #0
  662              		.cfi_def_cfa_register 7
  663 0006 7860     		str	r0, [r7, #4]
- 286:main.c        ****     /* Clear LCD line. */
- 287:main.c        ****     LCD_Position(0u, 0u);
- 664              		.loc 1 287 0
+ 310:main.c        ****     /* Clear LCD line. */
+ 311:main.c        ****     LCD_Position(0u, 0u);
+ 664              		.loc 1 311 0
  665 0008 0021     		movs	r1, #0
  666 000a 0020     		movs	r0, #0
  667 000c FFF7FEFF 		bl	LCD_Position
- 288:main.c        ****     LCD_PrintString("           ");
- 668              		.loc 1 288 0
+ 312:main.c        ****     LCD_PrintString("           ");
+ 668              		.loc 1 312 0
  669 0010 0948     		ldr	r0, .L40
  670 0012 FFF7FEFF 		bl	LCD_PrintString
- 289:main.c        ****     /* Reset LCD line position. */
- 290:main.c        ****     LCD_Position(0u, 0u);
- 671              		.loc 1 290 0
+ 313:main.c        ****     /* Reset LCD line position. */
+ 314:main.c        ****     LCD_Position(0u, 0u);
+ 671              		.loc 1 314 0
  672 0016 0021     		movs	r1, #0
  673 0018 0020     		movs	r0, #0
  674 001a FFF7FEFF 		bl	LCD_Position
- 291:main.c        ****     /* Store int crabs into a string to print to LCD */
- 292:main.c        ****     sprintf(lineStr,"Crabs: %d", crabs);
- 675              		.loc 1 292 0
+ 315:main.c        ****     /* Store int crabs into a string to print to LCD */
+ 316:main.c        ****     sprintf(lineStr,"Crabs: %d", crabs);
+ 675              		.loc 1 316 0
  676 001e 7A68     		ldr	r2, [r7, #4]
  677 0020 0649     		ldr	r1, .L40+4
  678 0022 0748     		ldr	r0, .L40+8
  679 0024 FFF7FEFF 		bl	sprintf
- 293:main.c        ****     LCD_PrintString(lineStr);
- 680              		.loc 1 293 0
+ 317:main.c        ****     LCD_PrintString(lineStr);
+ 680              		.loc 1 317 0
  681 0028 0548     		ldr	r0, .L40+8
  682 002a FFF7FEFF 		bl	LCD_PrintString
- 294:main.c        **** }
- 683              		.loc 1 294 0
+ 318:main.c        **** }
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 19
+
+
+ 683              		.loc 1 318 0
  684 002e 00BF     		nop
  685 0030 0837     		adds	r7, r7, #8
  686              		.cfi_def_cfa_offset 8
@@ -1078,9 +1105,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  704              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
  705              		.file 5 "Generated_Source\\PSoC5/core_cm3.h"
  706              		.section	.debug_info,"",%progbits
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 19
-
-
  707              	.Ldebug_info0:
  708 0000 5A020000 		.4byte	0x25a
  709 0004 0400     		.2byte	0x4
@@ -1114,6 +1138,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  737 0042 A6000000 		.4byte	.LASF9
  738 0046 02       		.byte	0x2
  739 0047 3F       		.byte	0x3f
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 20
+
+
  740 0048 4C000000 		.4byte	0x4c
  741 004c 02       		.uleb128 0x2
  742 004d 04       		.byte	0x4
@@ -1138,9 +1165,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  761 006f 02       		.uleb128 0x2
  762 0070 04       		.byte	0x4
  763 0071 07       		.byte	0x7
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 20
-
-
  764 0072 41010000 		.4byte	.LASF8
  765 0076 03       		.uleb128 0x3
  766 0077 A7010000 		.4byte	.LASF10
@@ -1174,6 +1198,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  794 00b4 01       		.byte	0x1
  795 00b5 08       		.byte	0x8
  796 00b6 DF010000 		.4byte	.LASF16
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 21
+
+
  797 00ba 02       		.uleb128 0x2
  798 00bb 08       		.byte	0x8
  799 00bc 04       		.byte	0x4
@@ -1185,7 +1212,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  805 00c8 06       		.uleb128 0x6
  806 00c9 3C010000 		.4byte	.LASF23
  807 00cd 01       		.byte	0x1
- 808 00ce 41       		.byte	0x41
+ 808 00ce 59       		.byte	0x59
  809 00cf 68000000 		.4byte	0x68
  810 00d3 00000000 		.4byte	.LFB64
  811 00d7 84000000 		.4byte	.LFE64-.LFB64
@@ -1195,18 +1222,15 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  815 00e1 07       		.uleb128 0x7
  816 00e2 11010000 		.4byte	.LASF19
  817 00e6 01       		.byte	0x1
- 818 00e7 43       		.byte	0x43
+ 818 00e7 5B       		.byte	0x5b
  819 00e8 68000000 		.4byte	0x68
  820 00ec 02       		.uleb128 0x2
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 21
-
-
  821 00ed 91       		.byte	0x91
  822 00ee 74       		.sleb128 -12
  823 00ef 07       		.uleb128 0x7
  824 00f0 B8010000 		.4byte	.LASF20
  825 00f4 01       		.byte	0x1
- 826 00f5 44       		.byte	0x44
+ 826 00f5 5C       		.byte	0x5c
  827 00f6 68000000 		.4byte	0x68
  828 00fa 02       		.uleb128 0x2
  829 00fb 91       		.byte	0x91
@@ -1215,7 +1239,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  832 00fe 08       		.uleb128 0x8
  833 00ff 1F010000 		.4byte	.LASF21
  834 0103 01       		.byte	0x1
- 835 0104 72       		.byte	0x72
+ 835 0104 8A       		.byte	0x8a
  836 0105 68000000 		.4byte	0x68
  837 0109 00000000 		.4byte	.LFB65
  838 010d 5C010000 		.4byte	.LFE65-.LFB65
@@ -1225,7 +1249,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  842 0117 07       		.uleb128 0x7
  843 0118 11010000 		.4byte	.LASF19
  844 011c 01       		.byte	0x1
- 845 011d 74       		.byte	0x74
+ 845 011d 8C       		.byte	0x8c
  846 011e 8D000000 		.4byte	0x8d
  847 0122 02       		.uleb128 0x2
  848 0123 91       		.byte	0x91
@@ -1234,7 +1258,10 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  851 0126 08       		.uleb128 0x8
  852 0127 97000000 		.4byte	.LASF22
  853 012b 01       		.byte	0x1
- 854 012c DE       		.byte	0xde
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 22
+
+
+ 854 012c F6       		.byte	0xf6
  855 012d 68000000 		.4byte	0x68
  856 0131 00000000 		.4byte	.LFB66
  857 0135 38010000 		.4byte	.LFE66-.LFB66
@@ -1244,7 +1271,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  861 013f 07       		.uleb128 0x7
  862 0140 11010000 		.4byte	.LASF19
  863 0144 01       		.byte	0x1
- 864 0145 E0       		.byte	0xe0
+ 864 0145 F8       		.byte	0xf8
  865 0146 68000000 		.4byte	0x68
  866 014a 02       		.uleb128 0x2
  867 014b 91       		.byte	0x91
@@ -1253,19 +1280,16 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  870 014e 09       		.uleb128 0x9
  871 014f 2F010000 		.4byte	.LASF24
  872 0153 01       		.byte	0x1
- 873 0154 1D01     		.2byte	0x11d
+ 873 0154 3501     		.2byte	0x135
  874 0156 00000000 		.4byte	.LFB67
  875 015a 44000000 		.4byte	.LFE67-.LFB67
  876 015e 01       		.uleb128 0x1
  877 015f 9C       		.byte	0x9c
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 22
-
-
  878 0160 74010000 		.4byte	0x174
  879 0164 0A       		.uleb128 0xa
  880 0165 11010000 		.4byte	.LASF19
  881 0169 01       		.byte	0x1
- 882 016a 1D01     		.2byte	0x11d
+ 882 016a 3501     		.2byte	0x135
  883 016c 68000000 		.4byte	0x68
  884 0170 02       		.uleb128 0x2
  885 0171 91       		.byte	0x91
@@ -1281,7 +1305,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  895 0185 0D       		.uleb128 0xd
  896 0186 22020000 		.4byte	.LASF26
  897 018a 01       		.byte	0x1
- 898 018b 31       		.byte	0x31
+ 898 018b 49       		.byte	0x49
  899 018c 68000000 		.4byte	0x68
  900 0190 05       		.uleb128 0x5
  901 0191 03       		.byte	0x3
@@ -1289,15 +1313,18 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  903 0196 0D       		.uleb128 0xd
  904 0197 17010000 		.4byte	.LASF27
  905 019b 01       		.byte	0x1
- 906 019c 32       		.byte	0x32
+ 906 019c 4A       		.byte	0x4a
  907 019d 68000000 		.4byte	0x68
  908 01a1 05       		.uleb128 0x5
  909 01a2 03       		.byte	0x3
  910 01a3 00000000 		.4byte	endFlag
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 23
+
+
  911 01a7 0D       		.uleb128 0xd
  912 01a8 8E000000 		.4byte	.LASF28
  913 01ac 01       		.byte	0x1
- 914 01ad 33       		.byte	0x33
+ 914 01ad 4B       		.byte	0x4b
  915 01ae 68000000 		.4byte	0x68
  916 01b2 05       		.uleb128 0x5
  917 01b3 03       		.byte	0x3
@@ -1305,7 +1332,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  919 01b8 0D       		.uleb128 0xd
  920 01b9 B0000000 		.4byte	.LASF29
  921 01bd 01       		.byte	0x1
- 922 01be 34       		.byte	0x34
+ 922 01be 4C       		.byte	0x4c
  923 01bf 68000000 		.4byte	0x68
  924 01c3 05       		.uleb128 0x5
  925 01c4 03       		.byte	0x3
@@ -1313,18 +1340,15 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  927 01c9 0D       		.uleb128 0xd
  928 01ca C4010000 		.4byte	.LASF30
  929 01ce 01       		.byte	0x1
- 930 01cf 35       		.byte	0x35
+ 930 01cf 4D       		.byte	0x4d
  931 01d0 68000000 		.4byte	0x68
  932 01d4 05       		.uleb128 0x5
  933 01d5 03       		.byte	0x3
  934 01d6 00000000 		.4byte	error
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 23
-
-
  935 01da 0E       		.uleb128 0xe
  936 01db 6900     		.ascii	"i\000"
  937 01dd 01       		.byte	0x1
- 938 01de 36       		.byte	0x36
+ 938 01de 4E       		.byte	0x4e
  939 01df 68000000 		.4byte	0x68
  940 01e3 05       		.uleb128 0x5
  941 01e4 03       		.byte	0x3
@@ -1332,7 +1356,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  943 01e9 0D       		.uleb128 0xd
  944 01ea E4010000 		.4byte	.LASF31
  945 01ee 01       		.byte	0x1
- 946 01ef 37       		.byte	0x37
+ 946 01ef 4F       		.byte	0x4f
  947 01f0 8D000000 		.4byte	0x8d
  948 01f4 05       		.uleb128 0x5
  949 01f5 03       		.byte	0x3
@@ -1347,13 +1371,16 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  958 020a 0D       		.uleb128 0xd
  959 020b 29020000 		.4byte	.LASF32
  960 020f 01       		.byte	0x1
- 961 0210 38       		.byte	0x38
+ 961 0210 50       		.byte	0x50
  962 0211 FA010000 		.4byte	0x1fa
  963 0215 05       		.uleb128 0x5
  964 0216 03       		.byte	0x3
  965 0217 00000000 		.4byte	lineStr
  966 021b 0F       		.uleb128 0xf
  967 021c 81000000 		.4byte	0x81
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 24
+
+
  968 0220 2B020000 		.4byte	0x22b
  969 0224 10       		.uleb128 0x10
  970 0225 C1000000 		.4byte	0xc1
@@ -1362,7 +1389,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  973 022b 0D       		.uleb128 0xd
  974 022c F4010000 		.4byte	.LASF33
  975 0230 01       		.byte	0x1
- 976 0231 39       		.byte	0x39
+ 976 0231 51       		.byte	0x51
  977 0232 1B020000 		.4byte	0x21b
  978 0236 05       		.uleb128 0x5
  979 0237 03       		.byte	0x3
@@ -1377,10 +1404,7 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  988 024c 0D       		.uleb128 0xd
  989 024d BF000000 		.4byte	.LASF34
  990 0251 01       		.byte	0x1
- 991 0252 3A       		.byte	0x3a
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 24
-
-
+ 991 0252 52       		.byte	0x52
  992 0253 3C020000 		.4byte	0x23c
  993 0257 05       		.uleb128 0x5
  994 0258 03       		.byte	0x3
@@ -1414,6 +1438,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1022 0017 0B       		.uleb128 0xb
  1023 0018 3E       		.uleb128 0x3e
  1024 0019 0B       		.uleb128 0xb
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 25
+
+
  1025 001a 03       		.uleb128 0x3
  1026 001b 0E       		.uleb128 0xe
  1027 001c 00       		.byte	0
@@ -1438,9 +1465,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1046 002f 0B       		.uleb128 0xb
  1047 0030 3E       		.uleb128 0x3e
  1048 0031 0B       		.uleb128 0xb
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 25
-
-
  1049 0032 03       		.uleb128 0x3
  1050 0033 08       		.uleb128 0x8
  1051 0034 00       		.byte	0
@@ -1474,6 +1498,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1079 0050 11       		.uleb128 0x11
  1080 0051 01       		.uleb128 0x1
  1081 0052 12       		.uleb128 0x12
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 26
+
+
  1082 0053 06       		.uleb128 0x6
  1083 0054 40       		.uleb128 0x40
  1084 0055 18       		.uleb128 0x18
@@ -1498,9 +1525,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1103 0069 18       		.uleb128 0x18
  1104 006a 00       		.byte	0
  1105 006b 00       		.byte	0
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 26
-
-
  1106 006c 08       		.uleb128 0x8
  1107 006d 2E       		.uleb128 0x2e
  1108 006e 01       		.byte	0x1
@@ -1534,6 +1558,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1136 008b 3F       		.uleb128 0x3f
  1137 008c 19       		.uleb128 0x19
  1138 008d 03       		.uleb128 0x3
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 27
+
+
  1139 008e 0E       		.uleb128 0xe
  1140 008f 3A       		.uleb128 0x3a
  1141 0090 0B       		.uleb128 0xb
@@ -1558,9 +1585,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1160 00a4 00       		.byte	0
  1161 00a5 03       		.uleb128 0x3
  1162 00a6 0E       		.uleb128 0xe
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 27
-
-
  1163 00a7 3A       		.uleb128 0x3a
  1164 00a8 0B       		.uleb128 0xb
  1165 00a9 3B       		.uleb128 0x3b
@@ -1594,6 +1618,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1193 00c5 49       		.uleb128 0x49
  1194 00c6 13       		.uleb128 0x13
  1195 00c7 00       		.byte	0
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 28
+
+
  1196 00c8 00       		.byte	0
  1197 00c9 0D       		.uleb128 0xd
  1198 00ca 34       		.uleb128 0x34
@@ -1618,9 +1645,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1217 00dd 03       		.uleb128 0x3
  1218 00de 08       		.uleb128 0x8
  1219 00df 3A       		.uleb128 0x3a
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 28
-
-
  1220 00e0 0B       		.uleb128 0xb
  1221 00e1 3B       		.uleb128 0x3b
  1222 00e2 0B       		.uleb128 0xb
@@ -1654,6 +1678,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1250              		.section	.debug_aranges,"",%progbits
  1251 0000 34000000 		.4byte	0x34
  1252 0004 0200     		.2byte	0x2
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 29
+
+
  1253 0006 00000000 		.4byte	.Ldebug_info0
  1254 000a 04       		.byte	0x4
  1255 000b 00       		.byte	0
@@ -1678,9 +1705,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1274 0010 00000000 		.4byte	.LFB66
  1275 0014 38010000 		.4byte	.LFE66
  1276 0018 00000000 		.4byte	.LFB67
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 29
-
-
  1277 001c 44000000 		.4byte	.LFE67
  1278 0020 00000000 		.4byte	0
  1279 0024 00000000 		.4byte	0
@@ -1714,6 +1738,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1289              	.LASF22:
  1290 0097 43616C63 		.ascii	"CalculateCrabs\000"
  1290      756C6174 
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 30
+
+
  1290      65437261 
  1290      627300
  1291              	.LASF9:
@@ -1738,9 +1765,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1301              	.LASF15:
  1302 00d2 63686172 		.ascii	"char8\000"
  1302      3800
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 30
-
-
  1303              	.LASF5:
  1304 00d8 6C6F6E67 		.ascii	"long unsigned int\000"
  1304      20756E73 
@@ -1774,6 +1798,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1317              	.LASF12:
  1318 0128 75696E74 		.ascii	"uint16\000"
  1318      313600
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 31
+
+
  1319              	.LASF24:
  1320 012f 44697370 		.ascii	"DisplayCrabs\000"
  1320      6C617943 
@@ -1798,9 +1825,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1328      73657273 
  1328      5C736479 
  1328      73617274 
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 31
-
-
  1328      5C446F63 
  1329 0192 46534B5C 		.ascii	"FSK\\USBFS_UART.cydsn\000"
  1329      55534246 
@@ -1834,6 +1858,9 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1343      00
  1344              	.LASF31:
  1345 01e4 636F756E 		.ascii	"count\000"
+ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccOHdDXC.s 			page 32
+
+
  1345      7400
  1346              	.LASF2:
  1347 01ea 73686F72 		.ascii	"short int\000"
@@ -1858,9 +1885,6 @@ ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 1
  1357      65642063 
  1357      68617200 
  1358              	.LASF26:
-ARM GAS  C:\Users\sdysart\AppData\Local\Temp\ccJSNm3c.s 			page 32
-
-
  1359 0222 70726F6D 		.ascii	"prompt\000"
  1359      707400
  1360              	.LASF32:

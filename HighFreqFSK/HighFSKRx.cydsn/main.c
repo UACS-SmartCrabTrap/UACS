@@ -118,6 +118,16 @@ CY_ISR(Bit_Timer){
             lcdFlagData = 1; //Display data
             decodeFlag = 1; //Now go to decode stage
         }
+        //Check data by checking next 8 bits after the encoding
+        }else if((dataFlag == 1) && (dataCount > 7)){
+            crabs = data;
+            data = 0; //Restart data for decode
+            dataCount = 0; 
+            lcdFlagEncode = 0; //Turn off encode message
+            lcdFlagData = 1; //Display data
+            decodeFlag = 1;
+            dataFlag = 0;
+        
         
         // Check for 8 bits of post-fix
         if(decodeFlag == 1 && (dataCount > 7)){

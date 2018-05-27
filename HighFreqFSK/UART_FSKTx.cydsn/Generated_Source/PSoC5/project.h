@@ -46,8 +46,6 @@
 #include "Clock_3.h"
 #include "SignalBase_aliases.h"
 #include "SignalBase.h"
-#include "checkWatchDogTimer.h"
-#include "watchDogCheck.h"
 #include "UART_IntClock.h"
 #include "LCD_LCDPort_aliases.h"
 #include "LCD_LCDPort.h"

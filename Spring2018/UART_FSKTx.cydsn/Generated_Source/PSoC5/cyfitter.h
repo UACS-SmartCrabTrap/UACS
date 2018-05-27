@@ -611,6 +611,16 @@
 #define SignalBase__SHIFT 7u
 #define SignalBase__SLW CYREG_PRT2_SLW
 
+/* Sleep_ISR */
+#define Sleep_ISR__INTC_CLR_EN_REG CYREG_NVIC_CLRENA0
+#define Sleep_ISR__INTC_CLR_PD_REG CYREG_NVIC_CLRPEND0
+#define Sleep_ISR__INTC_MASK 0x01u
+#define Sleep_ISR__INTC_NUMBER 0u
+#define Sleep_ISR__INTC_PRIOR_NUM 7u
+#define Sleep_ISR__INTC_PRIOR_REG CYREG_NVIC_PRI_0
+#define Sleep_ISR__INTC_SET_EN_REG CYREG_NVIC_SETENA0
+#define Sleep_ISR__INTC_SET_PD_REG CYREG_NVIC_SETPEND0
+
 /* Tx */
 #define Tx__0__INTTYPE CYREG_PICU12_INTTYPE7
 #define Tx__0__MASK 0x80u
@@ -774,20 +784,20 @@
 /* isr_rx */
 #define isr_rx__INTC_CLR_EN_REG CYREG_NVIC_CLRENA0
 #define isr_rx__INTC_CLR_PD_REG CYREG_NVIC_CLRPEND0
-#define isr_rx__INTC_MASK 0x01u
-#define isr_rx__INTC_NUMBER 0u
+#define isr_rx__INTC_MASK 0x02u
+#define isr_rx__INTC_NUMBER 1u
 #define isr_rx__INTC_PRIOR_NUM 7u
-#define isr_rx__INTC_PRIOR_REG CYREG_NVIC_PRI_0
+#define isr_rx__INTC_PRIOR_REG CYREG_NVIC_PRI_1
 #define isr_rx__INTC_SET_EN_REG CYREG_NVIC_SETENA0
 #define isr_rx__INTC_SET_PD_REG CYREG_NVIC_SETPEND0
 
 /* isr_sec */
 #define isr_sec__INTC_CLR_EN_REG CYREG_NVIC_CLRENA0
 #define isr_sec__INTC_CLR_PD_REG CYREG_NVIC_CLRPEND0
-#define isr_sec__INTC_MASK 0x02u
-#define isr_sec__INTC_NUMBER 1u
+#define isr_sec__INTC_MASK 0x04u
+#define isr_sec__INTC_NUMBER 2u
 #define isr_sec__INTC_PRIOR_NUM 7u
-#define isr_sec__INTC_PRIOR_REG CYREG_NVIC_PRI_1
+#define isr_sec__INTC_PRIOR_REG CYREG_NVIC_PRI_2
 #define isr_sec__INTC_SET_EN_REG CYREG_NVIC_SETENA0
 #define isr_sec__INTC_SET_PD_REG CYREG_NVIC_SETPEND0
 
@@ -893,6 +903,40 @@
 #define pin_43kHz__SHIFT 5u
 #define pin_43kHz__SLW CYREG_PRT1_SLW
 
+/* sleepToggle */
+#define sleepToggle__0__INTTYPE CYREG_PICU0_INTTYPE6
+#define sleepToggle__0__MASK 0x40u
+#define sleepToggle__0__PC CYREG_PRT0_PC6
+#define sleepToggle__0__PORT 0u
+#define sleepToggle__0__SHIFT 6u
+#define sleepToggle__AG CYREG_PRT0_AG
+#define sleepToggle__AMUX CYREG_PRT0_AMUX
+#define sleepToggle__BIE CYREG_PRT0_BIE
+#define sleepToggle__BIT_MASK CYREG_PRT0_BIT_MASK
+#define sleepToggle__BYP CYREG_PRT0_BYP
+#define sleepToggle__CTL CYREG_PRT0_CTL
+#define sleepToggle__DM0 CYREG_PRT0_DM0
+#define sleepToggle__DM1 CYREG_PRT0_DM1
+#define sleepToggle__DM2 CYREG_PRT0_DM2
+#define sleepToggle__DR CYREG_PRT0_DR
+#define sleepToggle__INP_DIS CYREG_PRT0_INP_DIS
+#define sleepToggle__INTTYPE_BASE CYDEV_PICU_INTTYPE_PICU0_BASE
+#define sleepToggle__LCD_COM_SEG CYREG_PRT0_LCD_COM_SEG
+#define sleepToggle__LCD_EN CYREG_PRT0_LCD_EN
+#define sleepToggle__MASK 0x40u
+#define sleepToggle__PORT 0u
+#define sleepToggle__PRT CYREG_PRT0_PRT
+#define sleepToggle__PRTDSI__CAPS_SEL CYREG_PRT0_CAPS_SEL
+#define sleepToggle__PRTDSI__DBL_SYNC_IN CYREG_PRT0_DBL_SYNC_IN
+#define sleepToggle__PRTDSI__OE_SEL0 CYREG_PRT0_OE_SEL0
+#define sleepToggle__PRTDSI__OE_SEL1 CYREG_PRT0_OE_SEL1
+#define sleepToggle__PRTDSI__OUT_SEL0 CYREG_PRT0_OUT_SEL0
+#define sleepToggle__PRTDSI__OUT_SEL1 CYREG_PRT0_OUT_SEL1
+#define sleepToggle__PRTDSI__SYNC_OUT CYREG_PRT0_SYNC_OUT
+#define sleepToggle__PS CYREG_PRT0_PS
+#define sleepToggle__SHIFT 6u
+#define sleepToggle__SLW CYREG_PRT0_SLW
+
 /* timer_clock */
 #define timer_clock__CFG0 CYREG_CLKDIST_DCFG5_CFG0
 #define timer_clock__CFG1 CYREG_CLKDIST_DCFG5_CFG1
@@ -907,10 +951,10 @@
 /* watchDogCheck */
 #define watchDogCheck__INTC_CLR_EN_REG CYREG_NVIC_CLRENA0
 #define watchDogCheck__INTC_CLR_PD_REG CYREG_NVIC_CLRPEND0
-#define watchDogCheck__INTC_MASK 0x04u
-#define watchDogCheck__INTC_NUMBER 2u
+#define watchDogCheck__INTC_MASK 0x08u
+#define watchDogCheck__INTC_NUMBER 3u
 #define watchDogCheck__INTC_PRIOR_NUM 7u
-#define watchDogCheck__INTC_PRIOR_REG CYREG_NVIC_PRI_2
+#define watchDogCheck__INTC_PRIOR_REG CYREG_NVIC_PRI_3
 #define watchDogCheck__INTC_SET_EN_REG CYREG_NVIC_SETENA0
 #define watchDogCheck__INTC_SET_PD_REG CYREG_NVIC_SETPEND0
 
@@ -1038,10 +1082,10 @@
 #define CYDEV_DEBUG_ENABLE_MASK 0x20u
 #define CYDEV_DEBUG_ENABLE_REGISTER CYREG_MLOGIC_DEBUG
 #define CYDEV_DEBUGGING_DPS_Disable 3
+#define CYDEV_DEBUGGING_DPS CYDEV_DEBUGGING_DPS_Disable
 #define CYDEV_DEBUGGING_DPS_JTAG_4 1
 #define CYDEV_DEBUGGING_DPS_JTAG_5 0
 #define CYDEV_DEBUGGING_DPS_SWD 2
-#define CYDEV_DEBUGGING_DPS CYDEV_DEBUGGING_DPS_SWD
 #define CYDEV_DEBUGGING_DPS_SWD_SWV 6
 #define CYDEV_DEBUGGING_ENABLE 1
 #define CYDEV_DEBUGGING_XRES 0
@@ -1049,7 +1093,7 @@
 #define CYDEV_ECC_ENABLE 0
 #define CYDEV_HEAP_SIZE 0x300
 #define CYDEV_INSTRUCT_CACHE_ENABLED 1
-#define CYDEV_INTR_RISING 0x00000003u
+#define CYDEV_INTR_RISING 0x00000006u
 #define CYDEV_IS_EXPORTING_CODE 0
 #define CYDEV_IS_IMPORTING_CODE 0
 #define CYDEV_PROJ_TYPE 0

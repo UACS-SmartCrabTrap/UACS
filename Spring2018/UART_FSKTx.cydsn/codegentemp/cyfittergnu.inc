@@ -611,6 +611,16 @@
 .set SignalBase__SHIFT, 7
 .set SignalBase__SLW, CYREG_PRT2_SLW
 
+/* Sleep_ISR */
+.set Sleep_ISR__INTC_CLR_EN_REG, CYREG_NVIC_CLRENA0
+.set Sleep_ISR__INTC_CLR_PD_REG, CYREG_NVIC_CLRPEND0
+.set Sleep_ISR__INTC_MASK, 0x01
+.set Sleep_ISR__INTC_NUMBER, 0
+.set Sleep_ISR__INTC_PRIOR_NUM, 7
+.set Sleep_ISR__INTC_PRIOR_REG, CYREG_NVIC_PRI_0
+.set Sleep_ISR__INTC_SET_EN_REG, CYREG_NVIC_SETENA0
+.set Sleep_ISR__INTC_SET_PD_REG, CYREG_NVIC_SETPEND0
+
 /* Tx */
 .set Tx__0__INTTYPE, CYREG_PICU12_INTTYPE7
 .set Tx__0__MASK, 0x80
@@ -774,20 +784,20 @@
 /* isr_rx */
 .set isr_rx__INTC_CLR_EN_REG, CYREG_NVIC_CLRENA0
 .set isr_rx__INTC_CLR_PD_REG, CYREG_NVIC_CLRPEND0
-.set isr_rx__INTC_MASK, 0x01
-.set isr_rx__INTC_NUMBER, 0
+.set isr_rx__INTC_MASK, 0x02
+.set isr_rx__INTC_NUMBER, 1
 .set isr_rx__INTC_PRIOR_NUM, 7
-.set isr_rx__INTC_PRIOR_REG, CYREG_NVIC_PRI_0
+.set isr_rx__INTC_PRIOR_REG, CYREG_NVIC_PRI_1
 .set isr_rx__INTC_SET_EN_REG, CYREG_NVIC_SETENA0
 .set isr_rx__INTC_SET_PD_REG, CYREG_NVIC_SETPEND0
 
 /* isr_sec */
 .set isr_sec__INTC_CLR_EN_REG, CYREG_NVIC_CLRENA0
 .set isr_sec__INTC_CLR_PD_REG, CYREG_NVIC_CLRPEND0
-.set isr_sec__INTC_MASK, 0x02
-.set isr_sec__INTC_NUMBER, 1
+.set isr_sec__INTC_MASK, 0x04
+.set isr_sec__INTC_NUMBER, 2
 .set isr_sec__INTC_PRIOR_NUM, 7
-.set isr_sec__INTC_PRIOR_REG, CYREG_NVIC_PRI_1
+.set isr_sec__INTC_PRIOR_REG, CYREG_NVIC_PRI_2
 .set isr_sec__INTC_SET_EN_REG, CYREG_NVIC_SETENA0
 .set isr_sec__INTC_SET_PD_REG, CYREG_NVIC_SETPEND0
 
@@ -893,6 +903,40 @@
 .set pin_43kHz__SHIFT, 5
 .set pin_43kHz__SLW, CYREG_PRT1_SLW
 
+/* sleepToggle */
+.set sleepToggle__0__INTTYPE, CYREG_PICU0_INTTYPE6
+.set sleepToggle__0__MASK, 0x40
+.set sleepToggle__0__PC, CYREG_PRT0_PC6
+.set sleepToggle__0__PORT, 0
+.set sleepToggle__0__SHIFT, 6
+.set sleepToggle__AG, CYREG_PRT0_AG
+.set sleepToggle__AMUX, CYREG_PRT0_AMUX
+.set sleepToggle__BIE, CYREG_PRT0_BIE
+.set sleepToggle__BIT_MASK, CYREG_PRT0_BIT_MASK
+.set sleepToggle__BYP, CYREG_PRT0_BYP
+.set sleepToggle__CTL, CYREG_PRT0_CTL
+.set sleepToggle__DM0, CYREG_PRT0_DM0
+.set sleepToggle__DM1, CYREG_PRT0_DM1
+.set sleepToggle__DM2, CYREG_PRT0_DM2
+.set sleepToggle__DR, CYREG_PRT0_DR
+.set sleepToggle__INP_DIS, CYREG_PRT0_INP_DIS
+.set sleepToggle__INTTYPE_BASE, CYDEV_PICU_INTTYPE_PICU0_BASE
+.set sleepToggle__LCD_COM_SEG, CYREG_PRT0_LCD_COM_SEG
+.set sleepToggle__LCD_EN, CYREG_PRT0_LCD_EN
+.set sleepToggle__MASK, 0x40
+.set sleepToggle__PORT, 0
+.set sleepToggle__PRT, CYREG_PRT0_PRT
+.set sleepToggle__PRTDSI__CAPS_SEL, CYREG_PRT0_CAPS_SEL
+.set sleepToggle__PRTDSI__DBL_SYNC_IN, CYREG_PRT0_DBL_SYNC_IN
+.set sleepToggle__PRTDSI__OE_SEL0, CYREG_PRT0_OE_SEL0
+.set sleepToggle__PRTDSI__OE_SEL1, CYREG_PRT0_OE_SEL1
+.set sleepToggle__PRTDSI__OUT_SEL0, CYREG_PRT0_OUT_SEL0
+.set sleepToggle__PRTDSI__OUT_SEL1, CYREG_PRT0_OUT_SEL1
+.set sleepToggle__PRTDSI__SYNC_OUT, CYREG_PRT0_SYNC_OUT
+.set sleepToggle__PS, CYREG_PRT0_PS
+.set sleepToggle__SHIFT, 6
+.set sleepToggle__SLW, CYREG_PRT0_SLW
+
 /* timer_clock */
 .set timer_clock__CFG0, CYREG_CLKDIST_DCFG5_CFG0
 .set timer_clock__CFG1, CYREG_CLKDIST_DCFG5_CFG1
@@ -907,10 +951,10 @@
 /* watchDogCheck */
 .set watchDogCheck__INTC_CLR_EN_REG, CYREG_NVIC_CLRENA0
 .set watchDogCheck__INTC_CLR_PD_REG, CYREG_NVIC_CLRPEND0
-.set watchDogCheck__INTC_MASK, 0x04
-.set watchDogCheck__INTC_NUMBER, 2
+.set watchDogCheck__INTC_MASK, 0x08
+.set watchDogCheck__INTC_NUMBER, 3
 .set watchDogCheck__INTC_PRIOR_NUM, 7
-.set watchDogCheck__INTC_PRIOR_REG, CYREG_NVIC_PRI_2
+.set watchDogCheck__INTC_PRIOR_REG, CYREG_NVIC_PRI_3
 .set watchDogCheck__INTC_SET_EN_REG, CYREG_NVIC_SETENA0
 .set watchDogCheck__INTC_SET_PD_REG, CYREG_NVIC_SETPEND0
 
@@ -1036,10 +1080,10 @@
 .set CYDEV_DEBUG_ENABLE_MASK, 0x20
 .set CYDEV_DEBUG_ENABLE_REGISTER, CYREG_MLOGIC_DEBUG
 .set CYDEV_DEBUGGING_DPS_Disable, 3
+.set CYDEV_DEBUGGING_DPS, CYDEV_DEBUGGING_DPS_Disable
 .set CYDEV_DEBUGGING_DPS_JTAG_4, 1
 .set CYDEV_DEBUGGING_DPS_JTAG_5, 0
 .set CYDEV_DEBUGGING_DPS_SWD, 2
-.set CYDEV_DEBUGGING_DPS, CYDEV_DEBUGGING_DPS_SWD
 .set CYDEV_DEBUGGING_DPS_SWD_SWV, 6
 .set CYDEV_DEBUGGING_ENABLE, 1
 .set CYDEV_DEBUGGING_XRES, 0
@@ -1047,7 +1091,7 @@
 .set CYDEV_ECC_ENABLE, 0
 .set CYDEV_HEAP_SIZE, 0x300
 .set CYDEV_INSTRUCT_CACHE_ENABLED, 1
-.set CYDEV_INTR_RISING, 0x00000003
+.set CYDEV_INTR_RISING, 0x00000006
 .set CYDEV_IS_EXPORTING_CODE, 0
 .set CYDEV_IS_IMPORTING_CODE, 0
 .set CYDEV_PROJ_TYPE, 0

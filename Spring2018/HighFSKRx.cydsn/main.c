@@ -24,7 +24,7 @@ void Display(void);
 
 // Interrupt for switching bits 100 ms
 CY_ISR_PROTO(Bit_Timer);
-CY_ISR_PROTO(watchDogCheck);
+CY_ISR_PROTO(watchDogCheck); //reset watchDog timer before reset
 
 // Global Variables
 static uint16 levelCounter = 0; // Timer counter to debounce bit

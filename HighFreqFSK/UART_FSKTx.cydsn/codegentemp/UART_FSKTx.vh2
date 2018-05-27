@@ -2,7 +2,7 @@
 --	Conversion of UART_FSKTx.v to vh2:
 --
 --	Cypress Semiconductor - WARP Version 6.3 IR 41
---	Sat May 26 21:23:52 2018
+--	Sat May 26 23:53:10 2018
 --
 
 USE cypress.cypress.all;
@@ -2230,6 +2230,16 @@ SIGNAL tmpFB_0__SignalBase_net_0 : bit;
 SIGNAL tmpIO_0__SignalBase_net_0 : bit;
 TERMINAL tmpSIOVREF__SignalBase_net_0 : bit;
 SIGNAL tmpINTERRUPT_0__SignalBase_net_0 : bit;
+SIGNAL Net_10 : bit;
+SIGNAL Net_12 : bit;
+SIGNAL \checkWatchDogTimer:Net_260\ : bit;
+SIGNAL \checkWatchDogTimer:Net_266\ : bit;
+SIGNAL \checkWatchDogTimer:Net_51\ : bit;
+SIGNAL \checkWatchDogTimer:Net_261\ : bit;
+SIGNAL \checkWatchDogTimer:Net_57\ : bit;
+SIGNAL Net_860 : bit;
+SIGNAL Net_212 : bit;
+SIGNAL \checkWatchDogTimer:Net_102\ : bit;
 SIGNAL \UART:BUART:reset_reg\\D\ : bit;
 SIGNAL \UART:BUART:txn\\D\ : bit;
 SIGNAL \UART:BUART:tx_state_1\\D\ : bit;
@@ -4437,6 +4447,30 @@ SignalBase:cy_psoc3_pins_v1_10
 		out_clock_en=>one,
 		out_reset=>zero,
 		interrupt=>tmpINTERRUPT_0__SignalBase_net_0);
+checkDogTime:cy_clock_v1_0
+	GENERIC MAP(cy_registers=>"",
+		id=>"17e78454-ec6a-49b7-98ef-7409eae455df",
+		source_clock_id=>"75C2148C-3656-4d8a-846D-0CAE99AB6FF7",
+		divisor=>0,
+		period=>"0",
+		is_direct=>'1',
+		is_digital=>'1')
+	PORT MAP(clock_out=>Net_10,
+		dig_domain_out=>open);
+\checkWatchDogTimer:TimerHW\:cy_psoc3_timer_v1_0
+	GENERIC MAP(cy_registers=>"")
+	PORT MAP(clock=>Net_10,
+		kill=>zero,
+		enable=>one,
+		capture=>zero,
+		timer_reset=>zero,
+		tc=>Net_212,
+		compare=>\checkWatchDogTimer:Net_261\,
+		interrupt=>\checkWatchDogTimer:Net_57\);
+watchDogCheck:cy_isr_v1_0
+	GENERIC MAP(int_type=>"10",
+		is_nmi=>'0')
+	PORT MAP(int_signal=>Net_212);
 \UART:BUART:reset_reg\:cy_dff
 	PORT MAP(d=>zero,
 		clk=>\UART:BUART:clock_op\,

@@ -162,16 +162,16 @@ CYPACKED typedef struct
 #define cy_cfg_data_table ((const cy_cfg_addrvalue_t CYFAR *)0x4800005Cu)
 
 /* IOPINS0_0 Address: CYREG_PRT0_DM0 Size (bytes): 8 */
-#define BS_IOPINS0_0_VAL ((const uint8 CYFAR *)0x48000384u)
+#define BS_IOPINS0_0_VAL ((const uint8 CYFAR *)0x48000394u)
 
 /* IOPINS0_1 Address: CYREG_PRT1_DM0 Size (bytes): 8 */
-#define BS_IOPINS0_1_VAL ((const uint8 CYFAR *)0x4800038Cu)
+#define BS_IOPINS0_1_VAL ((const uint8 CYFAR *)0x4800039Cu)
 
 /* IOPINS0_2 Address: CYREG_PRT2_DM0 Size (bytes): 8 */
-#define BS_IOPINS0_2_VAL ((const uint8 CYFAR *)0x48000394u)
+#define BS_IOPINS0_2_VAL ((const uint8 CYFAR *)0x480003A4u)
 
 /* IOPINS0_3 Address: CYREG_PRT3_DM0 Size (bytes): 8 */
-#define BS_IOPINS0_3_VAL ((const uint8 CYFAR *)0x4800039Cu)
+#define BS_IOPINS0_3_VAL ((const uint8 CYFAR *)0x480003ACu)
 
 
 /*******************************************************************************
@@ -373,6 +373,7 @@ void cyfitter_cfg(void)
 
 		static const cfg_memset_t CYCODE cfg_memset_list[] = {
 			/* address, size */
+			{(void CYFAR *)(CYREG_TMR0_CFG0), 12u},
 			{(void CYFAR *)(CYREG_PRT4_DR), 48u},
 			{(void CYFAR *)(CYREG_PRT12_DR), 16u},
 			{(void CYFAR *)(CYREG_PRT15_DR), 16u},

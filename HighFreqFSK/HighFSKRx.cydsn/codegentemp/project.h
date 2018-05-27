@@ -47,6 +47,8 @@
 #include "XOR_Out_LPF.h"
 #include "Parity_aliases.h"
 #include "Parity.h"
+#include "watchDogCheck.h"
+#include "checkWatchDogTimer.h"
 #include "Pin_1_aliases.h"
 #include "Pin_1.h"
 #include "LCD_Char_LCDPort_aliases.h"

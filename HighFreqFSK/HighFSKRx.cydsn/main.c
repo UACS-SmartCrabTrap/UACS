@@ -17,8 +17,10 @@
 #define ARRAY_SIZE        12
 #define COUNT             100
 #define PREFIX_ACCURACY   90
-#define DATA_ACCURACY     60
+#define DATA_ACCURACY     70
 #define DATA_LENGTH       7
+#define PREFIX            0xFF
+#define POSTFIX           0x01
 #define BIT_0_MASK        0x1
 #define SUCCESS           0x1
 #define FAILURE           0x0
@@ -33,7 +35,7 @@ int CheckParity(int);
 
 // Interrupt for switching bits 5 ms
 CY_ISR_PROTO(Bit_Timer);
-//CY_ISR_PROTO(watchDogCheck);
+CY_ISR_PROTO(watchDogCheck);
 
 // Global Variables
 static uint16 levelCounter = 0; // Timer counter to debounce bit
@@ -60,22 +62,22 @@ static uint8 decodeWrong = FALSE;
 
 int main(void)
 {
-//    /* Enable global interrupts. */
-//    LCD_Char_Start();
-//    sprintf(display, "Starting Module!");
-//    LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
-//    LCD_Char_PrintString(display);
-//    CyDelay(FiveSecs);
+    /* Enable global interrupts. */
+    LCD_Char_Start();
+    sprintf(display, "Starting Module!");
+    LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+    LCD_Char_PrintString(display);
+    CyDelay(FiveSecs);
    
     
     CyGlobalIntEnable; 
     
-//    // Start timer to clear watch dog
-//    checkWatchDogTimer_Start();
-//    watchDogCheck_StartEx(watchDogCheck);
+    // Start timer to clear watch dog
+    checkWatchDogTimer_Start();
+    watchDogCheck_StartEx(watchDogCheck);
     
 //    // Start watch dog timer to check for blocks in code
-//    CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE);
+    CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE);
 
     /* initialization/startup code here */
     PWM_Recon_Start();
@@ -83,7 +85,6 @@ int main(void)
     Out_Comp_Start();
     Bit_Timer_Start();
     Timer_ISR_StartEx(Bit_Timer);
-    LCD_Char_Start();
 
     // Displays Loading Message before receiving pre-fix=
     sprintf(display, "counting crabs...");
@@ -96,6 +97,12 @@ int main(void)
     } // end of for(;;)
 } // end of main()
 
+//Clears watchdog timer to avoid reset unless timing has drifted
+CY_ISR(watchDogCheck){
+    
+    CyWdtClear(); 
+        
+}
 
 //Bit length = 500 ms
 //timer period = 5 ms
@@ -144,9 +151,9 @@ CY_ISR(Bit_Timer){
         data = data << 1; // Shift data over to store next bit
         data = data | currentBit;
         // Check if data is prefix(oxFF) but we are not looking for data or decode
-        if(((data & 0xff) == 0xff) && (dataFlag == FALSE) && (decodeFlag == FALSE)){ 
+        if(((data & PREFIX) == PREFIX) && (dataFlag == FALSE) && (decodeFlag == FALSE)){ 
             dataCount = 0;
-            data = 0x00;
+            data = 0;
             dataFlag = TRUE; //Start looking for data
             lcdFlagEncode = TRUE; //Display pre-fix on lcd
         
@@ -163,7 +170,7 @@ CY_ISR(Bit_Timer){
         // Check for 8 bits of post-fix
         if(decodeFlag == TRUE && (dataCount > DATA_LENGTH)){
             // Correct postfix is 0x01
-            if(data == 0x01){
+            if(data == POSTFIX){
              lcdFlagDecode = TRUE; // lcd flag for "good" post-fix
             }else{
                 decodeWrong = TRUE; // lcd flag for "bad" post-fix
@@ -188,7 +195,6 @@ void Display()
     // LCD Screen Messages
     // If encode is received, display message
     if(lcdFlagEncode == TRUE){
-       
         LCD_Char_ClearDisplay();
         LCD_Char_PrintString("0xFF pre-fix");
         lcdFlagEncode = FALSE; 
@@ -240,18 +246,5 @@ int CheckParity(crabs)
         return FAILURE;
     }
 }   
-
-///*
-// * function: void LEDSOn(void)
-// * parameters: void
-// * returns: void
-// * description: Turns on LED if bit is high
-// */
-//void LEDSOn(data, paritySuccess)
-//{
-//    Control_Reg_Write(data);
-//    Parity_Write(paritySuccess);
-//}
-    
 
 /* [] END OF FILE */

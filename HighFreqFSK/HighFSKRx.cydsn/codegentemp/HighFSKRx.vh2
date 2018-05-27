@@ -2,7 +2,7 @@
 --	Conversion of HighFSKRx.v to vh2:
 --
 --	Cypress Semiconductor - WARP Version 6.3 IR 41
---	Sat May 26 23:29:22 2018
+--	Sat May 26 23:48:29 2018
 --
 
 USE cypress.cypress.all;
@@ -1022,6 +1022,16 @@ SIGNAL tmpFB_0__Parity_net_0 : bit;
 SIGNAL tmpIO_0__Parity_net_0 : bit;
 TERMINAL tmpSIOVREF__Parity_net_0 : bit;
 SIGNAL tmpINTERRUPT_0__Parity_net_0 : bit;
+SIGNAL Net_212 : bit;
+SIGNAL Net_10 : bit;
+SIGNAL \checkWatchDogTimer:Net_260\ : bit;
+SIGNAL \checkWatchDogTimer:Net_266\ : bit;
+SIGNAL Net_12 : bit;
+SIGNAL \checkWatchDogTimer:Net_51\ : bit;
+SIGNAL \checkWatchDogTimer:Net_261\ : bit;
+SIGNAL \checkWatchDogTimer:Net_57\ : bit;
+SIGNAL Net_286 : bit;
+SIGNAL \checkWatchDogTimer:Net_102\ : bit;
 SIGNAL tmpOE__Pin_1_net_0 : bit;
 SIGNAL tmpFB_0__Pin_1_net_0 : bit;
 SIGNAL tmpIO_0__Pin_1_net_0 : bit;
@@ -2661,6 +2671,30 @@ Parity:cy_psoc3_pins_v1_10
 		out_clock_en=>tmpOE__LPF_In_net_0,
 		out_reset=>zero,
 		interrupt=>tmpINTERRUPT_0__Parity_net_0);
+watchDogCheck:cy_isr_v1_0
+	GENERIC MAP(int_type=>"10",
+		is_nmi=>'0')
+	PORT MAP(int_signal=>Net_212);
+\checkWatchDogTimer:TimerHW\:cy_psoc3_timer_v1_0
+	GENERIC MAP(cy_registers=>"")
+	PORT MAP(clock=>Net_10,
+		kill=>zero,
+		enable=>tmpOE__LPF_In_net_0,
+		capture=>zero,
+		timer_reset=>zero,
+		tc=>Net_212,
+		compare=>\checkWatchDogTimer:Net_261\,
+		interrupt=>\checkWatchDogTimer:Net_57\);
+checkDogTime:cy_clock_v1_0
+	GENERIC MAP(cy_registers=>"",
+		id=>"17e78454-ec6a-49b7-98ef-7409eae455df",
+		source_clock_id=>"75C2148C-3656-4d8a-846D-0CAE99AB6FF7",
+		divisor=>0,
+		period=>"0",
+		is_direct=>'1',
+		is_digital=>'1')
+	PORT MAP(clock_out=>Net_10,
+		dig_domain_out=>open);
 Pin_1:cy_psoc3_pins_v1_10
 	GENERIC MAP(id=>"a9e65ad9-ad0b-4f2e-9091-765f41c20621",
 		drive_mode=>"110",

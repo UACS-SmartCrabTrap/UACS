@@ -89,7 +89,7 @@ enum state{
 int Byte(unsigned int hex_value, int bT);
 int FindParity(void);
 CY_ISR_PROTO(isr_sec); // High F Interrupt
-//CY_ISR_PROTO(watchDogCheck); //reset watchDog timer before reset
+CY_ISR_PROTO(watchDogCheck); //reset watchDog timer before reset
 CY_ISR_PROTO(RxIsr); // RX Interrupt
 
 /*Global Variables*/
@@ -126,8 +126,9 @@ int main()
     
     /* Enable global interrupts. */
     CyGlobalIntEnable;
-//    checkWatchDogTimer_Start();
-//    watchDogCheck_StartEx(watchDogCheck);
+    CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE); 
+    checkWatchDogTimer_Start();
+    watchDogCheck_StartEx(watchDogCheck);
     
     /*Block initializations*/
     UART_Start(); 
@@ -429,24 +430,24 @@ CY_ISR(RxIsr)
     }while((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u);
 }
 
-///*******************************************************************************
-//* Function Name: watchDogCheck
-//********************************************************************************
-//*
-//* Summary:
-//* Reset watchDog timer every 2.1ms
-//* Watchdog should reset system between 12 - 24ms
-//* Should not get triggered if system experiencing drift 
-//*
-//* Parameters:
-//*  None.
-//*
-//* Return:
-//*  None.
-//*
-//*******************************************************************************/
-//CY_ISR_PROTO(watchDogCheck){
-//    
-//    CyWdtClear(); 
-//        
-//}
+/*******************************************************************************
+* Function Name: watchDogCheck
+********************************************************************************
+*
+* Summary:
+* Reset watchDog timer every 2.1ms
+* Watchdog should reset system between 12 - 24ms
+* Should not get triggered if system experiencing drift 
+*
+* Parameters:
+*  None.
+*
+* Return:
+*  None.
+*
+*******************************************************************************/
+CY_ISR(watchDogCheck){
+    
+    CyWdtClear(); 
+        
+}

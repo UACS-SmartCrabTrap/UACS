@@ -126,8 +126,10 @@ int main()
         
 
     CyGlobalIntEnable;
+    CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE); 
     checkWatchDogTimer_Start();
     watchDogCheck_StartEx(watchDogCheck);
+    
     
     /*Block initializations*/
     
@@ -339,7 +341,9 @@ CY_ISR(isr_sec)
 *******************************************************************************/
 CY_ISR(watchDogCheck){
     
+    //CyDelay(100);
     CyWdtClear(); 
+
         
 
 }

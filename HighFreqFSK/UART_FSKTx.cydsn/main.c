@@ -75,6 +75,7 @@
 #define PREFIX_BIT_LENGTH 6
 #define PREFIX_MESSAGE    0xFF
 #define MAX_DATA_SENDING  3
+#define FiveSecs 5000
 
 /*Enumerations*/
 enum state{
@@ -88,6 +89,7 @@ enum state{
 int Byte(unsigned int hex_value, int bT);
 int FindParity(void);
 CY_ISR_PROTO(isr_sec); // High F Interrupt
+CY_ISR_PROTO(watchDogCheck); //reset watchDog timer before reset
 CY_ISR_PROTO(RxIsr); // RX Interrupt
 
 /*Global Variables*/
@@ -96,12 +98,13 @@ int i = 2; // to iterate through data array
 uint16 count;
 char8 lineStr[LINE_STR_LENGTH];
 char8 data[LINE_STR_LENGTH];
-uint8 newDataflag = 0;
+uint8 newDataflag = FALSE;
 static int bitTime = 0;
 static int currentByte = Encoding_Byte1;
 static int prefixTime = 0;
 static int sendDataCount = 0;
-static int ParityFlag = 0;
+static int ParityFlag = FALSE;
+static int maxDataFlag = FALSE;
 
 /* UART Global Variables */
 uint8 errorStatus = 0u;
@@ -198,7 +201,7 @@ int main()
                     sendDataCount = 0;
                     crabsToSend <<= 1; // Move over data a bit
                     data_turn++;
-                    CyDelay(2000); // 2 second delay between new data
+                    maxDataFlag = TRUE; // flag for extra 2 second delay between new data
                 }
                 //Once data to be sent can't be contained in a byte, reset to 0x1
                 if (data_turn >= DATA_LENGTH-1) {
@@ -223,6 +226,9 @@ int main()
                 HighVoltage_Write(0); // Turn High Voltage off while delaying
                 CyDelay(20);
                 SignalBase_Write(0);
+                if(maxDataFlag == TRUE){
+                    CyDelay(2000); // 2 second delay between new data
+                }
 
 #if(UART == ENABLED)
                 /* Check if data has been sent 3 time */
@@ -388,7 +394,7 @@ CY_ISR(isr_sec)
 CY_ISR(RxIsr)
 {
     uint8 rxStatus;         
-    newDataflag = 1;
+    newDataflag = TRUE;
     do
     {
         /* Read receiver status register */
@@ -421,4 +427,26 @@ CY_ISR(RxIsr)
             }
         }
     }while((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u);
+}
+
+/*******************************************************************************
+* Function Name: watchDogCheck
+********************************************************************************
+*
+* Summary:
+* Reset watchDog timer every 2.1ms
+* Watchdog should reset system between 12 - 24ms
+* Should not get triggered if system experiencing drift 
+*
+* Parameters:
+*  None.
+*
+* Return:
+*  None.
+*
+*******************************************************************************/
+CY_ISR_PROTO(watchDogCheck){
+    
+    CyWdtClear(); 
+        
 }

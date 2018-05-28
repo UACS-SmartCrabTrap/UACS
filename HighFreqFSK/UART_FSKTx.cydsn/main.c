@@ -91,6 +91,7 @@ int FindParity(void);
 CY_ISR_PROTO(isr_sec); // High F Interrupt
 CY_ISR_PROTO(watchDogCheck); //reset watchDog timer before reset
 CY_ISR_PROTO(RxIsr); // RX Interrupt
+CY_ISR_PROTO(wakeUpIsr); // sleep timer interrupt
 
 /*Global Variables*/
 int error = 0; // flag for input error
@@ -451,3 +452,15 @@ CY_ISR(watchDogCheck){
     CyWdtClear(); 
         
 }
+
+CY_ISR(wakeUpIsr){
+    SleepTimer_GetStatus(); // Clears the sleep timer interrupt
+    //sleepToggle_Write(ON); //Turns pin on upon waking up.
+        /* Output string on LCD. */
+//    LCD_Position(0u, 0u);
+//    LCD_PrintString("                    ");
+//    LCD_Position(0u, 0u);
+//    LCD_PrintString("Awake");
+    
+
+} //end CY_ISR(wakeUpIsr)

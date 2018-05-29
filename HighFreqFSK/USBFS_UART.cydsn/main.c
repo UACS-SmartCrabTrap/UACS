@@ -121,7 +121,12 @@ int main()
                 gettingData = 0;
                 }
             }
-            UART_WriteTxData(crabs);
+            UART_PutChar(0);
+            CyDelay(1000);
+            UART_PutChar(crabs); 
+            
+            
+
     } // end for(;;)
 } // end main
 

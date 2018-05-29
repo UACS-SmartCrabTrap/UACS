@@ -98,6 +98,7 @@ CY_ISR_PROTO(isr_sec); // High F Interrupt
 CY_ISR_PROTO(watchDogCheck); //reset watchDog timer before reset
 CY_ISR_PROTO(RxIsr); // RX Interrupt
 CY_ISR_PROTO(wakeUpIsr); // sleep timer interrupt
+CY_ISR_PROTO(RxWakeUp); // sleep timer interrupt from UART
 
 /*Global Variables*/
 int error = 0; // flag for input error
@@ -236,7 +237,7 @@ int main()
                 CyDelay(20);
                 SignalBase_Write(0);               
                 
-                if(maxDataFlag == TRUE){
+                if(sendDataCount >= MAX_DATA_SENDING){
                     SleepTimer_Start();
                     goToSleep();
                     // PSoC Sleep command. To adjust sleep time, change in the hardware
@@ -246,14 +247,16 @@ int main()
 #if(UART == ENABLED)
                 /* Check if data has been sent 3 time */
                 if(sendDataCount >= MAX_DATA_SENDING){
+                    RxWakeUp_StartEx(RxWakeUp); //Start UART interrupt while in sleep mode
                     sendDataCount = 0; // reset for sending new data
                     /* Wait for new data before sending out data */
-                    while(newDataflag == 0){
+                    while(newDataflag == FALSE){
                         CyWdtClear(); // Clear watchdog timer while in sleep
                         // PSoC Sleep command. To adjust sleep time, change in the hardware
                         //CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
                     }
                     //New Transmission, wake up PSOC
+                    RxWakeUp_Stop();
                     SleepTimer_Stop();
                     wakeUp(); 
                 }else{
@@ -377,7 +380,7 @@ int FindParity()
 
 void wakeUp(void){
     //sleepToggle_Write(OFF);
-    CyPmRestoreClocks();
+    //CyPmRestoreClocks();
     LCD_Wakeup();
     checkWatchDogTimer_Wakeup();
     PWM_Modulator_Wakeup();
@@ -390,7 +393,7 @@ void wakeUp(void){
  * function: void goToSleep(void)
  * parameters: none
  * returns: none
- * description: puts all modules to sleep and svae clocks
+ * description: puts all modules to sleep and save clocks
  *  
  */
 void goToSleep(){
@@ -399,6 +402,7 @@ void goToSleep(){
     PWM_Modulator_Sleep();
     PWM_Switch_Timer_Sleep();
     checkWatchDogTimer_Sleep();
+    UART_Sleep();
     watchDogCheck_ClearPending();
     isr_sec_ClearPending();
     isr_rx_ClearPending();
@@ -456,8 +460,9 @@ CY_ISR(isr_sec)
 *******************************************************************************/
 CY_ISR(RxIsr)
 {
-    uint8 rxStatus;         
-    newDataflag = TRUE;
+    
+    sleepToggle_Write(ON);
+    uint8 rxStatus;   
     do
     {
         /* Read receiver status register */
@@ -473,8 +478,10 @@ CY_ISR(RxIsr)
         
         if((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u)
         {
+            newDataflag = TRUE;
             /* Read data from the RX data register */
-            crabsToSend = UART_RXDATA_REG;
+            //crabsToSend = UART_RXDATA_REG;
+            crabsToSend =  UART_GetByte()  ;
             if(errorStatus == 0u)
             {
                 /* Send data backward */
@@ -483,13 +490,21 @@ CY_ISR(RxIsr)
                 LCD_Position(0u, 0u);
                 sprintf(data,"Crabs: %d", crabsToSend);
                 LCD_PrintString("             ");
-
                 /* Output string on LCD. */
                 LCD_Position(0u, 0u);
                 LCD_PrintString(data);
+
+            }else{
+                isr_rx_SetPending();
+                sprintf(data,"%d", errorStatus);
+                LCD_PrintString(data);
             }
+
         }
     }while((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u);
+    
+    isr_rx_ClearPending();
+    sleepToggle_Write(OFF);
 }
 
 /*******************************************************************************
@@ -532,12 +547,36 @@ CY_ISR(watchDogCheck){
 CY_ISR(wakeUpIsr){
     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
     CyWdtClear(); // Clear watchdog timer while in sleep
-
     sleepCount++;
     if(sleepCount > MAX_SLEEP_COUNT){
         wakeUpData = TRUE;
         sleepCount = 0;
     }
+
+} //end CY_ISR(wakeUpIsr)
+
+/*******************************************************************************
+* Function Name: wakeUpIsr
+********************************************************************************
+*
+* Summary:
+* Sleep Timer interrupt to wake up PSoC from sleep
+*
+* Parameters:
+*  None.
+*
+* Return:
+*  None.
+*
+*******************************************************************************/
+CY_ISR(RxWakeUp){
+    CyPmRestoreClocks();
+    UART_Wakeup();
+    UART_Start();
+    isr_rx_StartEx(RxIsr);
+    RxWakeUp_ClearPending();
+    RxWakeUp_Disable();
+    isr_rx_SetPending();
 
 } //end CY_ISR(wakeUpIsr)
 

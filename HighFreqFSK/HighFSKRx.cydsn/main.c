@@ -90,6 +90,8 @@ int main(void)
     sprintf(display, "counting crabs...");
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
     LCD_Char_PrintString(display);
+    
+    Power_Toggle_Write(1); // Turn analog circuit on
 
     for(;;)
     {

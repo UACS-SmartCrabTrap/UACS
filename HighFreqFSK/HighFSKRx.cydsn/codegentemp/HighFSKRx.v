@@ -1,6 +1,6 @@
 // ======================================================================
 // HighFSKRx.v generated from TopDesign.cysch
-// 05/28/2018 at 21:02
+// 05/29/2018 at 14:14
 // This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 // ======================================================================
 
@@ -1740,11 +1740,11 @@ module top ;
 		 (.clock_out(Net_10));
 
 
-	wire [0:0] tmpOE__Pin_1_net;
-	wire [0:0] tmpFB_0__Pin_1_net;
-	wire [0:0] tmpIO_0__Pin_1_net;
-	wire [0:0] tmpINTERRUPT_0__Pin_1_net;
-	electrical [0:0] tmpSIOVREF__Pin_1_net;
+	wire [0:0] tmpOE__Power_Toggle_net;
+	wire [0:0] tmpFB_0__Power_Toggle_net;
+	wire [0:0] tmpIO_0__Power_Toggle_net;
+	wire [0:0] tmpINTERRUPT_0__Power_Toggle_net;
+	electrical [0:0] tmpSIOVREF__Power_Toggle_net;
 
 	cy_psoc3_pins_v1_10
 		#(.id("a9e65ad9-ad0b-4f2e-9091-765f41c20621"),
@@ -1799,13 +1799,13 @@ module top ;
 		  .ovt_needed(1'b0),
 		  .ovt_slew_control(2'b00),
 		  .input_buffer_sel(2'b00))
-		Pin_1
-		 (.oe(tmpOE__Pin_1_net),
+		Power_Toggle
+		 (.oe(tmpOE__Power_Toggle_net),
 		  .y({1'b0}),
-		  .fb({tmpFB_0__Pin_1_net[0:0]}),
-		  .io({tmpIO_0__Pin_1_net[0:0]}),
-		  .siovref(tmpSIOVREF__Pin_1_net),
-		  .interrupt({tmpINTERRUPT_0__Pin_1_net[0:0]}),
+		  .fb({tmpFB_0__Power_Toggle_net[0:0]}),
+		  .io({tmpIO_0__Power_Toggle_net[0:0]}),
+		  .siovref(tmpSIOVREF__Power_Toggle_net),
+		  .interrupt({tmpINTERRUPT_0__Power_Toggle_net[0:0]}),
 		  .in_clock({1'b0}),
 		  .in_clock_en({1'b1}),
 		  .in_reset({1'b0}),
@@ -1813,7 +1813,7 @@ module top ;
 		  .out_clock_en({1'b1}),
 		  .out_reset({1'b0}));
 
-	assign tmpOE__Pin_1_net = (`CYDEV_CHIP_MEMBER_USED == `CYDEV_CHIP_MEMBER_3A && `CYDEV_CHIP_REVISION_USED < `CYDEV_CHIP_REVISION_3A_ES3) ? ~{1'b1} : {1'b1};
+	assign tmpOE__Power_Toggle_net = (`CYDEV_CHIP_MEMBER_USED == `CYDEV_CHIP_MEMBER_3A && `CYDEV_CHIP_REVISION_USED < `CYDEV_CHIP_REVISION_3A_ES3) ? ~{1'b1} : {1'b1};
 
     UART_v2_50_6 UART (
         .cts_n(1'b0),

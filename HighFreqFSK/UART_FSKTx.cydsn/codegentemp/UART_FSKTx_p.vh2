@@ -1,5 +1,5 @@
 -- Project:   UART_FSKTx
--- Generated: 05/28/2018 23:01:54
+-- Generated: 05/29/2018 14:28:53
 -- PSoC Creator  4.1 Update 1
 
 ENTITY UART_FSKTx IS
@@ -51,7 +51,6 @@ ARCHITECTURE __DEFAULT__ OF UART_FSKTx IS
     SIGNAL ClockBlock_XTAL : bit;
     SIGNAL ClockBlock_XTAL_32KHZ : bit;
     SIGNAL HighVoltage(0)__PA : bit;
-    SIGNAL Net_102 : bit;
     SIGNAL Net_104 : bit;
     SIGNAL Net_14 : bit;
     ATTRIBUTE udbclken_assigned OF Net_14 : SIGNAL IS "True";
@@ -79,6 +78,7 @@ ARCHITECTURE __DEFAULT__ OF UART_FSKTx IS
     ATTRIBUTE global_signal OF Net_46 : SIGNAL IS true;
     SIGNAL Net_46_local : bit;
     SIGNAL Net_87 : bit;
+    SIGNAL Net_874 : bit;
     SIGNAL Net_97 : bit;
     SIGNAL PWM_Out(0)__PA : bit;
     SIGNAL Rx(0)__PA : bit;
@@ -1174,7 +1174,7 @@ BEGIN
         PORT MAP(
             pa_out => Rx(0)__PA,
             oe => open,
-            fb => Net_102,
+            fb => Net_874,
             pad_in => Rx(0)_PAD,
             in_clock => ClockBlock_BUS_CLK,
             in_clock_en => '1',
@@ -1885,7 +1885,7 @@ BEGIN
         PORT MAP(
             q => \UART:BUART:rx_postpoll\,
             main_0 => \UART:BUART:pollcount_1\,
-            main_1 => Net_102,
+            main_1 => Net_874,
             main_2 => \UART:BUART:pollcount_0\);
 
     \UART:BUART:rx_status_4\:macrocell
@@ -3029,6 +3029,14 @@ BEGIN
             interrupt => CTW_OUT,
             clock => ClockBlock_BUS_CLK);
 
+    RxWakeUp:interrupt
+        GENERIC MAP(
+            int_type => "00",
+            is_nmi => 0)
+        PORT MAP(
+            interrupt => Net_874,
+            clock => ClockBlock_BUS_CLK);
+
     \UART:BUART:txn\:macrocell
         GENERIC MAP(
             eqn_main => "(main_0 * main_1 * !main_6) + (main_0 * main_4) + (!main_1 * main_2 * !main_3 * !main_4) + (!main_1 * main_2 * !main_4 * !main_6) + (main_1 * !main_2 * !main_3 * !main_4 * !main_5 * main_6)",
@@ -3136,7 +3144,7 @@ BEGIN
             main_6 => \UART:BUART:rx_count_5\,
             main_7 => \UART:BUART:rx_count_4\,
             main_8 => \UART:BUART:pollcount_1\,
-            main_9 => Net_102,
+            main_9 => Net_874,
             main_10 => \UART:BUART:pollcount_0\);
 
     \UART:BUART:rx_load_fifo\:macrocell
@@ -3192,7 +3200,7 @@ BEGIN
             main_5 => \UART:BUART:rx_count_6\,
             main_6 => \UART:BUART:rx_count_5\,
             main_7 => \UART:BUART:rx_count_4\,
-            main_8 => Net_102,
+            main_8 => Net_874,
             main_9 => \UART:BUART:rx_last\);
 
     \UART:BUART:rx_bitclk_enable\:macrocell
@@ -3234,7 +3242,7 @@ BEGIN
             main_0 => \UART:BUART:rx_count_2\,
             main_1 => \UART:BUART:rx_count_1\,
             main_2 => \UART:BUART:pollcount_1\,
-            main_3 => Net_102,
+            main_3 => Net_874,
             main_4 => \UART:BUART:pollcount_0\);
 
     \UART:BUART:pollcount_0\:macrocell
@@ -3248,7 +3256,7 @@ BEGIN
             clock_0 => \UART:Net_9\,
             main_0 => \UART:BUART:rx_count_2\,
             main_1 => \UART:BUART:rx_count_1\,
-            main_2 => Net_102,
+            main_2 => Net_874,
             main_3 => \UART:BUART:pollcount_0\);
 
     \UART:BUART:rx_status_3\:macrocell
@@ -3266,7 +3274,7 @@ BEGIN
             main_3 => \UART:BUART:rx_state_3\,
             main_4 => \UART:BUART:rx_state_2\,
             main_5 => \UART:BUART:pollcount_1\,
-            main_6 => Net_102,
+            main_6 => Net_874,
             main_7 => \UART:BUART:pollcount_0\);
 
     \UART:BUART:rx_last\:macrocell
@@ -3278,7 +3286,7 @@ BEGIN
         PORT MAP(
             q => \UART:BUART:rx_last\,
             clock_0 => \UART:Net_9\,
-            main_0 => Net_102);
+            main_0 => Net_874);
 
     \PWM_Modulator:PWMUDB:runmode_enable\:macrocell
         GENERIC MAP(

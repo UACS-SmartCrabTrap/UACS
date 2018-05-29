@@ -52,6 +52,7 @@
 #include "Sleep_ISR.h"
 #include "sleepToggle_aliases.h"
 #include "sleepToggle.h"
+#include "RxWakeUp.h"
 #include "UART_IntClock.h"
 #include "LCD_LCDPort_aliases.h"
 #include "LCD_LCDPort.h"

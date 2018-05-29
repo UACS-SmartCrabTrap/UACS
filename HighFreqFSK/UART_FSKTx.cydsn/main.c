@@ -35,7 +35,7 @@
 /***************************************
 * Conditional Compilation Parameters
 ***************************************/
-#define UART    DISABLED
+#define UART    ENABLED
 
 /* Character LCD String Length */
 #define LINE_STR_LENGTH     (20u)
@@ -75,7 +75,7 @@
 #define PREFIX_BIT_LENGTH 6
 #define PREFIX_MESSAGE    0xFF
 #define MAX_DATA_SENDING  3
-#define MAX_SLEEP_COUNT   3
+#define MAX_SLEEP_COUNT   5
 #define FiveSecs          5000
 #define ON                1
 #define OFF               0
@@ -113,6 +113,7 @@ static int prefixTime = 0;
 static int sendDataCount = 0;
 static int ParityFlag = FALSE;
 static int maxDataFlag = FALSE;
+static int wakeUpData = FALSE;
 
 /* UART Global Variables */
 uint8 errorStatus = 0u;
@@ -193,7 +194,7 @@ int main()
             default:
                 sendDataCount++; // count how many times we send data
                 // Turn sending off until new data from UART
-                newDataflag = 0;
+                newDataflag = FALSE;
                 //encode used to transmit 7 1's for the prefix 
                 //reset here to be ready for case 0 
                 prefixTime = 0;
@@ -236,7 +237,6 @@ int main()
                 SignalBase_Write(0);               
                 
                 if(maxDataFlag == TRUE){
-                    sleepToggle_Write(ON); //Turns pin on upon waking up.
                     SleepTimer_Start();
                     goToSleep();
                     // PSoC Sleep command. To adjust sleep time, change in the hardware
@@ -249,6 +249,9 @@ int main()
                     sendDataCount = 0; // reset for sending new data
                     /* Wait for new data before sending out data */
                     while(newDataflag == 0){
+                        CyWdtClear(); // Clear watchdog timer while in sleep
+                        // PSoC Sleep command. To adjust sleep time, change in the hardware
+                        //CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
                     }
                     //New Transmission, wake up PSOC
                     SleepTimer_Stop();
@@ -258,8 +261,23 @@ int main()
                     CyDelay(1000);
                 }
 #else 
-                /* Delay in ms and send data after without waiting for UART */
-                CyDelay(1000);
+                if(maxDataFlag == TRUE){
+                    /* Delay in ms and send data after without waiting for UART */
+                    while(wakeUpData == FALSE){
+                        CyWdtClear(); // Clear watchdog timer while in sleep
+                        // PSoC Sleep command. To adjust sleep time, change in the hardware
+                        CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
+                    }
+                    maxDataFlag = FALSE;
+                    wakeUpData = FALSE;
+                    //New Transmission, wake up PSOC
+                    SleepTimer_Stop();
+                    wakeUp(); 
+                }else{
+                    // Sending data again, pause 1 s in between
+                    CyDelay(1000);
+                }
+                
 #endif /* UART == ENABLED */
 
                 /* New data: Turn on circuitry and begin transmission */
@@ -358,7 +376,7 @@ int FindParity()
  */
 
 void wakeUp(void){
-    sleepToggle_Write(OFF);
+    //sleepToggle_Write(OFF);
     CyPmRestoreClocks();
     LCD_Wakeup();
     checkWatchDogTimer_Wakeup();
@@ -376,7 +394,7 @@ void wakeUp(void){
  *  
  */
 void goToSleep(){
-    sleepToggle_Write(ON);
+    //sleepToggle_Write(ON);
     LCD_Sleep();
     PWM_Modulator_Sleep();
     PWM_Switch_Timer_Sleep();
@@ -517,6 +535,7 @@ CY_ISR(wakeUpIsr){
 
     sleepCount++;
     if(sleepCount > MAX_SLEEP_COUNT){
+        wakeUpData = TRUE;
         sleepCount = 0;
     }
 

@@ -125,6 +125,7 @@ int main()
     /*Variable initializations*/
     int bitCase = 0;
     int data_turn = 0;
+    int sleep = TRUE;
 
 #if(UART == ENABLED)
     isr_rx_StartEx(RxIsr);
@@ -238,6 +239,15 @@ int main()
                 SignalBase_Write(0);
                 if(maxDataFlag == TRUE){
                     //CyDelay(2000);
+                    sleep = TRUE;
+                    
+                    sleepToggle_Write(OFF);
+                    goToSleep();
+                    SleepTimer_Start();
+                    // PSoC Sleep command. To adjust sleep time, change in the hardware
+                    //  block. No sleep time parameters taken in PSoC5LP.
+                    //  PM_SLEEP_TIME_NONE is a relic of PSoC3
+                    CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
                 }
 
 #if(UART == ENABLED)
@@ -256,9 +266,6 @@ int main()
                 CyDelay(1000);
 #endif /* UART == ENABLED */
 
-//                //New Transmission, wake up PSOC
-//                SleepTimer_Stop();
-//                wakeUp(); 
                 /* New data: Turn on circuitry and begin transmission */
                 HighVoltage_Write(1);
                 CyDelay(20); // Give voltage booster time to charge up
@@ -359,6 +366,7 @@ void wakeUp(void){
     CyPmRestoreClocks();
     
     LCD_Wakeup();
+    UART_Wakeup();
     PWM_Modulator_Wakeup();
     PWM_Switch_Timer_Wakeup();
     PWM_1_Wakeup();
@@ -379,6 +387,7 @@ void wakeUp(void){
 void goToSleep(void){
     
     LCD_Sleep();
+    UART_Sleep();
     PWM_Modulator_Sleep();
     PWM_Switch_Timer_Sleep();
     PWM_1_Sleep();
@@ -498,7 +507,10 @@ CY_ISR(watchDogCheck){
 
 CY_ISR(wakeUpIsr){
     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
-    //sleepToggle_Write(ON); //Turns pin on upon waking up.
+    sleepToggle_Write(ON); //Turns pin on upon waking up.
+    //New Transmission, wake up PSOC
+    SleepTimer_Stop();
+    wakeUp(); 
         /* Output string on LCD. */
 //    LCD_Position(0u, 0u);
 //    LCD_PrintString("                    ");

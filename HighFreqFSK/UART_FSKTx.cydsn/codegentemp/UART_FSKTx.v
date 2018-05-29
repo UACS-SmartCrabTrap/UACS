@@ -1,6 +1,6 @@
 // ======================================================================
 // UART_FSKTx.v generated from TopDesign.cysch
-// 05/26/2018 at 23:53
+// 05/28/2018 at 16:26
 // This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 // ======================================================================
 
@@ -895,6 +895,24 @@ module Timer_v2_70_7 (
 
 endmodule
 
+// SleepTimer_v3_20(EnableInt=true, Interval=12, CY_API_CALLBACK_HEADER_INCLUDE=#include "cyapicallbacks.h", CY_COMMENT=, CY_COMPONENT_NAME=SleepTimer_v3_20, CY_CONST_CONFIG=true, CY_CONTROL_FILE=<:default:>, CY_DATASHEET_FILE=<:default:>, CY_FITTER_NAME=SleepTimer, CY_INSTANCE_SHORT_NAME=SleepTimer, CY_MAJOR_VERSION=3, CY_MINOR_VERSION=20, CY_PDL_DRIVER_NAME=, CY_PDL_DRIVER_REQ_VERSION=, CY_PDL_DRIVER_SUBGROUP=, CY_PDL_DRIVER_VARIANT=, CY_REMOVE=false, CY_SUPPRESS_API_GEN=false, CY_VERSION=PSoC Creator  4.1 Update 1, INSTANCE_NAME=SleepTimer, )
+module SleepTimer_v3_20_8 (
+    interrupt);
+    output      interrupt;
+
+
+
+
+	cy_gsref_v1_0
+		#(.guid("0335EFD7-9943-4db5-B556-454A5AD8A118"))
+		gsRef_1
+		 (.sig_out(interrupt));
+
+
+
+
+endmodule
+
 // top
 module top ;
 
@@ -903,7 +921,7 @@ module top ;
           wire  Net_862;
           wire  Net_861;
           wire  Net_860;
-          wire  Net_865;
+          wire  Net_870;
           wire  Net_352;
           wire  Net_832;
           wire  Net_831;
@@ -981,6 +999,7 @@ module top ;
           wire  Net_98;
           wire  Net_97;
           wire  Net_96;
+          wire  Net_2;
           wire  Net_212;
           wire  Net_10;
           wire  Net_12;
@@ -1818,6 +1837,91 @@ module top ;
 		watchDogCheck
 		 (.int_signal(Net_212));
 
+
+    SleepTimer_v3_20_8 SleepTimer (
+        .interrupt(Net_2));
+
+
+	cy_isr_v1_0
+		#(.int_type(2'b10))
+		Sleep_ISR
+		 (.int_signal(Net_2));
+
+
+	wire [0:0] tmpOE__sleepToggle_net;
+	wire [0:0] tmpFB_0__sleepToggle_net;
+	wire [0:0] tmpIO_0__sleepToggle_net;
+	wire [0:0] tmpINTERRUPT_0__sleepToggle_net;
+	electrical [0:0] tmpSIOVREF__sleepToggle_net;
+
+	cy_psoc3_pins_v1_10
+		#(.id("8d7fafb5-91a7-41c3-bbf4-ee23766aed9a"),
+		  .drive_mode(3'b110),
+		  .ibuf_enabled(1'b1),
+		  .init_dr_st(1'b0),
+		  .input_clk_en(0),
+		  .input_sync(1'b1),
+		  .input_sync_mode(1'b0),
+		  .intr_mode(2'b00),
+		  .invert_in_clock(0),
+		  .invert_in_clock_en(0),
+		  .invert_in_reset(0),
+		  .invert_out_clock(0),
+		  .invert_out_clock_en(0),
+		  .invert_out_reset(0),
+		  .io_voltage(""),
+		  .layout_mode("CONTIGUOUS"),
+		  .oe_conn(1'b0),
+		  .oe_reset(0),
+		  .oe_sync(1'b0),
+		  .output_clk_en(0),
+		  .output_clock_mode(1'b0),
+		  .output_conn(1'b0),
+		  .output_mode(1'b0),
+		  .output_reset(0),
+		  .output_sync(1'b0),
+		  .pa_in_clock(-1),
+		  .pa_in_clock_en(-1),
+		  .pa_in_reset(-1),
+		  .pa_out_clock(-1),
+		  .pa_out_clock_en(-1),
+		  .pa_out_reset(-1),
+		  .pin_aliases(""),
+		  .pin_mode("O"),
+		  .por_state(4),
+		  .sio_group_cnt(0),
+		  .sio_hyst(1'b1),
+		  .sio_ibuf(""),
+		  .sio_info(2'b00),
+		  .sio_obuf(""),
+		  .sio_refsel(""),
+		  .sio_vtrip(""),
+		  .sio_hifreq(""),
+		  .sio_vohsel(""),
+		  .slew_rate(1'b0),
+		  .spanning(0),
+		  .use_annotation(1'b0),
+		  .vtrip(2'b10),
+		  .width(1),
+		  .ovt_hyst_trim(1'b0),
+		  .ovt_needed(1'b0),
+		  .ovt_slew_control(2'b00),
+		  .input_buffer_sel(2'b00))
+		sleepToggle
+		 (.oe(tmpOE__sleepToggle_net),
+		  .y({1'b0}),
+		  .fb({tmpFB_0__sleepToggle_net[0:0]}),
+		  .io({tmpIO_0__sleepToggle_net[0:0]}),
+		  .siovref(tmpSIOVREF__sleepToggle_net),
+		  .interrupt({tmpINTERRUPT_0__sleepToggle_net[0:0]}),
+		  .in_clock({1'b0}),
+		  .in_clock_en({1'b1}),
+		  .in_reset({1'b0}),
+		  .out_clock({1'b0}),
+		  .out_clock_en({1'b1}),
+		  .out_reset({1'b0}));
+
+	assign tmpOE__sleepToggle_net = (`CYDEV_CHIP_MEMBER_USED == `CYDEV_CHIP_MEMBER_3A && `CYDEV_CHIP_REVISION_USED < `CYDEV_CHIP_REVISION_3A_ES3) ? ~{1'b1} : {1'b1};
 
 
 

@@ -95,9 +95,9 @@ int main()
     /*Block initializations*/
     LCD_Start();
 
-    /* Start USBFS operation with 5-V operation. */
+    /* Start USBFS and UART  */
     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
-    UART_Start();           /* Start communication component */
+    UART_Start();        
 
     /* Clear LCD line. */
     LCD_Position(0u, 0u);

@@ -75,7 +75,9 @@
 #define PREFIX_BIT_LENGTH 6
 #define PREFIX_MESSAGE    0xFF
 #define MAX_DATA_SENDING  3
-#define FiveSecs 5000
+#define FiveSecs          5000
+#define ON                1
+#define OFF               0
 
 /*Enumerations*/
 enum state{
@@ -88,6 +90,9 @@ enum state{
 /*Function Prototypes*/
 int Byte(unsigned int hex_value, int bT);
 int FindParity(void);
+void goToSleep(void);
+void wakeUp(void);
+
 CY_ISR_PROTO(isr_sec); // High F Interrupt
 CY_ISR_PROTO(watchDogCheck); //reset watchDog timer before reset
 CY_ISR_PROTO(RxIsr); // RX Interrupt
@@ -123,10 +128,11 @@ int main()
 
 #if(UART == ENABLED)
     isr_rx_StartEx(RxIsr);
-#endif /* INTERRUPT_CODE_ENABLED == ENABLED */
+#endif /* UART == ENABLED */
     
     /* Enable global interrupts. */
     CyGlobalIntEnable;
+    /* Start Watchdog and its check timer */
     CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE); 
     checkWatchDogTimer_Start();
     watchDogCheck_StartEx(watchDogCheck);
@@ -139,7 +145,9 @@ int main()
     PWM_2_Start();
     PWM_3_Start();
     PWM_Switch_Timer_Start();
+    /* Start Interrupt */
     isr_sec_StartEx(isr_sec);
+    Sleep_ISR_StartEx(wakeUpIsr);
     
     // Set PWM to AUDIBLE_FREQ
     PWM_1_WritePeriod(FREQ(AUDIBLE_FREQ));
@@ -229,7 +237,7 @@ int main()
                 CyDelay(20);
                 SignalBase_Write(0);
                 if(maxDataFlag == TRUE){
-                    CyDelay(2000); // 2 second delay between new data
+                    //CyDelay(2000);
                 }
 
 #if(UART == ENABLED)
@@ -248,6 +256,9 @@ int main()
                 CyDelay(1000);
 #endif /* UART == ENABLED */
 
+//                //New Transmission, wake up PSOC
+//                SleepTimer_Stop();
+//                wakeUp(); 
                 /* New data: Turn on circuitry and begin transmission */
                 HighVoltage_Write(1);
                 CyDelay(20); // Give voltage booster time to charge up
@@ -333,18 +344,50 @@ int FindParity()
         parity = (bitToCheck & BIT_0_MASK) ^ parity; // XOR new bit
     }
     return parity;
-//    
-//    /* Clear LCD line. */
-//    LCD_Position(0u, 0u);
-//    LCD_PrintString("                    ");
-//
-//    /* Output string on LCD. */
-//    LCD_Position(0u, 0u);
-//    sprintf(data, "Crabs %d P = %d", crabsToSend,parity);
-//    LCD_PrintString(data);
 }   
+
+/*
+ * function: void wakeUp(void)
+ * parameters: none
+ * returns: none
+ * description: wakes up all modules and restores clocks
+ *  
+ */
+
+void wakeUp(void){
     
-/* [] END OF FILE */
+    CyPmRestoreClocks();
+    
+    LCD_Wakeup();
+    PWM_Modulator_Wakeup();
+    PWM_Switch_Timer_Wakeup();
+    PWM_1_Wakeup();
+    PWM_2_Wakeup();
+    PWM_3_Wakeup();
+    checkWatchDogTimer_Wakeup();  
+    
+}
+
+/*
+ * function: void goToSleep(void)
+ * parameters: none
+ * returns: none
+ * description: puts all modules to sleep and svae clocks
+ *  
+ */
+
+void goToSleep(void){
+    
+    LCD_Sleep();
+    PWM_Modulator_Sleep();
+    PWM_Switch_Timer_Sleep();
+    PWM_1_Sleep();
+    PWM_2_Sleep();
+    PWM_3_Sleep();
+    checkWatchDogTimer_Sleep();
+    CyPmSaveClocks();
+
+}
 
 
 /*******************************************************************************
@@ -464,3 +507,5 @@ CY_ISR(wakeUpIsr){
     
 
 } //end CY_ISR(wakeUpIsr)
+
+/* [] END OF FILE */

@@ -2,7 +2,7 @@
 * File Name: main.c
 *
 * Created: 5/16/18
-* Revised: 5/17/18
+* Revised: 5/28/18
 * Revised by: Stephanie Salazar
 *
 * Description: 
@@ -75,6 +75,7 @@
 #define PREFIX_BIT_LENGTH 6
 #define PREFIX_MESSAGE    0xFF
 #define MAX_DATA_SENDING  3
+#define MAX_SLEEP_COUNT   3
 #define FiveSecs          5000
 #define ON                1
 #define OFF               0
@@ -101,6 +102,7 @@ CY_ISR_PROTO(wakeUpIsr); // sleep timer interrupt
 /*Global Variables*/
 int error = 0; // flag for input error
 int i = 2; // to iterate through data array
+int sleepCount = 0;
 uint16 count;
 char8 lineStr[LINE_STR_LENGTH];
 char8 data[LINE_STR_LENGTH];
@@ -125,7 +127,6 @@ int main()
     /*Variable initializations*/
     int bitCase = 0;
     int data_turn = 0;
-    int sleep = TRUE;
 
 #if(UART == ENABLED)
     isr_rx_StartEx(RxIsr);
@@ -134,7 +135,7 @@ int main()
     /* Enable global interrupts. */
     CyGlobalIntEnable;
     /* Start Watchdog and its check timer */
-    CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE); 
+    CyWdtStart(CYWDT_1024_TICKS, CYWDT_LPMODE_NOCHANGE); // 2.048 - 3.072 s
     checkWatchDogTimer_Start();
     watchDogCheck_StartEx(watchDogCheck);
     
@@ -142,25 +143,22 @@ int main()
     UART_Start(); 
     LCD_Start();
     PWM_Modulator_Start();
-    PWM_1_Start();
-    PWM_2_Start();
-    PWM_3_Start();
     PWM_Switch_Timer_Start();
-    /* Start Interrupt */
+    /* Start Interrupts */
     isr_sec_StartEx(isr_sec);
     Sleep_ISR_StartEx(wakeUpIsr);
     
-    // Set PWM to AUDIBLE_FREQ
-    PWM_1_WritePeriod(FREQ(AUDIBLE_FREQ));
-    PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
-    
-    // Set PWM to ONE_FREQ
-    PWM_2_WritePeriod(FREQ(ONE_FREQ));
-    PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
-    
-    // Set PWM to ZERO_FREQ
-    PWM_3_WritePeriod(FREQ(ZERO_FREQ));
-    PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
+//    // Set PWM to AUDIBLE_FREQ
+//    PWM_1_WritePeriod(FREQ(AUDIBLE_FREQ));
+//    PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
+//    
+//    // Set PWM to ONE_FREQ
+//    PWM_2_WritePeriod(FREQ(ONE_FREQ));
+//    PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
+//    
+//    // Set PWM to ZERO_FREQ
+//    PWM_3_WritePeriod(FREQ(ZERO_FREQ));
+//    PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
     
     /* Clear LCD line. */
     LCD_Position(0u, 0u);
@@ -199,7 +197,6 @@ int main()
                 //encode used to transmit 7 1's for the prefix 
                 //reset here to be ready for case 0 
                 prefixTime = 0;
-                FindParity();
                 
 #if(UART == ENABLED)
                 data_turn++;
@@ -236,17 +233,13 @@ int main()
                 PWM_Switch_Timer_Stop();
                 HighVoltage_Write(0); // Turn High Voltage off while delaying
                 CyDelay(20);
-                SignalBase_Write(0);
+                SignalBase_Write(0);               
+                
                 if(maxDataFlag == TRUE){
-                    //CyDelay(2000);
-                    sleep = TRUE;
-                    
-                    sleepToggle_Write(OFF);
-                    goToSleep();
+                    sleepToggle_Write(ON); //Turns pin on upon waking up.
                     SleepTimer_Start();
+                    goToSleep();
                     // PSoC Sleep command. To adjust sleep time, change in the hardware
-                    //  block. No sleep time parameters taken in PSoC5LP.
-                    //  PM_SLEEP_TIME_NONE is a relic of PSoC3
                     CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
                 }
 
@@ -257,6 +250,9 @@ int main()
                     /* Wait for new data before sending out data */
                     while(newDataflag == 0){
                     }
+                    //New Transmission, wake up PSOC
+                    SleepTimer_Stop();
+                    wakeUp(); 
                 }else{
                     /* Delay 1 s before sending out for MAX_DATA_SENDING times */
                     CyDelay(1000);
@@ -362,17 +358,13 @@ int FindParity()
  */
 
 void wakeUp(void){
-    
+    sleepToggle_Write(OFF);
     CyPmRestoreClocks();
-    
     LCD_Wakeup();
-    UART_Wakeup();
+    checkWatchDogTimer_Wakeup();
     PWM_Modulator_Wakeup();
-    PWM_Switch_Timer_Wakeup();
-    PWM_1_Wakeup();
-    PWM_2_Wakeup();
-    PWM_3_Wakeup();
-    checkWatchDogTimer_Wakeup();  
+    PWM_Switch_Timer_Wakeup(); 
+    PWM_Switch_Timer_Start();
     
 }
 
@@ -383,17 +375,15 @@ void wakeUp(void){
  * description: puts all modules to sleep and svae clocks
  *  
  */
-
-void goToSleep(void){
-    
+void goToSleep(){
+    sleepToggle_Write(ON);
     LCD_Sleep();
-    UART_Sleep();
     PWM_Modulator_Sleep();
     PWM_Switch_Timer_Sleep();
-    PWM_1_Sleep();
-    PWM_2_Sleep();
-    PWM_3_Sleep();
     checkWatchDogTimer_Sleep();
+    watchDogCheck_ClearPending();
+    isr_sec_ClearPending();
+    isr_rx_ClearPending();
     CyPmSaveClocks();
 
 }
@@ -419,6 +409,7 @@ void goToSleep(void){
 CY_ISR(isr_sec)
 {
     bitTime++;
+    /* Only want to send one bit for parity */
     if(ParityFlag == TRUE){
         bitTime = 0;
         currentByte++;
@@ -488,8 +479,8 @@ CY_ISR(RxIsr)
 ********************************************************************************
 *
 * Summary:
-* Reset watchDog timer every 2.1ms
-* Watchdog should reset system between 12 - 24ms
+* Reset watchDog timer every 1.4s
+* Watchdog should reset system between 2-3s
 * Should not get triggered if system experiencing drift 
 *
 * Parameters:
@@ -502,21 +493,32 @@ CY_ISR(RxIsr)
 CY_ISR(watchDogCheck){
     
     CyWdtClear(); 
-        
 }
 
+
+/*******************************************************************************
+* Function Name: wakeUpIsr
+********************************************************************************
+*
+* Summary:
+* Sleep Timer interrupt to check for new data every 1.024 s
+* Also resets watch dog timer when watchDogCheck timer is asleep
+*
+* Parameters:
+*  None.
+*
+* Return:
+*  None.
+*
+*******************************************************************************/
 CY_ISR(wakeUpIsr){
     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
-    sleepToggle_Write(ON); //Turns pin on upon waking up.
-    //New Transmission, wake up PSOC
-    SleepTimer_Stop();
-    wakeUp(); 
-        /* Output string on LCD. */
-//    LCD_Position(0u, 0u);
-//    LCD_PrintString("                    ");
-//    LCD_Position(0u, 0u);
-//    LCD_PrintString("Awake");
-    
+    CyWdtClear(); // Clear watchdog timer while in sleep
+
+    sleepCount++;
+    if(sleepCount > MAX_SLEEP_COUNT){
+        sleepCount = 0;
+    }
 
 } //end CY_ISR(wakeUpIsr)
 

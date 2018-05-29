@@ -31,7 +31,7 @@
 /*Function Prototypes*/
 void Display(void);
 int CheckParity(int);
-//void LEDSOn(int,int);
+void SendData(void);
 
 // Interrupt for switching bits 5 ms
 CY_ISR_PROTO(Bit_Timer);
@@ -62,24 +62,24 @@ static uint8 decodeWrong = FALSE;
 
 int main(void)
 {
-    /* Enable global interrupts. */
+    /* Module is turned on- will display again if watchdog timer is enabled */
     LCD_Char_Start();
     sprintf(display, "Starting Module!");
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
     LCD_Char_PrintString(display);
     CyDelay(FiveSecs);
    
-    
     CyGlobalIntEnable; 
     
     // Start timer to clear watch dog
     checkWatchDogTimer_Start();
     watchDogCheck_StartEx(watchDogCheck);
     
-//    // Start watch dog timer to check for blocks in code
+    // Start watch dog timer to check for blocks in code
     CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE);
 
     /* initialization/startup code here */
+    UART_Start();
     PWM_Recon_Start();
     Shift_Reg_Start();
     Out_Comp_Start();
@@ -246,5 +246,15 @@ int CheckParity(crabs)
         return FAILURE;
     }
 }   
+
+void SendData()
+{
+    UART_WriteTxData(crabs);
+    if((paritySuccess == SUCCESS) && (decodeWrong != TRUE)){
+        UART_WriteTxData(SUCCESS);
+    }else{
+        UART_WriteTxData(FAILURE);
+    }
+}
 
 /* [] END OF FILE */

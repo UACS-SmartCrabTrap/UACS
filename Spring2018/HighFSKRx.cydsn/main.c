@@ -28,12 +28,14 @@
 #define FALSE             0x0
 #define FiveSecs          5000
 #define TRANSMISSIONS_3    2
-#define Delay               2
+#define Delay              1
 
 /*Function Prototypes*/
 void Display(void);
 int CheckParity(int);
 void SendData(void);
+void startModules(void);
+void stopModules(void);
 
 // Interrupt for switching bits 5 ms
 CY_ISR_PROTO(Bit_Timer);
@@ -52,6 +54,7 @@ static uint8 dataFlag = 0; // Flag to start looking for data
 static uint8 decodeFlag = 0; // Flag to start looking for post-fix
 static int paritySuccess = 0;
 static uint8 threeTransmissions = 0; // checks for 3 transmission before reinstatiating sleep timer
+static uint8 sleepFlag = FALSE; 
 
 // LCD String Variables
 char OutputString[ARRAY_SIZE];
@@ -69,8 +72,9 @@ int main(void)
     
     CyGlobalIntEnable;
     
+    startModules(); 
+    
     /* Module is turned on- will display again if watchdog timer is enabled */
-    LCD_Char_Start();
     sprintf(display, "Starting Module!");
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
     LCD_Char_PrintString(display);
@@ -79,19 +83,13 @@ int main(void)
      
  
     /* initialization/startup code here */
-    UART_Start();
-    PWM_Recon_Start();
-    Shift_Reg_Start();
-    Out_Comp_Start();
-    Bit_Timer_Start();
     Timer_ISR_StartEx(Bit_Timer);
-    Sleep_ISR_StartEx(wakeUp_ISR);
-   
-    // Start timer to clear watch dog
-    checkWatchDogTimer_Start();
-    watchDogCheck_StartEx(watchDogCheck);      
+    Sleep_ISR_StartEx(wakeUp_ISR);    
+    watchDogCheck_StartEx(watchDogCheck);
+    
+    
     // Start watch dog timer to check for blocks in code
-    CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE);
+    CyWdtStart(CYWDT_1024_TICKS, CYWDT_LPMODE_NOCHANGE);
     
     SleepTimer_Start();
 
@@ -100,31 +98,27 @@ int main(void)
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
     LCD_Char_PrintString(display);
     
-    Power_Toggle_Write(1); // Turn analog circuit on
-    
-    // PSoC Sleep command. To adjust sleep time, change in the hardware
-    //  block. No sleep time parameters taken in PSoC5LP.
-    //  PM_SLEEP_TIME_NONE is a relic of PSoC3
-    CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
-    
-    
+    Power_Toggle_Write(TRUE); // Turn analog circuit on
 
     for(;;)
     {
         Display();
+         // PSoC Sleep command. To adjust sleep time, change in the hardware
+        //  block. No sleep time parameters taken in PSoC5LP.
+        //  PM_SLEEP_TIME_NONE is a relic of PSoC3
+        if(sleepFlag == TRUE){
+            
+            sleepFlag = FALSE; 
+            Power_Toggle_Write(FALSE);
+            stopModules(); 
+            CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
+        
+        }
+
     } // end of for(;;)
 } // end of main()
 
-//Clears watchdog timer to avoid reset unless timing has drifted
-CY_ISR(watchDogCheck){
-    
-    CyWdtClear();
-    //sleepToggle_Write(TRUE);
-    //CyDelay(Delay);
-    //sleepToggle_Write(FALSE);
-     
-        
-}
+
 
 //Bit length = 500 ms
 //timer period = 5 ms
@@ -215,6 +209,17 @@ CY_ISR(Bit_Timer){
 } // end of CY_ISR(HighF_LevelCount)
 
 
+//Clears watchdog timer to avoid reset unless timing has drifted
+CY_ISR(watchDogCheck){
+    
+    CyWdtClear();
+//    sleepToggle_Write(TRUE);
+//    CyDelay(Delay);
+//    sleepToggle_Write(FALSE);
+     
+        
+}
+
 //check for prefix
 //disable sleep if see prefix
 //enable timer to restart sleep if false positive
@@ -222,12 +227,13 @@ CY_ISR(Bit_Timer){
 CY_ISR(wakeUp_ISR){
     
     CyWdtClear(); 
-    
     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
-    
-    sleepToggle_Write(TRUE);
-    CyDelay(Delay);
-    sleepToggle_Write(FALSE);
+    Power_Toggle_Write(TRUE);
+    startModules();
+//    sleepToggle_Write(TRUE);
+//    CyDelay(Delay);
+//    sleepToggle_Write(FALSE);
+       
     
     if(Out_Comp_GetCompare() != 0){
         SleepTimer_Stop();
@@ -235,6 +241,8 @@ CY_ISR(wakeUp_ISR){
         //trigger interrupt to avoid data loss 
         Timer_ISR_Enable();
     }
+    
+    sleepFlag = TRUE; 
 
 }
 
@@ -286,7 +294,7 @@ void Display()
 // * description: XORs each bit of data to get even or odd parity for
 // * error checking
 // */
-int CheckParity(crabs)
+int CheckParity(int crabs)
 {
     int i = 0;
     int bitToCheck = crabs >> 1; // Remove parity from data
@@ -311,6 +319,31 @@ void SendData()
     }else{
         UART_WriteTxData(FAILURE);
     }
+}
+
+void stopModules(void){
+    
+    LCD_Char_Stop();
+    UART_Stop();
+    PWM_Recon_Stop();
+    Shift_Reg_Stop();
+    Out_Comp_Stop();
+    Bit_Timer_Stop();
+    checkWatchDogTimer_Stop();
+
+
+}
+void startModules(void){
+    
+    LCD_Char_Start();
+    UART_Start();
+    PWM_Recon_Start();
+    Shift_Reg_Start();
+    Out_Comp_Start();
+    //Bit_Timer_Start();
+    // Start timer to clear watch dog
+    checkWatchDogTimer_Start();
+
 }
 
 /* [] END OF FILE */

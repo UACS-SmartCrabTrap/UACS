@@ -1,6 +1,6 @@
 -- ======================================================================
 -- USBFS_UART.ctl generated from USBFS_UART
--- 05/29/2018 at 12:11
+-- 05/29/2018 at 19:46
 -- This file is auto generated. ANY EDITS YOU MAKE MAY BE LOST WHEN THIS FILE IS REGENERATED!!!
 -- ======================================================================
 

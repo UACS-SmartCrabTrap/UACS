@@ -169,6 +169,7 @@ int main()
     /* Output string on LCD. */
     LCD_Position(0u, 0u);
     LCD_PrintString("Hello");
+    CyDelay(FiveSecs);
 
     for(;;)
     {

@@ -69,6 +69,8 @@ int GetCrabs(void);
 int CalculateCrabs(void);
 void DisplayCrabs(int);
 
+CY_ISR_PROTO(tx_done); // sleep timer interrupt from UART
+
 /*Global Variables*/
 int prompt = 1;
 int endFlag = 0; // flag for end of user input
@@ -76,6 +78,8 @@ int oneDigit = 0; // flag for end of input with one character
 int twoDigit = 0; // flag for end of input with two characters
 int error = 0; // flag for input error
 int i = 2; // to iterate through data array
+int dataDone = TRUE;
+int sendReady = FALSE;
 uint16 count;
 char8 lineStr[LINE_STR_LENGTH];
 uint8 buffer[USBUART_BUFFER_SIZE];
@@ -97,7 +101,10 @@ int main()
 
     /* Start USBFS and UART  */
     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
-    UART_Start();        
+    UART_Start();     
+    Data_Timer_Start();
+    
+    tx_done_StartEx(tx_done);
 
     /* Clear LCD line. */
     LCD_Position(0u, 0u);
@@ -106,7 +113,6 @@ int main()
     /* Output string on LCD. */
     LCD_Position(0u, 0u);
     LCD_PrintString("Hello");
-    
 
     for(;;)
     {
@@ -114,19 +120,37 @@ int main()
         /* Start UART interface and fill array with 3 parameters until valid */
         while(gettingData){
             while(0u == GetCrabs()){
-            };
+                if(sendReady == TRUE){
+                    while (0u == USBUART_CDCIsReady())
+                    {
+                    }
+                    USBUART_PutString("Data Ready");
+                    sendReady = FALSE;
+                    /* Wait until component is ready to send data to host. */
+                    while (0u == USBUART_CDCIsReady())
+                    {
+                    }
+                    USBUART_PutCRLF();
+                }
+            }
             crabs = CalculateCrabs();
             if(crabs != ERROR){
                 DisplayCrabs(crabs);
                 gettingData = 0;
-                }
             }
-            UART_PutChar(0);
-            CyDelay(1000);
-            UART_PutChar(crabs); 
+        }
+        UART_PutChar(crabs); 
+        dataDone = FALSE;
+        while (0u == USBUART_CDCIsReady())
+        {
+        }
+        USBUART_PutString("Data Sent");
+        while (0u == USBUART_CDCIsReady())
+        {
+        }
+        USBUART_PutCRLF();
+        Data_Timer_Start();
             
-            
-
     } // end for(;;)
 } // end main
 
@@ -152,9 +176,9 @@ int GetCrabs()
             /* Enumeration is done, enable OUT endpoint to receive data 
             * from host. */
             USBUART_CDC_Init();
-            }
         }
-        
+    }
+
         /* Service USB CDC when device is configured. */
         if (0u != USBUART_GetConfiguration())
         {
@@ -162,17 +186,17 @@ int GetCrabs()
             while (0u == USBUART_CDCIsReady())
                 {
                 }
-                if(prompt == 1){
-                    USBUART_PutString("Please enter amount of crabs (up to 127). Terminates with carriage return or third character. Any non-integer will be interpreted as a 0.");
-                }
+            if(prompt == TRUE){
+                USBUART_PutString("Please enter amount of crabs (up to 127). Terminates with carriage return or third character. Any non-integer will be interpreted as a 0.");
+            }
             /* Wait until component is ready to send data to host. */
             while (0u == USBUART_CDCIsReady())
                 {
                 }
-                if(prompt == 1){
-                    USBUART_PutCRLF();
-                    prompt = 0;
-                }
+            if(prompt == TRUE){
+                USBUART_PutCRLF();
+                prompt = 0;
+            }
                 
             /* Check for input data from host. */
             if (0u != USBUART_DataIsReady())
@@ -205,7 +229,7 @@ int GetCrabs()
                     i--;
                 }
                 
-                 if (0u != count)
+                if (0u != count)
                 {
                     /* Wait until component is ready to send data to host. */
                     while (0u == USBUART_CDCIsReady())
@@ -234,11 +258,11 @@ int GetCrabs()
                 }
             } // end (0u != USBUART_DataIsReady())
         } // end (0u != USBUART_GetConfiguration())
-        if(endFlag == 1){
-            return 1;
-        }else{
-            return 0;
-        }
+    if(endFlag == 1){
+        return 1;
+    }else{
+        return 0;
+    }
 }//end GetCrabs()
 
 /*
@@ -274,9 +298,22 @@ int CalculateCrabs()
     data[1] = data[1] * 10;
     data[2] = data[2] * 100;
     crabs = data[0] + data[1] + data[2];
+    if(dataDone == FALSE){
+        error = TRUE;
+        /* Wait until component is ready to send data to host. */
+        while (0u == USBUART_CDCIsReady())
+        {
+        }
+        USBUART_PutString("Error. Not Ready for new data.");
+        /* Wait until component is ready to send data to host. */
+        while (0u == USBUART_CDCIsReady())
+        {
+        }
+        USBUART_PutCRLF();
+    }
     if(crabs > MAX_CRABS){
         crabs = 0;
-        error = 1;
+        error = TRUE;
         /* Wait until component is ready to send data to host. */
         while (0u == USBUART_CDCIsReady())
         {
@@ -298,9 +335,11 @@ int CalculateCrabs()
     if(error == 1){
         error = 0; // reset error checking
         return ERROR;
-
+    }
+    else if(dataDone == FALSE){
+        return ERROR;
     }else{
-        prompt = 1;
+        //prompt = TRUE;
         return crabs;
     }
 } /* END OF CalculateCrabs() */
@@ -321,6 +360,32 @@ void DisplayCrabs(int crabs){
     sprintf(lineStr,"Crabs: %d", crabs);
     LCD_PrintString(lineStr);
 }
+
+/*******************************************************************************
+* Function Name: wakeUpIsr
+********************************************************************************
+*
+* Summary:
+* Sleep Timer interrupt to wake up PSoC from sleep
+*
+* Parameters:
+*  None.
+*
+* Return:
+*  None.
+*
+*******************************************************************************/
+CY_ISR(tx_done){
+    count++;
+    if(count >= 10){
+        dataDone = TRUE;
+        sendReady = TRUE;
+        
+        count = 0;
+        Data_Timer_Stop();
+    }
+
+} //end CY_ISR(tx_done)
 
 
 

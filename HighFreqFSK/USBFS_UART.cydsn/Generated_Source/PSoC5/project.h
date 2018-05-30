@@ -31,6 +31,8 @@
 #include "LCD.h"
 #include "UART.h"
 #include "isr_rx.h"
+#include "Data_Timer.h"
+#include "tx_done.h"
 #include "USBUART_Dm_aliases.h"
 #include "USBUART_Dm.h"
 #include "USBUART_Dp_aliases.h"

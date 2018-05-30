@@ -78,9 +78,7 @@ int main(void)
     sprintf(display, "Starting Module!");
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
     LCD_Char_PrintString(display);
-    //CyDelay(FiveSecs);
-
-     
+    
  
     /* initialization/startup code here */
     Timer_ISR_StartEx(Bit_Timer);
@@ -91,7 +89,6 @@ int main(void)
     // Start watch dog timer to check for blocks in code
     CyWdtStart(CYWDT_1024_TICKS, CYWDT_LPMODE_NOCHANGE);
     
-    SleepTimer_Start();
 
     // Displays Loading Message before receiving pre-fix=
     sprintf(display, "counting crabs...");
@@ -99,6 +96,11 @@ int main(void)
     LCD_Char_PrintString(display);
     
     Power_Toggle_Write(TRUE); // Turn analog circuit on
+        
+          
+    SleepTimer_Start();   
+    stopModules(); 
+    CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
 
     for(;;)
     {
@@ -216,7 +218,7 @@ CY_ISR(watchDogCheck){
 //    sleepToggle_Write(TRUE);
 //    CyDelay(Delay);
 //    sleepToggle_Write(FALSE);
-     
+       
         
 }
 
@@ -226,10 +228,13 @@ CY_ISR(watchDogCheck){
 //if no prefix, disbale interrupt and nothing else 
 CY_ISR(wakeUp_ISR){
     
-    CyWdtClear(); 
+    CyWdtClear();
+    startModules();
     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
     Power_Toggle_Write(TRUE);
-    startModules();
+    
+     sleepFlag = TRUE; 
+    
 //    sleepToggle_Write(TRUE);
 //    CyDelay(Delay);
 //    sleepToggle_Write(FALSE);
@@ -242,7 +247,7 @@ CY_ISR(wakeUp_ISR){
         Timer_ISR_Enable();
     }
     
-    sleepFlag = TRUE; 
+   
 
 }
 

@@ -168,7 +168,7 @@ void checkWatchDogTimer_Wakeup(void)        ;
 *    Initialial Parameter Constants
 ***************************************/
 
-#define checkWatchDogTimer_INIT_PERIOD             33333332u
+#define checkWatchDogTimer_INIT_PERIOD             22222221u
 #define checkWatchDogTimer_INIT_CAPTURE_MODE       ((uint8)((uint8)0u << checkWatchDogTimer_CTRL_CAP_MODE_SHIFT))
 #define checkWatchDogTimer_INIT_TRIGGER_MODE       ((uint8)((uint8)0u << checkWatchDogTimer_CTRL_TRIG_MODE_SHIFT))
 #if (checkWatchDogTimer_UsingFixedFunction)

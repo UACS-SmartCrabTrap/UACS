@@ -33,7 +33,7 @@
 #include "stdlib.h"
 
 /***************************************
-* Conditional Compilation Parameters
+* UART/TESTING MACRO
 ***************************************/
 #define UART    ENABLED
 
@@ -82,10 +82,10 @@
 
 /*Enumerations*/
 enum state{
-    Encoding_Byte1,
+    Encoding_Byte,
     Data,
     Parity,
-    Decoding_Byte1,
+    Decoding_Byte,
 };
 
 /*Function Prototypes*/
@@ -101,15 +101,15 @@ CY_ISR_PROTO(wakeUpIsr); // sleep timer interrupt
 CY_ISR_PROTO(RxWakeUp); // sleep timer interrupt from UART
 
 /*Global Variables*/
-int error = 0; // flag for input error
-int i = 2; // to iterate through data array
-int sleepCount = 0;
-uint16 count;
-char8 lineStr[LINE_STR_LENGTH];
-char8 data[LINE_STR_LENGTH];
-uint8 newDataflag = FALSE;
+static int error = 0; // flag for input error
+static int i = 2; // to iterate through data array
+static int sleepCount = 0;
+static uint16 count;
+static char8 lineStr[LINE_STR_LENGTH];
+static char8 data[LINE_STR_LENGTH];
+static uint8 newDataflag = FALSE;
 static int bitTime = 0;
-static int currentByte = Encoding_Byte1;
+static int currentByte = Encoding_Byte;
 static int prefixTime = 0;
 static int sendDataCount = 0;
 static int ParityFlag = FALSE;
@@ -168,7 +168,7 @@ int main()
             errorStatus = 0u;
         }
         switch(currentByte){
-            case Encoding_Byte1:
+            case Encoding_Byte:
                 bitCase = Byte(PREFIX_MESSAGE, bitTime);
                 break;
             case Data:
@@ -178,17 +178,14 @@ int main()
                 ParityFlag = TRUE;
                 bitCase = FindParity();
                 break;
-            case Decoding_Byte1:
+            case Decoding_Byte:
                 bitCase = Byte(DECODE_VALUE, bitTime);
                 break;
  
             default:
+                /* Switch data or repeat data depending on sendDataCount */
                 sendDataCount++; // count how many times we send data
-                // Turn sending off until new data from UART
-                newDataflag = FALSE;
-                //encode used to transmit 7 1's for the prefix 
-                //reset here to be ready for case 0 
-                prefixTime = 0;
+                newDataflag = FALSE; // Turn sending off until new data from UART
                 
 #if(UART == ENABLED)
                 data_turn++;
@@ -281,7 +278,7 @@ int main()
                 bitTime = 0; 
                 PWM_Modulator_Start();
                 PWM_Switch_Timer_Start();
-                currentByte = Encoding_Byte1;
+                currentByte = Encoding_Byte;
                 break;
          } //end switch(bitTime) 
         
@@ -358,7 +355,7 @@ int FindParity()
         parity = (bitToCheck & BIT_0_MASK) ^ parity; // XOR new bit
     }
     return parity;
-}   
+}//end FindParity()   
 
 /*
  * function: void wakeUp(void)
@@ -377,7 +374,7 @@ void wakeUp(void){
     PWM_Switch_Timer_Wakeup(); 
     PWM_Switch_Timer_Start();
     
-}
+}//end wakeUp()
 
 /*
  * function: void goToSleep(void)
@@ -398,7 +395,7 @@ void goToSleep(){
     isr_rx_ClearPending();
     CyPmSaveClocks();
 
-}
+}//end goToSleep()
 
 
 /*******************************************************************************
@@ -491,11 +488,12 @@ CY_ISR(RxIsr)
             }
 
         }
+    // Read FIFO until empty
     }while((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u);
     
     isr_rx_ClearPending();
     sleepToggle_Write(OFF);
-}
+} //end CY_ISR(RxIsr)
 
 /*******************************************************************************
 * Function Name: watchDogCheck
@@ -516,7 +514,7 @@ CY_ISR(RxIsr)
 CY_ISR(watchDogCheck){
     
     CyWdtClear(); 
-}
+} //CY_ISR(watchDogCheck)
 
 
 /*******************************************************************************

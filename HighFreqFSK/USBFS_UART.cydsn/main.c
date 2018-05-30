@@ -78,7 +78,7 @@ int oneDigit = 0; // flag for end of input with one character
 int twoDigit = 0; // flag for end of input with two characters
 int error = 0; // flag for input error
 int i = 2; // to iterate through data array
-int dataDone = TRUE;
+int dataDone = TRUE; // check if 
 int sendReady = FALSE;
 uint16 count;
 char8 lineStr[LINE_STR_LENGTH];
@@ -236,7 +236,7 @@ int GetCrabs()
                     {
                     }
 
-                    /* Send data back to host. */
+                    /* Send data back to PC */
                     USBUART_PutData(buffer, count);
 
 
@@ -265,12 +265,13 @@ int GetCrabs()
     }
 }//end GetCrabs()
 
-/*
+/*******************************************************************************************
  * function: int CalculateCrabs()
  * parameters: none
  * returns: int crabs - amount of crabs from user input 
  * description: This function takes an array of size three and converts
  * to a single number
+ *******************************************************************************************
  */
 int CalculateCrabs()
 {
@@ -344,11 +345,12 @@ int CalculateCrabs()
     }
 } /* END OF CalculateCrabs() */
 
-/*
+/*******************************************************************************************
  * function: void DisplayCrabs()
  * parameters: int crabs
  * returns: void
  * description: Displays the number of crabs on LCD Display
+ *******************************************************************************************
  */
 void DisplayCrabs(int crabs){
     /* Clear LCD line. */

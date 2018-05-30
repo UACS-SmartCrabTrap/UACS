@@ -1,8 +1,8 @@
 /* =============================================================================
  * Smart Crab Trap
- * FSK RX 
+ * High FSK Rx
  * Edited by: Stephanie Salazar
- * Revision: 5/10/18
+ * Revision: 5/29/18
  * Function: This project takes in a signal from an outside source
  * and reads the data within the signal. This code waits for a pre-fix
  * of 0xFF and then reads the next 4 bits as the data and confirms
@@ -56,8 +56,8 @@ static uint8 paritySuccess = 0; // Flag for whether transmitted parity matches d
 static uint8 threeTransmissions = 0; // checks for 3 transmission before reinstatiating sleep timer
 
 // LCD String Variables
-char OutputString[ARRAY_SIZE];
-char display[ARRAY_SIZE];
+static char OutputString[ARRAY_SIZE];
+static char display[ARRAY_SIZE];
 
 // FLAGS for turning on messages on LCD screen
 static uint8 lcdFlagEncode = FALSE; // Turns on pre-fix message
@@ -84,7 +84,7 @@ int main(void)
     Out_Comp_Start();
     Bit_Timer_Start();
     Timer_ISR_StartEx(Bit_Timer);
-    Sleep_ISR_StartEx(wakeup_ISR);
+    Sleep_ISR_StartEx(wakeUp_ISR);
     
     // Start timer to clear watch dog
     checkWatchDogTimer_Start();
@@ -110,18 +110,32 @@ int main(void)
     {
         Display();
     } // end of for(;;)
+    
 } // end of main()
 
-//Clears watchdog timer to avoid reset unless timing has drifted
+///*********************************************************************
+// * ISR: watchDogCheck
+// * parameters: void
+// * returns: void
+// * description: Clears watchdog timer to avoid reset unless timing 
+// * has drifted
+// *********************************************************************
+// */
 CY_ISR(watchDogCheck){
     
     CyWdtClear(); 
         
-}
+} /* END OF CY_ISR(watchDogCheck) */
 
-//Bit length = 500 ms
-//timer period = 5 ms
-//will check bit COUNT times, to debounce
+///*********************************************************************
+// * ISR: Bit_Timer
+// * parameters: void
+// * returns: void
+// * description: Bit length is 500 ms. Bit_Timer checks every 5 ms for
+// * a one or zero. After 100 checks, it decides the bit and looks for
+// * the prefix 0xff. If seen, record data. 
+// *********************************************************************
+// */
 CY_ISR(Bit_Timer){
     levelCounter++;
     
@@ -195,13 +209,17 @@ CY_ISR(Bit_Timer){
         }
         
     } // end of if(levelCounter == COUNT)
-} // end of CY_ISR(HighF_LevelCount)
+} /* END OF CY_ISR(HighF_LevelCount) */
 
-
-//check for prefix
-//disable sleep if see prefix
-//enable timer to restart sleep if false positive
-//if no prefix, disbale interrupt and nothing else 
+///*********************************************************************
+// * ISR: wakeUp_ISR
+// * parameters: void
+// * returns: void
+// * description: Checks for prefix and disables sleep if prefix is seen
+// * Timer is enabled to restart sleep if false positive
+// * If no prefix, disable interrupt and nothing else
+// *********************************************************************
+// */
 CY_ISR(wakeUp_ISR){
     
     CyWdtClear(); 
@@ -219,15 +237,16 @@ CY_ISR(wakeUp_ISR){
         Timer_ISR_Enable();
     }
 
-}
+}/* END OF wakeUp_ISR */
 
 
-///*
+///*********************************************************************
 // * function: void Display(void)
 // * parameters: void
 // * returns: void
 // * description: Displays current data on LCD display depending
 // * on what flags are set
+// *********************************************************************
 // */
 void Display()
 {
@@ -260,14 +279,15 @@ void Display()
         LCD_Char_PrintString(displayB);
         decodeWrong = FALSE;
     }
-}//end Display()
+} /* END OF Display() */
 
-///*
+///********************************************************************
 // * function: void CheckParity(void)
-// * parameters: void
-// * returns: void
+// * parameters: int received data including parity
+// * returns: int whether 
 // * description: XORs each bit of data to get even or odd parity for
 // * error checking
+// ********************************************************************
 // */
 int CheckParity(crabs)
 {
@@ -284,8 +304,17 @@ int CheckParity(crabs)
     }else{
         return FAILURE;
     }
-}   
+} /* END OF CheckParity() */
 
+///*******************************************************************
+// * function: void SendData(void)
+// * parameters: void
+// * returns: void
+// * description: Sends received data through UART 
+// * Order sent is: 1 byte: Data
+// *                1 bit : Success/Failure
+// *******************************************************************
+//*/
 void SendData()
 {
     UART_WriteTxData(crabs);
@@ -294,6 +323,6 @@ void SendData()
     }else{
         UART_WriteTxData(FAILURE);
     }
-}
+} /* END OF SendData() */
 
 /* [] END OF FILE */

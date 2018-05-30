@@ -21,7 +21,6 @@
 #define DATA_LENGTH       7
 #define PREFIX            0xFF
 #define POSTFIX           0x01
-#define BIT_0_MASK        0x1
 #define SUCCESS           0x1
 #define FAILURE           0x0
 #define TRUE              0x1
@@ -31,11 +30,23 @@
 #define FiveSecs          5000
 #define TRANSMISSIONS_3   2
 #define Delay             2
+#define DATA_STORED       3
+
+#define BIT_0_MASK 0x01
+#define BIT_1_MASK 0x02
+#define BIT_2_MASK 0x04
+#define BIT_3_MASK 0x08
+#define BIT_4_MASK 0x10
+#define BIT_5_MASK 0x20
+#define BIT_6_MASK 0x40
+#define BIT_7_MASK 0x80
 
 /*Function Prototypes*/
 void Display(void);
 int CheckParity(int);
 void SendData(void);
+void startModules(void);
+void stopModules(void);
 
 // Interrupt for switching bits 5 ms
 CY_ISR_PROTO(Bit_Timer);
@@ -54,13 +65,16 @@ static uint8 dataFlag = 0; // Flag to start looking for data
 static uint8 decodeFlag = 0; // Flag to start looking for post-fix
 static uint8 paritySuccess = 0; // Flag for whether transmitted parity matches data
 static uint8 threeTransmissions = 0; // checks for 3 transmission before reinstatiating sleep timer
+static uint8 sleepFlag = FALSE; 
 
 // LCD String Variables
 static char OutputString[ARRAY_SIZE];
 static char display[ARRAY_SIZE];
 
 // Store Received Data
-static uint8 allData[3];
+static uint8 allData[DATA_STORED];
+static uint8 parityResult[DATA_STORED];
+static uint8 postFixResult[DATA_STORED];
 
 // FLAGS for turning on messages on LCD screen
 static uint8 lcdFlagEncode = FALSE; // Turns on pre-fix message
@@ -78,22 +92,15 @@ int main(void)
     sprintf(display, "Starting Module!");
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
     LCD_Char_PrintString(display);
-    CyDelay(FiveSecs);
+    CyDelay(500);
 
     /* initialization/startup code here */
-    UART_Start();
-    PWM_Recon_Start();
-    Shift_Reg_Start();
-    Out_Comp_Start();
-    Bit_Timer_Start();
     Timer_ISR_StartEx(Bit_Timer);
     Sleep_ISR_StartEx(wakeUp_ISR);
-    
-    // Start timer to clear watch dog
-    checkWatchDogTimer_Start();
-    watchDogCheck_StartEx(watchDogCheck);      
+    watchDogCheck_StartEx(watchDogCheck); 
+      
     // Start watch dog timer to check for blocks in code
-    CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE);
+    CyWdtStart(CYWDT_16_TICKS, CYWDT_LPMODE_NOCHANGE); // 4-6 ms
     
     SleepTimer_Start();
 
@@ -103,32 +110,23 @@ int main(void)
     LCD_Char_PrintString(display);
     
     Power_Toggle_Write(ON); // Turn analog circuit on
-    
-    // PSoC Sleep command. To adjust sleep time, change in the hardware
-    //  block. No sleep time parameters taken in PSoC5LP.
-    //  PM_SLEEP_TIME_NONE is a relic of PSoC3
-    CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
 
     for(;;)
     {
         Display();
+        // PSoC Sleep command. To adjust sleep time, change in the hardware
+        //  block. No sleep time parameters taken in PSoC5LP.
+        //  PM_SLEEP_TIME_NONE is a relic of PSoC3
+        if(sleepFlag == TRUE){
+            sleepFlag = FALSE; 
+            Power_Toggle_Write(FALSE);
+            stopModules(); 
+            CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
+        }
     } // end of for(;;)
     
 } // end of main()
 
-///*********************************************************************
-// * ISR: watchDogCheck
-// * parameters: void
-// * returns: void
-// * description: Clears watchdog timer to avoid reset unless timing 
-// * has drifted
-// *********************************************************************
-// */
-CY_ISR(watchDogCheck){
-    
-    CyWdtClear(); 
-        
-} /* END OF CY_ISR(watchDogCheck) */
 
 ///*********************************************************************
 // * ISR: Bit_Timer
@@ -215,6 +213,20 @@ CY_ISR(Bit_Timer){
 } /* END OF CY_ISR(HighF_LevelCount) */
 
 ///*********************************************************************
+// * ISR: watchDogCheck
+// * parameters: void
+// * returns: void
+// * description: Clears watchdog timer to avoid reset unless timing 
+// * has drifted
+// *********************************************************************
+// */
+CY_ISR(watchDogCheck){
+    
+    CyWdtClear(); 
+        
+} /* END OF CY_ISR(watchDogCheck) */
+
+///*********************************************************************
 // * ISR: wakeUp_ISR
 // * parameters: void
 // * returns: void
@@ -226,18 +238,22 @@ CY_ISR(Bit_Timer){
 CY_ISR(wakeUp_ISR){
     
     CyWdtClear(); 
-    
     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
+    Power_Toggle_Write(TRUE);
+    startModules();
+//    sleepToggle_Write(TRUE);
+//    CyDelay(Delay);
+//    sleepToggle_Write(FALSE);
     
-    sleepToggle_Write(TRUE);
-    CyDelay(Delay);
-    sleepToggle_Write(FALSE);
-    
+    // If output is high
     if(Out_Comp_GetCompare() != 0){
         SleepTimer_Stop();
         Bit_Timer_Start();
         //trigger interrupt to avoid data loss 
         Timer_ISR_Enable();
+        Timer_ISR_SetPending();
+    }else{
+        sleepFlag = TRUE; 
     }
 
 }/* END OF wakeUp_ISR */
@@ -327,5 +343,102 @@ void SendData()
         UART_WriteTxData(FAILURE);
     }
 } /* END OF SendData() */
+
+void stopModules(void){
+    LCD_Char_Sleep();
+    UART_Sleep();
+    PWM_Recon_Sleep();
+    Shift_Reg_Sleep();
+    Out_Comp_Sleep();
+    Bit_Timer_Sleep();
+    checkWatchDogTimer_Sleep();
+    CyPmSaveClocks();
+
+}
+
+void startModules(void){
+    CyPmRestoreClocks();
+    LCD_Char_Wakeup();
+    UART_Wakeup();
+    PWM_Recon_Wakeup();
+    Shift_Reg_Wakeup();
+    Out_Comp_Wakeup();
+    // Start timer to clear watch dog
+    checkWatchDogTimer_Wakeup();
+    checkWatchDogTimer_Start();
+}
+
+uint8 majorityVote(){
+    int i = 0;
+    int success = 0;
+    uint8 finalResult = 0;
+    for(i = 0; i<DATA_STORED; i++){
+        if((parityResult[i] == SUCCESS) && (postFixResult[i] == SUCCESS)){
+            success++;
+        }
+        if(success >= DATA_STORED){
+            finalResult = allData[0];
+        }else{
+            int zero1 = allData[0] & BIT_0_MASK;
+            int zero2 = allData[1] & BIT_0_MASK;
+            int zero3 = allData[2] & BIT_0_MASK;
+            int zeros = zero1 + zero2 + zero3;
+            if(zeros > 1){
+                finalResult = finalResult | BIT_0_MASK;
+            }
+            int one1 = allData[0] & BIT_1_MASK;
+            int one2 = allData[1] & BIT_1_MASK;
+            int one3 = allData[2] & BIT_1_MASK;
+            int ones = one1 + one2 + one3;
+            if(ones > 1){
+                finalResult = finalResult | BIT_1_MASK;
+            }
+            int two1 = allData[0] & BIT_2_MASK;
+            int two2 = allData[1] & BIT_2_MASK;
+            int two3 = allData[2] & BIT_2_MASK;
+            int twos = two1 + two2 + two3;
+            if(twos > 1){
+                finalResult = finalResult | BIT_2_MASK;
+            }
+            int three1 = allData[0] & BIT_3_MASK;
+            int three2 = allData[1] & BIT_3_MASK;
+            int three3 = allData[2] & BIT_3_MASK;
+            int threes = three1 + three2 + three3;
+            if(threes > 1){
+                finalResult = finalResult | BIT_3_MASK;
+            }
+            int four1 = allData[0] & BIT_4_MASK;
+            int four2 = allData[1] & BIT_4_MASK;
+            int four3 = allData[2] & BIT_4_MASK;
+            int fours = four1 + four2 + four3;
+            if(fours > 1){
+                finalResult = finalResult | BIT_4_MASK;
+            }
+            int five1 = allData[0] & BIT_5_MASK;
+            int five2 = allData[1] & BIT_5_MASK;
+            int five3 = allData[2] & BIT_5_MASK;
+            int fives = five1 + five2 + five3;
+            if(fives > 1){
+                finalResult = finalResult | BIT_5_MASK;
+            }
+            int six1 = allData[0] & BIT_6_MASK;
+            int six2 = allData[1] & BIT_6_MASK;
+            int six3 = allData[2] & BIT_6_MASK;
+            int sixes = six1 + six2 + six3;
+            if(sixes > 1){
+                finalResult = finalResult | BIT_6_MASK;
+            }
+            int seven1 = allData[0] & BIT_7_MASK;
+            int seven2 = allData[1] & BIT_7_MASK;
+            int seven3 = allData[2] & BIT_7_MASK;
+            int sevens = seven1 + seven2 + seven3;
+            if(sevens > 1){
+                finalResult = finalResult | BIT_7_MASK;
+            }
+        }
+    }
+    return finalResult;
+}
+
 
 /* [] END OF FILE */

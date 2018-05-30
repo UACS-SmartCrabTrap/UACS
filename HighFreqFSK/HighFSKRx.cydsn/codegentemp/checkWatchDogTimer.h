@@ -36,8 +36,8 @@ extern uint8 checkWatchDogTimer_initVar;
 *           Parameter Defaults
 **************************************/
 
-#define checkWatchDogTimer_Resolution                 16u
-#define checkWatchDogTimer_UsingFixedFunction         1u
+#define checkWatchDogTimer_Resolution                 32u
+#define checkWatchDogTimer_UsingFixedFunction         0u
 #define checkWatchDogTimer_UsingHWCaptureCounter      0u
 #define checkWatchDogTimer_SoftwareCaptureMode        0u
 #define checkWatchDogTimer_SoftwareTriggerMode        0u
@@ -69,7 +69,7 @@ typedef struct
     uint8 TimerEnableState;
     #if(!checkWatchDogTimer_UsingFixedFunction)
 
-        uint16 TimerUdb;
+        uint32 TimerUdb;
         uint8 InterruptMaskValue;
         #if (checkWatchDogTimer_UsingHWCaptureCounter)
             uint8 TimerCaptureCounter;
@@ -100,11 +100,11 @@ uint8   checkWatchDogTimer_ReadStatusRegister(void) ;
     void    checkWatchDogTimer_WriteControlRegister(uint8 control) ;
 #endif /* (!checkWatchDogTimer_UDB_CONTROL_REG_REMOVED) */
 
-uint16  checkWatchDogTimer_ReadPeriod(void) ;
-void    checkWatchDogTimer_WritePeriod(uint16 period) ;
-uint16  checkWatchDogTimer_ReadCounter(void) ;
-void    checkWatchDogTimer_WriteCounter(uint16 counter) ;
-uint16  checkWatchDogTimer_ReadCapture(void) ;
+uint32  checkWatchDogTimer_ReadPeriod(void) ;
+void    checkWatchDogTimer_WritePeriod(uint32 period) ;
+uint32  checkWatchDogTimer_ReadCounter(void) ;
+void    checkWatchDogTimer_WriteCounter(uint32 counter) ;
+uint32  checkWatchDogTimer_ReadCapture(void) ;
 void    checkWatchDogTimer_SoftwareCapture(void) ;
 
 #if(!checkWatchDogTimer_UsingFixedFunction) /* UDB Prototypes */
@@ -168,7 +168,7 @@ void checkWatchDogTimer_Wakeup(void)        ;
 *    Initialial Parameter Constants
 ***************************************/
 
-#define checkWatchDogTimer_INIT_PERIOD             65535u
+#define checkWatchDogTimer_INIT_PERIOD             333332u
 #define checkWatchDogTimer_INIT_CAPTURE_MODE       ((uint8)((uint8)0u << checkWatchDogTimer_CTRL_CAP_MODE_SHIFT))
 #define checkWatchDogTimer_INIT_TRIGGER_MODE       ((uint8)((uint8)0u << checkWatchDogTimer_CTRL_TRIG_MODE_SHIFT))
 #if (checkWatchDogTimer_UsingFixedFunction)
@@ -313,54 +313,54 @@ void checkWatchDogTimer_Wakeup(void)        ;
     #define checkWatchDogTimer_CONTROL             (* (reg8 *) checkWatchDogTimer_TimerUDB_sCTRLReg_SyncCtl_ctrlreg__CONTROL_REG )
     
     #if(checkWatchDogTimer_Resolution <= 8u) /* 8-bit Timer */
-        #define checkWatchDogTimer_CAPTURE_LSB         (* (reg8 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__F0_REG )
-        #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg8 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__F0_REG )
-        #define checkWatchDogTimer_PERIOD_LSB          (* (reg8 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__D0_REG )
-        #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg8 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__D0_REG )
-        #define checkWatchDogTimer_COUNTER_LSB         (* (reg8 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__A0_REG )
-        #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg8 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__A0_REG )
+        #define checkWatchDogTimer_CAPTURE_LSB         (* (reg8 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__F0_REG )
+        #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg8 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__F0_REG )
+        #define checkWatchDogTimer_PERIOD_LSB          (* (reg8 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__D0_REG )
+        #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg8 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__D0_REG )
+        #define checkWatchDogTimer_COUNTER_LSB         (* (reg8 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__A0_REG )
+        #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg8 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__A0_REG )
     #elif(checkWatchDogTimer_Resolution <= 16u) /* 8-bit Timer */
         #if(CY_PSOC3) /* 8-bit addres space */
-            #define checkWatchDogTimer_CAPTURE_LSB         (* (reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__F0_REG )
-            #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__F0_REG )
-            #define checkWatchDogTimer_PERIOD_LSB          (* (reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__D0_REG )
-            #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__D0_REG )
-            #define checkWatchDogTimer_COUNTER_LSB         (* (reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__A0_REG )
-            #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__A0_REG )
+            #define checkWatchDogTimer_CAPTURE_LSB         (* (reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__F0_REG )
+            #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__F0_REG )
+            #define checkWatchDogTimer_PERIOD_LSB          (* (reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__D0_REG )
+            #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__D0_REG )
+            #define checkWatchDogTimer_COUNTER_LSB         (* (reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__A0_REG )
+            #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__A0_REG )
         #else /* 16-bit address space */
-            #define checkWatchDogTimer_CAPTURE_LSB         (* (reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__16BIT_F0_REG )
-            #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__16BIT_F0_REG )
-            #define checkWatchDogTimer_PERIOD_LSB          (* (reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__16BIT_D0_REG )
-            #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__16BIT_D0_REG )
-            #define checkWatchDogTimer_COUNTER_LSB         (* (reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__16BIT_A0_REG )
-            #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg16 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__16BIT_A0_REG )
+            #define checkWatchDogTimer_CAPTURE_LSB         (* (reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__16BIT_F0_REG )
+            #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__16BIT_F0_REG )
+            #define checkWatchDogTimer_PERIOD_LSB          (* (reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__16BIT_D0_REG )
+            #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__16BIT_D0_REG )
+            #define checkWatchDogTimer_COUNTER_LSB         (* (reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__16BIT_A0_REG )
+            #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg16 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__16BIT_A0_REG )
         #endif /* CY_PSOC3 */
     #elif(checkWatchDogTimer_Resolution <= 24u)/* 24-bit Timer */
-        #define checkWatchDogTimer_CAPTURE_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__F0_REG )
-        #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__F0_REG )
-        #define checkWatchDogTimer_PERIOD_LSB          (* (reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__D0_REG )
-        #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__D0_REG )
-        #define checkWatchDogTimer_COUNTER_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__A0_REG )
-        #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__A0_REG )
+        #define checkWatchDogTimer_CAPTURE_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__F0_REG )
+        #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__F0_REG )
+        #define checkWatchDogTimer_PERIOD_LSB          (* (reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__D0_REG )
+        #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__D0_REG )
+        #define checkWatchDogTimer_COUNTER_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__A0_REG )
+        #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__A0_REG )
     #else /* 32-bit Timer */
         #if(CY_PSOC3 || CY_PSOC5) /* 8-bit address space */
-            #define checkWatchDogTimer_CAPTURE_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__F0_REG )
-            #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__F0_REG )
-            #define checkWatchDogTimer_PERIOD_LSB          (* (reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__D0_REG )
-            #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__D0_REG )
-            #define checkWatchDogTimer_COUNTER_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__A0_REG )
-            #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__A0_REG )
+            #define checkWatchDogTimer_CAPTURE_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__F0_REG )
+            #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__F0_REG )
+            #define checkWatchDogTimer_PERIOD_LSB          (* (reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__D0_REG )
+            #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__D0_REG )
+            #define checkWatchDogTimer_COUNTER_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__A0_REG )
+            #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__A0_REG )
         #else /* 32-bit address space */
-            #define checkWatchDogTimer_CAPTURE_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__32BIT_F0_REG )
-            #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__32BIT_F0_REG )
-            #define checkWatchDogTimer_PERIOD_LSB          (* (reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__32BIT_D0_REG )
-            #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__32BIT_D0_REG )
-            #define checkWatchDogTimer_COUNTER_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__32BIT_A0_REG )
-            #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__32BIT_A0_REG )
+            #define checkWatchDogTimer_CAPTURE_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__32BIT_F0_REG )
+            #define checkWatchDogTimer_CAPTURE_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__32BIT_F0_REG )
+            #define checkWatchDogTimer_PERIOD_LSB          (* (reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__32BIT_D0_REG )
+            #define checkWatchDogTimer_PERIOD_LSB_PTR        ((reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__32BIT_D0_REG )
+            #define checkWatchDogTimer_COUNTER_LSB         (* (reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__32BIT_A0_REG )
+            #define checkWatchDogTimer_COUNTER_LSB_PTR       ((reg32 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__32BIT_A0_REG )
         #endif /* CY_PSOC3 || CY_PSOC5 */ 
     #endif
 
-    #define checkWatchDogTimer_COUNTER_LSB_PTR_8BIT       ((reg8 *) checkWatchDogTimer_TimerUDB_sT16_timerdp_u0__A0_REG )
+    #define checkWatchDogTimer_COUNTER_LSB_PTR_8BIT       ((reg8 *) checkWatchDogTimer_TimerUDB_sT32_timerdp_u0__A0_REG )
     
     #if (checkWatchDogTimer_UsingHWCaptureCounter)
         #define checkWatchDogTimer_CAP_COUNT              (*(reg8 *) checkWatchDogTimer_TimerUDB_sCapCount_counter__PERIOD_REG )

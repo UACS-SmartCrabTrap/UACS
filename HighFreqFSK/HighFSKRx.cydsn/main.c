@@ -59,6 +59,9 @@ static uint8 threeTransmissions = 0; // checks for 3 transmission before reinsta
 static char OutputString[ARRAY_SIZE];
 static char display[ARRAY_SIZE];
 
+// Store Received Data
+static uint8 allData[3];
+
 // FLAGS for turning on messages on LCD screen
 static uint8 lcdFlagEncode = FALSE; // Turns on pre-fix message
 static uint8 lcdFlagData = FALSE; // Displays data 

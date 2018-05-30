@@ -239,7 +239,6 @@ int GetCrabs()
                     /* Send data back to PC */
                     USBUART_PutData(buffer, count);
 
-
                     /* If the last sent packet is exactly the maximum packet 
                     *  size, it is followed by a zero-length packet to assure
                     *  that the end of the segment is properly identified by 

@@ -35,10 +35,10 @@
 /***************************************
 * UART/TESTING MACRO
 ***************************************/
-#define UART    DISABLED
+#define UART    ENABLED                                                                                                      
 
 /* Character LCD String Length */
-#define LINE_STR_LENGTH     (20u)
+#define LINE_STR_LENGTH     (20u)                                                              
 /* Change data size for sending longer data (n-1) */
 #define DATA_SIZE           (7u)
 /* Change max crabs to correlate with data size 2^(n) - 1 */
@@ -225,7 +225,7 @@ int main()
                 SignalBase_Write(0);               
                 
                 if(sendDataCount >= MAX_DATA_SENDING){
-                    sendDataCount = 0;
+                    
                     SleepTimer_Start();
                     goToSleep();
                     // PSoC Sleep command. To adjust sleep time, change in the hardware
@@ -253,6 +253,7 @@ int main()
                 }
 #else 
                 if(maxDataFlag == TRUE){
+                    sendDataCount = 0;
                     /* Delay in ms and send data after without waiting for UART */
                     while(wakeUpData == FALSE){
                         CyWdtClear(); // Clear watchdog timer while in sleep

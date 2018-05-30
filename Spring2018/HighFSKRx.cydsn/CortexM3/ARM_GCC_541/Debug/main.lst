@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 1
 
 
    1              		.syntax unified
@@ -19,16 +19,16 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 1
   16              		.text
   17              	.Ltext0:
   18              		.cfi_sections	.debug_frame
-  19              		.section	.text.Bit_Timer,"ax",%progbits
+  19              		.section	.text.watchDogCheck,"ax",%progbits
   20              		.align	2
-  21              		.global	Bit_Timer
+  21              		.global	watchDogCheck
   22              		.thumb
   23              		.thumb_func
-  24              		.type	Bit_Timer, %function
-  25              	Bit_Timer:
+  24              		.type	watchDogCheck, %function
+  25              	watchDogCheck:
   26              	.LFB65:
   27              		.file 1 "main.c"
-   1:main.c        **** /* ========================================
+   1:main.c        **** /* =============================================================================
    2:main.c        ****  * Smart Crab Trap
    3:main.c        ****  * FSK RX 
    4:main.c        ****  * Edited by: Stephanie Salazar
@@ -36,99 +36,125 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 1
    6:main.c        ****  * Function: This project takes in a signal from an outside source
    7:main.c        ****  * and reads the data within the signal. This code waits for a pre-fix
    8:main.c        ****  * of 0xFF and then reads the next 4 bits as the data and confirms
-   9:main.c        ****  * the message with a post-fix of 0x01. The data is display on an LCD display.
-  10:main.c        ****  * ========================================
+   9:main.c        ****  * the message with a post-fix of 0x01. The data is displayed on an LCD display.
+  10:main.c        ****  * =============================================================================
   11:main.c        **** */
   12:main.c        **** 
   13:main.c        **** #include "project.h"
   14:main.c        **** #include <stdio.h>
   15:main.c        **** #include "LCD_Char.h"
   16:main.c        **** 
-  17:main.c        **** #define ARRAY_SIZE 12
-  18:main.c        **** #define COUNT      100
-  19:main.c        **** #define ACCURACY   70
-  20:main.c        **** #define FiveSecs 5000
-  21:main.c        **** 
-  22:main.c        **** /*Function Prototypes*/
-  23:main.c        **** void Display(void);
-  24:main.c        **** 
-  25:main.c        **** // Interrupt for switching bits 100 ms
-  26:main.c        **** CY_ISR_PROTO(Bit_Timer);
-  27:main.c        **** CY_ISR_PROTO(watchDogCheck);
-  28:main.c        **** 
-  29:main.c        **** // Global Variables
-  30:main.c        **** static uint16 levelCounter = 0; // Timer counter to debounce bit
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 2
+  17:main.c        **** #define ARRAY_SIZE        12
+  18:main.c        **** #define COUNT             100
+  19:main.c        **** #define PREFIX_ACCURACY   90
+  20:main.c        **** #define DATA_ACCURACY     70
+  21:main.c        **** #define DATA_LENGTH       7
+  22:main.c        **** #define PREFIX            0xFF
+  23:main.c        **** #define POSTFIX           0x01
+  24:main.c        **** #define BIT_0_MASK        0x1
+  25:main.c        **** #define SUCCESS           0x1
+  26:main.c        **** #define FAILURE           0x0
+  27:main.c        **** #define TRUE              0x1
+  28:main.c        **** #define FALSE             0x0
+  29:main.c        **** #define FiveSecs          5000
+  30:main.c        **** #define THREE_TRANSMISSIONS 2
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 2
 
 
-  31:main.c        **** static uint8 zeroCount = 0; // 0 count used in timer counter debounce
-  32:main.c        **** static uint16 oneCount = 0; // 1 count used in timer counter debounce
-  33:main.c        **** static uint8 currentBit = 0; // x/10 bit decision for 500 ms bit
-  34:main.c        **** static uint8 dataCount = 0; // which bit of data we are looking at
-  35:main.c        **** static uint8 data = 0; // 4 bits of data
-  36:main.c        **** static uint8 crabs = 0; // 4 bits of data transferred from data variable
-  37:main.c        **** static uint8 dataFlag = 0; // Flag to start looking for data
-  38:main.c        **** static uint8 decodeFlag = 0; // Flag to start looking for post-fix
-  39:main.c        **** //static uint8 watchDogCount = 0; //counter to reset watch dog timer after 3 rounds 
-  40:main.c        **** 
-  41:main.c        **** // LCD String Variables
-  42:main.c        **** char OutputString[ARRAY_SIZE];
-  43:main.c        **** char display[ARRAY_SIZE];
-  44:main.c        **** 
-  45:main.c        **** // FLAGS for turning on messages on LCD screen
-  46:main.c        **** static uint8 lcdFlagEncode = 0; // Turns on pre-fix message
-  47:main.c        **** static uint8 lcdFlagData = 0; // Displays data 
-  48:main.c        **** static uint8 lcdFlagDecode = 0; // good or bad postfix
-  49:main.c        **** static uint8 decodeWrong = 0;
-  50:main.c        **** 
-  51:main.c        **** 
-  52:main.c        **** int main(void)
-  53:main.c        **** {
-  54:main.c        ****     /* Enable global interrupts. */
-  55:main.c        ****     LCD_Char_Start();
-  56:main.c        ****     sprintf(display, "Staring Module!");
-  57:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
-  58:main.c        ****     LCD_Char_PrintString(display);
-  59:main.c        ****     CyDelay(FiveSecs);
-  60:main.c        ****     
-  61:main.c        ****     LCD_Char_ClearDisplay();
-  62:main.c        ****     
-  63:main.c        ****     CyGlobalIntEnable;
-  64:main.c        ****     checkWatchDogTimer_Start();
-  65:main.c        ****     watchDogCheck_StartEx(watchDogCheck);
-  66:main.c        ****     
-  67:main.c        ****     CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE); 
-  68:main.c        ****     
-  69:main.c        **** 
-  70:main.c        ****     /* initialization/startup code here */
-  71:main.c        ****     PWM_Recon_Start();
-  72:main.c        ****     //BPF_Comp_Start();
-  73:main.c        ****     Shift_Reg_Start();
-  74:main.c        ****     Out_Comp_Start();
-  75:main.c        ****     Bit_Timer_Start();
-  76:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
-  77:main.c        ****    
+  31:main.c        **** #define Delay               2
+  32:main.c        **** 
+  33:main.c        **** /*Function Prototypes*/
+  34:main.c        **** void Display(void);
+  35:main.c        **** int CheckParity(int);
+  36:main.c        **** void SendData(void);
+  37:main.c        **** 
+  38:main.c        **** // Interrupt for switching bits 5 ms
+  39:main.c        **** CY_ISR_PROTO(Bit_Timer);
+  40:main.c        **** CY_ISR_PROTO(watchDogCheck);
+  41:main.c        **** CY_ISR_PROTO(wakeUp_ISR);
+  42:main.c        **** 
+  43:main.c        **** // Global Variables
+  44:main.c        **** static uint16 levelCounter = 0; // Timer counter to debounce bit
+  45:main.c        **** static uint16 zeroCount = 0; // 0 count used in timer counter debounce
+  46:main.c        **** static uint16 oneCount = 0; // 1 count used in timer counter debounce
+  47:main.c        **** static uint8 currentBit = 0; // x/10 bit decision for 500 ms bit
+  48:main.c        **** static uint8 dataCount = 0; // which bit of data we are looking at
+  49:main.c        **** static uint16 data = 0; // byte bits of data
+  50:main.c        **** static uint16 crabs = 0; // byte of data transferred from data variable
+  51:main.c        **** static uint8 dataFlag = 0; // Flag to start looking for data
+  52:main.c        **** static uint8 decodeFlag = 0; // Flag to start looking for post-fix
+  53:main.c        **** static int paritySuccess = 0;
+  54:main.c        **** static uint8 threeTransmissions = 0; // checks for 3 transmission before reinstatiating sleep timer
+  55:main.c        **** 
+  56:main.c        **** // LCD String Variables
+  57:main.c        **** char OutputString[ARRAY_SIZE];
+  58:main.c        **** char display[ARRAY_SIZE];
+  59:main.c        **** 
+  60:main.c        **** // FLAGS for turning on messages on LCD screen
+  61:main.c        **** static uint8 lcdFlagEncode = FALSE; // Turns on pre-fix message
+  62:main.c        **** static uint8 lcdFlagData = FALSE; // Displays data 
+  63:main.c        **** static uint8 lcdFlagDecode = FALSE; // good or bad postfix
+  64:main.c        **** static uint8 decodeWrong = FALSE;
+  65:main.c        **** 
+  66:main.c        **** 
+  67:main.c        **** int main(void)
+  68:main.c        **** {
+  69:main.c        ****     
+  70:main.c        ****     CyGlobalIntEnable;
+  71:main.c        ****     
+  72:main.c        ****     /* Module is turned on- will display again if watchdog timer is enabled */
+  73:main.c        ****     LCD_Char_Start();
+  74:main.c        ****     sprintf(display, "Starting Module!");
+  75:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+  76:main.c        ****     LCD_Char_PrintString(display);
+  77:main.c        ****     //CyDelay(FiveSecs);
   78:main.c        **** 
-  79:main.c        ****     // Displays Loading Message before receiving pre-fix=
-  80:main.c        ****     sprintf(display, "counting crabs...");
-  81:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
-  82:main.c        ****     LCD_Char_PrintString(display);
-  83:main.c        **** 
-  84:main.c        ****     for(;;)
-  85:main.c        ****     {
-  86:main.c        ****         Display();
-  87:main.c        ****     } // end of for(;;)
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 3
+  79:main.c        ****      
+  80:main.c        ****  
+  81:main.c        ****     /* initialization/startup code here */
+  82:main.c        ****     UART_Start();
+  83:main.c        ****     PWM_Recon_Start();
+  84:main.c        ****     Shift_Reg_Start();
+  85:main.c        ****     Out_Comp_Start();
+  86:main.c        ****     Bit_Timer_Start();
+  87:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 3
 
 
-  88:main.c        **** } // end of main()
-  89:main.c        **** 
-  90:main.c        **** 
-  91:main.c        **** //Bit length = 100 ms
-  92:main.c        **** //timer period = 10 ms
-  93:main.c        **** //will check bit 10 times, to debounce
-  94:main.c        **** CY_ISR(Bit_Timer){
-  28              		.loc 1 94 0
+  88:main.c        ****     Sleep_ISR_StartEx(wakeUp_ISR);
+  89:main.c        ****    
+  90:main.c        ****     // Start timer to clear watch dog
+  91:main.c        ****     checkWatchDogTimer_Start();
+  92:main.c        ****     watchDogCheck_StartEx(watchDogCheck);      
+  93:main.c        ****     // Start watch dog timer to check for blocks in code
+  94:main.c        ****     CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE);
+  95:main.c        ****     
+  96:main.c        **** 
+  97:main.c        ****     SleepTimer_Start();
+  98:main.c        **** 
+  99:main.c        ****     // Displays Loading Message before receiving pre-fix=
+ 100:main.c        ****     sprintf(display, "counting crabs...");
+ 101:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+ 102:main.c        ****     LCD_Char_PrintString(display);
+ 103:main.c        ****     
+ 104:main.c        ****     Power_Toggle_Write(1); // Turn analog circuit on
+ 105:main.c        ****     
+ 106:main.c        ****     // PSoC Sleep command. To adjust sleep time, change in the hardware
+ 107:main.c        ****     //  block. No sleep time parameters taken in PSoC5LP.
+ 108:main.c        ****     //  PM_SLEEP_TIME_NONE is a relic of PSoC3
+ 109:main.c        ****     CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
+ 110:main.c        ****     
+ 111:main.c        ****     
+ 112:main.c        **** 
+ 113:main.c        ****     for(;;)
+ 114:main.c        ****     {
+ 115:main.c        ****         Display();
+ 116:main.c        ****     } // end of for(;;)
+ 117:main.c        **** } // end of main()
+ 118:main.c        **** 
+ 119:main.c        **** //Clears watchdog timer to avoid reset unless timing has drifted
+ 120:main.c        **** CY_ISR(watchDogCheck){
+  28              		.loc 1 120 0
   29              		.cfi_startproc
   30              		@ args = 0, pretend = 0, frame = 0
   31              		@ frame_needed = 0, uses_anonymous_args = 0
@@ -136,2044 +162,3003 @@ ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 1
   33              		.cfi_def_cfa_offset 8
   34              		.cfi_offset 3, -8
   35              		.cfi_offset 14, -4
-  95:main.c        ****     levelCounter++;
-  36              		.loc 1 95 0
-  37 0002 344A     		ldr	r2, .L12
-  38 0004 1388     		ldrh	r3, [r2]
-  39 0006 0133     		adds	r3, r3, #1
-  40 0008 1380     		strh	r3, [r2]	@ movhi
-  96:main.c        ****     
-  97:main.c        ****     // Count whether bit is currently 1 or 0
-  98:main.c        ****     if(Out_Comp_GetCompare() != 0){
-  41              		.loc 1 98 0
-  42 000a FFF7FEFF 		bl	Out_Comp_GetCompare
-  43              	.LVL0:
-  44 000e 20B1     		cbz	r0, .L2
-  99:main.c        ****         oneCount++;
-  45              		.loc 1 99 0
-  46 0010 304A     		ldr	r2, .L12
-  47 0012 5388     		ldrh	r3, [r2, #2]
-  48 0014 0133     		adds	r3, r3, #1
-  49 0016 5380     		strh	r3, [r2, #2]	@ movhi
-  50 0018 03E0     		b	.L3
-  51              	.L2:
- 100:main.c        ****     }else{
- 101:main.c        ****         zeroCount++;
-  52              		.loc 1 101 0
-  53 001a 2E4A     		ldr	r2, .L12
-  54 001c 1379     		ldrb	r3, [r2, #4]	@ zero_extendqisi2
-  55 001e 0133     		adds	r3, r3, #1
-  56 0020 1371     		strb	r3, [r2, #4]
-  57              	.L3:
- 102:main.c        ****     }
- 103:main.c        ****     
- 104:main.c        ****     // Debouncing
- 105:main.c        ****     if(levelCounter == COUNT){
-  58              		.loc 1 105 0
-  59 0022 2C4B     		ldr	r3, .L12
-  60 0024 1B88     		ldrh	r3, [r3]
-  61 0026 642B     		cmp	r3, #100
-  62 0028 52D1     		bne	.L1
- 106:main.c        ****         if(oneCount >= ACCURACY){ // 1 bit must be 7/10 = 1 
-  63              		.loc 1 106 0
-  64 002a 2A4B     		ldr	r3, .L12
-  65 002c 5B88     		ldrh	r3, [r3, #2]
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 4
-
-
-  66 002e 452B     		cmp	r3, #69
-  67 0030 05D9     		bls	.L5
- 107:main.c        ****             currentBit = 0x01;
-  68              		.loc 1 107 0
-  69 0032 284B     		ldr	r3, .L12
-  70 0034 0122     		movs	r2, #1
-  71 0036 5A71     		strb	r2, [r3, #5]
- 108:main.c        ****             oneCount = 0;
-  72              		.loc 1 108 0
-  73 0038 0022     		movs	r2, #0
-  74 003a 5A80     		strh	r2, [r3, #2]	@ movhi
-  75 003c 03E0     		b	.L6
-  76              	.L5:
- 109:main.c        ****         
- 110:main.c        ****         }else{ // if oneCount <= 7, bit is 0
- 111:main.c        ****             currentBit = 0x00; 
-  77              		.loc 1 111 0
-  78 003e 254B     		ldr	r3, .L12
-  79 0040 0022     		movs	r2, #0
-  80 0042 5A71     		strb	r2, [r3, #5]
- 112:main.c        ****             zeroCount = 0; 
-  81              		.loc 1 112 0
-  82 0044 1A71     		strb	r2, [r3, #4]
-  83              	.L6:
- 113:main.c        ****         }
- 114:main.c        ****         dataCount++; // Keep track of what bit we are on
-  84              		.loc 1 114 0
-  85 0046 234B     		ldr	r3, .L12
-  86 0048 9A79     		ldrb	r2, [r3, #6]	@ zero_extendqisi2
-  87 004a 0132     		adds	r2, r2, #1
-  88 004c D2B2     		uxtb	r2, r2
-  89 004e 9A71     		strb	r2, [r3, #6]
- 115:main.c        ****         levelCounter = 0; // Reset timer bit debouncer  
-  90              		.loc 1 115 0
-  91 0050 0021     		movs	r1, #0
-  92 0052 1980     		strh	r1, [r3]	@ movhi
- 116:main.c        ****         
- 117:main.c        ****         //Look for pre-fix
- 118:main.c        ****         data = data << 1; // Shift data over to store next bit
-  93              		.loc 1 118 0
-  94 0054 D979     		ldrb	r1, [r3, #7]	@ zero_extendqisi2
-  95 0056 4900     		lsls	r1, r1, #1
-  96 0058 C9B2     		uxtb	r1, r1
- 119:main.c        ****         data = data | currentBit;
-  97              		.loc 1 119 0
-  98 005a 5879     		ldrb	r0, [r3, #5]	@ zero_extendqisi2
-  99 005c 0143     		orrs	r1, r1, r0
- 100 005e D971     		strb	r1, [r3, #7]
- 120:main.c        ****         // Check if data is prefix(oxFF) but we are not looking for data or decode
- 121:main.c        ****         if((data == 0xff) && (dataFlag == 0) && (decodeFlag == 0)){ 
- 101              		.loc 1 121 0
- 102 0060 FF29     		cmp	r1, #255
- 103 0062 0FD1     		bne	.L7
- 104              		.loc 1 121 0 is_stmt 0 discriminator 1
- 105 0064 1B7A     		ldrb	r3, [r3, #8]	@ zero_extendqisi2
- 106 0066 6BB9     		cbnz	r3, .L7
- 107              		.loc 1 121 0 discriminator 2
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 5
-
-
- 108 0068 1A4B     		ldr	r3, .L12
- 109 006a 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
- 110 006c 53B9     		cbnz	r3, .L7
- 122:main.c        ****             Count_Out_Write(1);
- 111              		.loc 1 122 0 is_stmt 1
- 112 006e 0120     		movs	r0, #1
- 113 0070 FFF7FEFF 		bl	Count_Out_Write
- 114              	.LVL1:
- 123:main.c        ****             dataCount = 0;
- 115              		.loc 1 123 0
- 116 0074 174B     		ldr	r3, .L12
- 117 0076 0022     		movs	r2, #0
- 118 0078 9A71     		strb	r2, [r3, #6]
- 124:main.c        ****             data = 0x00;
- 119              		.loc 1 124 0
- 120 007a DA71     		strb	r2, [r3, #7]
- 125:main.c        ****             dataFlag = 1; //Start looking for data
- 121              		.loc 1 125 0
- 122 007c 0122     		movs	r2, #1
- 123 007e 1A72     		strb	r2, [r3, #8]
- 126:main.c        ****             lcdFlagEncode = 1; //Display pre-fix on lcd
- 124              		.loc 1 126 0
- 125 0080 9A72     		strb	r2, [r3, #10]
- 126 0082 0EE0     		b	.L8
- 127              	.L7:
- 127:main.c        **** 
- 128:main.c        ****         
- 129:main.c        ****         // Look for 4 bits of data
- 130:main.c        ****         }else if((dataFlag == 1) && (dataCount > 3)){
- 128              		.loc 1 130 0
- 129 0084 134B     		ldr	r3, .L12
- 130 0086 1B7A     		ldrb	r3, [r3, #8]	@ zero_extendqisi2
- 131 0088 012B     		cmp	r3, #1
- 132 008a 0AD1     		bne	.L8
- 133              		.loc 1 130 0 is_stmt 0 discriminator 1
- 134 008c 032A     		cmp	r2, #3
- 135 008e 08D9     		bls	.L8
- 131:main.c        ****             crabs = data;
- 136              		.loc 1 131 0 is_stmt 1
- 137 0090 104B     		ldr	r3, .L12
- 138 0092 D972     		strb	r1, [r3, #11]
- 132:main.c        ****             data = 0; //Restart data for decode
- 139              		.loc 1 132 0
- 140 0094 0022     		movs	r2, #0
- 141 0096 DA71     		strb	r2, [r3, #7]
- 133:main.c        ****             dataCount = 0; 
- 142              		.loc 1 133 0
- 143 0098 9A71     		strb	r2, [r3, #6]
- 134:main.c        ****             lcdFlagEncode = 0; //Turn off encode message
- 144              		.loc 1 134 0
- 145 009a 9A72     		strb	r2, [r3, #10]
- 135:main.c        ****             lcdFlagData = 1; //Display data
- 146              		.loc 1 135 0
- 147 009c 0122     		movs	r2, #1
- 148 009e 1A73     		strb	r2, [r3, #12]
- 136:main.c        ****             decodeFlag = 1; //Now go to decode stage
- 149              		.loc 1 136 0
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 6
-
-
- 150 00a0 5A72     		strb	r2, [r3, #9]
- 151              	.L8:
- 137:main.c        ****         }
- 138:main.c        ****         
- 139:main.c        ****         // Check for 8 bits of post-fix
- 140:main.c        ****         if(decodeFlag == 1 && (dataCount > 7)){
- 152              		.loc 1 140 0
- 153 00a2 0C4B     		ldr	r3, .L12
- 154 00a4 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
- 155 00a6 012B     		cmp	r3, #1
- 156 00a8 12D1     		bne	.L1
- 157              		.loc 1 140 0 is_stmt 0 discriminator 1
- 158 00aa 0A4B     		ldr	r3, .L12
- 159 00ac 9B79     		ldrb	r3, [r3, #6]	@ zero_extendqisi2
- 160 00ae 072B     		cmp	r3, #7
- 161 00b0 0ED9     		bls	.L1
- 141:main.c        ****             // Correct postfix is 0x01
- 142:main.c        ****             if(data == 0x01){
- 162              		.loc 1 142 0 is_stmt 1
- 163 00b2 084B     		ldr	r3, .L12
- 164 00b4 DB79     		ldrb	r3, [r3, #7]	@ zero_extendqisi2
- 165 00b6 012B     		cmp	r3, #1
- 166 00b8 03D1     		bne	.L9
- 143:main.c        ****              lcdFlagDecode = 1; // lcd flag for "good" post-fix
- 167              		.loc 1 143 0
- 168 00ba 0122     		movs	r2, #1
- 169 00bc 054B     		ldr	r3, .L12
- 170 00be 5A73     		strb	r2, [r3, #13]
- 171 00c0 02E0     		b	.L10
- 172              	.L9:
- 144:main.c        ****             }else{
- 145:main.c        ****                 decodeWrong = 1; // lcd flag for "bad" post-fix
- 173              		.loc 1 145 0
- 174 00c2 0122     		movs	r2, #1
- 175 00c4 034B     		ldr	r3, .L12
- 176 00c6 9A73     		strb	r2, [r3, #14]
- 177              	.L10:
- 146:main.c        ****             }
- 147:main.c        ****             decodeFlag = 0;
- 178              		.loc 1 147 0
- 179 00c8 024B     		ldr	r3, .L12
- 180 00ca 0022     		movs	r2, #0
- 181 00cc 5A72     		strb	r2, [r3, #9]
- 148:main.c        ****             dataFlag = 0; //Don't want to check for data anymore
- 182              		.loc 1 148 0
- 183 00ce 1A72     		strb	r2, [r3, #8]
- 184              	.L1:
- 185 00d0 08BD     		pop	{r3, pc}
- 186              	.L13:
- 187 00d2 00BF     		.align	2
- 188              	.L12:
- 189 00d4 00000000 		.word	.LANCHOR0
- 190              		.cfi_endproc
- 191              	.LFE65:
- 192              		.size	Bit_Timer, .-Bit_Timer
- 193              		.section	.text.watchDogCheck,"ax",%progbits
- 194              		.align	2
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 7
-
-
- 195              		.global	watchDogCheck
- 196              		.thumb
- 197              		.thumb_func
- 198              		.type	watchDogCheck, %function
- 199              	watchDogCheck:
- 200              	.LFB66:
- 149:main.c        ****         }
- 150:main.c        ****     } // end of if(levelCounter == 10)
- 151:main.c        **** } // end of CY_ISR(HighF_LevelCount)
- 152:main.c        **** 
- 153:main.c        **** 
- 154:main.c        **** //Clears watchdog timer to avoid reset unless timing has drifted
- 155:main.c        **** CY_ISR_PROTO(watchDogCheck){
- 201              		.loc 1 155 0
- 202              		.cfi_startproc
- 203              		@ args = 0, pretend = 0, frame = 0
- 204              		@ frame_needed = 0, uses_anonymous_args = 0
- 205 0000 08B5     		push	{r3, lr}
- 206              		.cfi_def_cfa_offset 8
- 207              		.cfi_offset 3, -8
- 208              		.cfi_offset 14, -4
- 156:main.c        ****     
- 157:main.c        ****     CyWdtClear(); 
- 209              		.loc 1 157 0
- 210 0002 FFF7FEFF 		bl	CyWdtClear
- 211              	.LVL2:
- 212 0006 08BD     		pop	{r3, pc}
- 213              		.cfi_endproc
- 214              	.LFE66:
- 215              		.size	watchDogCheck, .-watchDogCheck
- 216              		.section	.text.Display,"ax",%progbits
- 217              		.align	2
- 218              		.global	Display
- 219              		.thumb
- 220              		.thumb_func
- 221              		.type	Display, %function
- 222              	Display:
- 223              	.LFB67:
- 158:main.c        ****         
- 159:main.c        **** 
- 160:main.c        **** }
- 161:main.c        **** 
- 162:main.c        **** 
- 163:main.c        **** //// Transition time = 10ms
- 164:main.c        **** //CY_ISR(Bit_Transition){
- 165:main.c        **** //} // end of CY_ISR(Bit_Transistion)
- 166:main.c        **** 
- 167:main.c        **** /*
- 168:main.c        ****  * function: void Display(void)
- 169:main.c        ****  * parameters: void
- 170:main.c        ****  * returns: void
- 171:main.c        ****  * description: Displays current data on LCD display depending
- 172:main.c        ****  * on what flags are set
- 173:main.c        ****  */
- 174:main.c        **** void Display()
- 175:main.c        **** {
- 224              		.loc 1 175 0
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 8
-
-
- 225              		.cfi_startproc
- 226              		@ args = 0, pretend = 0, frame = 8
- 227              		@ frame_needed = 0, uses_anonymous_args = 0
- 228 0000 30B5     		push	{r4, r5, lr}
- 229              		.cfi_def_cfa_offset 12
- 230              		.cfi_offset 4, -12
- 231              		.cfi_offset 5, -8
- 232              		.cfi_offset 14, -4
- 233 0002 83B0     		sub	sp, sp, #12
- 234              		.cfi_def_cfa_offset 24
- 176:main.c        ****     // LCD Screen Messages
- 177:main.c        ****     // If encode is received, display message
- 178:main.c        ****     if(lcdFlagEncode == 1){
- 235              		.loc 1 178 0
- 236 0004 294B     		ldr	r3, .L22
- 237 0006 9B7A     		ldrb	r3, [r3, #10]	@ zero_extendqisi2
- 238 0008 012B     		cmp	r3, #1
- 239 000a 09D1     		bne	.L17
- 179:main.c        ****         LCD_Char_ClearDisplay();
- 240              		.loc 1 179 0
- 241 000c 0120     		movs	r0, #1
- 242 000e FFF7FEFF 		bl	LCD_Char_WriteControl
- 243              	.LVL3:
- 180:main.c        ****         LCD_Char_PrintString("0xFF pre-fix");
- 244              		.loc 1 180 0
- 245 0012 2748     		ldr	r0, .L22+4
- 246 0014 FFF7FEFF 		bl	LCD_Char_PrintString
- 247              	.LVL4:
- 181:main.c        ****         lcdFlagEncode = 0; 
- 248              		.loc 1 181 0
- 249 0018 0022     		movs	r2, #0
- 250 001a 244B     		ldr	r3, .L22
- 251 001c 9A72     		strb	r2, [r3, #10]
- 252 001e 42E0     		b	.L16
- 253              	.L17:
- 182:main.c        ****     // When 4 bits are received, data will display at top of screen
- 183:main.c        ****     }else if(lcdFlagData == 1){
- 254              		.loc 1 183 0
- 255 0020 224B     		ldr	r3, .L22
- 256 0022 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
- 257 0024 012B     		cmp	r3, #1
- 258 0026 17D1     		bne	.L19
- 184:main.c        ****         sprintf(OutputString, "%i", crabs);
- 259              		.loc 1 184 0
- 260 0028 204C     		ldr	r4, .L22
- 261 002a 224D     		ldr	r5, .L22+8
- 262 002c E27A     		ldrb	r2, [r4, #11]	@ zero_extendqisi2
- 263 002e 2249     		ldr	r1, .L22+12
- 264 0030 2846     		mov	r0, r5
- 265 0032 FFF7FEFF 		bl	sprintf
- 266              	.LVL5:
- 185:main.c        ****         LCD_Char_ClearDisplay();
- 267              		.loc 1 185 0
- 268 0036 0120     		movs	r0, #1
- 269 0038 FFF7FEFF 		bl	LCD_Char_WriteControl
- 270              	.LVL6:
- 186:main.c        ****         LCD_Char_Position(0u,0u);
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 9
-
-
- 271              		.loc 1 186 0
- 272 003c 0021     		movs	r1, #0
- 273 003e 0846     		mov	r0, r1
- 274 0040 FFF7FEFF 		bl	LCD_Char_Position
- 275              	.LVL7:
- 187:main.c        ****         LCD_Char_PrintString(OutputString);
- 276              		.loc 1 187 0
- 277 0044 2846     		mov	r0, r5
- 278 0046 FFF7FEFF 		bl	LCD_Char_PrintString
- 279              	.LVL8:
- 188:main.c        ****         LCD_Char_PrintString(" crabs");
- 280              		.loc 1 188 0
- 281 004a 1C48     		ldr	r0, .L22+16
- 282 004c FFF7FEFF 		bl	LCD_Char_PrintString
- 283              	.LVL9:
- 189:main.c        ****         dataFlag = 0;
- 284              		.loc 1 189 0
- 285 0050 0023     		movs	r3, #0
- 286 0052 2372     		strb	r3, [r4, #8]
- 190:main.c        ****         lcdFlagData = 0;
- 287              		.loc 1 190 0
- 288 0054 2373     		strb	r3, [r4, #12]
- 289 0056 26E0     		b	.L16
- 290              	.L19:
- 191:main.c        ****     // Postfix will display good or bad below data on screen
- 192:main.c        ****     }else if(lcdFlagDecode == 1){
- 291              		.loc 1 192 0
- 292 0058 144B     		ldr	r3, .L22
- 293 005a 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
- 294 005c 012B     		cmp	r3, #1
- 295 005e 11D1     		bne	.L20
- 296              	.LBB2:
- 193:main.c        ****         LCD_Char_Position(1u,0u);
- 297              		.loc 1 193 0
- 298 0060 0021     		movs	r1, #0
- 299 0062 0120     		movs	r0, #1
- 300 0064 FFF7FEFF 		bl	LCD_Char_Position
- 301              	.LVL10:
- 194:main.c        ****         char8 displayG[] = "good";
- 302              		.loc 1 194 0
- 303 0068 154B     		ldr	r3, .L22+20
- 304 006a 93E80300 		ldmia	r3, {r0, r1}
- 305 006e 0090     		str	r0, [sp]
- 306 0070 8DF80410 		strb	r1, [sp, #4]
- 195:main.c        ****         LCD_Char_PrintString(displayG);
- 307              		.loc 1 195 0
- 308 0074 6846     		mov	r0, sp
- 309 0076 FFF7FEFF 		bl	LCD_Char_PrintString
- 310              	.LVL11:
- 196:main.c        ****         dataFlag = 0;
- 311              		.loc 1 196 0
- 312 007a 0C4B     		ldr	r3, .L22
- 313 007c 0022     		movs	r2, #0
- 314 007e 1A72     		strb	r2, [r3, #8]
- 197:main.c        ****         lcdFlagDecode = 0;
- 315              		.loc 1 197 0
- 316 0080 5A73     		strb	r2, [r3, #13]
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 10
-
-
- 317              	.LBE2:
- 318 0082 10E0     		b	.L16
- 319              	.L20:
- 198:main.c        ****     }else if(decodeWrong == 1){
- 320              		.loc 1 198 0
- 321 0084 094B     		ldr	r3, .L22
- 322 0086 9B7B     		ldrb	r3, [r3, #14]	@ zero_extendqisi2
- 323 0088 012B     		cmp	r3, #1
- 324 008a 0CD1     		bne	.L16
- 325              	.LBB3:
- 199:main.c        ****         LCD_Char_Position(1u,0u);
- 326              		.loc 1 199 0
- 327 008c 0021     		movs	r1, #0
- 328 008e 0120     		movs	r0, #1
- 329 0090 FFF7FEFF 		bl	LCD_Char_Position
- 330              	.LVL12:
- 200:main.c        ****         char8 displayB[] = "bad";
- 331              		.loc 1 200 0
- 332 0094 02A8     		add	r0, sp, #8
- 333 0096 0B4B     		ldr	r3, .L22+24
- 334 0098 40F8083D 		str	r3, [r0, #-8]!
- 201:main.c        ****         LCD_Char_PrintString(displayB);
- 335              		.loc 1 201 0
- 336 009c FFF7FEFF 		bl	LCD_Char_PrintString
- 337              	.LVL13:
- 202:main.c        ****         decodeWrong = 0;
- 338              		.loc 1 202 0
- 339 00a0 0022     		movs	r2, #0
- 340 00a2 024B     		ldr	r3, .L22
- 341 00a4 9A73     		strb	r2, [r3, #14]
- 342              	.L16:
- 343              	.LBE3:
- 203:main.c        ****     }
- 204:main.c        **** }//end Display()
- 344              		.loc 1 204 0
- 345 00a6 03B0     		add	sp, sp, #12
- 346              		.cfi_def_cfa_offset 12
- 347              		@ sp needed
- 348 00a8 30BD     		pop	{r4, r5, pc}
- 349              	.L23:
- 350 00aa 00BF     		.align	2
- 351              	.L22:
- 352 00ac 00000000 		.word	.LANCHOR0
- 353 00b0 00000000 		.word	.LC0
- 354 00b4 00000000 		.word	OutputString
- 355 00b8 10000000 		.word	.LC1
- 356 00bc 14000000 		.word	.LC2
- 357 00c0 1C000000 		.word	.LC3
- 358 00c4 62616400 		.word	6578530
- 359              		.cfi_endproc
- 360              	.LFE67:
- 361              		.size	Display, .-Display
- 362              		.section	.text.main,"ax",%progbits
- 363              		.align	2
- 364              		.global	main
- 365              		.thumb
- 366              		.thumb_func
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 11
-
-
- 367              		.type	main, %function
- 368              	main:
- 369              	.LFB64:
-  53:main.c        ****     /* Enable global interrupts. */
- 370              		.loc 1 53 0
- 371              		.cfi_startproc
- 372              		@ Volatile: function does not return.
- 373              		@ args = 0, pretend = 0, frame = 0
- 374              		@ frame_needed = 0, uses_anonymous_args = 0
- 375 0000 08B5     		push	{r3, lr}
- 376              		.cfi_def_cfa_offset 8
- 377              		.cfi_offset 3, -8
- 378              		.cfi_offset 14, -4
-  55:main.c        ****     sprintf(display, "Staring Module!");
- 379              		.loc 1 55 0
- 380 0002 FFF7FEFF 		bl	LCD_Char_Start
- 381              	.LVL14:
-  56:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
- 382              		.loc 1 56 0
- 383 0006 1E4C     		ldr	r4, .L27
- 384 0008 1E4D     		ldr	r5, .L27+4
- 385 000a 0FCD     		ldmia	r5!, {r0, r1, r2, r3}
- 386 000c 2060     		str	r0, [r4]	@ unaligned
- 387 000e 6160     		str	r1, [r4, #4]	@ unaligned
- 388 0010 A260     		str	r2, [r4, #8]	@ unaligned
- 389 0012 E360     		str	r3, [r4, #12]	@ unaligned
-  57:main.c        ****     LCD_Char_PrintString(display);
- 390              		.loc 1 57 0
- 391 0014 0021     		movs	r1, #0
- 392 0016 0846     		mov	r0, r1
- 393 0018 FFF7FEFF 		bl	LCD_Char_Position
- 394              	.LVL15:
-  58:main.c        ****     CyDelay(FiveSecs);
- 395              		.loc 1 58 0
- 396 001c 2046     		mov	r0, r4
- 397 001e FFF7FEFF 		bl	LCD_Char_PrintString
- 398              	.LVL16:
-  59:main.c        ****     
- 399              		.loc 1 59 0
- 400 0022 41F28830 		movw	r0, #5000
- 401 0026 FFF7FEFF 		bl	CyDelay
- 402              	.LVL17:
-  61:main.c        ****     
- 403              		.loc 1 61 0
- 404 002a 0120     		movs	r0, #1
- 405 002c FFF7FEFF 		bl	LCD_Char_WriteControl
- 406              	.LVL18:
-  63:main.c        ****     checkWatchDogTimer_Start();
- 407              		.loc 1 63 0
- 408              		.syntax unified
- 409              	@ 63 "main.c" 1
- 410 0030 62B6     		CPSIE   i
- 411              	@ 0 "" 2
-  64:main.c        ****     watchDogCheck_StartEx(watchDogCheck);
- 412              		.loc 1 64 0
- 413              		.thumb
- 414              		.syntax unified
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 12
-
-
- 415 0032 FFF7FEFF 		bl	checkWatchDogTimer_Start
- 416              	.LVL19:
-  65:main.c        ****     
- 417              		.loc 1 65 0
- 418 0036 1448     		ldr	r0, .L27+8
- 419 0038 FFF7FEFF 		bl	watchDogCheck_StartEx
- 420              	.LVL20:
-  67:main.c        ****     
- 421              		.loc 1 67 0
- 422 003c 0021     		movs	r1, #0
- 423 003e 0846     		mov	r0, r1
- 424 0040 FFF7FEFF 		bl	CyWdtStart
- 425              	.LVL21:
-  71:main.c        ****     //BPF_Comp_Start();
- 426              		.loc 1 71 0
- 427 0044 FFF7FEFF 		bl	PWM_Recon_Start
- 428              	.LVL22:
-  73:main.c        ****     Out_Comp_Start();
- 429              		.loc 1 73 0
- 430 0048 FFF7FEFF 		bl	Shift_Reg_Start
- 431              	.LVL23:
-  74:main.c        ****     Bit_Timer_Start();
- 432              		.loc 1 74 0
- 433 004c FFF7FEFF 		bl	Out_Comp_Start
- 434              	.LVL24:
-  75:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
- 435              		.loc 1 75 0
- 436 0050 FFF7FEFF 		bl	Bit_Timer_Start
- 437              	.LVL25:
-  76:main.c        ****    
- 438              		.loc 1 76 0
- 439 0054 0D48     		ldr	r0, .L27+12
- 440 0056 FFF7FEFF 		bl	Timer_ISR_StartEx
- 441              	.LVL26:
-  80:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
- 442              		.loc 1 80 0
- 443 005a 0D4D     		ldr	r5, .L27+16
- 444 005c 0FCD     		ldmia	r5!, {r0, r1, r2, r3}
- 445 005e 2060     		str	r0, [r4]	@ unaligned
- 446 0060 6160     		str	r1, [r4, #4]	@ unaligned
- 447 0062 A260     		str	r2, [r4, #8]	@ unaligned
- 448 0064 E360     		str	r3, [r4, #12]	@ unaligned
- 449 0066 2B88     		ldrh	r3, [r5]	@ unaligned
- 450 0068 2382     		strh	r3, [r4, #16]	@ unaligned
-  81:main.c        ****     LCD_Char_PrintString(display);
- 451              		.loc 1 81 0
- 452 006a 0021     		movs	r1, #0
- 453 006c 0846     		mov	r0, r1
- 454 006e FFF7FEFF 		bl	LCD_Char_Position
- 455              	.LVL27:
-  82:main.c        **** 
- 456              		.loc 1 82 0
- 457 0072 2046     		mov	r0, r4
- 458 0074 FFF7FEFF 		bl	LCD_Char_PrintString
- 459              	.LVL28:
- 460              	.L25:
-  86:main.c        ****     } // end of for(;;)
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 13
-
-
- 461              		.loc 1 86 0 discriminator 1
- 462 0078 FFF7FEFF 		bl	Display
- 463              	.LVL29:
- 464 007c FCE7     		b	.L25
- 465              	.L28:
- 466 007e 00BF     		.align	2
- 467              	.L27:
- 468 0080 00000000 		.word	display
- 469 0084 24000000 		.word	.LC4
- 470 0088 00000000 		.word	watchDogCheck
- 471 008c 00000000 		.word	Bit_Timer
- 472 0090 34000000 		.word	.LC5
- 473              		.cfi_endproc
- 474              	.LFE64:
- 475              		.size	main, .-main
- 476              		.comm	display,12,4
- 477              		.comm	OutputString,12,4
- 478              		.section	.rodata.str1.4,"aMS",%progbits,1
- 479              		.align	2
- 480              	.LC0:
- 481 0000 30784646 		.ascii	"0xFF pre-fix\000"
- 481      20707265 
- 481      2D666978 
- 481      00
- 482 000d 000000   		.space	3
- 483              	.LC1:
- 484 0010 256900   		.ascii	"%i\000"
- 485 0013 00       		.space	1
- 486              	.LC2:
- 487 0014 20637261 		.ascii	" crabs\000"
- 487      627300
- 488 001b 00       		.space	1
- 489              	.LC3:
- 490 001c 676F6F64 		.ascii	"good\000"
- 490      00
- 491 0021 000000   		.space	3
- 492              	.LC4:
- 493 0024 53746172 		.ascii	"Staring Module!\000"
- 493      696E6720 
- 493      4D6F6475 
- 493      6C652100 
- 494              	.LC5:
- 495 0034 636F756E 		.ascii	"counting crabs...\000"
- 495      74696E67 
- 495      20637261 
- 495      62732E2E 
- 495      2E00
- 496              		.bss
- 497              		.align	1
- 498              		.set	.LANCHOR0,. + 0
- 499              		.type	levelCounter, %object
- 500              		.size	levelCounter, 2
- 501              	levelCounter:
- 502 0000 0000     		.space	2
- 503              		.type	oneCount, %object
- 504              		.size	oneCount, 2
- 505              	oneCount:
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 14
-
-
- 506 0002 0000     		.space	2
- 507              		.type	zeroCount, %object
- 508              		.size	zeroCount, 1
- 509              	zeroCount:
- 510 0004 00       		.space	1
- 511              		.type	currentBit, %object
- 512              		.size	currentBit, 1
- 513              	currentBit:
- 514 0005 00       		.space	1
- 515              		.type	dataCount, %object
- 516              		.size	dataCount, 1
- 517              	dataCount:
- 518 0006 00       		.space	1
- 519              		.type	data, %object
- 520              		.size	data, 1
- 521              	data:
- 522 0007 00       		.space	1
- 523              		.type	dataFlag, %object
- 524              		.size	dataFlag, 1
- 525              	dataFlag:
- 526 0008 00       		.space	1
- 527              		.type	decodeFlag, %object
- 528              		.size	decodeFlag, 1
- 529              	decodeFlag:
- 530 0009 00       		.space	1
- 531              		.type	lcdFlagEncode, %object
- 532              		.size	lcdFlagEncode, 1
- 533              	lcdFlagEncode:
- 534 000a 00       		.space	1
- 535              		.type	crabs, %object
- 536              		.size	crabs, 1
- 537              	crabs:
- 538 000b 00       		.space	1
- 539              		.type	lcdFlagData, %object
- 540              		.size	lcdFlagData, 1
- 541              	lcdFlagData:
- 542 000c 00       		.space	1
- 543              		.type	lcdFlagDecode, %object
- 544              		.size	lcdFlagDecode, 1
- 545              	lcdFlagDecode:
- 546 000d 00       		.space	1
- 547              		.type	decodeWrong, %object
- 548              		.size	decodeWrong, 1
- 549              	decodeWrong:
- 550 000e 00       		.space	1
- 551              		.text
- 552              	.Letext0:
- 553              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
- 554              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
- 555              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
- 556              		.file 5 "Generated_Source\\PSoC5/core_cm3.h"
- 557              		.file 6 "Generated_Source\\PSoC5/Out_Comp.h"
- 558              		.file 7 "Generated_Source\\PSoC5/Count_Out.h"
- 559              		.file 8 "Generated_Source\\PSoC5/CyLib.h"
- 560              		.file 9 "Generated_Source\\PSoC5/LCD_Char.h"
- 561              		.file 10 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4
- 562              		.file 11 "Generated_Source\\PSoC5/checkWatchDogTimer.h"
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 15
-
-
- 563              		.file 12 "Generated_Source\\PSoC5/watchDogCheck.h"
- 564              		.file 13 "Generated_Source\\PSoC5/PWM_Recon.h"
- 565              		.file 14 "Generated_Source\\PSoC5/Shift_Reg.h"
- 566              		.file 15 "Generated_Source\\PSoC5/Bit_Timer.h"
- 567              		.file 16 "Generated_Source\\PSoC5/Timer_ISR.h"
- 568              		.section	.debug_info,"",%progbits
- 569              	.Ldebug_info0:
- 570 0000 63050000 		.4byte	0x563
- 571 0004 0400     		.2byte	0x4
- 572 0006 00000000 		.4byte	.Ldebug_abbrev0
- 573 000a 04       		.byte	0x4
- 574 000b 01       		.uleb128 0x1
- 575 000c FE000000 		.4byte	.LASF57
- 576 0010 0C       		.byte	0xc
- 577 0011 E5020000 		.4byte	.LASF58
- 578 0015 BF000000 		.4byte	.LASF59
- 579 0019 00000000 		.4byte	.Ldebug_ranges0+0
- 580 001d 00000000 		.4byte	0
- 581 0021 00000000 		.4byte	.Ldebug_line0
- 582 0025 02       		.uleb128 0x2
- 583 0026 01       		.byte	0x1
- 584 0027 06       		.byte	0x6
- 585 0028 5B030000 		.4byte	.LASF0
- 586 002c 02       		.uleb128 0x2
- 587 002d 01       		.byte	0x1
- 588 002e 08       		.byte	0x8
- 589 002f F6010000 		.4byte	.LASF1
- 590 0033 02       		.uleb128 0x2
- 591 0034 02       		.byte	0x2
- 592 0035 05       		.byte	0x5
- 593 0036 26030000 		.4byte	.LASF2
- 594 003a 02       		.uleb128 0x2
- 595 003b 02       		.byte	0x2
- 596 003c 07       		.byte	0x7
- 597 003d BD010000 		.4byte	.LASF3
- 598 0041 03       		.uleb128 0x3
- 599 0042 2C000000 		.4byte	.LASF9
- 600 0046 02       		.byte	0x2
- 601 0047 3F       		.byte	0x3f
- 602 0048 4C000000 		.4byte	0x4c
- 603 004c 02       		.uleb128 0x2
- 604 004d 04       		.byte	0x4
- 605 004e 05       		.byte	0x5
- 606 004f 3E030000 		.4byte	.LASF4
- 607 0053 02       		.uleb128 0x2
- 608 0054 04       		.byte	0x4
- 609 0055 07       		.byte	0x7
- 610 0056 AB010000 		.4byte	.LASF5
- 611 005a 02       		.uleb128 0x2
- 612 005b 08       		.byte	0x8
- 613 005c 05       		.byte	0x5
- 614 005d D7020000 		.4byte	.LASF6
- 615 0061 02       		.uleb128 0x2
- 616 0062 08       		.byte	0x8
- 617 0063 07       		.byte	0x7
- 618 0064 71020000 		.4byte	.LASF7
- 619 0068 04       		.uleb128 0x4
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 16
-
-
- 620 0069 04       		.byte	0x4
- 621 006a 05       		.byte	0x5
- 622 006b 696E7400 		.ascii	"int\000"
- 623 006f 02       		.uleb128 0x2
- 624 0070 04       		.byte	0x4
- 625 0071 07       		.byte	0x7
- 626 0072 64020000 		.4byte	.LASF8
- 627 0076 03       		.uleb128 0x3
- 628 0077 C6020000 		.4byte	.LASF10
- 629 007b 03       		.byte	0x3
- 630 007c 2C       		.byte	0x2c
- 631 007d 41000000 		.4byte	0x41
- 632 0081 05       		.uleb128 0x5
- 633 0082 30030000 		.4byte	.LASF11
- 634 0086 04       		.byte	0x4
- 635 0087 9201     		.2byte	0x192
- 636 0089 2C000000 		.4byte	0x2c
- 637 008d 05       		.uleb128 0x5
- 638 008e 4A020000 		.4byte	.LASF12
- 639 0092 04       		.byte	0x4
- 640 0093 9301     		.2byte	0x193
- 641 0095 3A000000 		.4byte	0x3a
- 642 0099 02       		.uleb128 0x2
- 643 009a 04       		.byte	0x4
- 644 009b 04       		.byte	0x4
- 645 009c B4000000 		.4byte	.LASF13
- 646 00a0 02       		.uleb128 0x2
- 647 00a1 08       		.byte	0x8
- 648 00a2 04       		.byte	0x4
- 649 00a3 89000000 		.4byte	.LASF14
- 650 00a7 05       		.uleb128 0x5
- 651 00a8 8C010000 		.4byte	.LASF15
- 652 00ac 04       		.byte	0x4
- 653 00ad A301     		.2byte	0x1a3
- 654 00af B3000000 		.4byte	0xb3
- 655 00b3 02       		.uleb128 0x2
- 656 00b4 01       		.byte	0x1
- 657 00b5 08       		.byte	0x8
- 658 00b6 EC020000 		.4byte	.LASF16
- 659 00ba 02       		.uleb128 0x2
- 660 00bb 08       		.byte	0x8
- 661 00bc 04       		.byte	0x4
- 662 00bd 4F030000 		.4byte	.LASF17
- 663 00c1 02       		.uleb128 0x2
- 664 00c2 04       		.byte	0x4
- 665 00c3 07       		.byte	0x7
- 666 00c4 CE020000 		.4byte	.LASF18
- 667 00c8 06       		.uleb128 0x6
- 668 00c9 5A020000 		.4byte	.LASF19
- 669 00cd 01       		.byte	0x1
- 670 00ce 5E       		.byte	0x5e
- 671 00cf 00000000 		.4byte	.LFB65
- 672 00d3 D8000000 		.4byte	.LFE65-.LFB65
- 673 00d7 01       		.uleb128 0x1
- 674 00d8 9C       		.byte	0x9c
- 675 00d9 F6000000 		.4byte	0xf6
- 676 00dd 07       		.uleb128 0x7
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 17
-
-
- 677 00de 0E000000 		.4byte	.LVL0
- 678 00e2 AB040000 		.4byte	0x4ab
- 679 00e6 08       		.uleb128 0x8
- 680 00e7 74000000 		.4byte	.LVL1
- 681 00eb B6040000 		.4byte	0x4b6
- 682 00ef 09       		.uleb128 0x9
- 683 00f0 01       		.uleb128 0x1
- 684 00f1 50       		.byte	0x50
- 685 00f2 01       		.uleb128 0x1
- 686 00f3 31       		.byte	0x31
- 687 00f4 00       		.byte	0
- 688 00f5 00       		.byte	0
- 689 00f6 06       		.uleb128 0x6
- 690 00f7 1E000000 		.4byte	.LASF20
- 691 00fb 01       		.byte	0x1
- 692 00fc 9B       		.byte	0x9b
- 693 00fd 00000000 		.4byte	.LFB66
- 694 0101 08000000 		.4byte	.LFE66-.LFB66
- 695 0105 01       		.uleb128 0x1
- 696 0106 9C       		.byte	0x9c
- 697 0107 15010000 		.4byte	0x115
- 698 010b 07       		.uleb128 0x7
- 699 010c 06000000 		.4byte	.LVL2
- 700 0110 C1040000 		.4byte	0x4c1
- 701 0114 00       		.byte	0
- 702 0115 06       		.uleb128 0x6
- 703 0116 36030000 		.4byte	.LASF21
- 704 011a 01       		.byte	0x1
- 705 011b AE       		.byte	0xae
- 706 011c 00000000 		.4byte	.LFB67
- 707 0120 C8000000 		.4byte	.LFE67-.LFB67
- 708 0124 01       		.uleb128 0x1
- 709 0125 9C       		.byte	0x9c
- 710 0126 4C020000 		.4byte	0x24c
- 711 012a 0A       		.uleb128 0xa
- 712 012b 60000000 		.4byte	.LBB2
- 713 012f 22000000 		.4byte	.LBE2-.LBB2
- 714 0133 6E010000 		.4byte	0x16e
- 715 0137 0B       		.uleb128 0xb
- 716 0138 31020000 		.4byte	.LASF22
- 717 013c 01       		.byte	0x1
- 718 013d C2       		.byte	0xc2
- 719 013e 4C020000 		.4byte	0x24c
- 720 0142 02       		.uleb128 0x2
- 721 0143 91       		.byte	0x91
- 722 0144 68       		.sleb128 -24
- 723 0145 0C       		.uleb128 0xc
- 724 0146 68000000 		.4byte	.LVL10
- 725 014a CC040000 		.4byte	0x4cc
- 726 014e 5D010000 		.4byte	0x15d
- 727 0152 09       		.uleb128 0x9
- 728 0153 01       		.uleb128 0x1
- 729 0154 50       		.byte	0x50
- 730 0155 01       		.uleb128 0x1
- 731 0156 31       		.byte	0x31
- 732 0157 09       		.uleb128 0x9
- 733 0158 01       		.uleb128 0x1
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 18
-
-
- 734 0159 51       		.byte	0x51
- 735 015a 01       		.uleb128 0x1
- 736 015b 30       		.byte	0x30
- 737 015c 00       		.byte	0
- 738 015d 08       		.uleb128 0x8
- 739 015e 7A000000 		.4byte	.LVL11
- 740 0162 D7040000 		.4byte	0x4d7
- 741 0166 09       		.uleb128 0x9
- 742 0167 01       		.uleb128 0x1
- 743 0168 50       		.byte	0x50
- 744 0169 02       		.uleb128 0x2
- 745 016a 7D       		.byte	0x7d
- 746 016b 00       		.sleb128 0
- 747 016c 00       		.byte	0
- 748 016d 00       		.byte	0
- 749 016e 0A       		.uleb128 0xa
- 750 016f 8C000000 		.4byte	.LBB3
- 751 0173 1A000000 		.4byte	.LBE3-.LBB3
- 752 0177 B2010000 		.4byte	0x1b2
- 753 017b 0B       		.uleb128 0xb
- 754 017c 1D020000 		.4byte	.LASF23
- 755 0180 01       		.byte	0x1
- 756 0181 C8       		.byte	0xc8
- 757 0182 5C020000 		.4byte	0x25c
- 758 0186 02       		.uleb128 0x2
- 759 0187 91       		.byte	0x91
- 760 0188 68       		.sleb128 -24
- 761 0189 0C       		.uleb128 0xc
- 762 018a 94000000 		.4byte	.LVL12
- 763 018e CC040000 		.4byte	0x4cc
- 764 0192 A1010000 		.4byte	0x1a1
- 765 0196 09       		.uleb128 0x9
- 766 0197 01       		.uleb128 0x1
- 767 0198 50       		.byte	0x50
- 768 0199 01       		.uleb128 0x1
- 769 019a 31       		.byte	0x31
- 770 019b 09       		.uleb128 0x9
- 771 019c 01       		.uleb128 0x1
- 772 019d 51       		.byte	0x51
- 773 019e 01       		.uleb128 0x1
- 774 019f 30       		.byte	0x30
- 775 01a0 00       		.byte	0
- 776 01a1 08       		.uleb128 0x8
- 777 01a2 A0000000 		.4byte	.LVL13
- 778 01a6 D7040000 		.4byte	0x4d7
- 779 01aa 09       		.uleb128 0x9
- 780 01ab 01       		.uleb128 0x1
- 781 01ac 50       		.byte	0x50
- 782 01ad 02       		.uleb128 0x2
- 783 01ae 91       		.byte	0x91
- 784 01af 68       		.sleb128 -24
- 785 01b0 00       		.byte	0
- 786 01b1 00       		.byte	0
- 787 01b2 0C       		.uleb128 0xc
- 788 01b3 12000000 		.4byte	.LVL3
- 789 01b7 E2040000 		.4byte	0x4e2
- 790 01bb C5010000 		.4byte	0x1c5
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 19
-
-
- 791 01bf 09       		.uleb128 0x9
- 792 01c0 01       		.uleb128 0x1
- 793 01c1 50       		.byte	0x50
- 794 01c2 01       		.uleb128 0x1
- 795 01c3 31       		.byte	0x31
- 796 01c4 00       		.byte	0
- 797 01c5 0C       		.uleb128 0xc
- 798 01c6 18000000 		.4byte	.LVL4
- 799 01ca D7040000 		.4byte	0x4d7
- 800 01ce DC010000 		.4byte	0x1dc
- 801 01d2 09       		.uleb128 0x9
- 802 01d3 01       		.uleb128 0x1
- 803 01d4 50       		.byte	0x50
- 804 01d5 05       		.uleb128 0x5
- 805 01d6 03       		.byte	0x3
- 806 01d7 00000000 		.4byte	.LC0
- 807 01db 00       		.byte	0
- 808 01dc 0C       		.uleb128 0xc
- 809 01dd 36000000 		.4byte	.LVL5
- 810 01e1 ED040000 		.4byte	0x4ed
- 811 01e5 F9010000 		.4byte	0x1f9
- 812 01e9 09       		.uleb128 0x9
- 813 01ea 01       		.uleb128 0x1
- 814 01eb 50       		.byte	0x50
- 815 01ec 02       		.uleb128 0x2
- 816 01ed 75       		.byte	0x75
- 817 01ee 00       		.sleb128 0
- 818 01ef 09       		.uleb128 0x9
- 819 01f0 01       		.uleb128 0x1
- 820 01f1 51       		.byte	0x51
- 821 01f2 05       		.uleb128 0x5
- 822 01f3 03       		.byte	0x3
- 823 01f4 10000000 		.4byte	.LC1
- 824 01f8 00       		.byte	0
- 825 01f9 0C       		.uleb128 0xc
- 826 01fa 3C000000 		.4byte	.LVL6
- 827 01fe E2040000 		.4byte	0x4e2
- 828 0202 0C020000 		.4byte	0x20c
- 829 0206 09       		.uleb128 0x9
- 830 0207 01       		.uleb128 0x1
- 831 0208 50       		.byte	0x50
- 832 0209 01       		.uleb128 0x1
- 833 020a 31       		.byte	0x31
- 834 020b 00       		.byte	0
- 835 020c 0C       		.uleb128 0xc
- 836 020d 44000000 		.4byte	.LVL7
- 837 0211 CC040000 		.4byte	0x4cc
- 838 0215 24020000 		.4byte	0x224
- 839 0219 09       		.uleb128 0x9
- 840 021a 01       		.uleb128 0x1
- 841 021b 50       		.byte	0x50
- 842 021c 01       		.uleb128 0x1
- 843 021d 30       		.byte	0x30
- 844 021e 09       		.uleb128 0x9
- 845 021f 01       		.uleb128 0x1
- 846 0220 51       		.byte	0x51
- 847 0221 01       		.uleb128 0x1
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 20
-
-
- 848 0222 30       		.byte	0x30
- 849 0223 00       		.byte	0
- 850 0224 0C       		.uleb128 0xc
- 851 0225 4A000000 		.4byte	.LVL8
- 852 0229 D7040000 		.4byte	0x4d7
- 853 022d 38020000 		.4byte	0x238
- 854 0231 09       		.uleb128 0x9
- 855 0232 01       		.uleb128 0x1
- 856 0233 50       		.byte	0x50
- 857 0234 02       		.uleb128 0x2
- 858 0235 75       		.byte	0x75
- 859 0236 00       		.sleb128 0
- 860 0237 00       		.byte	0
- 861 0238 08       		.uleb128 0x8
- 862 0239 50000000 		.4byte	.LVL9
- 863 023d D7040000 		.4byte	0x4d7
- 864 0241 09       		.uleb128 0x9
- 865 0242 01       		.uleb128 0x1
- 866 0243 50       		.byte	0x50
- 867 0244 05       		.uleb128 0x5
- 868 0245 03       		.byte	0x3
- 869 0246 14000000 		.4byte	.LC2
- 870 024a 00       		.byte	0
- 871 024b 00       		.byte	0
- 872 024c 0D       		.uleb128 0xd
- 873 024d A7000000 		.4byte	0xa7
- 874 0251 5C020000 		.4byte	0x25c
- 875 0255 0E       		.uleb128 0xe
- 876 0256 C1000000 		.4byte	0xc1
- 877 025a 04       		.byte	0x4
- 878 025b 00       		.byte	0
- 879 025c 0D       		.uleb128 0xd
- 880 025d A7000000 		.4byte	0xa7
- 881 0261 6C020000 		.4byte	0x26c
- 882 0265 0E       		.uleb128 0xe
- 883 0266 C1000000 		.4byte	0xc1
- 884 026a 03       		.byte	0x3
- 885 026b 00       		.byte	0
- 886 026c 0F       		.uleb128 0xf
- 887 026d 2C020000 		.4byte	.LASF60
- 888 0271 01       		.byte	0x1
- 889 0272 34       		.byte	0x34
- 890 0273 68000000 		.4byte	0x68
- 891 0277 00000000 		.4byte	.LFB64
- 892 027b 94000000 		.4byte	.LFE64-.LFB64
- 893 027f 01       		.uleb128 0x1
- 894 0280 9C       		.byte	0x9c
- 895 0281 8B030000 		.4byte	0x38b
- 896 0285 07       		.uleb128 0x7
- 897 0286 06000000 		.4byte	.LVL14
- 898 028a F8040000 		.4byte	0x4f8
- 899 028e 0C       		.uleb128 0xc
- 900 028f 1C000000 		.4byte	.LVL15
- 901 0293 CC040000 		.4byte	0x4cc
- 902 0297 A6020000 		.4byte	0x2a6
- 903 029b 09       		.uleb128 0x9
- 904 029c 01       		.uleb128 0x1
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 21
-
-
- 905 029d 50       		.byte	0x50
- 906 029e 01       		.uleb128 0x1
- 907 029f 30       		.byte	0x30
- 908 02a0 09       		.uleb128 0x9
- 909 02a1 01       		.uleb128 0x1
- 910 02a2 51       		.byte	0x51
- 911 02a3 01       		.uleb128 0x1
- 912 02a4 30       		.byte	0x30
- 913 02a5 00       		.byte	0
- 914 02a6 0C       		.uleb128 0xc
- 915 02a7 22000000 		.4byte	.LVL16
- 916 02ab D7040000 		.4byte	0x4d7
- 917 02af BA020000 		.4byte	0x2ba
- 918 02b3 09       		.uleb128 0x9
- 919 02b4 01       		.uleb128 0x1
- 920 02b5 50       		.byte	0x50
- 921 02b6 02       		.uleb128 0x2
- 922 02b7 74       		.byte	0x74
- 923 02b8 00       		.sleb128 0
- 924 02b9 00       		.byte	0
- 925 02ba 0C       		.uleb128 0xc
- 926 02bb 2A000000 		.4byte	.LVL17
- 927 02bf 03050000 		.4byte	0x503
- 928 02c3 CF020000 		.4byte	0x2cf
- 929 02c7 09       		.uleb128 0x9
- 930 02c8 01       		.uleb128 0x1
- 931 02c9 50       		.byte	0x50
- 932 02ca 03       		.uleb128 0x3
- 933 02cb 0A       		.byte	0xa
- 934 02cc 8813     		.2byte	0x1388
- 935 02ce 00       		.byte	0
- 936 02cf 0C       		.uleb128 0xc
- 937 02d0 30000000 		.4byte	.LVL18
- 938 02d4 E2040000 		.4byte	0x4e2
- 939 02d8 E2020000 		.4byte	0x2e2
- 940 02dc 09       		.uleb128 0x9
- 941 02dd 01       		.uleb128 0x1
- 942 02de 50       		.byte	0x50
- 943 02df 01       		.uleb128 0x1
- 944 02e0 31       		.byte	0x31
- 945 02e1 00       		.byte	0
- 946 02e2 07       		.uleb128 0x7
- 947 02e3 36000000 		.4byte	.LVL19
- 948 02e7 0E050000 		.4byte	0x50e
- 949 02eb 0C       		.uleb128 0xc
- 950 02ec 3C000000 		.4byte	.LVL20
- 951 02f0 19050000 		.4byte	0x519
- 952 02f4 02030000 		.4byte	0x302
- 953 02f8 09       		.uleb128 0x9
- 954 02f9 01       		.uleb128 0x1
- 955 02fa 50       		.byte	0x50
- 956 02fb 05       		.uleb128 0x5
- 957 02fc 03       		.byte	0x3
- 958 02fd 00000000 		.4byte	watchDogCheck
- 959 0301 00       		.byte	0
- 960 0302 0C       		.uleb128 0xc
- 961 0303 44000000 		.4byte	.LVL21
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 22
-
-
- 962 0307 24050000 		.4byte	0x524
- 963 030b 1A030000 		.4byte	0x31a
- 964 030f 09       		.uleb128 0x9
- 965 0310 01       		.uleb128 0x1
- 966 0311 50       		.byte	0x50
- 967 0312 01       		.uleb128 0x1
- 968 0313 30       		.byte	0x30
- 969 0314 09       		.uleb128 0x9
- 970 0315 01       		.uleb128 0x1
- 971 0316 51       		.byte	0x51
- 972 0317 01       		.uleb128 0x1
- 973 0318 30       		.byte	0x30
- 974 0319 00       		.byte	0
- 975 031a 07       		.uleb128 0x7
- 976 031b 48000000 		.4byte	.LVL22
- 977 031f 2F050000 		.4byte	0x52f
- 978 0323 07       		.uleb128 0x7
- 979 0324 4C000000 		.4byte	.LVL23
- 980 0328 3A050000 		.4byte	0x53a
- 981 032c 07       		.uleb128 0x7
- 982 032d 50000000 		.4byte	.LVL24
- 983 0331 45050000 		.4byte	0x545
- 984 0335 07       		.uleb128 0x7
- 985 0336 54000000 		.4byte	.LVL25
- 986 033a 50050000 		.4byte	0x550
- 987 033e 0C       		.uleb128 0xc
- 988 033f 5A000000 		.4byte	.LVL26
- 989 0343 5B050000 		.4byte	0x55b
- 990 0347 55030000 		.4byte	0x355
- 991 034b 09       		.uleb128 0x9
- 992 034c 01       		.uleb128 0x1
- 993 034d 50       		.byte	0x50
- 994 034e 05       		.uleb128 0x5
- 995 034f 03       		.byte	0x3
- 996 0350 00000000 		.4byte	Bit_Timer
- 997 0354 00       		.byte	0
- 998 0355 0C       		.uleb128 0xc
- 999 0356 72000000 		.4byte	.LVL27
- 1000 035a CC040000 		.4byte	0x4cc
- 1001 035e 6D030000 		.4byte	0x36d
- 1002 0362 09       		.uleb128 0x9
- 1003 0363 01       		.uleb128 0x1
- 1004 0364 50       		.byte	0x50
- 1005 0365 01       		.uleb128 0x1
- 1006 0366 30       		.byte	0x30
- 1007 0367 09       		.uleb128 0x9
- 1008 0368 01       		.uleb128 0x1
- 1009 0369 51       		.byte	0x51
- 1010 036a 01       		.uleb128 0x1
- 1011 036b 30       		.byte	0x30
- 1012 036c 00       		.byte	0
- 1013 036d 0C       		.uleb128 0xc
- 1014 036e 78000000 		.4byte	.LVL28
- 1015 0372 D7040000 		.4byte	0x4d7
- 1016 0376 81030000 		.4byte	0x381
- 1017 037a 09       		.uleb128 0x9
- 1018 037b 01       		.uleb128 0x1
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 23
-
-
- 1019 037c 50       		.byte	0x50
- 1020 037d 02       		.uleb128 0x2
- 1021 037e 74       		.byte	0x74
- 1022 037f 00       		.sleb128 0
- 1023 0380 00       		.byte	0
- 1024 0381 07       		.uleb128 0x7
- 1025 0382 7C000000 		.4byte	.LVL29
- 1026 0386 15010000 		.4byte	0x115
- 1027 038a 00       		.byte	0
- 1028 038b 0B       		.uleb128 0xb
- 1029 038c A3020000 		.4byte	.LASF24
- 1030 0390 01       		.byte	0x1
- 1031 0391 1E       		.byte	0x1e
- 1032 0392 8D000000 		.4byte	0x8d
- 1033 0396 05       		.uleb128 0x5
- 1034 0397 03       		.byte	0x3
- 1035 0398 00000000 		.4byte	levelCounter
- 1036 039c 0B       		.uleb128 0xb
- 1037 039d 92010000 		.4byte	.LASF25
- 1038 03a1 01       		.byte	0x1
- 1039 03a2 1F       		.byte	0x1f
- 1040 03a3 81000000 		.4byte	0x81
- 1041 03a7 05       		.uleb128 0x5
- 1042 03a8 03       		.byte	0x3
- 1043 03a9 04000000 		.4byte	zeroCount
- 1044 03ad 0B       		.uleb128 0xb
- 1045 03ae 9A020000 		.4byte	.LASF26
- 1046 03b2 01       		.byte	0x1
- 1047 03b3 20       		.byte	0x20
- 1048 03b4 8D000000 		.4byte	0x8d
- 1049 03b8 05       		.uleb128 0x5
- 1050 03b9 03       		.byte	0x3
- 1051 03ba 02000000 		.4byte	oneCount
- 1052 03be 0B       		.uleb128 0xb
- 1053 03bf BB020000 		.4byte	.LASF27
- 1054 03c3 01       		.byte	0x1
- 1055 03c4 21       		.byte	0x21
- 1056 03c5 81000000 		.4byte	0x81
- 1057 03c9 05       		.uleb128 0x5
- 1058 03ca 03       		.byte	0x3
- 1059 03cb 05000000 		.4byte	currentBit
- 1060 03cf 0B       		.uleb128 0xb
- 1061 03d0 F1020000 		.4byte	.LASF28
- 1062 03d4 01       		.byte	0x1
- 1063 03d5 22       		.byte	0x22
- 1064 03d6 81000000 		.4byte	0x81
- 1065 03da 05       		.uleb128 0x5
- 1066 03db 03       		.byte	0x3
- 1067 03dc 06000000 		.4byte	dataCount
- 1068 03e0 0B       		.uleb128 0xb
- 1069 03e1 BA000000 		.4byte	.LASF29
- 1070 03e5 01       		.byte	0x1
- 1071 03e6 23       		.byte	0x23
- 1072 03e7 81000000 		.4byte	0x81
- 1073 03eb 05       		.uleb128 0x5
- 1074 03ec 03       		.byte	0x3
- 1075 03ed 07000000 		.4byte	data
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 24
-
-
- 1076 03f1 0B       		.uleb128 0xb
- 1077 03f2 26020000 		.4byte	.LASF30
- 1078 03f6 01       		.byte	0x1
- 1079 03f7 24       		.byte	0x24
- 1080 03f8 81000000 		.4byte	0x81
- 1081 03fc 05       		.uleb128 0x5
- 1082 03fd 03       		.byte	0x3
- 1083 03fe 0B000000 		.4byte	crabs
- 1084 0402 0B       		.uleb128 0xb
- 1085 0403 51020000 		.4byte	.LASF31
- 1086 0407 01       		.byte	0x1
- 1087 0408 25       		.byte	0x25
- 1088 0409 81000000 		.4byte	0x81
- 1089 040d 05       		.uleb128 0x5
- 1090 040e 03       		.byte	0x3
- 1091 040f 08000000 		.4byte	dataFlag
- 1092 0413 0B       		.uleb128 0xb
- 1093 0414 9D000000 		.4byte	.LASF32
- 1094 0418 01       		.byte	0x1
- 1095 0419 26       		.byte	0x26
- 1096 041a 81000000 		.4byte	0x81
- 1097 041e 05       		.uleb128 0x5
- 1098 041f 03       		.byte	0x3
- 1099 0420 09000000 		.4byte	decodeFlag
- 1100 0424 0B       		.uleb128 0xb
- 1101 0425 DD010000 		.4byte	.LASF33
- 1102 0429 01       		.byte	0x1
- 1103 042a 2E       		.byte	0x2e
- 1104 042b 81000000 		.4byte	0x81
- 1105 042f 05       		.uleb128 0x5
- 1106 0430 03       		.byte	0x3
- 1107 0431 0A000000 		.4byte	lcdFlagEncode
- 1108 0435 0B       		.uleb128 0xb
- 1109 0436 00000000 		.4byte	.LASF34
- 1110 043a 01       		.byte	0x1
- 1111 043b 2F       		.byte	0x2f
- 1112 043c 81000000 		.4byte	0x81
- 1113 0440 05       		.uleb128 0x5
- 1114 0441 03       		.byte	0x3
- 1115 0442 0C000000 		.4byte	lcdFlagData
- 1116 0446 0B       		.uleb128 0xb
- 1117 0447 8D030000 		.4byte	.LASF35
- 1118 044b 01       		.byte	0x1
- 1119 044c 30       		.byte	0x30
- 1120 044d 81000000 		.4byte	0x81
- 1121 0451 05       		.uleb128 0x5
- 1122 0452 03       		.byte	0x3
- 1123 0453 0D000000 		.4byte	lcdFlagDecode
- 1124 0457 0B       		.uleb128 0xb
- 1125 0458 A8000000 		.4byte	.LASF36
- 1126 045c 01       		.byte	0x1
- 1127 045d 31       		.byte	0x31
- 1128 045e 81000000 		.4byte	0x81
- 1129 0462 05       		.uleb128 0x5
- 1130 0463 03       		.byte	0x3
- 1131 0464 0E000000 		.4byte	decodeWrong
- 1132 0468 10       		.uleb128 0x10
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 25
-
-
- 1133 0469 D0010000 		.4byte	.LASF37
- 1134 046d 05       		.byte	0x5
- 1135 046e 1207     		.2byte	0x712
- 1136 0470 74040000 		.4byte	0x474
- 1137 0474 11       		.uleb128 0x11
- 1138 0475 76000000 		.4byte	0x76
- 1139 0479 0D       		.uleb128 0xd
- 1140 047a B3000000 		.4byte	0xb3
- 1141 047e 89040000 		.4byte	0x489
- 1142 0482 0E       		.uleb128 0xe
- 1143 0483 C1000000 		.4byte	0xc1
- 1144 0487 0B       		.byte	0xb
- 1145 0488 00       		.byte	0
- 1146 0489 12       		.uleb128 0x12
- 1147 048a 90000000 		.4byte	.LASF38
- 1148 048e 01       		.byte	0x1
- 1149 048f 2A       		.byte	0x2a
- 1150 0490 79040000 		.4byte	0x479
- 1151 0494 05       		.uleb128 0x5
- 1152 0495 03       		.byte	0x3
- 1153 0496 00000000 		.4byte	OutputString
- 1154 049a 12       		.uleb128 0x12
- 1155 049b 47030000 		.4byte	.LASF39
- 1156 049f 01       		.byte	0x1
- 1157 04a0 2B       		.byte	0x2b
- 1158 04a1 79040000 		.4byte	0x479
- 1159 04a5 05       		.uleb128 0x5
- 1160 04a6 03       		.byte	0x3
- 1161 04a7 00000000 		.4byte	display
- 1162 04ab 13       		.uleb128 0x13
- 1163 04ac 36000000 		.4byte	.LASF40
- 1164 04b0 36000000 		.4byte	.LASF40
- 1165 04b4 06       		.byte	0x6
- 1166 04b5 42       		.byte	0x42
- 1167 04b6 13       		.uleb128 0x13
- 1168 04b7 79000000 		.4byte	.LASF41
- 1169 04bb 79000000 		.4byte	.LASF41
- 1170 04bf 07       		.byte	0x7
- 1171 04c0 26       		.byte	0x26
- 1172 04c1 13       		.uleb128 0x13
- 1173 04c2 EB010000 		.4byte	.LASF42
- 1174 04c6 EB010000 		.4byte	.LASF42
- 1175 04ca 08       		.byte	0x8
- 1176 04cb 73       		.byte	0x73
- 1177 04cc 13       		.uleb128 0x13
- 1178 04cd 0C000000 		.4byte	.LASF43
- 1179 04d1 0C000000 		.4byte	.LASF43
- 1180 04d5 09       		.byte	0x9
- 1181 04d6 3D       		.byte	0x3d
- 1182 04d7 13       		.uleb128 0x13
- 1183 04d8 11030000 		.4byte	.LASF44
- 1184 04dc 11030000 		.4byte	.LASF44
- 1185 04e0 09       		.byte	0x9
- 1186 04e1 3C       		.byte	0x3c
- 1187 04e2 13       		.uleb128 0x13
- 1188 04e3 FB020000 		.4byte	.LASF45
- 1189 04e7 FB020000 		.4byte	.LASF45
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 26
-
-
- 1190 04eb 09       		.byte	0x9
- 1191 04ec 3A       		.byte	0x3a
- 1192 04ed 13       		.uleb128 0x13
- 1193 04ee 7D030000 		.4byte	.LASF46
- 1194 04f2 7D030000 		.4byte	.LASF46
- 1195 04f6 0A       		.byte	0xa
- 1196 04f7 E7       		.byte	0xe7
- 1197 04f8 13       		.uleb128 0x13
- 1198 04f9 4A000000 		.4byte	.LASF47
- 1199 04fd 4A000000 		.4byte	.LASF47
- 1200 0501 09       		.byte	0x9
- 1201 0502 38       		.byte	0x38
- 1202 0503 13       		.uleb128 0x13
- 1203 0504 85030000 		.4byte	.LASF48
- 1204 0508 85030000 		.4byte	.LASF48
- 1205 050c 08       		.byte	0x8
- 1206 050d 76       		.byte	0x76
- 1207 050e 13       		.uleb128 0x13
- 1208 050f 04020000 		.4byte	.LASF49
- 1209 0513 04020000 		.4byte	.LASF49
- 1210 0517 0B       		.byte	0xb
- 1211 0518 5A       		.byte	0x5a
- 1212 0519 13       		.uleb128 0x13
- 1213 051a 67030000 		.4byte	.LASF50
- 1214 051e 67030000 		.4byte	.LASF50
- 1215 0522 0C       		.byte	0xc
- 1216 0523 18       		.byte	0x18
- 1217 0524 13       		.uleb128 0x13
- 1218 0525 B0020000 		.4byte	.LASF51
- 1219 0529 B0020000 		.4byte	.LASF51
- 1220 052d 08       		.byte	0x8
- 1221 052e 72       		.byte	0x72
- 1222 052f 13       		.uleb128 0x13
- 1223 0530 59000000 		.4byte	.LASF52
- 1224 0534 59000000 		.4byte	.LASF52
- 1225 0538 0D       		.byte	0xd
- 1226 0539 92       		.byte	0x92
- 1227 053a 13       		.uleb128 0x13
- 1228 053b 3A020000 		.4byte	.LASF53
- 1229 053f 3A020000 		.4byte	.LASF53
- 1230 0543 0E       		.byte	0xe
- 1231 0544 3C       		.byte	0x3c
- 1232 0545 13       		.uleb128 0x13
- 1233 0546 9C010000 		.4byte	.LASF54
- 1234 054a 9C010000 		.4byte	.LASF54
- 1235 054e 06       		.byte	0x6
- 1236 054f 3F       		.byte	0x3f
- 1237 0550 13       		.uleb128 0x13
- 1238 0551 69000000 		.4byte	.LASF55
- 1239 0555 69000000 		.4byte	.LASF55
- 1240 0559 0F       		.byte	0xf
- 1241 055a 5A       		.byte	0x5a
- 1242 055b 13       		.uleb128 0x13
- 1243 055c 88020000 		.4byte	.LASF56
- 1244 0560 88020000 		.4byte	.LASF56
- 1245 0564 10       		.byte	0x10
- 1246 0565 18       		.byte	0x18
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 27
-
-
- 1247 0566 00       		.byte	0
- 1248              		.section	.debug_abbrev,"",%progbits
- 1249              	.Ldebug_abbrev0:
- 1250 0000 01       		.uleb128 0x1
- 1251 0001 11       		.uleb128 0x11
- 1252 0002 01       		.byte	0x1
- 1253 0003 25       		.uleb128 0x25
- 1254 0004 0E       		.uleb128 0xe
- 1255 0005 13       		.uleb128 0x13
- 1256 0006 0B       		.uleb128 0xb
- 1257 0007 03       		.uleb128 0x3
- 1258 0008 0E       		.uleb128 0xe
- 1259 0009 1B       		.uleb128 0x1b
- 1260 000a 0E       		.uleb128 0xe
- 1261 000b 55       		.uleb128 0x55
- 1262 000c 17       		.uleb128 0x17
- 1263 000d 11       		.uleb128 0x11
- 1264 000e 01       		.uleb128 0x1
- 1265 000f 10       		.uleb128 0x10
- 1266 0010 17       		.uleb128 0x17
- 1267 0011 00       		.byte	0
- 1268 0012 00       		.byte	0
- 1269 0013 02       		.uleb128 0x2
- 1270 0014 24       		.uleb128 0x24
- 1271 0015 00       		.byte	0
- 1272 0016 0B       		.uleb128 0xb
- 1273 0017 0B       		.uleb128 0xb
- 1274 0018 3E       		.uleb128 0x3e
- 1275 0019 0B       		.uleb128 0xb
- 1276 001a 03       		.uleb128 0x3
- 1277 001b 0E       		.uleb128 0xe
- 1278 001c 00       		.byte	0
- 1279 001d 00       		.byte	0
- 1280 001e 03       		.uleb128 0x3
- 1281 001f 16       		.uleb128 0x16
- 1282 0020 00       		.byte	0
- 1283 0021 03       		.uleb128 0x3
- 1284 0022 0E       		.uleb128 0xe
- 1285 0023 3A       		.uleb128 0x3a
- 1286 0024 0B       		.uleb128 0xb
- 1287 0025 3B       		.uleb128 0x3b
- 1288 0026 0B       		.uleb128 0xb
- 1289 0027 49       		.uleb128 0x49
- 1290 0028 13       		.uleb128 0x13
- 1291 0029 00       		.byte	0
- 1292 002a 00       		.byte	0
- 1293 002b 04       		.uleb128 0x4
- 1294 002c 24       		.uleb128 0x24
- 1295 002d 00       		.byte	0
- 1296 002e 0B       		.uleb128 0xb
- 1297 002f 0B       		.uleb128 0xb
- 1298 0030 3E       		.uleb128 0x3e
- 1299 0031 0B       		.uleb128 0xb
- 1300 0032 03       		.uleb128 0x3
- 1301 0033 08       		.uleb128 0x8
- 1302 0034 00       		.byte	0
- 1303 0035 00       		.byte	0
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 28
-
-
- 1304 0036 05       		.uleb128 0x5
- 1305 0037 16       		.uleb128 0x16
- 1306 0038 00       		.byte	0
- 1307 0039 03       		.uleb128 0x3
- 1308 003a 0E       		.uleb128 0xe
- 1309 003b 3A       		.uleb128 0x3a
- 1310 003c 0B       		.uleb128 0xb
- 1311 003d 3B       		.uleb128 0x3b
- 1312 003e 05       		.uleb128 0x5
- 1313 003f 49       		.uleb128 0x49
- 1314 0040 13       		.uleb128 0x13
- 1315 0041 00       		.byte	0
- 1316 0042 00       		.byte	0
- 1317 0043 06       		.uleb128 0x6
- 1318 0044 2E       		.uleb128 0x2e
- 1319 0045 01       		.byte	0x1
- 1320 0046 3F       		.uleb128 0x3f
- 1321 0047 19       		.uleb128 0x19
- 1322 0048 03       		.uleb128 0x3
- 1323 0049 0E       		.uleb128 0xe
- 1324 004a 3A       		.uleb128 0x3a
- 1325 004b 0B       		.uleb128 0xb
- 1326 004c 3B       		.uleb128 0x3b
- 1327 004d 0B       		.uleb128 0xb
- 1328 004e 27       		.uleb128 0x27
- 1329 004f 19       		.uleb128 0x19
- 1330 0050 11       		.uleb128 0x11
- 1331 0051 01       		.uleb128 0x1
- 1332 0052 12       		.uleb128 0x12
- 1333 0053 06       		.uleb128 0x6
- 1334 0054 40       		.uleb128 0x40
- 1335 0055 18       		.uleb128 0x18
- 1336 0056 9742     		.uleb128 0x2117
- 1337 0058 19       		.uleb128 0x19
- 1338 0059 01       		.uleb128 0x1
- 1339 005a 13       		.uleb128 0x13
- 1340 005b 00       		.byte	0
- 1341 005c 00       		.byte	0
- 1342 005d 07       		.uleb128 0x7
- 1343 005e 898201   		.uleb128 0x4109
- 1344 0061 00       		.byte	0
- 1345 0062 11       		.uleb128 0x11
- 1346 0063 01       		.uleb128 0x1
- 1347 0064 31       		.uleb128 0x31
- 1348 0065 13       		.uleb128 0x13
- 1349 0066 00       		.byte	0
- 1350 0067 00       		.byte	0
- 1351 0068 08       		.uleb128 0x8
- 1352 0069 898201   		.uleb128 0x4109
- 1353 006c 01       		.byte	0x1
- 1354 006d 11       		.uleb128 0x11
- 1355 006e 01       		.uleb128 0x1
- 1356 006f 31       		.uleb128 0x31
- 1357 0070 13       		.uleb128 0x13
- 1358 0071 00       		.byte	0
- 1359 0072 00       		.byte	0
- 1360 0073 09       		.uleb128 0x9
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 29
-
-
- 1361 0074 8A8201   		.uleb128 0x410a
- 1362 0077 00       		.byte	0
- 1363 0078 02       		.uleb128 0x2
- 1364 0079 18       		.uleb128 0x18
- 1365 007a 9142     		.uleb128 0x2111
- 1366 007c 18       		.uleb128 0x18
- 1367 007d 00       		.byte	0
- 1368 007e 00       		.byte	0
- 1369 007f 0A       		.uleb128 0xa
- 1370 0080 0B       		.uleb128 0xb
- 1371 0081 01       		.byte	0x1
- 1372 0082 11       		.uleb128 0x11
- 1373 0083 01       		.uleb128 0x1
- 1374 0084 12       		.uleb128 0x12
- 1375 0085 06       		.uleb128 0x6
- 1376 0086 01       		.uleb128 0x1
- 1377 0087 13       		.uleb128 0x13
- 1378 0088 00       		.byte	0
- 1379 0089 00       		.byte	0
- 1380 008a 0B       		.uleb128 0xb
- 1381 008b 34       		.uleb128 0x34
- 1382 008c 00       		.byte	0
- 1383 008d 03       		.uleb128 0x3
- 1384 008e 0E       		.uleb128 0xe
- 1385 008f 3A       		.uleb128 0x3a
- 1386 0090 0B       		.uleb128 0xb
- 1387 0091 3B       		.uleb128 0x3b
- 1388 0092 0B       		.uleb128 0xb
- 1389 0093 49       		.uleb128 0x49
- 1390 0094 13       		.uleb128 0x13
- 1391 0095 02       		.uleb128 0x2
- 1392 0096 18       		.uleb128 0x18
- 1393 0097 00       		.byte	0
- 1394 0098 00       		.byte	0
- 1395 0099 0C       		.uleb128 0xc
- 1396 009a 898201   		.uleb128 0x4109
- 1397 009d 01       		.byte	0x1
- 1398 009e 11       		.uleb128 0x11
- 1399 009f 01       		.uleb128 0x1
- 1400 00a0 31       		.uleb128 0x31
- 1401 00a1 13       		.uleb128 0x13
- 1402 00a2 01       		.uleb128 0x1
- 1403 00a3 13       		.uleb128 0x13
- 1404 00a4 00       		.byte	0
- 1405 00a5 00       		.byte	0
- 1406 00a6 0D       		.uleb128 0xd
- 1407 00a7 01       		.uleb128 0x1
- 1408 00a8 01       		.byte	0x1
- 1409 00a9 49       		.uleb128 0x49
- 1410 00aa 13       		.uleb128 0x13
- 1411 00ab 01       		.uleb128 0x1
- 1412 00ac 13       		.uleb128 0x13
- 1413 00ad 00       		.byte	0
- 1414 00ae 00       		.byte	0
- 1415 00af 0E       		.uleb128 0xe
- 1416 00b0 21       		.uleb128 0x21
- 1417 00b1 00       		.byte	0
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 30
-
-
- 1418 00b2 49       		.uleb128 0x49
- 1419 00b3 13       		.uleb128 0x13
- 1420 00b4 2F       		.uleb128 0x2f
- 1421 00b5 0B       		.uleb128 0xb
- 1422 00b6 00       		.byte	0
- 1423 00b7 00       		.byte	0
- 1424 00b8 0F       		.uleb128 0xf
- 1425 00b9 2E       		.uleb128 0x2e
- 1426 00ba 01       		.byte	0x1
- 1427 00bb 3F       		.uleb128 0x3f
- 1428 00bc 19       		.uleb128 0x19
- 1429 00bd 03       		.uleb128 0x3
- 1430 00be 0E       		.uleb128 0xe
- 1431 00bf 3A       		.uleb128 0x3a
- 1432 00c0 0B       		.uleb128 0xb
- 1433 00c1 3B       		.uleb128 0x3b
- 1434 00c2 0B       		.uleb128 0xb
- 1435 00c3 27       		.uleb128 0x27
- 1436 00c4 19       		.uleb128 0x19
- 1437 00c5 49       		.uleb128 0x49
- 1438 00c6 13       		.uleb128 0x13
- 1439 00c7 8701     		.uleb128 0x87
- 1440 00c9 19       		.uleb128 0x19
- 1441 00ca 11       		.uleb128 0x11
- 1442 00cb 01       		.uleb128 0x1
- 1443 00cc 12       		.uleb128 0x12
- 1444 00cd 06       		.uleb128 0x6
- 1445 00ce 40       		.uleb128 0x40
- 1446 00cf 18       		.uleb128 0x18
- 1447 00d0 9742     		.uleb128 0x2117
- 1448 00d2 19       		.uleb128 0x19
- 1449 00d3 01       		.uleb128 0x1
- 1450 00d4 13       		.uleb128 0x13
- 1451 00d5 00       		.byte	0
- 1452 00d6 00       		.byte	0
- 1453 00d7 10       		.uleb128 0x10
- 1454 00d8 34       		.uleb128 0x34
- 1455 00d9 00       		.byte	0
- 1456 00da 03       		.uleb128 0x3
- 1457 00db 0E       		.uleb128 0xe
- 1458 00dc 3A       		.uleb128 0x3a
- 1459 00dd 0B       		.uleb128 0xb
- 1460 00de 3B       		.uleb128 0x3b
- 1461 00df 05       		.uleb128 0x5
- 1462 00e0 49       		.uleb128 0x49
- 1463 00e1 13       		.uleb128 0x13
- 1464 00e2 3F       		.uleb128 0x3f
- 1465 00e3 19       		.uleb128 0x19
- 1466 00e4 3C       		.uleb128 0x3c
- 1467 00e5 19       		.uleb128 0x19
- 1468 00e6 00       		.byte	0
- 1469 00e7 00       		.byte	0
- 1470 00e8 11       		.uleb128 0x11
- 1471 00e9 35       		.uleb128 0x35
- 1472 00ea 00       		.byte	0
- 1473 00eb 49       		.uleb128 0x49
- 1474 00ec 13       		.uleb128 0x13
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 31
-
-
- 1475 00ed 00       		.byte	0
- 1476 00ee 00       		.byte	0
- 1477 00ef 12       		.uleb128 0x12
- 1478 00f0 34       		.uleb128 0x34
- 1479 00f1 00       		.byte	0
- 1480 00f2 03       		.uleb128 0x3
- 1481 00f3 0E       		.uleb128 0xe
- 1482 00f4 3A       		.uleb128 0x3a
- 1483 00f5 0B       		.uleb128 0xb
- 1484 00f6 3B       		.uleb128 0x3b
- 1485 00f7 0B       		.uleb128 0xb
- 1486 00f8 49       		.uleb128 0x49
- 1487 00f9 13       		.uleb128 0x13
- 1488 00fa 3F       		.uleb128 0x3f
- 1489 00fb 19       		.uleb128 0x19
- 1490 00fc 02       		.uleb128 0x2
- 1491 00fd 18       		.uleb128 0x18
- 1492 00fe 00       		.byte	0
- 1493 00ff 00       		.byte	0
- 1494 0100 13       		.uleb128 0x13
- 1495 0101 2E       		.uleb128 0x2e
- 1496 0102 00       		.byte	0
- 1497 0103 3F       		.uleb128 0x3f
- 1498 0104 19       		.uleb128 0x19
- 1499 0105 3C       		.uleb128 0x3c
- 1500 0106 19       		.uleb128 0x19
- 1501 0107 6E       		.uleb128 0x6e
- 1502 0108 0E       		.uleb128 0xe
- 1503 0109 03       		.uleb128 0x3
- 1504 010a 0E       		.uleb128 0xe
- 1505 010b 3A       		.uleb128 0x3a
- 1506 010c 0B       		.uleb128 0xb
- 1507 010d 3B       		.uleb128 0x3b
- 1508 010e 0B       		.uleb128 0xb
- 1509 010f 00       		.byte	0
- 1510 0110 00       		.byte	0
- 1511 0111 00       		.byte	0
- 1512              		.section	.debug_aranges,"",%progbits
- 1513 0000 34000000 		.4byte	0x34
- 1514 0004 0200     		.2byte	0x2
- 1515 0006 00000000 		.4byte	.Ldebug_info0
- 1516 000a 04       		.byte	0x4
- 1517 000b 00       		.byte	0
- 1518 000c 0000     		.2byte	0
- 1519 000e 0000     		.2byte	0
- 1520 0010 00000000 		.4byte	.LFB65
- 1521 0014 D8000000 		.4byte	.LFE65-.LFB65
- 1522 0018 00000000 		.4byte	.LFB66
- 1523 001c 08000000 		.4byte	.LFE66-.LFB66
- 1524 0020 00000000 		.4byte	.LFB67
- 1525 0024 C8000000 		.4byte	.LFE67-.LFB67
- 1526 0028 00000000 		.4byte	.LFB64
- 1527 002c 94000000 		.4byte	.LFE64-.LFB64
- 1528 0030 00000000 		.4byte	0
- 1529 0034 00000000 		.4byte	0
- 1530              		.section	.debug_ranges,"",%progbits
- 1531              	.Ldebug_ranges0:
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 32
-
-
- 1532 0000 00000000 		.4byte	.LFB65
- 1533 0004 D8000000 		.4byte	.LFE65
- 1534 0008 00000000 		.4byte	.LFB66
- 1535 000c 08000000 		.4byte	.LFE66
- 1536 0010 00000000 		.4byte	.LFB67
- 1537 0014 C8000000 		.4byte	.LFE67
- 1538 0018 00000000 		.4byte	.LFB64
- 1539 001c 94000000 		.4byte	.LFE64
- 1540 0020 00000000 		.4byte	0
- 1541 0024 00000000 		.4byte	0
- 1542              		.section	.debug_line,"",%progbits
- 1543              	.Ldebug_line0:
- 1544 0000 0B030000 		.section	.debug_str,"MS",%progbits,1
- 1544      02005C02 
- 1544      00000201 
- 1544      FB0E0D00 
- 1544      01010101 
- 1545              	.LASF34:
- 1546 0000 6C636446 		.ascii	"lcdFlagData\000"
- 1546      6C616744 
- 1546      61746100 
- 1547              	.LASF43:
- 1548 000c 4C43445F 		.ascii	"LCD_Char_Position\000"
- 1548      43686172 
- 1548      5F506F73 
- 1548      6974696F 
- 1548      6E00
- 1549              	.LASF20:
- 1550 001e 77617463 		.ascii	"watchDogCheck\000"
- 1550      68446F67 
- 1550      43686563 
- 1550      6B00
- 1551              	.LASF9:
- 1552 002c 5F5F696E 		.ascii	"__int32_t\000"
- 1552      7433325F 
- 1552      7400
- 1553              	.LASF40:
- 1554 0036 4F75745F 		.ascii	"Out_Comp_GetCompare\000"
- 1554      436F6D70 
- 1554      5F476574 
- 1554      436F6D70 
- 1554      61726500 
- 1555              	.LASF47:
- 1556 004a 4C43445F 		.ascii	"LCD_Char_Start\000"
- 1556      43686172 
- 1556      5F537461 
- 1556      727400
- 1557              	.LASF52:
- 1558 0059 50574D5F 		.ascii	"PWM_Recon_Start\000"
- 1558      5265636F 
- 1558      6E5F5374 
- 1558      61727400 
- 1559              	.LASF55:
- 1560 0069 4269745F 		.ascii	"Bit_Timer_Start\000"
- 1560      54696D65 
- 1560      725F5374 
- 1560      61727400 
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 33
-
-
- 1561              	.LASF41:
- 1562 0079 436F756E 		.ascii	"Count_Out_Write\000"
- 1562      745F4F75 
- 1562      745F5772 
- 1562      69746500 
- 1563              	.LASF14:
- 1564 0089 646F7562 		.ascii	"double\000"
- 1564      6C6500
- 1565              	.LASF38:
- 1566 0090 4F757470 		.ascii	"OutputString\000"
- 1566      75745374 
- 1566      72696E67 
- 1566      00
- 1567              	.LASF32:
- 1568 009d 6465636F 		.ascii	"decodeFlag\000"
- 1568      6465466C 
- 1568      616700
- 1569              	.LASF36:
- 1570 00a8 6465636F 		.ascii	"decodeWrong\000"
- 1570      64655772 
- 1570      6F6E6700 
- 1571              	.LASF13:
- 1572 00b4 666C6F61 		.ascii	"float\000"
- 1572      7400
- 1573              	.LASF29:
- 1574 00ba 64617461 		.ascii	"data\000"
- 1574      00
- 1575              	.LASF59:
- 1576 00bf 433A5C53 		.ascii	"C:\\SPB_Data\\Documents\\UACSCode\\UACS\\Spring2018"
- 1576      50425F44 
- 1576      6174615C 
- 1576      446F6375 
- 1576      6D656E74 
- 1577 00ed 5C486967 		.ascii	"\\HighFSKRx.cydsn\000"
- 1577      6846534B 
- 1577      52782E63 
- 1577      7964736E 
- 1577      00
- 1578              	.LASF57:
- 1579 00fe 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
- 1579      43313120 
- 1579      352E342E 
- 1579      31203230 
- 1579      31363036 
- 1580 0131 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
- 1580      20726576 
- 1580      6973696F 
- 1580      6E203233 
- 1580      37373135 
- 1581 0164 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
- 1581      66756E63 
- 1581      74696F6E 
- 1581      2D736563 
- 1581      74696F6E 
- 1582              	.LASF15:
- 1583 018c 63686172 		.ascii	"char8\000"
- 1583      3800
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 34
-
-
- 1584              	.LASF25:
- 1585 0192 7A65726F 		.ascii	"zeroCount\000"
- 1585      436F756E 
- 1585      7400
- 1586              	.LASF54:
- 1587 019c 4F75745F 		.ascii	"Out_Comp_Start\000"
- 1587      436F6D70 
- 1587      5F537461 
- 1587      727400
- 1588              	.LASF5:
- 1589 01ab 6C6F6E67 		.ascii	"long unsigned int\000"
- 1589      20756E73 
- 1589      69676E65 
- 1589      6420696E 
- 1589      7400
- 1590              	.LASF3:
- 1591 01bd 73686F72 		.ascii	"short unsigned int\000"
- 1591      7420756E 
- 1591      7369676E 
- 1591      65642069 
- 1591      6E7400
- 1592              	.LASF37:
- 1593 01d0 49544D5F 		.ascii	"ITM_RxBuffer\000"
- 1593      52784275 
- 1593      66666572 
- 1593      00
- 1594              	.LASF33:
- 1595 01dd 6C636446 		.ascii	"lcdFlagEncode\000"
- 1595      6C616745 
- 1595      6E636F64 
- 1595      6500
- 1596              	.LASF42:
- 1597 01eb 43795764 		.ascii	"CyWdtClear\000"
- 1597      74436C65 
- 1597      617200
- 1598              	.LASF1:
- 1599 01f6 756E7369 		.ascii	"unsigned char\000"
- 1599      676E6564 
- 1599      20636861 
- 1599      7200
- 1600              	.LASF49:
- 1601 0204 63686563 		.ascii	"checkWatchDogTimer_Start\000"
- 1601      6B576174 
- 1601      6368446F 
- 1601      6754696D 
- 1601      65725F53 
- 1602              	.LASF23:
- 1603 021d 64697370 		.ascii	"displayB\000"
- 1603      6C617942 
- 1603      00
- 1604              	.LASF30:
- 1605 0226 63726162 		.ascii	"crabs\000"
- 1605      7300
- 1606              	.LASF60:
- 1607 022c 6D61696E 		.ascii	"main\000"
- 1607      00
- 1608              	.LASF22:
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 35
-
-
- 1609 0231 64697370 		.ascii	"displayG\000"
- 1609      6C617947 
- 1609      00
- 1610              	.LASF53:
- 1611 023a 53686966 		.ascii	"Shift_Reg_Start\000"
- 1611      745F5265 
- 1611      675F5374 
- 1611      61727400 
- 1612              	.LASF12:
- 1613 024a 75696E74 		.ascii	"uint16\000"
- 1613      313600
- 1614              	.LASF31:
- 1615 0251 64617461 		.ascii	"dataFlag\000"
- 1615      466C6167 
- 1615      00
- 1616              	.LASF19:
- 1617 025a 4269745F 		.ascii	"Bit_Timer\000"
- 1617      54696D65 
- 1617      7200
- 1618              	.LASF8:
- 1619 0264 756E7369 		.ascii	"unsigned int\000"
- 1619      676E6564 
- 1619      20696E74 
- 1619      00
- 1620              	.LASF7:
- 1621 0271 6C6F6E67 		.ascii	"long long unsigned int\000"
- 1621      206C6F6E 
- 1621      6720756E 
- 1621      7369676E 
- 1621      65642069 
- 1622              	.LASF56:
- 1623 0288 54696D65 		.ascii	"Timer_ISR_StartEx\000"
- 1623      725F4953 
- 1623      525F5374 
- 1623      61727445 
- 1623      7800
- 1624              	.LASF26:
- 1625 029a 6F6E6543 		.ascii	"oneCount\000"
- 1625      6F756E74 
- 1625      00
- 1626              	.LASF24:
- 1627 02a3 6C657665 		.ascii	"levelCounter\000"
- 1627      6C436F75 
- 1627      6E746572 
- 1627      00
- 1628              	.LASF51:
- 1629 02b0 43795764 		.ascii	"CyWdtStart\000"
- 1629      74537461 
- 1629      727400
- 1630              	.LASF27:
- 1631 02bb 63757272 		.ascii	"currentBit\000"
- 1631      656E7442 
- 1631      697400
- 1632              	.LASF10:
- 1633 02c6 696E7433 		.ascii	"int32_t\000"
- 1633      325F7400 
- 1634              	.LASF18:
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 36
-
-
- 1635 02ce 73697A65 		.ascii	"sizetype\000"
- 1635      74797065 
- 1635      00
- 1636              	.LASF6:
- 1637 02d7 6C6F6E67 		.ascii	"long long int\000"
- 1637      206C6F6E 
- 1637      6720696E 
- 1637      7400
- 1638              	.LASF58:
- 1639 02e5 6D61696E 		.ascii	"main.c\000"
- 1639      2E6300
- 1640              	.LASF16:
- 1641 02ec 63686172 		.ascii	"char\000"
- 1641      00
- 1642              	.LASF28:
- 1643 02f1 64617461 		.ascii	"dataCount\000"
- 1643      436F756E 
- 1643      7400
- 1644              	.LASF45:
- 1645 02fb 4C43445F 		.ascii	"LCD_Char_WriteControl\000"
- 1645      43686172 
- 1645      5F577269 
- 1645      7465436F 
- 1645      6E74726F 
- 1646              	.LASF44:
- 1647 0311 4C43445F 		.ascii	"LCD_Char_PrintString\000"
- 1647      43686172 
- 1647      5F507269 
- 1647      6E745374 
- 1647      72696E67 
- 1648              	.LASF2:
- 1649 0326 73686F72 		.ascii	"short int\000"
- 1649      7420696E 
- 1649      7400
- 1650              	.LASF11:
- 1651 0330 75696E74 		.ascii	"uint8\000"
- 1651      3800
- 1652              	.LASF21:
- 1653 0336 44697370 		.ascii	"Display\000"
- 1653      6C617900 
- 1654              	.LASF4:
- 1655 033e 6C6F6E67 		.ascii	"long int\000"
- 1655      20696E74 
- 1655      00
- 1656              	.LASF39:
- 1657 0347 64697370 		.ascii	"display\000"
- 1657      6C617900 
- 1658              	.LASF17:
- 1659 034f 6C6F6E67 		.ascii	"long double\000"
- 1659      20646F75 
- 1659      626C6500 
- 1660              	.LASF0:
- 1661 035b 7369676E 		.ascii	"signed char\000"
- 1661      65642063 
- 1661      68617200 
- 1662              	.LASF50:
- 1663 0367 77617463 		.ascii	"watchDogCheck_StartEx\000"
-ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc1IyJDA.s 			page 37
-
-
- 1663      68446F67 
- 1663      43686563 
- 1663      6B5F5374 
- 1663      61727445 
- 1664              	.LASF46:
- 1665 037d 73707269 		.ascii	"sprintf\000"
- 1665      6E746600 
- 1666              	.LASF48:
- 1667 0385 43794465 		.ascii	"CyDelay\000"
- 1667      6C617900 
- 1668              	.LASF35:
- 1669 038d 6C636446 		.ascii	"lcdFlagDecode\000"
- 1669      6C616744 
- 1669      65636F64 
- 1669      6500
- 1670              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
+ 121:main.c        ****     
+ 122:main.c        ****     CyWdtClear();
+  36              		.loc 1 122 0
+  37 0002 FFF7FEFF 		bl	CyWdtClear
+  38              	.LVL0:
+  39 0006 08BD     		pop	{r3, pc}
+  40              		.cfi_endproc
+  41              	.LFE65:
+  42              		.size	watchDogCheck, .-watchDogCheck
+  43              		.section	.text.Bit_Timer,"ax",%progbits
+  44              		.align	2
+  45              		.global	Bit_Timer
+  46              		.thumb
+  47              		.thumb_func
+  48              		.type	Bit_Timer, %function
+  49              	Bit_Timer:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 4
+
+
+  50              	.LFB66:
+ 123:main.c        ****     //sleepToggle_Write(TRUE);
+ 124:main.c        ****     //CyDelay(Delay);
+ 125:main.c        ****     //sleepToggle_Write(FALSE);
+ 126:main.c        ****      
+ 127:main.c        ****         
+ 128:main.c        **** }
+ 129:main.c        **** 
+ 130:main.c        **** //Bit length = 500 ms
+ 131:main.c        **** //timer period = 5 ms
+ 132:main.c        **** //will check bit COUNT times, to debounce
+ 133:main.c        **** CY_ISR(Bit_Timer){
+  51              		.loc 1 133 0
+  52              		.cfi_startproc
+  53              		@ args = 0, pretend = 0, frame = 0
+  54              		@ frame_needed = 0, uses_anonymous_args = 0
+  55 0000 08B5     		push	{r3, lr}
+  56              		.cfi_def_cfa_offset 8
+  57              		.cfi_offset 3, -8
+  58              		.cfi_offset 14, -4
+ 134:main.c        ****     levelCounter++;
+  59              		.loc 1 134 0
+  60 0002 484A     		ldr	r2, .L16
+  61 0004 1388     		ldrh	r3, [r2]
+  62 0006 0133     		adds	r3, r3, #1
+  63 0008 1380     		strh	r3, [r2]	@ movhi
+ 135:main.c        ****     
+ 136:main.c        ****     // Count whether bit is currently 1 or 0
+ 137:main.c        ****     if(Out_Comp_GetCompare() != 0){
+  64              		.loc 1 137 0
+  65 000a FFF7FEFF 		bl	Out_Comp_GetCompare
+  66              	.LVL1:
+  67 000e 20B1     		cbz	r0, .L4
+ 138:main.c        ****         oneCount++;
+  68              		.loc 1 138 0
+  69 0010 444A     		ldr	r2, .L16
+  70 0012 5388     		ldrh	r3, [r2, #2]
+  71 0014 0133     		adds	r3, r3, #1
+  72 0016 5380     		strh	r3, [r2, #2]	@ movhi
+  73 0018 03E0     		b	.L5
+  74              	.L4:
+ 139:main.c        ****     }else{
+ 140:main.c        ****         zeroCount++;
+  75              		.loc 1 140 0
+  76 001a 424A     		ldr	r2, .L16
+  77 001c 9388     		ldrh	r3, [r2, #4]
+  78 001e 0133     		adds	r3, r3, #1
+  79 0020 9380     		strh	r3, [r2, #4]	@ movhi
+  80              	.L5:
+ 141:main.c        ****     }
+ 142:main.c        ****     
+ 143:main.c        ****     // Debouncing
+ 144:main.c        ****     if(levelCounter == COUNT){
+  81              		.loc 1 144 0
+  82 0022 404B     		ldr	r3, .L16
+  83 0024 1B88     		ldrh	r3, [r3]
+  84 0026 642B     		cmp	r3, #100
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 5
+
+
+  85 0028 7BD1     		bne	.L3
+ 145:main.c        ****         if((dataFlag == FALSE) && (decodeFlag == FALSE)){ //looking for prefix
+  86              		.loc 1 145 0
+  87 002a 3E4B     		ldr	r3, .L16
+  88 002c 9B79     		ldrb	r3, [r3, #6]	@ zero_extendqisi2
+  89 002e ABB9     		cbnz	r3, .L7
+  90              		.loc 1 145 0 is_stmt 0 discriminator 1
+  91 0030 3C4B     		ldr	r3, .L16
+  92 0032 DB79     		ldrb	r3, [r3, #7]	@ zero_extendqisi2
+  93 0034 93B9     		cbnz	r3, .L7
+ 146:main.c        ****             if(oneCount >= PREFIX_ACCURACY){ // 1 bit must be Accuracy/100 = 1 
+  94              		.loc 1 146 0 is_stmt 1
+  95 0036 3B4B     		ldr	r3, .L16
+  96 0038 5B88     		ldrh	r3, [r3, #2]
+  97 003a 592B     		cmp	r3, #89
+  98 003c 07D9     		bls	.L8
+ 147:main.c        ****                 currentBit = 0x01;
+  99              		.loc 1 147 0
+ 100 003e 394B     		ldr	r3, .L16
+ 101 0040 0120     		movs	r0, #1
+ 102 0042 1872     		strb	r0, [r3, #8]
+ 148:main.c        ****                 oneCount = 0;
+ 103              		.loc 1 148 0
+ 104 0044 0022     		movs	r2, #0
+ 105 0046 5A80     		strh	r2, [r3, #2]	@ movhi
+ 149:main.c        ****                 Count_Out_Write(1);
+ 106              		.loc 1 149 0
+ 107 0048 FFF7FEFF 		bl	Count_Out_Write
+ 108              	.LVL2:
+ 109 004c 18E0     		b	.L9
+ 110              	.L8:
+ 150:main.c        ****         
+ 151:main.c        ****             }else{ // if oneCount <= PREFIX_ACCURACY, bit is 0
+ 152:main.c        ****                 currentBit = 0x00; 
+ 111              		.loc 1 152 0
+ 112 004e 354B     		ldr	r3, .L16
+ 113 0050 0020     		movs	r0, #0
+ 114 0052 1872     		strb	r0, [r3, #8]
+ 153:main.c        ****                 zeroCount = 0; 
+ 115              		.loc 1 153 0
+ 116 0054 9880     		strh	r0, [r3, #4]	@ movhi
+ 154:main.c        ****                 Count_Out_Write(0);
+ 117              		.loc 1 154 0
+ 118 0056 FFF7FEFF 		bl	Count_Out_Write
+ 119              	.LVL3:
+ 120 005a 11E0     		b	.L9
+ 121              	.L7:
+ 155:main.c        ****             
+ 156:main.c        ****             }
+ 157:main.c        ****         }else{ // looking for data bits, can have less accuracy
+ 158:main.c        ****             if(oneCount >= DATA_ACCURACY){ // 1 bit must be Accuracy/100 = 1 
+ 122              		.loc 1 158 0
+ 123 005c 314B     		ldr	r3, .L16
+ 124 005e 5B88     		ldrh	r3, [r3, #2]
+ 125 0060 452B     		cmp	r3, #69
+ 126 0062 07D9     		bls	.L10
+ 159:main.c        ****                 currentBit = 0x01;
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 6
+
+
+ 127              		.loc 1 159 0
+ 128 0064 2F4B     		ldr	r3, .L16
+ 129 0066 0120     		movs	r0, #1
+ 130 0068 1872     		strb	r0, [r3, #8]
+ 160:main.c        ****                 oneCount = 0;
+ 131              		.loc 1 160 0
+ 132 006a 0022     		movs	r2, #0
+ 133 006c 5A80     		strh	r2, [r3, #2]	@ movhi
+ 161:main.c        ****                 Count_Out_Write(1);
+ 134              		.loc 1 161 0
+ 135 006e FFF7FEFF 		bl	Count_Out_Write
+ 136              	.LVL4:
+ 137 0072 05E0     		b	.L9
+ 138              	.L10:
+ 162:main.c        ****         
+ 163:main.c        ****             }else{ // if oneCount <= DATA_ACCURACY, bit is 0
+ 164:main.c        ****                 currentBit = 0x00; 
+ 139              		.loc 1 164 0
+ 140 0074 2B4B     		ldr	r3, .L16
+ 141 0076 0020     		movs	r0, #0
+ 142 0078 1872     		strb	r0, [r3, #8]
+ 165:main.c        ****                 zeroCount = 0; 
+ 143              		.loc 1 165 0
+ 144 007a 9880     		strh	r0, [r3, #4]	@ movhi
+ 166:main.c        ****                 Count_Out_Write(0);
+ 145              		.loc 1 166 0
+ 146 007c FFF7FEFF 		bl	Count_Out_Write
+ 147              	.LVL5:
+ 148              	.L9:
+ 167:main.c        ****             
+ 168:main.c        ****             }
+ 169:main.c        ****         }
+ 170:main.c        ****         dataCount++; // Keep track of what bit we are on
+ 149              		.loc 1 170 0
+ 150 0080 284B     		ldr	r3, .L16
+ 151 0082 5A7A     		ldrb	r2, [r3, #9]	@ zero_extendqisi2
+ 152 0084 0132     		adds	r2, r2, #1
+ 153 0086 D2B2     		uxtb	r2, r2
+ 154 0088 5A72     		strb	r2, [r3, #9]
+ 171:main.c        ****         levelCounter = 0; // Reset timer bit debouncer  
+ 155              		.loc 1 171 0
+ 156 008a 0021     		movs	r1, #0
+ 157 008c 1980     		strh	r1, [r3]	@ movhi
+ 172:main.c        ****         
+ 173:main.c        ****         //Look for pre-fix
+ 174:main.c        ****         data = data << 1; // Shift data over to store next bit
+ 158              		.loc 1 174 0
+ 159 008e 5989     		ldrh	r1, [r3, #10]
+ 160 0090 4900     		lsls	r1, r1, #1
+ 161 0092 89B2     		uxth	r1, r1
+ 175:main.c        ****         data = data | currentBit;
+ 162              		.loc 1 175 0
+ 163 0094 187A     		ldrb	r0, [r3, #8]	@ zero_extendqisi2
+ 164 0096 0143     		orrs	r1, r1, r0
+ 165 0098 5981     		strh	r1, [r3, #10]	@ movhi
+ 176:main.c        ****         // Check if data is prefix(oxFF) but we are not looking for data or decode
+ 177:main.c        ****         if(((data & PREFIX) == PREFIX) && (dataFlag == FALSE) && (decodeFlag == FALSE)){ 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 7
+
+
+ 166              		.loc 1 177 0
+ 167 009a CBB2     		uxtb	r3, r1
+ 168 009c FF2B     		cmp	r3, #255
+ 169 009e 0DD1     		bne	.L11
+ 170              		.loc 1 177 0 is_stmt 0 discriminator 1
+ 171 00a0 204B     		ldr	r3, .L16
+ 172 00a2 9B79     		ldrb	r3, [r3, #6]	@ zero_extendqisi2
+ 173 00a4 53B9     		cbnz	r3, .L11
+ 174              		.loc 1 177 0 discriminator 2
+ 175 00a6 1F4B     		ldr	r3, .L16
+ 176 00a8 DB79     		ldrb	r3, [r3, #7]	@ zero_extendqisi2
+ 177 00aa 3BB9     		cbnz	r3, .L11
+ 178:main.c        ****             dataCount = 0;
+ 178              		.loc 1 178 0 is_stmt 1
+ 179 00ac 1D4B     		ldr	r3, .L16
+ 180 00ae 0022     		movs	r2, #0
+ 181 00b0 5A72     		strb	r2, [r3, #9]
+ 179:main.c        ****             data = 0;
+ 182              		.loc 1 179 0
+ 183 00b2 5A81     		strh	r2, [r3, #10]	@ movhi
+ 180:main.c        ****             dataFlag = TRUE; //Start looking for data
+ 184              		.loc 1 180 0
+ 185 00b4 0122     		movs	r2, #1
+ 186 00b6 9A71     		strb	r2, [r3, #6]
+ 181:main.c        ****             lcdFlagEncode = TRUE; //Display pre-fix on lcd
+ 187              		.loc 1 181 0
+ 188 00b8 1A73     		strb	r2, [r3, #12]
+ 189 00ba 0EE0     		b	.L12
+ 190              	.L11:
+ 182:main.c        ****         
+ 183:main.c        ****         //Check data by checking next 8 bits and parity (9 bits) after the encoding
+ 184:main.c        ****         }else if((dataFlag == TRUE) && (dataCount > DATA_LENGTH+1)){
+ 191              		.loc 1 184 0
+ 192 00bc 194B     		ldr	r3, .L16
+ 193 00be 9B79     		ldrb	r3, [r3, #6]	@ zero_extendqisi2
+ 194 00c0 012B     		cmp	r3, #1
+ 195 00c2 0AD1     		bne	.L12
+ 196              		.loc 1 184 0 is_stmt 0 discriminator 1
+ 197 00c4 082A     		cmp	r2, #8
+ 198 00c6 08D9     		bls	.L12
+ 185:main.c        ****             crabs = data;
+ 199              		.loc 1 185 0 is_stmt 1
+ 200 00c8 164B     		ldr	r3, .L16
+ 201 00ca D981     		strh	r1, [r3, #14]	@ movhi
+ 186:main.c        ****             data = 0; //Restart data for decode
+ 202              		.loc 1 186 0
+ 203 00cc 0022     		movs	r2, #0
+ 204 00ce 5A81     		strh	r2, [r3, #10]	@ movhi
+ 187:main.c        ****             dataCount = 0; 
+ 205              		.loc 1 187 0
+ 206 00d0 5A72     		strb	r2, [r3, #9]
+ 188:main.c        ****             lcdFlagEncode = FALSE; //Turn off encode message
+ 207              		.loc 1 188 0
+ 208 00d2 1A73     		strb	r2, [r3, #12]
+ 189:main.c        ****             lcdFlagData = TRUE; //Display data
+ 209              		.loc 1 189 0
+ 210 00d4 0122     		movs	r2, #1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 8
+
+
+ 211 00d6 1A74     		strb	r2, [r3, #16]
+ 190:main.c        ****             decodeFlag = TRUE;
+ 212              		.loc 1 190 0
+ 213 00d8 DA71     		strb	r2, [r3, #7]
+ 214              	.L12:
+ 191:main.c        ****         }
+ 192:main.c        ****         
+ 193:main.c        ****         // Check for 8 bits of post-fix
+ 194:main.c        ****         if(decodeFlag == TRUE && (dataCount > DATA_LENGTH)){
+ 215              		.loc 1 194 0
+ 216 00da 124B     		ldr	r3, .L16
+ 217 00dc DB79     		ldrb	r3, [r3, #7]	@ zero_extendqisi2
+ 218 00de 012B     		cmp	r3, #1
+ 219 00e0 1FD1     		bne	.L3
+ 220              		.loc 1 194 0 is_stmt 0 discriminator 1
+ 221 00e2 104B     		ldr	r3, .L16
+ 222 00e4 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 223 00e6 072B     		cmp	r3, #7
+ 224 00e8 1BD9     		bls	.L3
+ 195:main.c        ****             // Correct postfix is 0x01
+ 196:main.c        ****             if(data == POSTFIX){
+ 225              		.loc 1 196 0 is_stmt 1
+ 226 00ea 0E4B     		ldr	r3, .L16
+ 227 00ec 5B89     		ldrh	r3, [r3, #10]
+ 228 00ee 012B     		cmp	r3, #1
+ 229 00f0 03D1     		bne	.L13
+ 197:main.c        ****              lcdFlagDecode = TRUE; // lcd flag for "good" post-fix
+ 230              		.loc 1 197 0
+ 231 00f2 0122     		movs	r2, #1
+ 232 00f4 0B4B     		ldr	r3, .L16
+ 233 00f6 5A74     		strb	r2, [r3, #17]
+ 234 00f8 02E0     		b	.L14
+ 235              	.L13:
+ 198:main.c        ****             }else{
+ 199:main.c        ****                 decodeWrong = TRUE; // lcd flag for "bad" post-fix
+ 236              		.loc 1 199 0
+ 237 00fa 0122     		movs	r2, #1
+ 238 00fc 094B     		ldr	r3, .L16
+ 239 00fe 9A74     		strb	r2, [r3, #18]
+ 240              	.L14:
+ 200:main.c        ****             }
+ 201:main.c        ****             decodeFlag = FALSE;
+ 241              		.loc 1 201 0
+ 242 0100 084A     		ldr	r2, .L16
+ 243 0102 0023     		movs	r3, #0
+ 244 0104 D371     		strb	r3, [r2, #7]
+ 202:main.c        ****             dataFlag = FALSE; //Don't want to check for data anymore
+ 245              		.loc 1 202 0
+ 246 0106 9371     		strb	r3, [r2, #6]
+ 203:main.c        ****             
+ 204:main.c        ****             threeTransmissions++;
+ 247              		.loc 1 204 0
+ 248 0108 D37C     		ldrb	r3, [r2, #19]	@ zero_extendqisi2
+ 249 010a 0133     		adds	r3, r3, #1
+ 250 010c DBB2     		uxtb	r3, r3
+ 251 010e D374     		strb	r3, [r2, #19]
+ 205:main.c        ****             
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 9
+
+
+ 206:main.c        ****             //after 3 transmissions, turn bit timer off and sleep time back on
+ 207:main.c        ****             if(threeTransmissions == THREE_TRANSMISSIONS){
+ 252              		.loc 1 207 0
+ 253 0110 022B     		cmp	r3, #2
+ 254 0112 06D1     		bne	.L3
+ 208:main.c        ****                 threeTransmissions = 0;
+ 255              		.loc 1 208 0
+ 256 0114 0022     		movs	r2, #0
+ 257 0116 034B     		ldr	r3, .L16
+ 258 0118 DA74     		strb	r2, [r3, #19]
+ 209:main.c        ****                     SleepTimer_Start();
+ 259              		.loc 1 209 0
+ 260 011a FFF7FEFF 		bl	SleepTimer_Start
+ 261              	.LVL6:
+ 210:main.c        ****                     Bit_Timer_Stop();
+ 262              		.loc 1 210 0
+ 263 011e FFF7FEFF 		bl	Bit_Timer_Stop
+ 264              	.LVL7:
+ 265              	.L3:
+ 266 0122 08BD     		pop	{r3, pc}
+ 267              	.L17:
+ 268              		.align	2
+ 269              	.L16:
+ 270 0124 00000000 		.word	.LANCHOR0
+ 271              		.cfi_endproc
+ 272              	.LFE66:
+ 273              		.size	Bit_Timer, .-Bit_Timer
+ 274              		.section	.text.wakeUp_ISR,"ax",%progbits
+ 275              		.align	2
+ 276              		.global	wakeUp_ISR
+ 277              		.thumb
+ 278              		.thumb_func
+ 279              		.type	wakeUp_ISR, %function
+ 280              	wakeUp_ISR:
+ 281              	.LFB67:
+ 211:main.c        ****             
+ 212:main.c        ****             }
+ 213:main.c        ****         }
+ 214:main.c        ****         
+ 215:main.c        ****     } // end of if(levelCounter == COUNT)
+ 216:main.c        **** } // end of CY_ISR(HighF_LevelCount)
+ 217:main.c        **** 
+ 218:main.c        **** 
+ 219:main.c        **** //check for prefix
+ 220:main.c        **** //disable sleep if see prefix
+ 221:main.c        **** //enable timer to restart sleep if false positive
+ 222:main.c        **** //if no prefix, disbale interrupt and nothing else 
+ 223:main.c        **** CY_ISR(wakeUp_ISR){
+ 282              		.loc 1 223 0
+ 283              		.cfi_startproc
+ 284              		@ args = 0, pretend = 0, frame = 0
+ 285              		@ frame_needed = 0, uses_anonymous_args = 0
+ 286 0000 08B5     		push	{r3, lr}
+ 287              		.cfi_def_cfa_offset 8
+ 288              		.cfi_offset 3, -8
+ 289              		.cfi_offset 14, -4
+ 224:main.c        ****     
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 10
+
+
+ 225:main.c        ****     CyWdtClear(); 
+ 290              		.loc 1 225 0
+ 291 0002 FFF7FEFF 		bl	CyWdtClear
+ 292              	.LVL8:
+ 226:main.c        ****     
+ 227:main.c        ****     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
+ 293              		.loc 1 227 0
+ 294 0006 FFF7FEFF 		bl	SleepTimer_GetStatus
+ 295              	.LVL9:
+ 228:main.c        ****     
+ 229:main.c        ****     sleepToggle_Write(TRUE);
+ 296              		.loc 1 229 0
+ 297 000a 0120     		movs	r0, #1
+ 298 000c FFF7FEFF 		bl	sleepToggle_Write
+ 299              	.LVL10:
+ 230:main.c        ****     CyDelay(Delay);
+ 300              		.loc 1 230 0
+ 301 0010 0220     		movs	r0, #2
+ 302 0012 FFF7FEFF 		bl	CyDelay
+ 303              	.LVL11:
+ 231:main.c        ****     sleepToggle_Write(FALSE);
+ 304              		.loc 1 231 0
+ 305 0016 0020     		movs	r0, #0
+ 306 0018 FFF7FEFF 		bl	sleepToggle_Write
+ 307              	.LVL12:
+ 232:main.c        ****     
+ 233:main.c        ****     if(Out_Comp_GetCompare() != 0){
+ 308              		.loc 1 233 0
+ 309 001c FFF7FEFF 		bl	Out_Comp_GetCompare
+ 310              	.LVL13:
+ 311 0020 28B1     		cbz	r0, .L18
+ 234:main.c        ****         SleepTimer_Stop();
+ 312              		.loc 1 234 0
+ 313 0022 FFF7FEFF 		bl	SleepTimer_Stop
+ 314              	.LVL14:
+ 235:main.c        ****         Bit_Timer_Start();
+ 315              		.loc 1 235 0
+ 316 0026 FFF7FEFF 		bl	Bit_Timer_Start
+ 317              	.LVL15:
+ 236:main.c        ****         //trigger interrupt to avoid data loss 
+ 237:main.c        ****         Timer_ISR_Enable();
+ 318              		.loc 1 237 0
+ 319 002a FFF7FEFF 		bl	Timer_ISR_Enable
+ 320              	.LVL16:
+ 321              	.L18:
+ 322 002e 08BD     		pop	{r3, pc}
+ 323              		.cfi_endproc
+ 324              	.LFE67:
+ 325              		.size	wakeUp_ISR, .-wakeUp_ISR
+ 326              		.section	.text.CheckParity,"ax",%progbits
+ 327              		.align	2
+ 328              		.global	CheckParity
+ 329              		.thumb
+ 330              		.thumb_func
+ 331              		.type	CheckParity, %function
+ 332              	CheckParity:
+ 333              	.LFB69:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 11
+
+
+ 238:main.c        ****     }
+ 239:main.c        **** 
+ 240:main.c        **** }
+ 241:main.c        **** 
+ 242:main.c        **** 
+ 243:main.c        **** ///*
+ 244:main.c        **** // * function: void Display(void)
+ 245:main.c        **** // * parameters: void
+ 246:main.c        **** // * returns: void
+ 247:main.c        **** // * description: Displays current data on LCD display depending
+ 248:main.c        **** // * on what flags are set
+ 249:main.c        **** // */
+ 250:main.c        **** void Display()
+ 251:main.c        **** {
+ 252:main.c        ****     // LCD Screen Messages
+ 253:main.c        ****     // If encode is received, display message
+ 254:main.c        ****     if(lcdFlagEncode == TRUE){
+ 255:main.c        ****         LCD_Char_ClearDisplay();
+ 256:main.c        ****         LCD_Char_PrintString("0xFF pre-fix");
+ 257:main.c        ****         lcdFlagEncode = FALSE; 
+ 258:main.c        ****     // When 9 bits are received, data will display at top of screen
+ 259:main.c        ****     }else if(lcdFlagData == TRUE){
+ 260:main.c        ****         paritySuccess = CheckParity(crabs);
+ 261:main.c        ****         crabs = crabs >> 1;
+ 262:main.c        ****         sprintf(OutputString, "Crabs:%i Err:%i",crabs, !paritySuccess);
+ 263:main.c        ****         LCD_Char_ClearDisplay();
+ 264:main.c        ****         LCD_Char_Position(0u,0u);
+ 265:main.c        ****         LCD_Char_PrintString(OutputString);
+ 266:main.c        ****         dataFlag = FALSE;
+ 267:main.c        ****         lcdFlagData = FALSE;
+ 268:main.c        ****     // Postfix will display good or bad below data on screen
+ 269:main.c        ****     }else if(lcdFlagDecode == TRUE){
+ 270:main.c        ****         LCD_Char_Position(1u,0u);
+ 271:main.c        ****         char8 displayG[] = "good";
+ 272:main.c        ****         LCD_Char_PrintString(displayG);
+ 273:main.c        ****         dataFlag = FALSE;
+ 274:main.c        ****         lcdFlagDecode = FALSE;
+ 275:main.c        ****     }else if(decodeWrong == TRUE){
+ 276:main.c        ****         LCD_Char_Position(1u,0u);
+ 277:main.c        ****         char8 displayB[] = "bad";
+ 278:main.c        ****         LCD_Char_PrintString(displayB);
+ 279:main.c        ****         decodeWrong = FALSE;
+ 280:main.c        ****     }
+ 281:main.c        **** }//end Display()
+ 282:main.c        **** 
+ 283:main.c        **** ///*
+ 284:main.c        **** // * function: void CheckParity(void)
+ 285:main.c        **** // * parameters: void
+ 286:main.c        **** // * returns: void
+ 287:main.c        **** // * description: XORs each bit of data to get even or odd parity for
+ 288:main.c        **** // * error checking
+ 289:main.c        **** // */
+ 290:main.c        **** int CheckParity(crabs)
+ 291:main.c        **** {
+ 334              		.loc 1 291 0
+ 335              		.cfi_startproc
+ 336              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 12
+
+
+ 337              		@ frame_needed = 0, uses_anonymous_args = 0
+ 338              		@ link register save eliminated.
+ 339              	.LVL17:
+ 340 0000 10B4     		push	{r4}
+ 341              		.cfi_def_cfa_offset 4
+ 342              		.cfi_offset 4, -4
+ 343              	.LVL18:
+ 292:main.c        ****     int i = 0;
+ 293:main.c        ****     int bitToCheck = crabs >> 1; // Remove parity from data
+ 344              		.loc 1 293 0
+ 345 0002 4210     		asrs	r2, r0, #1
+ 346              	.LVL19:
+ 294:main.c        ****     int receivedParity = (crabs & BIT_0_MASK); //Save parity from data received
+ 347              		.loc 1 294 0
+ 348 0004 00F00100 		and	r0, r0, #1
+ 349              	.LVL20:
+ 295:main.c        ****     int parity = bitToCheck & BIT_0_MASK; // Get first bit of data to XOR
+ 350              		.loc 1 295 0
+ 351 0008 02F00101 		and	r1, r2, #1
+ 352              	.LVL21:
+ 296:main.c        ****     for(i = 0; i < DATA_LENGTH; i++){
+ 353              		.loc 1 296 0
+ 354 000c 0023     		movs	r3, #0
+ 355 000e 04E0     		b	.L22
+ 356              	.LVL22:
+ 357              	.L23:
+ 297:main.c        ****         bitToCheck = bitToCheck >> 1; // shift mask over
+ 358              		.loc 1 297 0 discriminator 3
+ 359 0010 5210     		asrs	r2, r2, #1
+ 360              	.LVL23:
+ 298:main.c        ****         parity = (bitToCheck & BIT_0_MASK) ^ parity; // XOR new bit
+ 361              		.loc 1 298 0 discriminator 3
+ 362 0012 02F00104 		and	r4, r2, #1
+ 363 0016 6140     		eors	r1, r1, r4
+ 364              	.LVL24:
+ 296:main.c        ****     for(i = 0; i < DATA_LENGTH; i++){
+ 365              		.loc 1 296 0 discriminator 3
+ 366 0018 0133     		adds	r3, r3, #1
+ 367              	.LVL25:
+ 368              	.L22:
+ 296:main.c        ****     for(i = 0; i < DATA_LENGTH; i++){
+ 369              		.loc 1 296 0 is_stmt 0 discriminator 1
+ 370 001a 062B     		cmp	r3, #6
+ 371 001c F8DD     		ble	.L23
+ 299:main.c        ****     }
+ 300:main.c        ****     if(parity == receivedParity){
+ 372              		.loc 1 300 0 is_stmt 1
+ 373 001e 8142     		cmp	r1, r0
+ 374 0020 01D1     		bne	.L25
+ 301:main.c        ****         return SUCCESS;
+ 375              		.loc 1 301 0
+ 376 0022 0120     		movs	r0, #1
+ 377              	.LVL26:
+ 378 0024 00E0     		b	.L24
+ 379              	.LVL27:
+ 380              	.L25:
+ 302:main.c        ****     }else{
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 13
+
+
+ 303:main.c        ****         return FAILURE;
+ 381              		.loc 1 303 0
+ 382 0026 0020     		movs	r0, #0
+ 383              	.LVL28:
+ 384              	.L24:
+ 304:main.c        ****     }
+ 305:main.c        **** }   
+ 385              		.loc 1 305 0
+ 386 0028 10BC     		pop	{r4}
+ 387              		.cfi_restore 4
+ 388              		.cfi_def_cfa_offset 0
+ 389 002a 7047     		bx	lr
+ 390              		.cfi_endproc
+ 391              	.LFE69:
+ 392              		.size	CheckParity, .-CheckParity
+ 393              		.section	.text.Display,"ax",%progbits
+ 394              		.align	2
+ 395              		.global	Display
+ 396              		.thumb
+ 397              		.thumb_func
+ 398              		.type	Display, %function
+ 399              	Display:
+ 400              	.LFB68:
+ 251:main.c        ****     // LCD Screen Messages
+ 401              		.loc 1 251 0
+ 402              		.cfi_startproc
+ 403              		@ args = 0, pretend = 0, frame = 8
+ 404              		@ frame_needed = 0, uses_anonymous_args = 0
+ 405 0000 30B5     		push	{r4, r5, lr}
+ 406              		.cfi_def_cfa_offset 12
+ 407              		.cfi_offset 4, -12
+ 408              		.cfi_offset 5, -8
+ 409              		.cfi_offset 14, -4
+ 410 0002 83B0     		sub	sp, sp, #12
+ 411              		.cfi_def_cfa_offset 24
+ 254:main.c        ****         LCD_Char_ClearDisplay();
+ 412              		.loc 1 254 0
+ 413 0004 2C4B     		ldr	r3, .L33
+ 414 0006 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 415 0008 012B     		cmp	r3, #1
+ 416 000a 09D1     		bne	.L28
+ 255:main.c        ****         LCD_Char_PrintString("0xFF pre-fix");
+ 417              		.loc 1 255 0
+ 418 000c 0120     		movs	r0, #1
+ 419 000e FFF7FEFF 		bl	LCD_Char_WriteControl
+ 420              	.LVL29:
+ 256:main.c        ****         lcdFlagEncode = FALSE; 
+ 421              		.loc 1 256 0
+ 422 0012 2A48     		ldr	r0, .L33+4
+ 423 0014 FFF7FEFF 		bl	LCD_Char_PrintString
+ 424              	.LVL30:
+ 257:main.c        ****     // When 9 bits are received, data will display at top of screen
+ 425              		.loc 1 257 0
+ 426 0018 0022     		movs	r2, #0
+ 427 001a 274B     		ldr	r3, .L33
+ 428 001c 1A73     		strb	r2, [r3, #12]
+ 429 001e 48E0     		b	.L27
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 14
+
+
+ 430              	.L28:
+ 259:main.c        ****         paritySuccess = CheckParity(crabs);
+ 431              		.loc 1 259 0
+ 432 0020 254B     		ldr	r3, .L33
+ 433 0022 1B7C     		ldrb	r3, [r3, #16]	@ zero_extendqisi2
+ 434 0024 012B     		cmp	r3, #1
+ 435 0026 1DD1     		bne	.L30
+ 260:main.c        ****         crabs = crabs >> 1;
+ 436              		.loc 1 260 0
+ 437 0028 234C     		ldr	r4, .L33
+ 438 002a E589     		ldrh	r5, [r4, #14]
+ 439 002c 2846     		mov	r0, r5
+ 440 002e FFF7FEFF 		bl	CheckParity
+ 441              	.LVL31:
+ 442 0032 6061     		str	r0, [r4, #20]
+ 261:main.c        ****         sprintf(OutputString, "Crabs:%i Err:%i",crabs, !paritySuccess);
+ 443              		.loc 1 261 0
+ 444 0034 6A08     		lsrs	r2, r5, #1
+ 445 0036 E281     		strh	r2, [r4, #14]	@ movhi
+ 262:main.c        ****         LCD_Char_ClearDisplay();
+ 446              		.loc 1 262 0
+ 447 0038 214D     		ldr	r5, .L33+8
+ 448 003a B0FA80F3 		clz	r3, r0
+ 449 003e 5B09     		lsrs	r3, r3, #5
+ 450 0040 2049     		ldr	r1, .L33+12
+ 451 0042 2846     		mov	r0, r5
+ 452 0044 FFF7FEFF 		bl	sprintf
+ 453              	.LVL32:
+ 263:main.c        ****         LCD_Char_Position(0u,0u);
+ 454              		.loc 1 263 0
+ 455 0048 0120     		movs	r0, #1
+ 456 004a FFF7FEFF 		bl	LCD_Char_WriteControl
+ 457              	.LVL33:
+ 264:main.c        ****         LCD_Char_PrintString(OutputString);
+ 458              		.loc 1 264 0
+ 459 004e 0021     		movs	r1, #0
+ 460 0050 0846     		mov	r0, r1
+ 461 0052 FFF7FEFF 		bl	LCD_Char_Position
+ 462              	.LVL34:
+ 265:main.c        ****         dataFlag = FALSE;
+ 463              		.loc 1 265 0
+ 464 0056 2846     		mov	r0, r5
+ 465 0058 FFF7FEFF 		bl	LCD_Char_PrintString
+ 466              	.LVL35:
+ 266:main.c        ****         lcdFlagData = FALSE;
+ 467              		.loc 1 266 0
+ 468 005c 0023     		movs	r3, #0
+ 469 005e A371     		strb	r3, [r4, #6]
+ 267:main.c        ****     // Postfix will display good or bad below data on screen
+ 470              		.loc 1 267 0
+ 471 0060 2374     		strb	r3, [r4, #16]
+ 472 0062 26E0     		b	.L27
+ 473              	.L30:
+ 269:main.c        ****         LCD_Char_Position(1u,0u);
+ 474              		.loc 1 269 0
+ 475 0064 144B     		ldr	r3, .L33
+ 476 0066 5B7C     		ldrb	r3, [r3, #17]	@ zero_extendqisi2
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 15
+
+
+ 477 0068 012B     		cmp	r3, #1
+ 478 006a 11D1     		bne	.L31
+ 479              	.LBB2:
+ 270:main.c        ****         char8 displayG[] = "good";
+ 480              		.loc 1 270 0
+ 481 006c 0021     		movs	r1, #0
+ 482 006e 0120     		movs	r0, #1
+ 483 0070 FFF7FEFF 		bl	LCD_Char_Position
+ 484              	.LVL36:
+ 271:main.c        ****         LCD_Char_PrintString(displayG);
+ 485              		.loc 1 271 0
+ 486 0074 144B     		ldr	r3, .L33+16
+ 487 0076 93E80300 		ldmia	r3, {r0, r1}
+ 488 007a 0090     		str	r0, [sp]
+ 489 007c 8DF80410 		strb	r1, [sp, #4]
+ 272:main.c        ****         dataFlag = FALSE;
+ 490              		.loc 1 272 0
+ 491 0080 6846     		mov	r0, sp
+ 492 0082 FFF7FEFF 		bl	LCD_Char_PrintString
+ 493              	.LVL37:
+ 273:main.c        ****         lcdFlagDecode = FALSE;
+ 494              		.loc 1 273 0
+ 495 0086 0C4B     		ldr	r3, .L33
+ 496 0088 0022     		movs	r2, #0
+ 497 008a 9A71     		strb	r2, [r3, #6]
+ 274:main.c        ****     }else if(decodeWrong == TRUE){
+ 498              		.loc 1 274 0
+ 499 008c 5A74     		strb	r2, [r3, #17]
+ 500              	.LBE2:
+ 501 008e 10E0     		b	.L27
+ 502              	.L31:
+ 275:main.c        ****         LCD_Char_Position(1u,0u);
+ 503              		.loc 1 275 0
+ 504 0090 094B     		ldr	r3, .L33
+ 505 0092 9B7C     		ldrb	r3, [r3, #18]	@ zero_extendqisi2
+ 506 0094 012B     		cmp	r3, #1
+ 507 0096 0CD1     		bne	.L27
+ 508              	.LBB3:
+ 276:main.c        ****         char8 displayB[] = "bad";
+ 509              		.loc 1 276 0
+ 510 0098 0021     		movs	r1, #0
+ 511 009a 0120     		movs	r0, #1
+ 512 009c FFF7FEFF 		bl	LCD_Char_Position
+ 513              	.LVL38:
+ 277:main.c        ****         LCD_Char_PrintString(displayB);
+ 514              		.loc 1 277 0
+ 515 00a0 02A8     		add	r0, sp, #8
+ 516 00a2 0A4B     		ldr	r3, .L33+20
+ 517 00a4 40F8083D 		str	r3, [r0, #-8]!
+ 278:main.c        ****         decodeWrong = FALSE;
+ 518              		.loc 1 278 0
+ 519 00a8 FFF7FEFF 		bl	LCD_Char_PrintString
+ 520              	.LVL39:
+ 279:main.c        ****     }
+ 521              		.loc 1 279 0
+ 522 00ac 0022     		movs	r2, #0
+ 523 00ae 024B     		ldr	r3, .L33
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 16
+
+
+ 524 00b0 9A74     		strb	r2, [r3, #18]
+ 525              	.L27:
+ 526              	.LBE3:
+ 281:main.c        **** 
+ 527              		.loc 1 281 0
+ 528 00b2 03B0     		add	sp, sp, #12
+ 529              		.cfi_def_cfa_offset 12
+ 530              		@ sp needed
+ 531 00b4 30BD     		pop	{r4, r5, pc}
+ 532              	.L34:
+ 533 00b6 00BF     		.align	2
+ 534              	.L33:
+ 535 00b8 00000000 		.word	.LANCHOR0
+ 536 00bc 00000000 		.word	.LC0
+ 537 00c0 00000000 		.word	OutputString
+ 538 00c4 10000000 		.word	.LC1
+ 539 00c8 20000000 		.word	.LC2
+ 540 00cc 62616400 		.word	6578530
+ 541              		.cfi_endproc
+ 542              	.LFE68:
+ 543              		.size	Display, .-Display
+ 544              		.section	.text.main,"ax",%progbits
+ 545              		.align	2
+ 546              		.global	main
+ 547              		.thumb
+ 548              		.thumb_func
+ 549              		.type	main, %function
+ 550              	main:
+ 551              	.LFB64:
+  68:main.c        ****     
+ 552              		.loc 1 68 0
+ 553              		.cfi_startproc
+ 554              		@ Volatile: function does not return.
+ 555              		@ args = 0, pretend = 0, frame = 0
+ 556              		@ frame_needed = 0, uses_anonymous_args = 0
+ 557 0000 08B5     		push	{r3, lr}
+ 558              		.cfi_def_cfa_offset 8
+ 559              		.cfi_offset 3, -8
+ 560              		.cfi_offset 14, -4
+  70:main.c        ****     
+ 561              		.loc 1 70 0
+ 562              		.syntax unified
+ 563              	@ 70 "main.c" 1
+ 564 0002 62B6     		CPSIE   i
+ 565              	@ 0 "" 2
+  73:main.c        ****     sprintf(display, "Starting Module!");
+ 566              		.loc 1 73 0
+ 567              		.thumb
+ 568              		.syntax unified
+ 569 0004 FFF7FEFF 		bl	LCD_Char_Start
+ 570              	.LVL40:
+  74:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+ 571              		.loc 1 74 0
+ 572 0008 224C     		ldr	r4, .L38
+ 573 000a 234D     		ldr	r5, .L38+4
+ 574 000c 0FCD     		ldmia	r5!, {r0, r1, r2, r3}
+ 575 000e 2060     		str	r0, [r4]	@ unaligned
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 17
+
+
+ 576 0010 6160     		str	r1, [r4, #4]	@ unaligned
+ 577 0012 A260     		str	r2, [r4, #8]	@ unaligned
+ 578 0014 E360     		str	r3, [r4, #12]	@ unaligned
+ 579 0016 2B78     		ldrb	r3, [r5]	@ zero_extendqisi2
+ 580 0018 2374     		strb	r3, [r4, #16]
+  75:main.c        ****     LCD_Char_PrintString(display);
+ 581              		.loc 1 75 0
+ 582 001a 0021     		movs	r1, #0
+ 583 001c 0846     		mov	r0, r1
+ 584 001e FFF7FEFF 		bl	LCD_Char_Position
+ 585              	.LVL41:
+  76:main.c        ****     //CyDelay(FiveSecs);
+ 586              		.loc 1 76 0
+ 587 0022 2046     		mov	r0, r4
+ 588 0024 FFF7FEFF 		bl	LCD_Char_PrintString
+ 589              	.LVL42:
+  82:main.c        ****     PWM_Recon_Start();
+ 590              		.loc 1 82 0
+ 591 0028 FFF7FEFF 		bl	UART_Start
+ 592              	.LVL43:
+  83:main.c        ****     Shift_Reg_Start();
+ 593              		.loc 1 83 0
+ 594 002c FFF7FEFF 		bl	PWM_Recon_Start
+ 595              	.LVL44:
+  84:main.c        ****     Out_Comp_Start();
+ 596              		.loc 1 84 0
+ 597 0030 FFF7FEFF 		bl	Shift_Reg_Start
+ 598              	.LVL45:
+  85:main.c        ****     Bit_Timer_Start();
+ 599              		.loc 1 85 0
+ 600 0034 FFF7FEFF 		bl	Out_Comp_Start
+ 601              	.LVL46:
+  86:main.c        ****     Timer_ISR_StartEx(Bit_Timer);
+ 602              		.loc 1 86 0
+ 603 0038 FFF7FEFF 		bl	Bit_Timer_Start
+ 604              	.LVL47:
+  87:main.c        ****     Sleep_ISR_StartEx(wakeUp_ISR);
+ 605              		.loc 1 87 0
+ 606 003c 1748     		ldr	r0, .L38+8
+ 607 003e FFF7FEFF 		bl	Timer_ISR_StartEx
+ 608              	.LVL48:
+  88:main.c        ****    
+ 609              		.loc 1 88 0
+ 610 0042 1748     		ldr	r0, .L38+12
+ 611 0044 FFF7FEFF 		bl	Sleep_ISR_StartEx
+ 612              	.LVL49:
+  91:main.c        ****     watchDogCheck_StartEx(watchDogCheck);      
+ 613              		.loc 1 91 0
+ 614 0048 FFF7FEFF 		bl	checkWatchDogTimer_Start
+ 615              	.LVL50:
+  92:main.c        ****     // Start watch dog timer to check for blocks in code
+ 616              		.loc 1 92 0
+ 617 004c 1548     		ldr	r0, .L38+16
+ 618 004e FFF7FEFF 		bl	watchDogCheck_StartEx
+ 619              	.LVL51:
+  94:main.c        ****     
+ 620              		.loc 1 94 0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 18
+
+
+ 621 0052 0021     		movs	r1, #0
+ 622 0054 0846     		mov	r0, r1
+ 623 0056 FFF7FEFF 		bl	CyWdtStart
+ 624              	.LVL52:
+  97:main.c        **** 
+ 625              		.loc 1 97 0
+ 626 005a FFF7FEFF 		bl	SleepTimer_Start
+ 627              	.LVL53:
+ 100:main.c        ****     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
+ 628              		.loc 1 100 0
+ 629 005e 124D     		ldr	r5, .L38+20
+ 630 0060 0FCD     		ldmia	r5!, {r0, r1, r2, r3}
+ 631 0062 2060     		str	r0, [r4]	@ unaligned
+ 632 0064 6160     		str	r1, [r4, #4]	@ unaligned
+ 633 0066 A260     		str	r2, [r4, #8]	@ unaligned
+ 634 0068 E360     		str	r3, [r4, #12]	@ unaligned
+ 635 006a 2B88     		ldrh	r3, [r5]	@ unaligned
+ 636 006c 2382     		strh	r3, [r4, #16]	@ unaligned
+ 101:main.c        ****     LCD_Char_PrintString(display);
+ 637              		.loc 1 101 0
+ 638 006e 0021     		movs	r1, #0
+ 639 0070 0846     		mov	r0, r1
+ 640 0072 FFF7FEFF 		bl	LCD_Char_Position
+ 641              	.LVL54:
+ 102:main.c        ****     
+ 642              		.loc 1 102 0
+ 643 0076 2046     		mov	r0, r4
+ 644 0078 FFF7FEFF 		bl	LCD_Char_PrintString
+ 645              	.LVL55:
+ 104:main.c        ****     
+ 646              		.loc 1 104 0
+ 647 007c 0120     		movs	r0, #1
+ 648 007e FFF7FEFF 		bl	Power_Toggle_Write
+ 649              	.LVL56:
+ 109:main.c        ****     
+ 650              		.loc 1 109 0
+ 651 0082 4FF40061 		mov	r1, #2048
+ 652 0086 0020     		movs	r0, #0
+ 653 0088 FFF7FEFF 		bl	CyPmSleep
+ 654              	.LVL57:
+ 655              	.L36:
+ 115:main.c        ****     } // end of for(;;)
+ 656              		.loc 1 115 0 discriminator 1
+ 657 008c FFF7FEFF 		bl	Display
+ 658              	.LVL58:
+ 659 0090 FCE7     		b	.L36
+ 660              	.L39:
+ 661 0092 00BF     		.align	2
+ 662              	.L38:
+ 663 0094 00000000 		.word	display
+ 664 0098 28000000 		.word	.LC3
+ 665 009c 00000000 		.word	Bit_Timer
+ 666 00a0 00000000 		.word	wakeUp_ISR
+ 667 00a4 00000000 		.word	watchDogCheck
+ 668 00a8 3C000000 		.word	.LC4
+ 669              		.cfi_endproc
+ 670              	.LFE64:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 19
+
+
+ 671              		.size	main, .-main
+ 672              		.section	.text.SendData,"ax",%progbits
+ 673              		.align	2
+ 674              		.global	SendData
+ 675              		.thumb
+ 676              		.thumb_func
+ 677              		.type	SendData, %function
+ 678              	SendData:
+ 679              	.LFB70:
+ 306:main.c        **** 
+ 307:main.c        **** void SendData()
+ 308:main.c        **** {
+ 680              		.loc 1 308 0
+ 681              		.cfi_startproc
+ 682              		@ args = 0, pretend = 0, frame = 0
+ 683              		@ frame_needed = 0, uses_anonymous_args = 0
+ 684 0000 10B5     		push	{r4, lr}
+ 685              		.cfi_def_cfa_offset 8
+ 686              		.cfi_offset 4, -8
+ 687              		.cfi_offset 14, -4
+ 309:main.c        ****     UART_WriteTxData(crabs);
+ 688              		.loc 1 309 0
+ 689 0002 094C     		ldr	r4, .L44
+ 690 0004 A07B     		ldrb	r0, [r4, #14]	@ zero_extendqisi2
+ 691 0006 FFF7FEFF 		bl	UART_WriteTxData
+ 692              	.LVL59:
+ 310:main.c        ****     if((paritySuccess == SUCCESS) && (decodeWrong != TRUE)){
+ 693              		.loc 1 310 0
+ 694 000a 6369     		ldr	r3, [r4, #20]
+ 695 000c 012B     		cmp	r3, #1
+ 696 000e 06D1     		bne	.L41
+ 697              		.loc 1 310 0 is_stmt 0 discriminator 1
+ 698 0010 A37C     		ldrb	r3, [r4, #18]	@ zero_extendqisi2
+ 699 0012 012B     		cmp	r3, #1
+ 700 0014 03D0     		beq	.L41
+ 311:main.c        ****         UART_WriteTxData(SUCCESS);
+ 701              		.loc 1 311 0 is_stmt 1
+ 702 0016 0120     		movs	r0, #1
+ 703 0018 FFF7FEFF 		bl	UART_WriteTxData
+ 704              	.LVL60:
+ 705 001c 10BD     		pop	{r4, pc}
+ 706              	.L41:
+ 312:main.c        ****     }else{
+ 313:main.c        ****         UART_WriteTxData(FAILURE);
+ 707              		.loc 1 313 0
+ 708 001e 0020     		movs	r0, #0
+ 709 0020 FFF7FEFF 		bl	UART_WriteTxData
+ 710              	.LVL61:
+ 711 0024 10BD     		pop	{r4, pc}
+ 712              	.L45:
+ 713 0026 00BF     		.align	2
+ 714              	.L44:
+ 715 0028 00000000 		.word	.LANCHOR0
+ 716              		.cfi_endproc
+ 717              	.LFE70:
+ 718              		.size	SendData, .-SendData
+ 719              		.comm	display,12,4
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 20
+
+
+ 720              		.comm	OutputString,12,4
+ 721              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 722              		.align	2
+ 723              	.LC0:
+ 724 0000 30784646 		.ascii	"0xFF pre-fix\000"
+ 724      20707265 
+ 724      2D666978 
+ 724      00
+ 725 000d 000000   		.space	3
+ 726              	.LC1:
+ 727 0010 43726162 		.ascii	"Crabs:%i Err:%i\000"
+ 727      733A2569 
+ 727      20457272 
+ 727      3A256900 
+ 728              	.LC2:
+ 729 0020 676F6F64 		.ascii	"good\000"
+ 729      00
+ 730 0025 000000   		.space	3
+ 731              	.LC3:
+ 732 0028 53746172 		.ascii	"Starting Module!\000"
+ 732      74696E67 
+ 732      204D6F64 
+ 732      756C6521 
+ 732      00
+ 733 0039 000000   		.space	3
+ 734              	.LC4:
+ 735 003c 636F756E 		.ascii	"counting crabs...\000"
+ 735      74696E67 
+ 735      20637261 
+ 735      62732E2E 
+ 735      2E00
+ 736              		.bss
+ 737              		.align	2
+ 738              		.set	.LANCHOR0,. + 0
+ 739              		.type	levelCounter, %object
+ 740              		.size	levelCounter, 2
+ 741              	levelCounter:
+ 742 0000 0000     		.space	2
+ 743              		.type	oneCount, %object
+ 744              		.size	oneCount, 2
+ 745              	oneCount:
+ 746 0002 0000     		.space	2
+ 747              		.type	zeroCount, %object
+ 748              		.size	zeroCount, 2
+ 749              	zeroCount:
+ 750 0004 0000     		.space	2
+ 751              		.type	dataFlag, %object
+ 752              		.size	dataFlag, 1
+ 753              	dataFlag:
+ 754 0006 00       		.space	1
+ 755              		.type	decodeFlag, %object
+ 756              		.size	decodeFlag, 1
+ 757              	decodeFlag:
+ 758 0007 00       		.space	1
+ 759              		.type	currentBit, %object
+ 760              		.size	currentBit, 1
+ 761              	currentBit:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 21
+
+
+ 762 0008 00       		.space	1
+ 763              		.type	dataCount, %object
+ 764              		.size	dataCount, 1
+ 765              	dataCount:
+ 766 0009 00       		.space	1
+ 767              		.type	data, %object
+ 768              		.size	data, 2
+ 769              	data:
+ 770 000a 0000     		.space	2
+ 771              		.type	lcdFlagEncode, %object
+ 772              		.size	lcdFlagEncode, 1
+ 773              	lcdFlagEncode:
+ 774 000c 00       		.space	1
+ 775 000d 00       		.space	1
+ 776              		.type	crabs, %object
+ 777              		.size	crabs, 2
+ 778              	crabs:
+ 779 000e 0000     		.space	2
+ 780              		.type	lcdFlagData, %object
+ 781              		.size	lcdFlagData, 1
+ 782              	lcdFlagData:
+ 783 0010 00       		.space	1
+ 784              		.type	lcdFlagDecode, %object
+ 785              		.size	lcdFlagDecode, 1
+ 786              	lcdFlagDecode:
+ 787 0011 00       		.space	1
+ 788              		.type	decodeWrong, %object
+ 789              		.size	decodeWrong, 1
+ 790              	decodeWrong:
+ 791 0012 00       		.space	1
+ 792              		.type	threeTransmissions, %object
+ 793              		.size	threeTransmissions, 1
+ 794              	threeTransmissions:
+ 795 0013 00       		.space	1
+ 796              		.type	paritySuccess, %object
+ 797              		.size	paritySuccess, 4
+ 798              	paritySuccess:
+ 799 0014 00000000 		.space	4
+ 800              		.text
+ 801              	.Letext0:
+ 802              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 803              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 804              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 805              		.file 5 "Generated_Source\\PSoC5/core_cm3.h"
+ 806              		.file 6 "Generated_Source\\PSoC5/CyLib.h"
+ 807              		.file 7 "Generated_Source\\PSoC5/Out_Comp.h"
+ 808              		.file 8 "Generated_Source\\PSoC5/Count_Out.h"
+ 809              		.file 9 "Generated_Source\\PSoC5/SleepTimer.h"
+ 810              		.file 10 "Generated_Source\\PSoC5/Bit_Timer.h"
+ 811              		.file 11 "Generated_Source\\PSoC5/sleepToggle.h"
+ 812              		.file 12 "Generated_Source\\PSoC5/Timer_ISR.h"
+ 813              		.file 13 "Generated_Source\\PSoC5/LCD_Char.h"
+ 814              		.file 14 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4
+ 815              		.file 15 "Generated_Source\\PSoC5/UART.h"
+ 816              		.file 16 "Generated_Source\\PSoC5/PWM_Recon.h"
+ 817              		.file 17 "Generated_Source\\PSoC5/Shift_Reg.h"
+ 818              		.file 18 "Generated_Source\\PSoC5/Sleep_ISR.h"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 22
+
+
+ 819              		.file 19 "Generated_Source\\PSoC5/checkWatchDogTimer.h"
+ 820              		.file 20 "Generated_Source\\PSoC5/watchDogCheck.h"
+ 821              		.file 21 "Generated_Source\\PSoC5/Power_Toggle.h"
+ 822              		.file 22 "Generated_Source\\PSoC5/cyPm.h"
+ 823              		.section	.debug_info,"",%progbits
+ 824              	.Ldebug_info0:
+ 825 0000 A6070000 		.4byte	0x7a6
+ 826 0004 0400     		.2byte	0x4
+ 827 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 828 000a 04       		.byte	0x4
+ 829 000b 01       		.uleb128 0x1
+ 830 000c 7C020000 		.4byte	.LASF75
+ 831 0010 0C       		.byte	0xc
+ 832 0011 F0030000 		.4byte	.LASF76
+ 833 0015 A9030000 		.4byte	.LASF77
+ 834 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 835 001d 00000000 		.4byte	0
+ 836 0021 00000000 		.4byte	.Ldebug_line0
+ 837 0025 02       		.uleb128 0x2
+ 838 0026 01       		.byte	0x1
+ 839 0027 06       		.byte	0x6
+ 840 0028 03020000 		.4byte	.LASF0
+ 841 002c 02       		.uleb128 0x2
+ 842 002d 01       		.byte	0x1
+ 843 002e 08       		.byte	0x8
+ 844 002f CF010000 		.4byte	.LASF1
+ 845 0033 02       		.uleb128 0x2
+ 846 0034 02       		.byte	0x2
+ 847 0035 05       		.byte	0x5
+ 848 0036 41000000 		.4byte	.LASF2
+ 849 003a 02       		.uleb128 0x2
+ 850 003b 02       		.byte	0x2
+ 851 003c 07       		.byte	0x7
+ 852 003d 96030000 		.4byte	.LASF3
+ 853 0041 03       		.uleb128 0x3
+ 854 0042 24040000 		.4byte	.LASF9
+ 855 0046 02       		.byte	0x2
+ 856 0047 3F       		.byte	0x3f
+ 857 0048 4C000000 		.4byte	0x4c
+ 858 004c 02       		.uleb128 0x2
+ 859 004d 04       		.byte	0x4
+ 860 004e 05       		.byte	0x5
+ 861 004f 3D010000 		.4byte	.LASF4
+ 862 0053 02       		.uleb128 0x2
+ 863 0054 04       		.byte	0x4
+ 864 0055 07       		.byte	0x7
+ 865 0056 F7030000 		.4byte	.LASF5
+ 866 005a 02       		.uleb128 0x2
+ 867 005b 08       		.byte	0x8
+ 868 005c 05       		.byte	0x5
+ 869 005d 0E010000 		.4byte	.LASF6
+ 870 0061 02       		.uleb128 0x2
+ 871 0062 08       		.byte	0x8
+ 872 0063 07       		.byte	0x7
+ 873 0064 1E020000 		.4byte	.LASF7
+ 874 0068 04       		.uleb128 0x4
+ 875 0069 04       		.byte	0x4
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 23
+
+
+ 876 006a 05       		.byte	0x5
+ 877 006b 696E7400 		.ascii	"int\000"
+ 878 006f 02       		.uleb128 0x2
+ 879 0070 04       		.byte	0x4
+ 880 0071 07       		.byte	0x7
+ 881 0072 35020000 		.4byte	.LASF8
+ 882 0076 03       		.uleb128 0x3
+ 883 0077 25030000 		.4byte	.LASF10
+ 884 007b 03       		.byte	0x3
+ 885 007c 2C       		.byte	0x2c
+ 886 007d 41000000 		.4byte	0x41
+ 887 0081 05       		.uleb128 0x5
+ 888 0082 B8000000 		.4byte	.LASF11
+ 889 0086 04       		.byte	0x4
+ 890 0087 9201     		.2byte	0x192
+ 891 0089 2C000000 		.4byte	0x2c
+ 892 008d 05       		.uleb128 0x5
+ 893 008e A1000000 		.4byte	.LASF12
+ 894 0092 04       		.byte	0x4
+ 895 0093 9301     		.2byte	0x193
+ 896 0095 3A000000 		.4byte	0x3a
+ 897 0099 02       		.uleb128 0x2
+ 898 009a 04       		.byte	0x4
+ 899 009b 04       		.byte	0x4
+ 900 009c E9000000 		.4byte	.LASF13
+ 901 00a0 02       		.uleb128 0x2
+ 902 00a1 08       		.byte	0x8
+ 903 00a2 04       		.byte	0x4
+ 904 00a3 09040000 		.4byte	.LASF14
+ 905 00a7 05       		.uleb128 0x5
+ 906 00a8 71000000 		.4byte	.LASF15
+ 907 00ac 04       		.byte	0x4
+ 908 00ad A301     		.2byte	0x1a3
+ 909 00af B3000000 		.4byte	0xb3
+ 910 00b3 02       		.uleb128 0x2
+ 911 00b4 01       		.byte	0x1
+ 912 00b5 08       		.byte	0x8
+ 913 00b6 2F010000 		.4byte	.LASF16
+ 914 00ba 02       		.uleb128 0x2
+ 915 00bb 08       		.byte	0x8
+ 916 00bc 04       		.byte	0x4
+ 917 00bd C3010000 		.4byte	.LASF17
+ 918 00c1 02       		.uleb128 0x2
+ 919 00c2 04       		.byte	0x4
+ 920 00c3 07       		.byte	0x7
+ 921 00c4 57000000 		.4byte	.LASF18
+ 922 00c8 06       		.uleb128 0x6
+ 923 00c9 DD010000 		.4byte	.LASF19
+ 924 00cd 01       		.byte	0x1
+ 925 00ce 78       		.byte	0x78
+ 926 00cf 00000000 		.4byte	.LFB65
+ 927 00d3 08000000 		.4byte	.LFE65-.LFB65
+ 928 00d7 01       		.uleb128 0x1
+ 929 00d8 9C       		.byte	0x9c
+ 930 00d9 E7000000 		.4byte	0xe7
+ 931 00dd 07       		.uleb128 0x7
+ 932 00de 06000000 		.4byte	.LVL0
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 24
+
+
+ 933 00e2 75060000 		.4byte	0x675
+ 934 00e6 00       		.byte	0
+ 935 00e7 06       		.uleb128 0x6
+ 936 00e8 CC000000 		.4byte	.LASF20
+ 937 00ec 01       		.byte	0x1
+ 938 00ed 85       		.byte	0x85
+ 939 00ee 00000000 		.4byte	.LFB66
+ 940 00f2 28010000 		.4byte	.LFE66-.LFB66
+ 941 00f6 01       		.uleb128 0x1
+ 942 00f7 9C       		.byte	0x9c
+ 943 00f8 64010000 		.4byte	0x164
+ 944 00fc 07       		.uleb128 0x7
+ 945 00fd 0E000000 		.4byte	.LVL1
+ 946 0101 80060000 		.4byte	0x680
+ 947 0105 08       		.uleb128 0x8
+ 948 0106 4C000000 		.4byte	.LVL2
+ 949 010a 8B060000 		.4byte	0x68b
+ 950 010e 18010000 		.4byte	0x118
+ 951 0112 09       		.uleb128 0x9
+ 952 0113 01       		.uleb128 0x1
+ 953 0114 50       		.byte	0x50
+ 954 0115 01       		.uleb128 0x1
+ 955 0116 31       		.byte	0x31
+ 956 0117 00       		.byte	0
+ 957 0118 08       		.uleb128 0x8
+ 958 0119 5A000000 		.4byte	.LVL3
+ 959 011d 8B060000 		.4byte	0x68b
+ 960 0121 2B010000 		.4byte	0x12b
+ 961 0125 09       		.uleb128 0x9
+ 962 0126 01       		.uleb128 0x1
+ 963 0127 50       		.byte	0x50
+ 964 0128 01       		.uleb128 0x1
+ 965 0129 30       		.byte	0x30
+ 966 012a 00       		.byte	0
+ 967 012b 08       		.uleb128 0x8
+ 968 012c 72000000 		.4byte	.LVL4
+ 969 0130 8B060000 		.4byte	0x68b
+ 970 0134 3E010000 		.4byte	0x13e
+ 971 0138 09       		.uleb128 0x9
+ 972 0139 01       		.uleb128 0x1
+ 973 013a 50       		.byte	0x50
+ 974 013b 01       		.uleb128 0x1
+ 975 013c 31       		.byte	0x31
+ 976 013d 00       		.byte	0
+ 977 013e 08       		.uleb128 0x8
+ 978 013f 80000000 		.4byte	.LVL5
+ 979 0143 8B060000 		.4byte	0x68b
+ 980 0147 51010000 		.4byte	0x151
+ 981 014b 09       		.uleb128 0x9
+ 982 014c 01       		.uleb128 0x1
+ 983 014d 50       		.byte	0x50
+ 984 014e 01       		.uleb128 0x1
+ 985 014f 30       		.byte	0x30
+ 986 0150 00       		.byte	0
+ 987 0151 07       		.uleb128 0x7
+ 988 0152 1E010000 		.4byte	.LVL6
+ 989 0156 96060000 		.4byte	0x696
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 25
+
+
+ 990 015a 07       		.uleb128 0x7
+ 991 015b 22010000 		.4byte	.LVL7
+ 992 015f A1060000 		.4byte	0x6a1
+ 993 0163 00       		.byte	0
+ 994 0164 06       		.uleb128 0x6
+ 995 0165 AD010000 		.4byte	.LASF21
+ 996 0169 01       		.byte	0x1
+ 997 016a DF       		.byte	0xdf
+ 998 016b 00000000 		.4byte	.LFB67
+ 999 016f 30000000 		.4byte	.LFE67-.LFB67
+ 1000 0173 01       		.uleb128 0x1
+ 1001 0174 9C       		.byte	0x9c
+ 1002 0175 E9010000 		.4byte	0x1e9
+ 1003 0179 07       		.uleb128 0x7
+ 1004 017a 06000000 		.4byte	.LVL8
+ 1005 017e 75060000 		.4byte	0x675
+ 1006 0182 07       		.uleb128 0x7
+ 1007 0183 0A000000 		.4byte	.LVL9
+ 1008 0187 AC060000 		.4byte	0x6ac
+ 1009 018b 08       		.uleb128 0x8
+ 1010 018c 10000000 		.4byte	.LVL10
+ 1011 0190 B7060000 		.4byte	0x6b7
+ 1012 0194 9E010000 		.4byte	0x19e
+ 1013 0198 09       		.uleb128 0x9
+ 1014 0199 01       		.uleb128 0x1
+ 1015 019a 50       		.byte	0x50
+ 1016 019b 01       		.uleb128 0x1
+ 1017 019c 31       		.byte	0x31
+ 1018 019d 00       		.byte	0
+ 1019 019e 08       		.uleb128 0x8
+ 1020 019f 16000000 		.4byte	.LVL11
+ 1021 01a3 C2060000 		.4byte	0x6c2
+ 1022 01a7 B1010000 		.4byte	0x1b1
+ 1023 01ab 09       		.uleb128 0x9
+ 1024 01ac 01       		.uleb128 0x1
+ 1025 01ad 50       		.byte	0x50
+ 1026 01ae 01       		.uleb128 0x1
+ 1027 01af 32       		.byte	0x32
+ 1028 01b0 00       		.byte	0
+ 1029 01b1 08       		.uleb128 0x8
+ 1030 01b2 1C000000 		.4byte	.LVL12
+ 1031 01b6 B7060000 		.4byte	0x6b7
+ 1032 01ba C4010000 		.4byte	0x1c4
+ 1033 01be 09       		.uleb128 0x9
+ 1034 01bf 01       		.uleb128 0x1
+ 1035 01c0 50       		.byte	0x50
+ 1036 01c1 01       		.uleb128 0x1
+ 1037 01c2 30       		.byte	0x30
+ 1038 01c3 00       		.byte	0
+ 1039 01c4 07       		.uleb128 0x7
+ 1040 01c5 20000000 		.4byte	.LVL13
+ 1041 01c9 80060000 		.4byte	0x680
+ 1042 01cd 07       		.uleb128 0x7
+ 1043 01ce 26000000 		.4byte	.LVL14
+ 1044 01d2 CD060000 		.4byte	0x6cd
+ 1045 01d6 07       		.uleb128 0x7
+ 1046 01d7 2A000000 		.4byte	.LVL15
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 26
+
+
+ 1047 01db D8060000 		.4byte	0x6d8
+ 1048 01df 07       		.uleb128 0x7
+ 1049 01e0 2E000000 		.4byte	.LVL16
+ 1050 01e4 E3060000 		.4byte	0x6e3
+ 1051 01e8 00       		.byte	0
+ 1052 01e9 0A       		.uleb128 0xa
+ 1053 01ea 4B000000 		.4byte	.LASF78
+ 1054 01ee 01       		.byte	0x1
+ 1055 01ef 2201     		.2byte	0x122
+ 1056 01f1 68000000 		.4byte	0x68
+ 1057 01f5 00000000 		.4byte	.LFB69
+ 1058 01f9 2C000000 		.4byte	.LFE69-.LFB69
+ 1059 01fd 01       		.uleb128 0x1
+ 1060 01fe 9C       		.byte	0x9c
+ 1061 01ff 4E020000 		.4byte	0x24e
+ 1062 0203 0B       		.uleb128 0xb
+ 1063 0204 58030000 		.4byte	.LASF35
+ 1064 0208 01       		.byte	0x1
+ 1065 0209 2201     		.2byte	0x122
+ 1066 020b 68000000 		.4byte	0x68
+ 1067 020f 00000000 		.4byte	.LLST0
+ 1068 0213 0C       		.uleb128 0xc
+ 1069 0214 6900     		.ascii	"i\000"
+ 1070 0216 01       		.byte	0x1
+ 1071 0217 2401     		.2byte	0x124
+ 1072 0219 68000000 		.4byte	0x68
+ 1073 021d 21000000 		.4byte	.LLST1
+ 1074 0221 0D       		.uleb128 0xd
+ 1075 0222 42030000 		.4byte	.LASF22
+ 1076 0226 01       		.byte	0x1
+ 1077 0227 2501     		.2byte	0x125
+ 1078 0229 68000000 		.4byte	0x68
+ 1079 022d 01       		.uleb128 0x1
+ 1080 022e 52       		.byte	0x52
+ 1081 022f 0E       		.uleb128 0xe
+ 1082 0230 0F020000 		.4byte	.LASF23
+ 1083 0234 01       		.byte	0x1
+ 1084 0235 2601     		.2byte	0x126
+ 1085 0237 68000000 		.4byte	0x68
+ 1086 023b 40000000 		.4byte	.LLST2
+ 1087 023f 0D       		.uleb128 0xd
+ 1088 0240 81010000 		.4byte	.LASF24
+ 1089 0244 01       		.byte	0x1
+ 1090 0245 2701     		.2byte	0x127
+ 1091 0247 68000000 		.4byte	0x68
+ 1092 024b 01       		.uleb128 0x1
+ 1093 024c 51       		.byte	0x51
+ 1094 024d 00       		.byte	0
+ 1095 024e 06       		.uleb128 0x6
+ 1096 024f A5010000 		.4byte	.LASF25
+ 1097 0253 01       		.byte	0x1
+ 1098 0254 FA       		.byte	0xfa
+ 1099 0255 00000000 		.4byte	.LFB68
+ 1100 0259 D0000000 		.4byte	.LFE68-.LFB68
+ 1101 025d 01       		.uleb128 0x1
+ 1102 025e 9C       		.byte	0x9c
+ 1103 025f 84030000 		.4byte	0x384
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 27
+
+
+ 1104 0263 0F       		.uleb128 0xf
+ 1105 0264 6C000000 		.4byte	.LBB2
+ 1106 0268 22000000 		.4byte	.LBE2-.LBB2
+ 1107 026c A8020000 		.4byte	0x2a8
+ 1108 0270 0D       		.uleb128 0xd
+ 1109 0271 1C010000 		.4byte	.LASF26
+ 1110 0275 01       		.byte	0x1
+ 1111 0276 0F01     		.2byte	0x10f
+ 1112 0278 84030000 		.4byte	0x384
+ 1113 027c 02       		.uleb128 0x2
+ 1114 027d 91       		.byte	0x91
+ 1115 027e 68       		.sleb128 -24
+ 1116 027f 08       		.uleb128 0x8
+ 1117 0280 74000000 		.4byte	.LVL36
+ 1118 0284 EE060000 		.4byte	0x6ee
+ 1119 0288 97020000 		.4byte	0x297
+ 1120 028c 09       		.uleb128 0x9
+ 1121 028d 01       		.uleb128 0x1
+ 1122 028e 50       		.byte	0x50
+ 1123 028f 01       		.uleb128 0x1
+ 1124 0290 31       		.byte	0x31
+ 1125 0291 09       		.uleb128 0x9
+ 1126 0292 01       		.uleb128 0x1
+ 1127 0293 51       		.byte	0x51
+ 1128 0294 01       		.uleb128 0x1
+ 1129 0295 30       		.byte	0x30
+ 1130 0296 00       		.byte	0
+ 1131 0297 10       		.uleb128 0x10
+ 1132 0298 86000000 		.4byte	.LVL37
+ 1133 029c F9060000 		.4byte	0x6f9
+ 1134 02a0 09       		.uleb128 0x9
+ 1135 02a1 01       		.uleb128 0x1
+ 1136 02a2 50       		.byte	0x50
+ 1137 02a3 02       		.uleb128 0x2
+ 1138 02a4 7D       		.byte	0x7d
+ 1139 02a5 00       		.sleb128 0
+ 1140 02a6 00       		.byte	0
+ 1141 02a7 00       		.byte	0
+ 1142 02a8 0F       		.uleb128 0xf
+ 1143 02a9 98000000 		.4byte	.LBB3
+ 1144 02ad 1A000000 		.4byte	.LBE3-.LBB3
+ 1145 02b1 ED020000 		.4byte	0x2ed
+ 1146 02b5 0D       		.uleb128 0xd
+ 1147 02b6 EF000000 		.4byte	.LASF27
+ 1148 02ba 01       		.byte	0x1
+ 1149 02bb 1501     		.2byte	0x115
+ 1150 02bd 94030000 		.4byte	0x394
+ 1151 02c1 02       		.uleb128 0x2
+ 1152 02c2 91       		.byte	0x91
+ 1153 02c3 68       		.sleb128 -24
+ 1154 02c4 08       		.uleb128 0x8
+ 1155 02c5 A0000000 		.4byte	.LVL38
+ 1156 02c9 EE060000 		.4byte	0x6ee
+ 1157 02cd DC020000 		.4byte	0x2dc
+ 1158 02d1 09       		.uleb128 0x9
+ 1159 02d2 01       		.uleb128 0x1
+ 1160 02d3 50       		.byte	0x50
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 28
+
+
+ 1161 02d4 01       		.uleb128 0x1
+ 1162 02d5 31       		.byte	0x31
+ 1163 02d6 09       		.uleb128 0x9
+ 1164 02d7 01       		.uleb128 0x1
+ 1165 02d8 51       		.byte	0x51
+ 1166 02d9 01       		.uleb128 0x1
+ 1167 02da 30       		.byte	0x30
+ 1168 02db 00       		.byte	0
+ 1169 02dc 10       		.uleb128 0x10
+ 1170 02dd AC000000 		.4byte	.LVL39
+ 1171 02e1 F9060000 		.4byte	0x6f9
+ 1172 02e5 09       		.uleb128 0x9
+ 1173 02e6 01       		.uleb128 0x1
+ 1174 02e7 50       		.byte	0x50
+ 1175 02e8 02       		.uleb128 0x2
+ 1176 02e9 91       		.byte	0x91
+ 1177 02ea 68       		.sleb128 -24
+ 1178 02eb 00       		.byte	0
+ 1179 02ec 00       		.byte	0
+ 1180 02ed 08       		.uleb128 0x8
+ 1181 02ee 12000000 		.4byte	.LVL29
+ 1182 02f2 04070000 		.4byte	0x704
+ 1183 02f6 00030000 		.4byte	0x300
+ 1184 02fa 09       		.uleb128 0x9
+ 1185 02fb 01       		.uleb128 0x1
+ 1186 02fc 50       		.byte	0x50
+ 1187 02fd 01       		.uleb128 0x1
+ 1188 02fe 31       		.byte	0x31
+ 1189 02ff 00       		.byte	0
+ 1190 0300 08       		.uleb128 0x8
+ 1191 0301 18000000 		.4byte	.LVL30
+ 1192 0305 F9060000 		.4byte	0x6f9
+ 1193 0309 17030000 		.4byte	0x317
+ 1194 030d 09       		.uleb128 0x9
+ 1195 030e 01       		.uleb128 0x1
+ 1196 030f 50       		.byte	0x50
+ 1197 0310 05       		.uleb128 0x5
+ 1198 0311 03       		.byte	0x3
+ 1199 0312 00000000 		.4byte	.LC0
+ 1200 0316 00       		.byte	0
+ 1201 0317 08       		.uleb128 0x8
+ 1202 0318 32000000 		.4byte	.LVL31
+ 1203 031c E9010000 		.4byte	0x1e9
+ 1204 0320 2B030000 		.4byte	0x32b
+ 1205 0324 09       		.uleb128 0x9
+ 1206 0325 01       		.uleb128 0x1
+ 1207 0326 50       		.byte	0x50
+ 1208 0327 02       		.uleb128 0x2
+ 1209 0328 75       		.byte	0x75
+ 1210 0329 00       		.sleb128 0
+ 1211 032a 00       		.byte	0
+ 1212 032b 08       		.uleb128 0x8
+ 1213 032c 48000000 		.4byte	.LVL32
+ 1214 0330 0F070000 		.4byte	0x70f
+ 1215 0334 48030000 		.4byte	0x348
+ 1216 0338 09       		.uleb128 0x9
+ 1217 0339 01       		.uleb128 0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 29
+
+
+ 1218 033a 50       		.byte	0x50
+ 1219 033b 02       		.uleb128 0x2
+ 1220 033c 75       		.byte	0x75
+ 1221 033d 00       		.sleb128 0
+ 1222 033e 09       		.uleb128 0x9
+ 1223 033f 01       		.uleb128 0x1
+ 1224 0340 51       		.byte	0x51
+ 1225 0341 05       		.uleb128 0x5
+ 1226 0342 03       		.byte	0x3
+ 1227 0343 10000000 		.4byte	.LC1
+ 1228 0347 00       		.byte	0
+ 1229 0348 08       		.uleb128 0x8
+ 1230 0349 4E000000 		.4byte	.LVL33
+ 1231 034d 04070000 		.4byte	0x704
+ 1232 0351 5B030000 		.4byte	0x35b
+ 1233 0355 09       		.uleb128 0x9
+ 1234 0356 01       		.uleb128 0x1
+ 1235 0357 50       		.byte	0x50
+ 1236 0358 01       		.uleb128 0x1
+ 1237 0359 31       		.byte	0x31
+ 1238 035a 00       		.byte	0
+ 1239 035b 08       		.uleb128 0x8
+ 1240 035c 56000000 		.4byte	.LVL34
+ 1241 0360 EE060000 		.4byte	0x6ee
+ 1242 0364 73030000 		.4byte	0x373
+ 1243 0368 09       		.uleb128 0x9
+ 1244 0369 01       		.uleb128 0x1
+ 1245 036a 50       		.byte	0x50
+ 1246 036b 01       		.uleb128 0x1
+ 1247 036c 30       		.byte	0x30
+ 1248 036d 09       		.uleb128 0x9
+ 1249 036e 01       		.uleb128 0x1
+ 1250 036f 51       		.byte	0x51
+ 1251 0370 01       		.uleb128 0x1
+ 1252 0371 30       		.byte	0x30
+ 1253 0372 00       		.byte	0
+ 1254 0373 10       		.uleb128 0x10
+ 1255 0374 5C000000 		.4byte	.LVL35
+ 1256 0378 F9060000 		.4byte	0x6f9
+ 1257 037c 09       		.uleb128 0x9
+ 1258 037d 01       		.uleb128 0x1
+ 1259 037e 50       		.byte	0x50
+ 1260 037f 02       		.uleb128 0x2
+ 1261 0380 75       		.byte	0x75
+ 1262 0381 00       		.sleb128 0
+ 1263 0382 00       		.byte	0
+ 1264 0383 00       		.byte	0
+ 1265 0384 11       		.uleb128 0x11
+ 1266 0385 A7000000 		.4byte	0xa7
+ 1267 0389 94030000 		.4byte	0x394
+ 1268 038d 12       		.uleb128 0x12
+ 1269 038e C1000000 		.4byte	0xc1
+ 1270 0392 04       		.byte	0x4
+ 1271 0393 00       		.byte	0
+ 1272 0394 11       		.uleb128 0x11
+ 1273 0395 A7000000 		.4byte	0xa7
+ 1274 0399 A4030000 		.4byte	0x3a4
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 30
+
+
+ 1275 039d 12       		.uleb128 0x12
+ 1276 039e C1000000 		.4byte	0xc1
+ 1277 03a2 03       		.byte	0x3
+ 1278 03a3 00       		.byte	0
+ 1279 03a4 13       		.uleb128 0x13
+ 1280 03a5 77000000 		.4byte	.LASF79
+ 1281 03a9 01       		.byte	0x1
+ 1282 03aa 43       		.byte	0x43
+ 1283 03ab 68000000 		.4byte	0x68
+ 1284 03af 00000000 		.4byte	.LFB64
+ 1285 03b3 AC000000 		.4byte	.LFE64-.LFB64
+ 1286 03b7 01       		.uleb128 0x1
+ 1287 03b8 9C       		.byte	0x9c
+ 1288 03b9 F1040000 		.4byte	0x4f1
+ 1289 03bd 07       		.uleb128 0x7
+ 1290 03be 08000000 		.4byte	.LVL40
+ 1291 03c2 1A070000 		.4byte	0x71a
+ 1292 03c6 08       		.uleb128 0x8
+ 1293 03c7 22000000 		.4byte	.LVL41
+ 1294 03cb EE060000 		.4byte	0x6ee
+ 1295 03cf DE030000 		.4byte	0x3de
+ 1296 03d3 09       		.uleb128 0x9
+ 1297 03d4 01       		.uleb128 0x1
+ 1298 03d5 50       		.byte	0x50
+ 1299 03d6 01       		.uleb128 0x1
+ 1300 03d7 30       		.byte	0x30
+ 1301 03d8 09       		.uleb128 0x9
+ 1302 03d9 01       		.uleb128 0x1
+ 1303 03da 51       		.byte	0x51
+ 1304 03db 01       		.uleb128 0x1
+ 1305 03dc 30       		.byte	0x30
+ 1306 03dd 00       		.byte	0
+ 1307 03de 08       		.uleb128 0x8
+ 1308 03df 28000000 		.4byte	.LVL42
+ 1309 03e3 F9060000 		.4byte	0x6f9
+ 1310 03e7 F2030000 		.4byte	0x3f2
+ 1311 03eb 09       		.uleb128 0x9
+ 1312 03ec 01       		.uleb128 0x1
+ 1313 03ed 50       		.byte	0x50
+ 1314 03ee 02       		.uleb128 0x2
+ 1315 03ef 74       		.byte	0x74
+ 1316 03f0 00       		.sleb128 0
+ 1317 03f1 00       		.byte	0
+ 1318 03f2 07       		.uleb128 0x7
+ 1319 03f3 2C000000 		.4byte	.LVL43
+ 1320 03f7 25070000 		.4byte	0x725
+ 1321 03fb 07       		.uleb128 0x7
+ 1322 03fc 30000000 		.4byte	.LVL44
+ 1323 0400 30070000 		.4byte	0x730
+ 1324 0404 07       		.uleb128 0x7
+ 1325 0405 34000000 		.4byte	.LVL45
+ 1326 0409 3B070000 		.4byte	0x73b
+ 1327 040d 07       		.uleb128 0x7
+ 1328 040e 38000000 		.4byte	.LVL46
+ 1329 0412 46070000 		.4byte	0x746
+ 1330 0416 07       		.uleb128 0x7
+ 1331 0417 3C000000 		.4byte	.LVL47
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 31
+
+
+ 1332 041b D8060000 		.4byte	0x6d8
+ 1333 041f 08       		.uleb128 0x8
+ 1334 0420 42000000 		.4byte	.LVL48
+ 1335 0424 51070000 		.4byte	0x751
+ 1336 0428 36040000 		.4byte	0x436
+ 1337 042c 09       		.uleb128 0x9
+ 1338 042d 01       		.uleb128 0x1
+ 1339 042e 50       		.byte	0x50
+ 1340 042f 05       		.uleb128 0x5
+ 1341 0430 03       		.byte	0x3
+ 1342 0431 00000000 		.4byte	Bit_Timer
+ 1343 0435 00       		.byte	0
+ 1344 0436 08       		.uleb128 0x8
+ 1345 0437 48000000 		.4byte	.LVL49
+ 1346 043b 5C070000 		.4byte	0x75c
+ 1347 043f 4D040000 		.4byte	0x44d
+ 1348 0443 09       		.uleb128 0x9
+ 1349 0444 01       		.uleb128 0x1
+ 1350 0445 50       		.byte	0x50
+ 1351 0446 05       		.uleb128 0x5
+ 1352 0447 03       		.byte	0x3
+ 1353 0448 00000000 		.4byte	wakeUp_ISR
+ 1354 044c 00       		.byte	0
+ 1355 044d 07       		.uleb128 0x7
+ 1356 044e 4C000000 		.4byte	.LVL50
+ 1357 0452 67070000 		.4byte	0x767
+ 1358 0456 08       		.uleb128 0x8
+ 1359 0457 52000000 		.4byte	.LVL51
+ 1360 045b 72070000 		.4byte	0x772
+ 1361 045f 6D040000 		.4byte	0x46d
+ 1362 0463 09       		.uleb128 0x9
+ 1363 0464 01       		.uleb128 0x1
+ 1364 0465 50       		.byte	0x50
+ 1365 0466 05       		.uleb128 0x5
+ 1366 0467 03       		.byte	0x3
+ 1367 0468 00000000 		.4byte	watchDogCheck
+ 1368 046c 00       		.byte	0
+ 1369 046d 08       		.uleb128 0x8
+ 1370 046e 5A000000 		.4byte	.LVL52
+ 1371 0472 7D070000 		.4byte	0x77d
+ 1372 0476 85040000 		.4byte	0x485
+ 1373 047a 09       		.uleb128 0x9
+ 1374 047b 01       		.uleb128 0x1
+ 1375 047c 50       		.byte	0x50
+ 1376 047d 01       		.uleb128 0x1
+ 1377 047e 30       		.byte	0x30
+ 1378 047f 09       		.uleb128 0x9
+ 1379 0480 01       		.uleb128 0x1
+ 1380 0481 51       		.byte	0x51
+ 1381 0482 01       		.uleb128 0x1
+ 1382 0483 30       		.byte	0x30
+ 1383 0484 00       		.byte	0
+ 1384 0485 07       		.uleb128 0x7
+ 1385 0486 5E000000 		.4byte	.LVL53
+ 1386 048a 96060000 		.4byte	0x696
+ 1387 048e 08       		.uleb128 0x8
+ 1388 048f 76000000 		.4byte	.LVL54
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 32
+
+
+ 1389 0493 EE060000 		.4byte	0x6ee
+ 1390 0497 A6040000 		.4byte	0x4a6
+ 1391 049b 09       		.uleb128 0x9
+ 1392 049c 01       		.uleb128 0x1
+ 1393 049d 50       		.byte	0x50
+ 1394 049e 01       		.uleb128 0x1
+ 1395 049f 30       		.byte	0x30
+ 1396 04a0 09       		.uleb128 0x9
+ 1397 04a1 01       		.uleb128 0x1
+ 1398 04a2 51       		.byte	0x51
+ 1399 04a3 01       		.uleb128 0x1
+ 1400 04a4 30       		.byte	0x30
+ 1401 04a5 00       		.byte	0
+ 1402 04a6 08       		.uleb128 0x8
+ 1403 04a7 7C000000 		.4byte	.LVL55
+ 1404 04ab F9060000 		.4byte	0x6f9
+ 1405 04af BA040000 		.4byte	0x4ba
+ 1406 04b3 09       		.uleb128 0x9
+ 1407 04b4 01       		.uleb128 0x1
+ 1408 04b5 50       		.byte	0x50
+ 1409 04b6 02       		.uleb128 0x2
+ 1410 04b7 74       		.byte	0x74
+ 1411 04b8 00       		.sleb128 0
+ 1412 04b9 00       		.byte	0
+ 1413 04ba 08       		.uleb128 0x8
+ 1414 04bb 82000000 		.4byte	.LVL56
+ 1415 04bf 88070000 		.4byte	0x788
+ 1416 04c3 CD040000 		.4byte	0x4cd
+ 1417 04c7 09       		.uleb128 0x9
+ 1418 04c8 01       		.uleb128 0x1
+ 1419 04c9 50       		.byte	0x50
+ 1420 04ca 01       		.uleb128 0x1
+ 1421 04cb 31       		.byte	0x31
+ 1422 04cc 00       		.byte	0
+ 1423 04cd 08       		.uleb128 0x8
+ 1424 04ce 8C000000 		.4byte	.LVL57
+ 1425 04d2 93070000 		.4byte	0x793
+ 1426 04d6 E7040000 		.4byte	0x4e7
+ 1427 04da 09       		.uleb128 0x9
+ 1428 04db 01       		.uleb128 0x1
+ 1429 04dc 50       		.byte	0x50
+ 1430 04dd 01       		.uleb128 0x1
+ 1431 04de 30       		.byte	0x30
+ 1432 04df 09       		.uleb128 0x9
+ 1433 04e0 01       		.uleb128 0x1
+ 1434 04e1 51       		.byte	0x51
+ 1435 04e2 03       		.uleb128 0x3
+ 1436 04e3 0A       		.byte	0xa
+ 1437 04e4 0008     		.2byte	0x800
+ 1438 04e6 00       		.byte	0
+ 1439 04e7 07       		.uleb128 0x7
+ 1440 04e8 90000000 		.4byte	.LVL58
+ 1441 04ec 4E020000 		.4byte	0x24e
+ 1442 04f0 00       		.byte	0
+ 1443 04f1 14       		.uleb128 0x14
+ 1444 04f2 2E000000 		.4byte	.LASF28
+ 1445 04f6 01       		.byte	0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 33
+
+
+ 1446 04f7 3301     		.2byte	0x133
+ 1447 04f9 00000000 		.4byte	.LFB70
+ 1448 04fd 2C000000 		.4byte	.LFE70-.LFB70
+ 1449 0501 01       		.uleb128 0x1
+ 1450 0502 9C       		.byte	0x9c
+ 1451 0503 33050000 		.4byte	0x533
+ 1452 0507 07       		.uleb128 0x7
+ 1453 0508 0A000000 		.4byte	.LVL59
+ 1454 050c 9E070000 		.4byte	0x79e
+ 1455 0510 08       		.uleb128 0x8
+ 1456 0511 1C000000 		.4byte	.LVL60
+ 1457 0515 9E070000 		.4byte	0x79e
+ 1458 0519 23050000 		.4byte	0x523
+ 1459 051d 09       		.uleb128 0x9
+ 1460 051e 01       		.uleb128 0x1
+ 1461 051f 50       		.byte	0x50
+ 1462 0520 01       		.uleb128 0x1
+ 1463 0521 31       		.byte	0x31
+ 1464 0522 00       		.byte	0
+ 1465 0523 10       		.uleb128 0x10
+ 1466 0524 24000000 		.4byte	.LVL61
+ 1467 0528 9E070000 		.4byte	0x79e
+ 1468 052c 09       		.uleb128 0x9
+ 1469 052d 01       		.uleb128 0x1
+ 1470 052e 50       		.byte	0x50
+ 1471 052f 01       		.uleb128 0x1
+ 1472 0530 30       		.byte	0x30
+ 1473 0531 00       		.byte	0
+ 1474 0532 00       		.byte	0
+ 1475 0533 15       		.uleb128 0x15
+ 1476 0534 A0040000 		.4byte	.LASF29
+ 1477 0538 01       		.byte	0x1
+ 1478 0539 2C       		.byte	0x2c
+ 1479 053a 8D000000 		.4byte	0x8d
+ 1480 053e 05       		.uleb128 0x5
+ 1481 053f 03       		.byte	0x3
+ 1482 0540 00000000 		.4byte	levelCounter
+ 1483 0544 15       		.uleb128 0x15
+ 1484 0545 25010000 		.4byte	.LASF30
+ 1485 0549 01       		.byte	0x1
+ 1486 054a 2D       		.byte	0x2d
+ 1487 054b 8D000000 		.4byte	0x8d
+ 1488 054f 05       		.uleb128 0x5
+ 1489 0550 03       		.byte	0x3
+ 1490 0551 04000000 		.4byte	zeroCount
+ 1491 0555 15       		.uleb128 0x15
+ 1492 0556 34010000 		.4byte	.LASF31
+ 1493 055a 01       		.byte	0x1
+ 1494 055b 2E       		.byte	0x2e
+ 1495 055c 8D000000 		.4byte	0x8d
+ 1496 0560 05       		.uleb128 0x5
+ 1497 0561 03       		.byte	0x3
+ 1498 0562 02000000 		.4byte	oneCount
+ 1499 0566 15       		.uleb128 0x15
+ 1500 0567 00000000 		.4byte	.LASF32
+ 1501 056b 01       		.byte	0x1
+ 1502 056c 2F       		.byte	0x2f
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 34
+
+
+ 1503 056d 81000000 		.4byte	0x81
+ 1504 0571 05       		.uleb128 0x5
+ 1505 0572 03       		.byte	0x3
+ 1506 0573 08000000 		.4byte	currentBit
+ 1507 0577 15       		.uleb128 0x15
+ 1508 0578 46010000 		.4byte	.LASF33
+ 1509 057c 01       		.byte	0x1
+ 1510 057d 30       		.byte	0x30
+ 1511 057e 81000000 		.4byte	0x81
+ 1512 0582 05       		.uleb128 0x5
+ 1513 0583 03       		.byte	0x3
+ 1514 0584 09000000 		.4byte	dataCount
+ 1515 0588 15       		.uleb128 0x15
+ 1516 0589 73030000 		.4byte	.LASF34
+ 1517 058d 01       		.byte	0x1
+ 1518 058e 31       		.byte	0x31
+ 1519 058f 8D000000 		.4byte	0x8d
+ 1520 0593 05       		.uleb128 0x5
+ 1521 0594 03       		.byte	0x3
+ 1522 0595 0A000000 		.4byte	data
+ 1523 0599 15       		.uleb128 0x15
+ 1524 059a 58030000 		.4byte	.LASF35
+ 1525 059e 01       		.byte	0x1
+ 1526 059f 32       		.byte	0x32
+ 1527 05a0 8D000000 		.4byte	0x8d
+ 1528 05a4 05       		.uleb128 0x5
+ 1529 05a5 03       		.byte	0x3
+ 1530 05a6 0E000000 		.4byte	crabs
+ 1531 05aa 15       		.uleb128 0x15
+ 1532 05ab 54040000 		.4byte	.LASF36
+ 1533 05af 01       		.byte	0x1
+ 1534 05b0 33       		.byte	0x33
+ 1535 05b1 81000000 		.4byte	0x81
+ 1536 05b5 05       		.uleb128 0x5
+ 1537 05b6 03       		.byte	0x3
+ 1538 05b7 06000000 		.4byte	dataFlag
+ 1539 05bb 15       		.uleb128 0x15
+ 1540 05bc B8010000 		.4byte	.LASF37
+ 1541 05c0 01       		.byte	0x1
+ 1542 05c1 34       		.byte	0x34
+ 1543 05c2 81000000 		.4byte	0x81
+ 1544 05c6 05       		.uleb128 0x5
+ 1545 05c7 03       		.byte	0x3
+ 1546 05c8 07000000 		.4byte	decodeFlag
+ 1547 05cc 15       		.uleb128 0x15
+ 1548 05cd 88030000 		.4byte	.LASF38
+ 1549 05d1 01       		.byte	0x1
+ 1550 05d2 35       		.byte	0x35
+ 1551 05d3 68000000 		.4byte	0x68
+ 1552 05d7 05       		.uleb128 0x5
+ 1553 05d8 03       		.byte	0x3
+ 1554 05d9 14000000 		.4byte	paritySuccess
+ 1555 05dd 15       		.uleb128 0x15
+ 1556 05de D6000000 		.4byte	.LASF39
+ 1557 05e2 01       		.byte	0x1
+ 1558 05e3 36       		.byte	0x36
+ 1559 05e4 81000000 		.4byte	0x81
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 35
+
+
+ 1560 05e8 05       		.uleb128 0x5
+ 1561 05e9 03       		.byte	0x3
+ 1562 05ea 13000000 		.4byte	threeTransmissions
+ 1563 05ee 15       		.uleb128 0x15
+ 1564 05ef 88010000 		.4byte	.LASF40
+ 1565 05f3 01       		.byte	0x1
+ 1566 05f4 3D       		.byte	0x3d
+ 1567 05f5 81000000 		.4byte	0x81
+ 1568 05f9 05       		.uleb128 0x5
+ 1569 05fa 03       		.byte	0x3
+ 1570 05fb 0C000000 		.4byte	lcdFlagEncode
+ 1571 05ff 15       		.uleb128 0x15
+ 1572 0600 7C040000 		.4byte	.LASF41
+ 1573 0604 01       		.byte	0x1
+ 1574 0605 3E       		.byte	0x3e
+ 1575 0606 81000000 		.4byte	0x81
+ 1576 060a 05       		.uleb128 0x5
+ 1577 060b 03       		.byte	0x3
+ 1578 060c 10000000 		.4byte	lcdFlagData
+ 1579 0610 15       		.uleb128 0x15
+ 1580 0611 BE000000 		.4byte	.LASF42
+ 1581 0615 01       		.byte	0x1
+ 1582 0616 3F       		.byte	0x3f
+ 1583 0617 81000000 		.4byte	0x81
+ 1584 061b 05       		.uleb128 0x5
+ 1585 061c 03       		.byte	0x3
+ 1586 061d 11000000 		.4byte	lcdFlagDecode
+ 1587 0621 15       		.uleb128 0x15
+ 1588 0622 18040000 		.4byte	.LASF43
+ 1589 0626 01       		.byte	0x1
+ 1590 0627 40       		.byte	0x40
+ 1591 0628 81000000 		.4byte	0x81
+ 1592 062c 05       		.uleb128 0x5
+ 1593 062d 03       		.byte	0x3
+ 1594 062e 12000000 		.4byte	decodeWrong
+ 1595 0632 16       		.uleb128 0x16
+ 1596 0633 6F040000 		.4byte	.LASF44
+ 1597 0637 05       		.byte	0x5
+ 1598 0638 1207     		.2byte	0x712
+ 1599 063a 3E060000 		.4byte	0x63e
+ 1600 063e 17       		.uleb128 0x17
+ 1601 063f 76000000 		.4byte	0x76
+ 1602 0643 11       		.uleb128 0x11
+ 1603 0644 B3000000 		.4byte	0xb3
+ 1604 0648 53060000 		.4byte	0x653
+ 1605 064c 12       		.uleb128 0x12
+ 1606 064d C1000000 		.4byte	0xc1
+ 1607 0651 0B       		.byte	0xb
+ 1608 0652 00       		.byte	0
+ 1609 0653 18       		.uleb128 0x18
+ 1610 0654 21000000 		.4byte	.LASF45
+ 1611 0658 01       		.byte	0x1
+ 1612 0659 39       		.byte	0x39
+ 1613 065a 43060000 		.4byte	0x643
+ 1614 065e 05       		.uleb128 0x5
+ 1615 065f 03       		.byte	0x3
+ 1616 0660 00000000 		.4byte	OutputString
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 36
+
+
+ 1617 0664 18       		.uleb128 0x18
+ 1618 0665 10040000 		.4byte	.LASF46
+ 1619 0669 01       		.byte	0x1
+ 1620 066a 3A       		.byte	0x3a
+ 1621 066b 43060000 		.4byte	0x643
+ 1622 066f 05       		.uleb128 0x5
+ 1623 0670 03       		.byte	0x3
+ 1624 0671 00000000 		.4byte	display
+ 1625 0675 19       		.uleb128 0x19
+ 1626 0676 AD040000 		.4byte	.LASF47
+ 1627 067a AD040000 		.4byte	.LASF47
+ 1628 067e 06       		.byte	0x6
+ 1629 067f 73       		.byte	0x73
+ 1630 0680 19       		.uleb128 0x19
+ 1631 0681 40040000 		.4byte	.LASF48
+ 1632 0685 40040000 		.4byte	.LASF48
+ 1633 0689 07       		.byte	0x7
+ 1634 068a 42       		.byte	0x42
+ 1635 068b 19       		.uleb128 0x19
+ 1636 068c 78030000 		.4byte	.LASF49
+ 1637 0690 78030000 		.4byte	.LASF49
+ 1638 0694 08       		.byte	0x8
+ 1639 0695 26       		.byte	0x26
+ 1640 0696 19       		.uleb128 0x19
+ 1641 0697 70010000 		.4byte	.LASF50
+ 1642 069b 70010000 		.4byte	.LASF50
+ 1643 069f 09       		.byte	0x9
+ 1644 06a0 24       		.byte	0x24
+ 1645 06a1 19       		.uleb128 0x19
+ 1646 06a2 96010000 		.4byte	.LASF51
+ 1647 06a6 96010000 		.4byte	.LASF51
+ 1648 06aa 0A       		.byte	0xa
+ 1649 06ab 5B       		.byte	0x5b
+ 1650 06ac 19       		.uleb128 0x19
+ 1651 06ad 2D030000 		.4byte	.LASF52
+ 1652 06b1 2D030000 		.4byte	.LASF52
+ 1653 06b5 09       		.byte	0x9
+ 1654 06b6 2B       		.byte	0x2b
+ 1655 06b7 19       		.uleb128 0x19
+ 1656 06b8 51020000 		.4byte	.LASF53
+ 1657 06bc 51020000 		.4byte	.LASF53
+ 1658 06c0 0B       		.byte	0xb
+ 1659 06c1 26       		.byte	0x26
+ 1660 06c2 19       		.uleb128 0x19
+ 1661 06c3 88040000 		.4byte	.LASF54
+ 1662 06c7 88040000 		.4byte	.LASF54
+ 1663 06cb 06       		.byte	0x6
+ 1664 06cc 76       		.byte	0x76
+ 1665 06cd 19       		.uleb128 0x19
+ 1666 06ce 0A030000 		.4byte	.LASF55
+ 1667 06d2 0A030000 		.4byte	.LASF55
+ 1668 06d6 09       		.byte	0x9
+ 1669 06d7 25       		.byte	0x25
+ 1670 06d8 19       		.uleb128 0x19
+ 1671 06d9 A8000000 		.4byte	.LASF56
+ 1672 06dd A8000000 		.4byte	.LASF56
+ 1673 06e1 0A       		.byte	0xa
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 37
+
+
+ 1674 06e2 5A       		.byte	0x5a
+ 1675 06e3 19       		.uleb128 0x19
+ 1676 06e4 5F010000 		.4byte	.LASF57
+ 1677 06e8 5F010000 		.4byte	.LASF57
+ 1678 06ec 0C       		.byte	0xc
+ 1679 06ed 23       		.byte	0x23
+ 1680 06ee 19       		.uleb128 0x19
+ 1681 06ef 5D040000 		.4byte	.LASF58
+ 1682 06f3 5D040000 		.4byte	.LASF58
+ 1683 06f7 0D       		.byte	0xd
+ 1684 06f8 3D       		.byte	0x3d
+ 1685 06f9 19       		.uleb128 0x19
+ 1686 06fa 5E030000 		.4byte	.LASF59
+ 1687 06fe 5E030000 		.4byte	.LASF59
+ 1688 0702 0D       		.byte	0xd
+ 1689 0703 3C       		.byte	0x3c
+ 1690 0704 19       		.uleb128 0x19
+ 1691 0705 0B000000 		.4byte	.LASF60
+ 1692 0709 0B000000 		.4byte	.LASF60
+ 1693 070d 0D       		.byte	0xd
+ 1694 070e 3A       		.byte	0x3a
+ 1695 070f 19       		.uleb128 0x19
+ 1696 0710 EB010000 		.4byte	.LASF61
+ 1697 0714 EB010000 		.4byte	.LASF61
+ 1698 0718 0E       		.byte	0xe
+ 1699 0719 E7       		.byte	0xe7
+ 1700 071a 19       		.uleb128 0x19
+ 1701 071b 42020000 		.4byte	.LASF62
+ 1702 071f 42020000 		.4byte	.LASF62
+ 1703 0723 0D       		.byte	0xd
+ 1704 0724 38       		.byte	0x38
+ 1705 0725 19       		.uleb128 0x19
+ 1706 0726 1A030000 		.4byte	.LASF63
+ 1707 072a 1A030000 		.4byte	.LASF63
+ 1708 072e 0F       		.byte	0xf
+ 1709 072f 54       		.byte	0x54
+ 1710 0730 19       		.uleb128 0x19
+ 1711 0731 F3010000 		.4byte	.LASF64
+ 1712 0735 F3010000 		.4byte	.LASF64
+ 1713 0739 10       		.byte	0x10
+ 1714 073a 92       		.byte	0x92
+ 1715 073b 19       		.uleb128 0x19
+ 1716 073c 90040000 		.4byte	.LASF65
+ 1717 0740 90040000 		.4byte	.LASF65
+ 1718 0744 11       		.byte	0x11
+ 1719 0745 3C       		.byte	0x3c
+ 1720 0746 19       		.uleb128 0x19
+ 1721 0747 50010000 		.4byte	.LASF66
+ 1722 074b 50010000 		.4byte	.LASF66
+ 1723 074f 07       		.byte	0x7
+ 1724 0750 3F       		.byte	0x3f
+ 1725 0751 19       		.uleb128 0x19
+ 1726 0752 8F000000 		.4byte	.LASF67
+ 1727 0756 8F000000 		.4byte	.LASF67
+ 1728 075a 0C       		.byte	0xc
+ 1729 075b 18       		.byte	0x18
+ 1730 075c 19       		.uleb128 0x19
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 38
+
+
+ 1731 075d 2E040000 		.4byte	.LASF68
+ 1732 0761 2E040000 		.4byte	.LASF68
+ 1733 0765 12       		.byte	0x12
+ 1734 0766 18       		.byte	0x18
+ 1735 0767 19       		.uleb128 0x19
+ 1736 0768 63020000 		.4byte	.LASF69
+ 1737 076c 63020000 		.4byte	.LASF69
+ 1738 0770 13       		.byte	0x13
+ 1739 0771 5A       		.byte	0x5a
+ 1740 0772 19       		.uleb128 0x19
+ 1741 0773 F8000000 		.4byte	.LASF70
+ 1742 0777 F8000000 		.4byte	.LASF70
+ 1743 077b 14       		.byte	0x14
+ 1744 077c 18       		.byte	0x18
+ 1745 077d 19       		.uleb128 0x19
+ 1746 077e 4D030000 		.4byte	.LASF71
+ 1747 0782 4D030000 		.4byte	.LASF71
+ 1748 0786 06       		.byte	0x6
+ 1749 0787 72       		.byte	0x72
+ 1750 0788 19       		.uleb128 0x19
+ 1751 0789 7C000000 		.4byte	.LASF72
+ 1752 078d 7C000000 		.4byte	.LASF72
+ 1753 0791 15       		.byte	0x15
+ 1754 0792 26       		.byte	0x26
+ 1755 0793 19       		.uleb128 0x19
+ 1756 0794 37000000 		.4byte	.LASF73
+ 1757 0798 37000000 		.4byte	.LASF73
+ 1758 079c 16       		.byte	0x16
+ 1759 079d 22       		.byte	0x22
+ 1760 079e 19       		.uleb128 0x19
+ 1761 079f 60000000 		.4byte	.LASF74
+ 1762 07a3 60000000 		.4byte	.LASF74
+ 1763 07a7 0F       		.byte	0xf
+ 1764 07a8 88       		.byte	0x88
+ 1765 07a9 00       		.byte	0
+ 1766              		.section	.debug_abbrev,"",%progbits
+ 1767              	.Ldebug_abbrev0:
+ 1768 0000 01       		.uleb128 0x1
+ 1769 0001 11       		.uleb128 0x11
+ 1770 0002 01       		.byte	0x1
+ 1771 0003 25       		.uleb128 0x25
+ 1772 0004 0E       		.uleb128 0xe
+ 1773 0005 13       		.uleb128 0x13
+ 1774 0006 0B       		.uleb128 0xb
+ 1775 0007 03       		.uleb128 0x3
+ 1776 0008 0E       		.uleb128 0xe
+ 1777 0009 1B       		.uleb128 0x1b
+ 1778 000a 0E       		.uleb128 0xe
+ 1779 000b 55       		.uleb128 0x55
+ 1780 000c 17       		.uleb128 0x17
+ 1781 000d 11       		.uleb128 0x11
+ 1782 000e 01       		.uleb128 0x1
+ 1783 000f 10       		.uleb128 0x10
+ 1784 0010 17       		.uleb128 0x17
+ 1785 0011 00       		.byte	0
+ 1786 0012 00       		.byte	0
+ 1787 0013 02       		.uleb128 0x2
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 39
+
+
+ 1788 0014 24       		.uleb128 0x24
+ 1789 0015 00       		.byte	0
+ 1790 0016 0B       		.uleb128 0xb
+ 1791 0017 0B       		.uleb128 0xb
+ 1792 0018 3E       		.uleb128 0x3e
+ 1793 0019 0B       		.uleb128 0xb
+ 1794 001a 03       		.uleb128 0x3
+ 1795 001b 0E       		.uleb128 0xe
+ 1796 001c 00       		.byte	0
+ 1797 001d 00       		.byte	0
+ 1798 001e 03       		.uleb128 0x3
+ 1799 001f 16       		.uleb128 0x16
+ 1800 0020 00       		.byte	0
+ 1801 0021 03       		.uleb128 0x3
+ 1802 0022 0E       		.uleb128 0xe
+ 1803 0023 3A       		.uleb128 0x3a
+ 1804 0024 0B       		.uleb128 0xb
+ 1805 0025 3B       		.uleb128 0x3b
+ 1806 0026 0B       		.uleb128 0xb
+ 1807 0027 49       		.uleb128 0x49
+ 1808 0028 13       		.uleb128 0x13
+ 1809 0029 00       		.byte	0
+ 1810 002a 00       		.byte	0
+ 1811 002b 04       		.uleb128 0x4
+ 1812 002c 24       		.uleb128 0x24
+ 1813 002d 00       		.byte	0
+ 1814 002e 0B       		.uleb128 0xb
+ 1815 002f 0B       		.uleb128 0xb
+ 1816 0030 3E       		.uleb128 0x3e
+ 1817 0031 0B       		.uleb128 0xb
+ 1818 0032 03       		.uleb128 0x3
+ 1819 0033 08       		.uleb128 0x8
+ 1820 0034 00       		.byte	0
+ 1821 0035 00       		.byte	0
+ 1822 0036 05       		.uleb128 0x5
+ 1823 0037 16       		.uleb128 0x16
+ 1824 0038 00       		.byte	0
+ 1825 0039 03       		.uleb128 0x3
+ 1826 003a 0E       		.uleb128 0xe
+ 1827 003b 3A       		.uleb128 0x3a
+ 1828 003c 0B       		.uleb128 0xb
+ 1829 003d 3B       		.uleb128 0x3b
+ 1830 003e 05       		.uleb128 0x5
+ 1831 003f 49       		.uleb128 0x49
+ 1832 0040 13       		.uleb128 0x13
+ 1833 0041 00       		.byte	0
+ 1834 0042 00       		.byte	0
+ 1835 0043 06       		.uleb128 0x6
+ 1836 0044 2E       		.uleb128 0x2e
+ 1837 0045 01       		.byte	0x1
+ 1838 0046 3F       		.uleb128 0x3f
+ 1839 0047 19       		.uleb128 0x19
+ 1840 0048 03       		.uleb128 0x3
+ 1841 0049 0E       		.uleb128 0xe
+ 1842 004a 3A       		.uleb128 0x3a
+ 1843 004b 0B       		.uleb128 0xb
+ 1844 004c 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 40
+
+
+ 1845 004d 0B       		.uleb128 0xb
+ 1846 004e 27       		.uleb128 0x27
+ 1847 004f 19       		.uleb128 0x19
+ 1848 0050 11       		.uleb128 0x11
+ 1849 0051 01       		.uleb128 0x1
+ 1850 0052 12       		.uleb128 0x12
+ 1851 0053 06       		.uleb128 0x6
+ 1852 0054 40       		.uleb128 0x40
+ 1853 0055 18       		.uleb128 0x18
+ 1854 0056 9742     		.uleb128 0x2117
+ 1855 0058 19       		.uleb128 0x19
+ 1856 0059 01       		.uleb128 0x1
+ 1857 005a 13       		.uleb128 0x13
+ 1858 005b 00       		.byte	0
+ 1859 005c 00       		.byte	0
+ 1860 005d 07       		.uleb128 0x7
+ 1861 005e 898201   		.uleb128 0x4109
+ 1862 0061 00       		.byte	0
+ 1863 0062 11       		.uleb128 0x11
+ 1864 0063 01       		.uleb128 0x1
+ 1865 0064 31       		.uleb128 0x31
+ 1866 0065 13       		.uleb128 0x13
+ 1867 0066 00       		.byte	0
+ 1868 0067 00       		.byte	0
+ 1869 0068 08       		.uleb128 0x8
+ 1870 0069 898201   		.uleb128 0x4109
+ 1871 006c 01       		.byte	0x1
+ 1872 006d 11       		.uleb128 0x11
+ 1873 006e 01       		.uleb128 0x1
+ 1874 006f 31       		.uleb128 0x31
+ 1875 0070 13       		.uleb128 0x13
+ 1876 0071 01       		.uleb128 0x1
+ 1877 0072 13       		.uleb128 0x13
+ 1878 0073 00       		.byte	0
+ 1879 0074 00       		.byte	0
+ 1880 0075 09       		.uleb128 0x9
+ 1881 0076 8A8201   		.uleb128 0x410a
+ 1882 0079 00       		.byte	0
+ 1883 007a 02       		.uleb128 0x2
+ 1884 007b 18       		.uleb128 0x18
+ 1885 007c 9142     		.uleb128 0x2111
+ 1886 007e 18       		.uleb128 0x18
+ 1887 007f 00       		.byte	0
+ 1888 0080 00       		.byte	0
+ 1889 0081 0A       		.uleb128 0xa
+ 1890 0082 2E       		.uleb128 0x2e
+ 1891 0083 01       		.byte	0x1
+ 1892 0084 3F       		.uleb128 0x3f
+ 1893 0085 19       		.uleb128 0x19
+ 1894 0086 03       		.uleb128 0x3
+ 1895 0087 0E       		.uleb128 0xe
+ 1896 0088 3A       		.uleb128 0x3a
+ 1897 0089 0B       		.uleb128 0xb
+ 1898 008a 3B       		.uleb128 0x3b
+ 1899 008b 05       		.uleb128 0x5
+ 1900 008c 27       		.uleb128 0x27
+ 1901 008d 19       		.uleb128 0x19
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 41
+
+
+ 1902 008e 49       		.uleb128 0x49
+ 1903 008f 13       		.uleb128 0x13
+ 1904 0090 11       		.uleb128 0x11
+ 1905 0091 01       		.uleb128 0x1
+ 1906 0092 12       		.uleb128 0x12
+ 1907 0093 06       		.uleb128 0x6
+ 1908 0094 40       		.uleb128 0x40
+ 1909 0095 18       		.uleb128 0x18
+ 1910 0096 9742     		.uleb128 0x2117
+ 1911 0098 19       		.uleb128 0x19
+ 1912 0099 01       		.uleb128 0x1
+ 1913 009a 13       		.uleb128 0x13
+ 1914 009b 00       		.byte	0
+ 1915 009c 00       		.byte	0
+ 1916 009d 0B       		.uleb128 0xb
+ 1917 009e 05       		.uleb128 0x5
+ 1918 009f 00       		.byte	0
+ 1919 00a0 03       		.uleb128 0x3
+ 1920 00a1 0E       		.uleb128 0xe
+ 1921 00a2 3A       		.uleb128 0x3a
+ 1922 00a3 0B       		.uleb128 0xb
+ 1923 00a4 3B       		.uleb128 0x3b
+ 1924 00a5 05       		.uleb128 0x5
+ 1925 00a6 49       		.uleb128 0x49
+ 1926 00a7 13       		.uleb128 0x13
+ 1927 00a8 02       		.uleb128 0x2
+ 1928 00a9 17       		.uleb128 0x17
+ 1929 00aa 00       		.byte	0
+ 1930 00ab 00       		.byte	0
+ 1931 00ac 0C       		.uleb128 0xc
+ 1932 00ad 34       		.uleb128 0x34
+ 1933 00ae 00       		.byte	0
+ 1934 00af 03       		.uleb128 0x3
+ 1935 00b0 08       		.uleb128 0x8
+ 1936 00b1 3A       		.uleb128 0x3a
+ 1937 00b2 0B       		.uleb128 0xb
+ 1938 00b3 3B       		.uleb128 0x3b
+ 1939 00b4 05       		.uleb128 0x5
+ 1940 00b5 49       		.uleb128 0x49
+ 1941 00b6 13       		.uleb128 0x13
+ 1942 00b7 02       		.uleb128 0x2
+ 1943 00b8 17       		.uleb128 0x17
+ 1944 00b9 00       		.byte	0
+ 1945 00ba 00       		.byte	0
+ 1946 00bb 0D       		.uleb128 0xd
+ 1947 00bc 34       		.uleb128 0x34
+ 1948 00bd 00       		.byte	0
+ 1949 00be 03       		.uleb128 0x3
+ 1950 00bf 0E       		.uleb128 0xe
+ 1951 00c0 3A       		.uleb128 0x3a
+ 1952 00c1 0B       		.uleb128 0xb
+ 1953 00c2 3B       		.uleb128 0x3b
+ 1954 00c3 05       		.uleb128 0x5
+ 1955 00c4 49       		.uleb128 0x49
+ 1956 00c5 13       		.uleb128 0x13
+ 1957 00c6 02       		.uleb128 0x2
+ 1958 00c7 18       		.uleb128 0x18
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 42
+
+
+ 1959 00c8 00       		.byte	0
+ 1960 00c9 00       		.byte	0
+ 1961 00ca 0E       		.uleb128 0xe
+ 1962 00cb 34       		.uleb128 0x34
+ 1963 00cc 00       		.byte	0
+ 1964 00cd 03       		.uleb128 0x3
+ 1965 00ce 0E       		.uleb128 0xe
+ 1966 00cf 3A       		.uleb128 0x3a
+ 1967 00d0 0B       		.uleb128 0xb
+ 1968 00d1 3B       		.uleb128 0x3b
+ 1969 00d2 05       		.uleb128 0x5
+ 1970 00d3 49       		.uleb128 0x49
+ 1971 00d4 13       		.uleb128 0x13
+ 1972 00d5 02       		.uleb128 0x2
+ 1973 00d6 17       		.uleb128 0x17
+ 1974 00d7 00       		.byte	0
+ 1975 00d8 00       		.byte	0
+ 1976 00d9 0F       		.uleb128 0xf
+ 1977 00da 0B       		.uleb128 0xb
+ 1978 00db 01       		.byte	0x1
+ 1979 00dc 11       		.uleb128 0x11
+ 1980 00dd 01       		.uleb128 0x1
+ 1981 00de 12       		.uleb128 0x12
+ 1982 00df 06       		.uleb128 0x6
+ 1983 00e0 01       		.uleb128 0x1
+ 1984 00e1 13       		.uleb128 0x13
+ 1985 00e2 00       		.byte	0
+ 1986 00e3 00       		.byte	0
+ 1987 00e4 10       		.uleb128 0x10
+ 1988 00e5 898201   		.uleb128 0x4109
+ 1989 00e8 01       		.byte	0x1
+ 1990 00e9 11       		.uleb128 0x11
+ 1991 00ea 01       		.uleb128 0x1
+ 1992 00eb 31       		.uleb128 0x31
+ 1993 00ec 13       		.uleb128 0x13
+ 1994 00ed 00       		.byte	0
+ 1995 00ee 00       		.byte	0
+ 1996 00ef 11       		.uleb128 0x11
+ 1997 00f0 01       		.uleb128 0x1
+ 1998 00f1 01       		.byte	0x1
+ 1999 00f2 49       		.uleb128 0x49
+ 2000 00f3 13       		.uleb128 0x13
+ 2001 00f4 01       		.uleb128 0x1
+ 2002 00f5 13       		.uleb128 0x13
+ 2003 00f6 00       		.byte	0
+ 2004 00f7 00       		.byte	0
+ 2005 00f8 12       		.uleb128 0x12
+ 2006 00f9 21       		.uleb128 0x21
+ 2007 00fa 00       		.byte	0
+ 2008 00fb 49       		.uleb128 0x49
+ 2009 00fc 13       		.uleb128 0x13
+ 2010 00fd 2F       		.uleb128 0x2f
+ 2011 00fe 0B       		.uleb128 0xb
+ 2012 00ff 00       		.byte	0
+ 2013 0100 00       		.byte	0
+ 2014 0101 13       		.uleb128 0x13
+ 2015 0102 2E       		.uleb128 0x2e
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 43
+
+
+ 2016 0103 01       		.byte	0x1
+ 2017 0104 3F       		.uleb128 0x3f
+ 2018 0105 19       		.uleb128 0x19
+ 2019 0106 03       		.uleb128 0x3
+ 2020 0107 0E       		.uleb128 0xe
+ 2021 0108 3A       		.uleb128 0x3a
+ 2022 0109 0B       		.uleb128 0xb
+ 2023 010a 3B       		.uleb128 0x3b
+ 2024 010b 0B       		.uleb128 0xb
+ 2025 010c 27       		.uleb128 0x27
+ 2026 010d 19       		.uleb128 0x19
+ 2027 010e 49       		.uleb128 0x49
+ 2028 010f 13       		.uleb128 0x13
+ 2029 0110 8701     		.uleb128 0x87
+ 2030 0112 19       		.uleb128 0x19
+ 2031 0113 11       		.uleb128 0x11
+ 2032 0114 01       		.uleb128 0x1
+ 2033 0115 12       		.uleb128 0x12
+ 2034 0116 06       		.uleb128 0x6
+ 2035 0117 40       		.uleb128 0x40
+ 2036 0118 18       		.uleb128 0x18
+ 2037 0119 9742     		.uleb128 0x2117
+ 2038 011b 19       		.uleb128 0x19
+ 2039 011c 01       		.uleb128 0x1
+ 2040 011d 13       		.uleb128 0x13
+ 2041 011e 00       		.byte	0
+ 2042 011f 00       		.byte	0
+ 2043 0120 14       		.uleb128 0x14
+ 2044 0121 2E       		.uleb128 0x2e
+ 2045 0122 01       		.byte	0x1
+ 2046 0123 3F       		.uleb128 0x3f
+ 2047 0124 19       		.uleb128 0x19
+ 2048 0125 03       		.uleb128 0x3
+ 2049 0126 0E       		.uleb128 0xe
+ 2050 0127 3A       		.uleb128 0x3a
+ 2051 0128 0B       		.uleb128 0xb
+ 2052 0129 3B       		.uleb128 0x3b
+ 2053 012a 05       		.uleb128 0x5
+ 2054 012b 27       		.uleb128 0x27
+ 2055 012c 19       		.uleb128 0x19
+ 2056 012d 11       		.uleb128 0x11
+ 2057 012e 01       		.uleb128 0x1
+ 2058 012f 12       		.uleb128 0x12
+ 2059 0130 06       		.uleb128 0x6
+ 2060 0131 40       		.uleb128 0x40
+ 2061 0132 18       		.uleb128 0x18
+ 2062 0133 9742     		.uleb128 0x2117
+ 2063 0135 19       		.uleb128 0x19
+ 2064 0136 01       		.uleb128 0x1
+ 2065 0137 13       		.uleb128 0x13
+ 2066 0138 00       		.byte	0
+ 2067 0139 00       		.byte	0
+ 2068 013a 15       		.uleb128 0x15
+ 2069 013b 34       		.uleb128 0x34
+ 2070 013c 00       		.byte	0
+ 2071 013d 03       		.uleb128 0x3
+ 2072 013e 0E       		.uleb128 0xe
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 44
+
+
+ 2073 013f 3A       		.uleb128 0x3a
+ 2074 0140 0B       		.uleb128 0xb
+ 2075 0141 3B       		.uleb128 0x3b
+ 2076 0142 0B       		.uleb128 0xb
+ 2077 0143 49       		.uleb128 0x49
+ 2078 0144 13       		.uleb128 0x13
+ 2079 0145 02       		.uleb128 0x2
+ 2080 0146 18       		.uleb128 0x18
+ 2081 0147 00       		.byte	0
+ 2082 0148 00       		.byte	0
+ 2083 0149 16       		.uleb128 0x16
+ 2084 014a 34       		.uleb128 0x34
+ 2085 014b 00       		.byte	0
+ 2086 014c 03       		.uleb128 0x3
+ 2087 014d 0E       		.uleb128 0xe
+ 2088 014e 3A       		.uleb128 0x3a
+ 2089 014f 0B       		.uleb128 0xb
+ 2090 0150 3B       		.uleb128 0x3b
+ 2091 0151 05       		.uleb128 0x5
+ 2092 0152 49       		.uleb128 0x49
+ 2093 0153 13       		.uleb128 0x13
+ 2094 0154 3F       		.uleb128 0x3f
+ 2095 0155 19       		.uleb128 0x19
+ 2096 0156 3C       		.uleb128 0x3c
+ 2097 0157 19       		.uleb128 0x19
+ 2098 0158 00       		.byte	0
+ 2099 0159 00       		.byte	0
+ 2100 015a 17       		.uleb128 0x17
+ 2101 015b 35       		.uleb128 0x35
+ 2102 015c 00       		.byte	0
+ 2103 015d 49       		.uleb128 0x49
+ 2104 015e 13       		.uleb128 0x13
+ 2105 015f 00       		.byte	0
+ 2106 0160 00       		.byte	0
+ 2107 0161 18       		.uleb128 0x18
+ 2108 0162 34       		.uleb128 0x34
+ 2109 0163 00       		.byte	0
+ 2110 0164 03       		.uleb128 0x3
+ 2111 0165 0E       		.uleb128 0xe
+ 2112 0166 3A       		.uleb128 0x3a
+ 2113 0167 0B       		.uleb128 0xb
+ 2114 0168 3B       		.uleb128 0x3b
+ 2115 0169 0B       		.uleb128 0xb
+ 2116 016a 49       		.uleb128 0x49
+ 2117 016b 13       		.uleb128 0x13
+ 2118 016c 3F       		.uleb128 0x3f
+ 2119 016d 19       		.uleb128 0x19
+ 2120 016e 02       		.uleb128 0x2
+ 2121 016f 18       		.uleb128 0x18
+ 2122 0170 00       		.byte	0
+ 2123 0171 00       		.byte	0
+ 2124 0172 19       		.uleb128 0x19
+ 2125 0173 2E       		.uleb128 0x2e
+ 2126 0174 00       		.byte	0
+ 2127 0175 3F       		.uleb128 0x3f
+ 2128 0176 19       		.uleb128 0x19
+ 2129 0177 3C       		.uleb128 0x3c
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 45
+
+
+ 2130 0178 19       		.uleb128 0x19
+ 2131 0179 6E       		.uleb128 0x6e
+ 2132 017a 0E       		.uleb128 0xe
+ 2133 017b 03       		.uleb128 0x3
+ 2134 017c 0E       		.uleb128 0xe
+ 2135 017d 3A       		.uleb128 0x3a
+ 2136 017e 0B       		.uleb128 0xb
+ 2137 017f 3B       		.uleb128 0x3b
+ 2138 0180 0B       		.uleb128 0xb
+ 2139 0181 00       		.byte	0
+ 2140 0182 00       		.byte	0
+ 2141 0183 00       		.byte	0
+ 2142              		.section	.debug_loc,"",%progbits
+ 2143              	.Ldebug_loc0:
+ 2144              	.LLST0:
+ 2145 0000 00000000 		.4byte	.LVL17
+ 2146 0004 08000000 		.4byte	.LVL20
+ 2147 0008 0100     		.2byte	0x1
+ 2148 000a 50       		.byte	0x50
+ 2149 000b 08000000 		.4byte	.LVL20
+ 2150 000f 2C000000 		.4byte	.LFE69
+ 2151 0013 0400     		.2byte	0x4
+ 2152 0015 F3       		.byte	0xf3
+ 2153 0016 01       		.uleb128 0x1
+ 2154 0017 50       		.byte	0x50
+ 2155 0018 9F       		.byte	0x9f
+ 2156 0019 00000000 		.4byte	0
+ 2157 001d 00000000 		.4byte	0
+ 2158              	.LLST1:
+ 2159 0021 02000000 		.4byte	.LVL18
+ 2160 0025 10000000 		.4byte	.LVL22
+ 2161 0029 0200     		.2byte	0x2
+ 2162 002b 30       		.byte	0x30
+ 2163 002c 9F       		.byte	0x9f
+ 2164 002d 10000000 		.4byte	.LVL22
+ 2165 0031 2C000000 		.4byte	.LFE69
+ 2166 0035 0100     		.2byte	0x1
+ 2167 0037 53       		.byte	0x53
+ 2168 0038 00000000 		.4byte	0
+ 2169 003c 00000000 		.4byte	0
+ 2170              	.LLST2:
+ 2171 0040 08000000 		.4byte	.LVL20
+ 2172 0044 24000000 		.4byte	.LVL26
+ 2173 0048 0100     		.2byte	0x1
+ 2174 004a 50       		.byte	0x50
+ 2175 004b 24000000 		.4byte	.LVL26
+ 2176 004f 26000000 		.4byte	.LVL27
+ 2177 0053 0600     		.2byte	0x6
+ 2178 0055 F3       		.byte	0xf3
+ 2179 0056 01       		.uleb128 0x1
+ 2180 0057 50       		.byte	0x50
+ 2181 0058 31       		.byte	0x31
+ 2182 0059 1A       		.byte	0x1a
+ 2183 005a 9F       		.byte	0x9f
+ 2184 005b 26000000 		.4byte	.LVL27
+ 2185 005f 28000000 		.4byte	.LVL28
+ 2186 0063 0100     		.2byte	0x1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 46
+
+
+ 2187 0065 50       		.byte	0x50
+ 2188 0066 28000000 		.4byte	.LVL28
+ 2189 006a 2C000000 		.4byte	.LFE69
+ 2190 006e 0600     		.2byte	0x6
+ 2191 0070 F3       		.byte	0xf3
+ 2192 0071 01       		.uleb128 0x1
+ 2193 0072 50       		.byte	0x50
+ 2194 0073 31       		.byte	0x31
+ 2195 0074 1A       		.byte	0x1a
+ 2196 0075 9F       		.byte	0x9f
+ 2197 0076 00000000 		.4byte	0
+ 2198 007a 00000000 		.4byte	0
+ 2199              		.section	.debug_aranges,"",%progbits
+ 2200 0000 4C000000 		.4byte	0x4c
+ 2201 0004 0200     		.2byte	0x2
+ 2202 0006 00000000 		.4byte	.Ldebug_info0
+ 2203 000a 04       		.byte	0x4
+ 2204 000b 00       		.byte	0
+ 2205 000c 0000     		.2byte	0
+ 2206 000e 0000     		.2byte	0
+ 2207 0010 00000000 		.4byte	.LFB65
+ 2208 0014 08000000 		.4byte	.LFE65-.LFB65
+ 2209 0018 00000000 		.4byte	.LFB66
+ 2210 001c 28010000 		.4byte	.LFE66-.LFB66
+ 2211 0020 00000000 		.4byte	.LFB67
+ 2212 0024 30000000 		.4byte	.LFE67-.LFB67
+ 2213 0028 00000000 		.4byte	.LFB69
+ 2214 002c 2C000000 		.4byte	.LFE69-.LFB69
+ 2215 0030 00000000 		.4byte	.LFB68
+ 2216 0034 D0000000 		.4byte	.LFE68-.LFB68
+ 2217 0038 00000000 		.4byte	.LFB64
+ 2218 003c AC000000 		.4byte	.LFE64-.LFB64
+ 2219 0040 00000000 		.4byte	.LFB70
+ 2220 0044 2C000000 		.4byte	.LFE70-.LFB70
+ 2221 0048 00000000 		.4byte	0
+ 2222 004c 00000000 		.4byte	0
+ 2223              		.section	.debug_ranges,"",%progbits
+ 2224              	.Ldebug_ranges0:
+ 2225 0000 00000000 		.4byte	.LFB65
+ 2226 0004 08000000 		.4byte	.LFE65
+ 2227 0008 00000000 		.4byte	.LFB66
+ 2228 000c 28010000 		.4byte	.LFE66
+ 2229 0010 00000000 		.4byte	.LFB67
+ 2230 0014 30000000 		.4byte	.LFE67
+ 2231 0018 00000000 		.4byte	.LFB69
+ 2232 001c 2C000000 		.4byte	.LFE69
+ 2233 0020 00000000 		.4byte	.LFB68
+ 2234 0024 D0000000 		.4byte	.LFE68
+ 2235 0028 00000000 		.4byte	.LFB64
+ 2236 002c AC000000 		.4byte	.LFE64
+ 2237 0030 00000000 		.4byte	.LFB70
+ 2238 0034 2C000000 		.4byte	.LFE70
+ 2239 0038 00000000 		.4byte	0
+ 2240 003c 00000000 		.4byte	0
+ 2241              		.section	.debug_line,"",%progbits
+ 2242              	.Ldebug_line0:
+ 2243 0000 DE030000 		.section	.debug_str,"MS",%progbits,1
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 47
+
+
+ 2243      0200B202 
+ 2243      00000201 
+ 2243      FB0E0D00 
+ 2243      01010101 
+ 2244              	.LASF32:
+ 2245 0000 63757272 		.ascii	"currentBit\000"
+ 2245      656E7442 
+ 2245      697400
+ 2246              	.LASF60:
+ 2247 000b 4C43445F 		.ascii	"LCD_Char_WriteControl\000"
+ 2247      43686172 
+ 2247      5F577269 
+ 2247      7465436F 
+ 2247      6E74726F 
+ 2248              	.LASF45:
+ 2249 0021 4F757470 		.ascii	"OutputString\000"
+ 2249      75745374 
+ 2249      72696E67 
+ 2249      00
+ 2250              	.LASF28:
+ 2251 002e 53656E64 		.ascii	"SendData\000"
+ 2251      44617461 
+ 2251      00
+ 2252              	.LASF73:
+ 2253 0037 4379506D 		.ascii	"CyPmSleep\000"
+ 2253      536C6565 
+ 2253      7000
+ 2254              	.LASF2:
+ 2255 0041 73686F72 		.ascii	"short int\000"
+ 2255      7420696E 
+ 2255      7400
+ 2256              	.LASF78:
+ 2257 004b 43686563 		.ascii	"CheckParity\000"
+ 2257      6B506172 
+ 2257      69747900 
+ 2258              	.LASF18:
+ 2259 0057 73697A65 		.ascii	"sizetype\000"
+ 2259      74797065 
+ 2259      00
+ 2260              	.LASF74:
+ 2261 0060 55415254 		.ascii	"UART_WriteTxData\000"
+ 2261      5F577269 
+ 2261      74655478 
+ 2261      44617461 
+ 2261      00
+ 2262              	.LASF15:
+ 2263 0071 63686172 		.ascii	"char8\000"
+ 2263      3800
+ 2264              	.LASF79:
+ 2265 0077 6D61696E 		.ascii	"main\000"
+ 2265      00
+ 2266              	.LASF72:
+ 2267 007c 506F7765 		.ascii	"Power_Toggle_Write\000"
+ 2267      725F546F 
+ 2267      67676C65 
+ 2267      5F577269 
+ 2267      746500
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 48
+
+
+ 2268              	.LASF67:
+ 2269 008f 54696D65 		.ascii	"Timer_ISR_StartEx\000"
+ 2269      725F4953 
+ 2269      525F5374 
+ 2269      61727445 
+ 2269      7800
+ 2270              	.LASF12:
+ 2271 00a1 75696E74 		.ascii	"uint16\000"
+ 2271      313600
+ 2272              	.LASF56:
+ 2273 00a8 4269745F 		.ascii	"Bit_Timer_Start\000"
+ 2273      54696D65 
+ 2273      725F5374 
+ 2273      61727400 
+ 2274              	.LASF11:
+ 2275 00b8 75696E74 		.ascii	"uint8\000"
+ 2275      3800
+ 2276              	.LASF42:
+ 2277 00be 6C636446 		.ascii	"lcdFlagDecode\000"
+ 2277      6C616744 
+ 2277      65636F64 
+ 2277      6500
+ 2278              	.LASF20:
+ 2279 00cc 4269745F 		.ascii	"Bit_Timer\000"
+ 2279      54696D65 
+ 2279      7200
+ 2280              	.LASF39:
+ 2281 00d6 74687265 		.ascii	"threeTransmissions\000"
+ 2281      65547261 
+ 2281      6E736D69 
+ 2281      7373696F 
+ 2281      6E7300
+ 2282              	.LASF13:
+ 2283 00e9 666C6F61 		.ascii	"float\000"
+ 2283      7400
+ 2284              	.LASF27:
+ 2285 00ef 64697370 		.ascii	"displayB\000"
+ 2285      6C617942 
+ 2285      00
+ 2286              	.LASF70:
+ 2287 00f8 77617463 		.ascii	"watchDogCheck_StartEx\000"
+ 2287      68446F67 
+ 2287      43686563 
+ 2287      6B5F5374 
+ 2287      61727445 
+ 2288              	.LASF6:
+ 2289 010e 6C6F6E67 		.ascii	"long long int\000"
+ 2289      206C6F6E 
+ 2289      6720696E 
+ 2289      7400
+ 2290              	.LASF26:
+ 2291 011c 64697370 		.ascii	"displayG\000"
+ 2291      6C617947 
+ 2291      00
+ 2292              	.LASF30:
+ 2293 0125 7A65726F 		.ascii	"zeroCount\000"
+ 2293      436F756E 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 49
+
+
+ 2293      7400
+ 2294              	.LASF16:
+ 2295 012f 63686172 		.ascii	"char\000"
+ 2295      00
+ 2296              	.LASF31:
+ 2297 0134 6F6E6543 		.ascii	"oneCount\000"
+ 2297      6F756E74 
+ 2297      00
+ 2298              	.LASF4:
+ 2299 013d 6C6F6E67 		.ascii	"long int\000"
+ 2299      20696E74 
+ 2299      00
+ 2300              	.LASF33:
+ 2301 0146 64617461 		.ascii	"dataCount\000"
+ 2301      436F756E 
+ 2301      7400
+ 2302              	.LASF66:
+ 2303 0150 4F75745F 		.ascii	"Out_Comp_Start\000"
+ 2303      436F6D70 
+ 2303      5F537461 
+ 2303      727400
+ 2304              	.LASF57:
+ 2305 015f 54696D65 		.ascii	"Timer_ISR_Enable\000"
+ 2305      725F4953 
+ 2305      525F456E 
+ 2305      61626C65 
+ 2305      00
+ 2306              	.LASF50:
+ 2307 0170 536C6565 		.ascii	"SleepTimer_Start\000"
+ 2307      7054696D 
+ 2307      65725F53 
+ 2307      74617274 
+ 2307      00
+ 2308              	.LASF24:
+ 2309 0181 70617269 		.ascii	"parity\000"
+ 2309      747900
+ 2310              	.LASF40:
+ 2311 0188 6C636446 		.ascii	"lcdFlagEncode\000"
+ 2311      6C616745 
+ 2311      6E636F64 
+ 2311      6500
+ 2312              	.LASF51:
+ 2313 0196 4269745F 		.ascii	"Bit_Timer_Stop\000"
+ 2313      54696D65 
+ 2313      725F5374 
+ 2313      6F7000
+ 2314              	.LASF25:
+ 2315 01a5 44697370 		.ascii	"Display\000"
+ 2315      6C617900 
+ 2316              	.LASF21:
+ 2317 01ad 77616B65 		.ascii	"wakeUp_ISR\000"
+ 2317      55705F49 
+ 2317      535200
+ 2318              	.LASF37:
+ 2319 01b8 6465636F 		.ascii	"decodeFlag\000"
+ 2319      6465466C 
+ 2319      616700
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 50
+
+
+ 2320              	.LASF17:
+ 2321 01c3 6C6F6E67 		.ascii	"long double\000"
+ 2321      20646F75 
+ 2321      626C6500 
+ 2322              	.LASF1:
+ 2323 01cf 756E7369 		.ascii	"unsigned char\000"
+ 2323      676E6564 
+ 2323      20636861 
+ 2323      7200
+ 2324              	.LASF19:
+ 2325 01dd 77617463 		.ascii	"watchDogCheck\000"
+ 2325      68446F67 
+ 2325      43686563 
+ 2325      6B00
+ 2326              	.LASF61:
+ 2327 01eb 73707269 		.ascii	"sprintf\000"
+ 2327      6E746600 
+ 2328              	.LASF64:
+ 2329 01f3 50574D5F 		.ascii	"PWM_Recon_Start\000"
+ 2329      5265636F 
+ 2329      6E5F5374 
+ 2329      61727400 
+ 2330              	.LASF0:
+ 2331 0203 7369676E 		.ascii	"signed char\000"
+ 2331      65642063 
+ 2331      68617200 
+ 2332              	.LASF23:
+ 2333 020f 72656365 		.ascii	"receivedParity\000"
+ 2333      69766564 
+ 2333      50617269 
+ 2333      747900
+ 2334              	.LASF7:
+ 2335 021e 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2335      206C6F6E 
+ 2335      6720756E 
+ 2335      7369676E 
+ 2335      65642069 
+ 2336              	.LASF8:
+ 2337 0235 756E7369 		.ascii	"unsigned int\000"
+ 2337      676E6564 
+ 2337      20696E74 
+ 2337      00
+ 2338              	.LASF62:
+ 2339 0242 4C43445F 		.ascii	"LCD_Char_Start\000"
+ 2339      43686172 
+ 2339      5F537461 
+ 2339      727400
+ 2340              	.LASF53:
+ 2341 0251 736C6565 		.ascii	"sleepToggle_Write\000"
+ 2341      70546F67 
+ 2341      676C655F 
+ 2341      57726974 
+ 2341      6500
+ 2342              	.LASF69:
+ 2343 0263 63686563 		.ascii	"checkWatchDogTimer_Start\000"
+ 2343      6B576174 
+ 2343      6368446F 
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 51
+
+
+ 2343      6754696D 
+ 2343      65725F53 
+ 2344              	.LASF75:
+ 2345 027c 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 2345      43313120 
+ 2345      352E342E 
+ 2345      31203230 
+ 2345      31363036 
+ 2346 02af 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 2346      20726576 
+ 2346      6973696F 
+ 2346      6E203233 
+ 2346      37373135 
+ 2347 02e2 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 2347      66756E63 
+ 2347      74696F6E 
+ 2347      2D736563 
+ 2347      74696F6E 
+ 2348              	.LASF55:
+ 2349 030a 536C6565 		.ascii	"SleepTimer_Stop\000"
+ 2349      7054696D 
+ 2349      65725F53 
+ 2349      746F7000 
+ 2350              	.LASF63:
+ 2351 031a 55415254 		.ascii	"UART_Start\000"
+ 2351      5F537461 
+ 2351      727400
+ 2352              	.LASF10:
+ 2353 0325 696E7433 		.ascii	"int32_t\000"
+ 2353      325F7400 
+ 2354              	.LASF52:
+ 2355 032d 536C6565 		.ascii	"SleepTimer_GetStatus\000"
+ 2355      7054696D 
+ 2355      65725F47 
+ 2355      65745374 
+ 2355      61747573 
+ 2356              	.LASF22:
+ 2357 0342 62697454 		.ascii	"bitToCheck\000"
+ 2357      6F436865 
+ 2357      636B00
+ 2358              	.LASF71:
+ 2359 034d 43795764 		.ascii	"CyWdtStart\000"
+ 2359      74537461 
+ 2359      727400
+ 2360              	.LASF35:
+ 2361 0358 63726162 		.ascii	"crabs\000"
+ 2361      7300
+ 2362              	.LASF59:
+ 2363 035e 4C43445F 		.ascii	"LCD_Char_PrintString\000"
+ 2363      43686172 
+ 2363      5F507269 
+ 2363      6E745374 
+ 2363      72696E67 
+ 2364              	.LASF34:
+ 2365 0373 64617461 		.ascii	"data\000"
+ 2365      00
+ 2366              	.LASF49:
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 52
+
+
+ 2367 0378 436F756E 		.ascii	"Count_Out_Write\000"
+ 2367      745F4F75 
+ 2367      745F5772 
+ 2367      69746500 
+ 2368              	.LASF38:
+ 2369 0388 70617269 		.ascii	"paritySuccess\000"
+ 2369      74795375 
+ 2369      63636573 
+ 2369      7300
+ 2370              	.LASF3:
+ 2371 0396 73686F72 		.ascii	"short unsigned int\000"
+ 2371      7420756E 
+ 2371      7369676E 
+ 2371      65642069 
+ 2371      6E7400
+ 2372              	.LASF77:
+ 2373 03a9 433A5C55 		.ascii	"C:\\Users\\ipfajard\\Downloads\\UACS-Stephanie\\Hig"
+ 2373      73657273 
+ 2373      5C697066 
+ 2373      616A6172 
+ 2373      645C446F 
+ 2374 03d7 68467265 		.ascii	"hFreqFSK\\HighFSKRx.cydsn\000"
+ 2374      7146534B 
+ 2374      5C486967 
+ 2374      6846534B 
+ 2374      52782E63 
+ 2375              	.LASF76:
+ 2376 03f0 6D61696E 		.ascii	"main.c\000"
+ 2376      2E6300
+ 2377              	.LASF5:
+ 2378 03f7 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2378      20756E73 
+ 2378      69676E65 
+ 2378      6420696E 
+ 2378      7400
+ 2379              	.LASF14:
+ 2380 0409 646F7562 		.ascii	"double\000"
+ 2380      6C6500
+ 2381              	.LASF46:
+ 2382 0410 64697370 		.ascii	"display\000"
+ 2382      6C617900 
+ 2383              	.LASF43:
+ 2384 0418 6465636F 		.ascii	"decodeWrong\000"
+ 2384      64655772 
+ 2384      6F6E6700 
+ 2385              	.LASF9:
+ 2386 0424 5F5F696E 		.ascii	"__int32_t\000"
+ 2386      7433325F 
+ 2386      7400
+ 2387              	.LASF68:
+ 2388 042e 536C6565 		.ascii	"Sleep_ISR_StartEx\000"
+ 2388      705F4953 
+ 2388      525F5374 
+ 2388      61727445 
+ 2388      7800
+ 2389              	.LASF48:
+ 2390 0440 4F75745F 		.ascii	"Out_Comp_GetCompare\000"
+ARM GAS  C:\Users\ipfajard\AppData\Local\Temp\cc7Mx1Dg.s 			page 53
+
+
+ 2390      436F6D70 
+ 2390      5F476574 
+ 2390      436F6D70 
+ 2390      61726500 
+ 2391              	.LASF36:
+ 2392 0454 64617461 		.ascii	"dataFlag\000"
+ 2392      466C6167 
+ 2392      00
+ 2393              	.LASF58:
+ 2394 045d 4C43445F 		.ascii	"LCD_Char_Position\000"
+ 2394      43686172 
+ 2394      5F506F73 
+ 2394      6974696F 
+ 2394      6E00
+ 2395              	.LASF44:
+ 2396 046f 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 2396      52784275 
+ 2396      66666572 
+ 2396      00
+ 2397              	.LASF41:
+ 2398 047c 6C636446 		.ascii	"lcdFlagData\000"
+ 2398      6C616744 
+ 2398      61746100 
+ 2399              	.LASF54:
+ 2400 0488 43794465 		.ascii	"CyDelay\000"
+ 2400      6C617900 
+ 2401              	.LASF65:
+ 2402 0490 53686966 		.ascii	"Shift_Reg_Start\000"
+ 2402      745F5265 
+ 2402      675F5374 
+ 2402      61727400 
+ 2403              	.LASF29:
+ 2404 04a0 6C657665 		.ascii	"levelCounter\000"
+ 2404      6C436F75 
+ 2404      6E746572 
+ 2404      00
+ 2405              	.LASF47:
+ 2406 04ad 43795764 		.ascii	"CyWdtClear\000"
+ 2406      74436C65 
+ 2406      617200
+ 2407              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

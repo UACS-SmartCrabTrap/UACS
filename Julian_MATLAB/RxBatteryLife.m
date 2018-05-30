@@ -11,13 +11,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function BatteryLife = RxBatteryLife(OnTime) %OnTime in seconds (0-86400)
 
-c = 675; %Battery capacity in mAh
+c = 1350; %Battery capacity in mAh
 v = 5; %Voltage supplied from the battery
 i = 22; %Current draw from the receiver module in mA
 % i = 22.5; %Current draw from the receiver module with an LCD screen in mA
 % v = 3.3 %Voltage supplied from the battery
 % i = 17.5 %Current draw from the receiver module in mA
-i_s = .12; %Sleep current drawn from circuit when not receiving data
+i_s = 1.5; %Sleep current drawn from circuit when not receiving data
 s = 86400; %Seconds in a day
 
 %Equation gives average current drawn from the circuit over a day

@@ -48,10 +48,10 @@ int main(void)
     while(1) {
         // After the sleep timer ISR activates and turns on a pin, it will stay
         // on for 4s before sleeping again.
-        CyDelay(4000);
+        CyDelay(100);
         
         // Prepares hardware for 
-        Toggle_Pin_Write(OFF);
+        //Toggle_Pin_Write(OFF);
         PWM_40k_Stop();
         PWM_40k_Sleep();
         

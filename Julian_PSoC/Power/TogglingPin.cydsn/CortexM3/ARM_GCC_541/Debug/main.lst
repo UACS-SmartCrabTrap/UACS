@@ -1,0 +1,881 @@
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.WakeupIsr,"ax",%progbits
+  20              		.align	2
+  21              		.global	WakeupIsr
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	WakeupIsr, %function
+  25              	WakeupIsr:
+  26              	.LFB64:
+  27              		.file 1 "main.c"
+   1:main.c        **** /* 
+   2:main.c        ****  * File: main.c
+   3:main.c        ****  * Project: TogglingPin
+   4:main.c        ****  * Workspace: Power
+   5:main.c        ****  * Author: Julian Salazar
+   6:main.c        ****  * Date: 5/10/18
+   7:main.c        ****  * Purpose: The purpose of this project is to simply toggle a pin on and off.
+   8:main.c        ****  *     The pin will connect to the base of a NPN transistor which will serve as
+   9:main.c        ****  *     a switch to turn the analog circuitry off and on.
+  10:main.c        ****  * Edits:
+  11:main.c        ****  *      - Sleep current too high. Adjusted to have sleep current of .24mA.(JS)
+  12:main.c        ****  * 
+  13:main.c        ****  */
+  14:main.c        **** 
+  15:main.c        **** /******************************************************************************
+  16:main.c        ****  * Included Header Files
+  17:main.c        ****  *****************************************************************************/
+  18:main.c        **** #include "project.h"
+  19:main.c        **** 
+  20:main.c        **** /******************************************************************************
+  21:main.c        ****  * Definitions
+  22:main.c        ****  *****************************************************************************/
+  23:main.c        **** #define ON  1
+  24:main.c        **** #define OFF 0
+  25:main.c        **** 
+  26:main.c        **** /******************************************************************************
+  27:main.c        ****  * Function Prototypes
+  28:main.c        ****  *****************************************************************************/
+  29:main.c        **** CY_ISR_PROTO(WakeupIsr);
+  30:main.c        **** 
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 2
+
+
+  31:main.c        **** /*
+  32:main.c        ****  * function: main()
+  33:main.c        ****  * parameters: none
+  34:main.c        ****  * returns: int (Should never return)
+  35:main.c        ****  * description: toggles a pin off and on every four seconds and sends a 40k PWM
+  36:main.c        ****  *      signal 
+  37:main.c        ****  */
+  38:main.c        **** int main(void)
+  39:main.c        **** {
+  40:main.c        ****     /* Enable global interrupts */
+  41:main.c        ****     CyGlobalIntEnable;
+  42:main.c        ****     
+  43:main.c        ****     /* Initialize hardware blocks */
+  44:main.c        ****     Sleep_ISR_StartEx(WakeupIsr);
+  45:main.c        ****     SleepTimer_Start();
+  46:main.c        ****     PWM_40k_Start();
+  47:main.c        ****     
+  48:main.c        ****     while(1) {
+  49:main.c        ****         // After the sleep timer ISR activates and turns on a pin, it will stay
+  50:main.c        ****         // on for 4s before sleeping again.
+  51:main.c        ****         CyDelay(100);
+  52:main.c        ****         
+  53:main.c        ****         // Prepares hardware for 
+  54:main.c        ****         //Toggle_Pin_Write(OFF);
+  55:main.c        ****         PWM_40k_Stop();
+  56:main.c        ****         PWM_40k_Sleep();
+  57:main.c        ****         
+  58:main.c        ****         // PSoC Sleep command. To adjust sleep time, change in the hardware
+  59:main.c        ****         //  block. No sleep time parameters taken in PSoC5LP.
+  60:main.c        ****         //  PM_SLEEP_TIME_NONE is a relic of PSoC3
+  61:main.c        ****         CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
+  62:main.c        ****         
+  63:main.c        ****         // Reactivatespwm hardware blocks from sleep
+  64:main.c        ****         PWM_40k_Wakeup();
+  65:main.c        ****         
+  66:main.c        ****         CyDelay(5); // Allow voltage booster to charge before sending signal
+  67:main.c        ****         PWM_40k_Start();
+  68:main.c        ****         
+  69:main.c        ****     }//end while(1)
+  70:main.c        ****     
+  71:main.c        **** } //end main
+  72:main.c        **** 
+  73:main.c        **** CY_ISR(WakeupIsr)
+  74:main.c        **** {
+  28              		.loc 1 74 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 08B5     		push	{r3, lr}
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 3, -8
+  35              		.cfi_offset 14, -4
+  75:main.c        ****     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
+  36              		.loc 1 75 0
+  37 0002 FFF7FEFF 		bl	SleepTimer_GetStatus
+  38              	.LVL0:
+  76:main.c        ****     Toggle_Pin_Write(ON); //Turns pin on upon waking up.
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 3
+
+
+  39              		.loc 1 76 0
+  40 0006 0120     		movs	r0, #1
+  41 0008 FFF7FEFF 		bl	Toggle_Pin_Write
+  42              	.LVL1:
+  43 000c 08BD     		pop	{r3, pc}
+  44              		.cfi_endproc
+  45              	.LFE64:
+  46              		.size	WakeupIsr, .-WakeupIsr
+  47 000e 00BF     		.section	.text.main,"ax",%progbits
+  48              		.align	2
+  49              		.global	main
+  50              		.thumb
+  51              		.thumb_func
+  52              		.type	main, %function
+  53              	main:
+  54              	.LFB63:
+  39:main.c        ****     /* Enable global interrupts */
+  55              		.loc 1 39 0
+  56              		.cfi_startproc
+  57              		@ Volatile: function does not return.
+  58              		@ args = 0, pretend = 0, frame = 0
+  59              		@ frame_needed = 0, uses_anonymous_args = 0
+  60 0000 08B5     		push	{r3, lr}
+  61              		.cfi_def_cfa_offset 8
+  62              		.cfi_offset 3, -8
+  63              		.cfi_offset 14, -4
+  41:main.c        ****     
+  64              		.loc 1 41 0
+  65              		.syntax unified
+  66              	@ 41 "main.c" 1
+  67 0002 62B6     		CPSIE   i
+  68              	@ 0 "" 2
+  44:main.c        ****     SleepTimer_Start();
+  69              		.loc 1 44 0
+  70              		.thumb
+  71              		.syntax unified
+  72 0004 0D48     		ldr	r0, .L6
+  73 0006 FFF7FEFF 		bl	Sleep_ISR_StartEx
+  74              	.LVL2:
+  45:main.c        ****     PWM_40k_Start();
+  75              		.loc 1 45 0
+  76 000a FFF7FEFF 		bl	SleepTimer_Start
+  77              	.LVL3:
+  46:main.c        ****     
+  78              		.loc 1 46 0
+  79 000e FFF7FEFF 		bl	PWM_40k_Start
+  80              	.LVL4:
+  81              	.L4:
+  51:main.c        ****         
+  82              		.loc 1 51 0 discriminator 1
+  83 0012 6420     		movs	r0, #100
+  84 0014 FFF7FEFF 		bl	CyDelay
+  85              	.LVL5:
+  55:main.c        ****         PWM_40k_Sleep();
+  86              		.loc 1 55 0 discriminator 1
+  87 0018 FFF7FEFF 		bl	PWM_40k_Stop
+  88              	.LVL6:
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 4
+
+
+  56:main.c        ****         
+  89              		.loc 1 56 0 discriminator 1
+  90 001c FFF7FEFF 		bl	PWM_40k_Sleep
+  91              	.LVL7:
+  61:main.c        ****         
+  92              		.loc 1 61 0 discriminator 1
+  93 0020 4FF40061 		mov	r1, #2048
+  94 0024 0020     		movs	r0, #0
+  95 0026 FFF7FEFF 		bl	CyPmSleep
+  96              	.LVL8:
+  64:main.c        ****         
+  97              		.loc 1 64 0 discriminator 1
+  98 002a FFF7FEFF 		bl	PWM_40k_Wakeup
+  99              	.LVL9:
+  66:main.c        ****         PWM_40k_Start();
+ 100              		.loc 1 66 0 discriminator 1
+ 101 002e 0520     		movs	r0, #5
+ 102 0030 FFF7FEFF 		bl	CyDelay
+ 103              	.LVL10:
+  67:main.c        ****         
+ 104              		.loc 1 67 0 discriminator 1
+ 105 0034 FFF7FEFF 		bl	PWM_40k_Start
+ 106              	.LVL11:
+ 107 0038 EBE7     		b	.L4
+ 108              	.L7:
+ 109 003a 00BF     		.align	2
+ 110              	.L6:
+ 111 003c 00000000 		.word	WakeupIsr
+ 112              		.cfi_endproc
+ 113              	.LFE63:
+ 114              		.size	main, .-main
+ 115              		.text
+ 116              	.Letext0:
+ 117              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 118              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.1\\psoc creator\\import\\gnu\\arm\\5.4.
+ 119              		.file 4 "Generated_Source\\PSoC5/SleepTimer.h"
+ 120              		.file 5 "Generated_Source\\PSoC5/Toggle_Pin.h"
+ 121              		.file 6 "Generated_Source\\PSoC5/Sleep_ISR.h"
+ 122              		.file 7 "Generated_Source\\PSoC5/PWM_40k.h"
+ 123              		.file 8 "Generated_Source\\PSoC5/CyLib.h"
+ 124              		.file 9 "Generated_Source\\PSoC5/cyPm.h"
+ 125              		.file 10 "Generated_Source\\PSoC5/core_cm3.h"
+ 126              		.section	.debug_info,"",%progbits
+ 127              	.Ldebug_info0:
+ 128 0000 F6010000 		.4byte	0x1f6
+ 129 0004 0400     		.2byte	0x4
+ 130 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 131 000a 04       		.byte	0x4
+ 132 000b 01       		.uleb128 0x1
+ 133 000c 9D000000 		.4byte	.LASF26
+ 134 0010 0C       		.byte	0xc
+ 135 0011 F4010000 		.4byte	.LASF27
+ 136 0015 1B000000 		.4byte	.LASF28
+ 137 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 138 001d 00000000 		.4byte	0
+ 139 0021 00000000 		.4byte	.Ldebug_line0
+ 140 0025 02       		.uleb128 0x2
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 5
+
+
+ 141 0026 01       		.byte	0x1
+ 142 0027 06       		.byte	0x6
+ 143 0028 38020000 		.4byte	.LASF0
+ 144 002c 02       		.uleb128 0x2
+ 145 002d 01       		.byte	0x1
+ 146 002e 08       		.byte	0x8
+ 147 002f 8F000000 		.4byte	.LASF1
+ 148 0033 02       		.uleb128 0x2
+ 149 0034 02       		.byte	0x2
+ 150 0035 05       		.byte	0x5
+ 151 0036 0F020000 		.4byte	.LASF2
+ 152 003a 02       		.uleb128 0x2
+ 153 003b 02       		.byte	0x2
+ 154 003c 07       		.byte	0x7
+ 155 003d 3D010000 		.4byte	.LASF3
+ 156 0041 03       		.uleb128 0x3
+ 157 0042 0A000000 		.4byte	.LASF9
+ 158 0046 02       		.byte	0x2
+ 159 0047 3F       		.byte	0x3f
+ 160 0048 4C000000 		.4byte	0x4c
+ 161 004c 02       		.uleb128 0x2
+ 162 004d 04       		.byte	0x4
+ 163 004e 05       		.byte	0x5
+ 164 004f 23020000 		.4byte	.LASF4
+ 165 0053 02       		.uleb128 0x2
+ 166 0054 04       		.byte	0x4
+ 167 0055 07       		.byte	0x7
+ 168 0056 92010000 		.4byte	.LASF5
+ 169 005a 02       		.uleb128 0x2
+ 170 005b 08       		.byte	0x8
+ 171 005c 05       		.byte	0x5
+ 172 005d E6010000 		.4byte	.LASF6
+ 173 0061 02       		.uleb128 0x2
+ 174 0062 08       		.byte	0x8
+ 175 0063 07       		.byte	0x7
+ 176 0064 B1010000 		.4byte	.LASF7
+ 177 0068 04       		.uleb128 0x4
+ 178 0069 04       		.byte	0x4
+ 179 006a 05       		.byte	0x5
+ 180 006b 696E7400 		.ascii	"int\000"
+ 181 006f 02       		.uleb128 0x2
+ 182 0070 04       		.byte	0x4
+ 183 0071 07       		.byte	0x7
+ 184 0072 A4010000 		.4byte	.LASF8
+ 185 0076 03       		.uleb128 0x3
+ 186 0077 D5010000 		.4byte	.LASF10
+ 187 007b 03       		.byte	0x3
+ 188 007c 2C       		.byte	0x2c
+ 189 007d 41000000 		.4byte	0x41
+ 190 0081 02       		.uleb128 0x2
+ 191 0082 04       		.byte	0x4
+ 192 0083 04       		.byte	0x4
+ 193 0084 74000000 		.4byte	.LASF11
+ 194 0088 02       		.uleb128 0x2
+ 195 0089 08       		.byte	0x8
+ 196 008a 04       		.byte	0x4
+ 197 008b 14000000 		.4byte	.LASF12
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 6
+
+
+ 198 008f 02       		.uleb128 0x2
+ 199 0090 01       		.byte	0x1
+ 200 0091 08       		.byte	0x8
+ 201 0092 FB010000 		.4byte	.LASF13
+ 202 0096 02       		.uleb128 0x2
+ 203 0097 08       		.byte	0x8
+ 204 0098 04       		.byte	0x4
+ 205 0099 2C020000 		.4byte	.LASF14
+ 206 009d 02       		.uleb128 0x2
+ 207 009e 04       		.byte	0x4
+ 208 009f 07       		.byte	0x7
+ 209 00a0 DD010000 		.4byte	.LASF15
+ 210 00a4 05       		.uleb128 0x5
+ 211 00a5 00000000 		.4byte	.LASF29
+ 212 00a9 01       		.byte	0x1
+ 213 00aa 49       		.byte	0x49
+ 214 00ab 00000000 		.4byte	.LFB64
+ 215 00af 0E000000 		.4byte	.LFE64-.LFB64
+ 216 00b3 01       		.uleb128 0x1
+ 217 00b4 9C       		.byte	0x9c
+ 218 00b5 D2000000 		.4byte	0xd2
+ 219 00b9 06       		.uleb128 0x6
+ 220 00ba 06000000 		.4byte	.LVL0
+ 221 00be 8B010000 		.4byte	0x18b
+ 222 00c2 07       		.uleb128 0x7
+ 223 00c3 0C000000 		.4byte	.LVL1
+ 224 00c7 96010000 		.4byte	0x196
+ 225 00cb 08       		.uleb128 0x8
+ 226 00cc 01       		.uleb128 0x1
+ 227 00cd 50       		.byte	0x50
+ 228 00ce 01       		.uleb128 0x1
+ 229 00cf 31       		.byte	0x31
+ 230 00d0 00       		.byte	0
+ 231 00d1 00       		.byte	0
+ 232 00d2 09       		.uleb128 0x9
+ 233 00d3 7C010000 		.4byte	.LASF30
+ 234 00d7 01       		.byte	0x1
+ 235 00d8 26       		.byte	0x26
+ 236 00d9 68000000 		.4byte	0x68
+ 237 00dd 00000000 		.4byte	.LFB63
+ 238 00e1 40000000 		.4byte	.LFE63-.LFB63
+ 239 00e5 01       		.uleb128 0x1
+ 240 00e6 9C       		.byte	0x9c
+ 241 00e7 7A010000 		.4byte	0x17a
+ 242 00eb 0A       		.uleb128 0xa
+ 243 00ec 0A000000 		.4byte	.LVL2
+ 244 00f0 A1010000 		.4byte	0x1a1
+ 245 00f4 02010000 		.4byte	0x102
+ 246 00f8 08       		.uleb128 0x8
+ 247 00f9 01       		.uleb128 0x1
+ 248 00fa 50       		.byte	0x50
+ 249 00fb 05       		.uleb128 0x5
+ 250 00fc 03       		.byte	0x3
+ 251 00fd 00000000 		.4byte	WakeupIsr
+ 252 0101 00       		.byte	0
+ 253 0102 06       		.uleb128 0x6
+ 254 0103 0E000000 		.4byte	.LVL3
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 7
+
+
+ 255 0107 AC010000 		.4byte	0x1ac
+ 256 010b 06       		.uleb128 0x6
+ 257 010c 12000000 		.4byte	.LVL4
+ 258 0110 B7010000 		.4byte	0x1b7
+ 259 0114 0A       		.uleb128 0xa
+ 260 0115 18000000 		.4byte	.LVL5
+ 261 0119 C2010000 		.4byte	0x1c2
+ 262 011d 28010000 		.4byte	0x128
+ 263 0121 08       		.uleb128 0x8
+ 264 0122 01       		.uleb128 0x1
+ 265 0123 50       		.byte	0x50
+ 266 0124 02       		.uleb128 0x2
+ 267 0125 08       		.byte	0x8
+ 268 0126 64       		.byte	0x64
+ 269 0127 00       		.byte	0
+ 270 0128 06       		.uleb128 0x6
+ 271 0129 1C000000 		.4byte	.LVL6
+ 272 012d CD010000 		.4byte	0x1cd
+ 273 0131 06       		.uleb128 0x6
+ 274 0132 20000000 		.4byte	.LVL7
+ 275 0136 D8010000 		.4byte	0x1d8
+ 276 013a 0A       		.uleb128 0xa
+ 277 013b 2A000000 		.4byte	.LVL8
+ 278 013f E3010000 		.4byte	0x1e3
+ 279 0143 54010000 		.4byte	0x154
+ 280 0147 08       		.uleb128 0x8
+ 281 0148 01       		.uleb128 0x1
+ 282 0149 50       		.byte	0x50
+ 283 014a 01       		.uleb128 0x1
+ 284 014b 30       		.byte	0x30
+ 285 014c 08       		.uleb128 0x8
+ 286 014d 01       		.uleb128 0x1
+ 287 014e 51       		.byte	0x51
+ 288 014f 03       		.uleb128 0x3
+ 289 0150 0A       		.byte	0xa
+ 290 0151 0008     		.2byte	0x800
+ 291 0153 00       		.byte	0
+ 292 0154 06       		.uleb128 0x6
+ 293 0155 2E000000 		.4byte	.LVL9
+ 294 0159 EE010000 		.4byte	0x1ee
+ 295 015d 0A       		.uleb128 0xa
+ 296 015e 34000000 		.4byte	.LVL10
+ 297 0162 C2010000 		.4byte	0x1c2
+ 298 0166 70010000 		.4byte	0x170
+ 299 016a 08       		.uleb128 0x8
+ 300 016b 01       		.uleb128 0x1
+ 301 016c 50       		.byte	0x50
+ 302 016d 01       		.uleb128 0x1
+ 303 016e 35       		.byte	0x35
+ 304 016f 00       		.byte	0
+ 305 0170 06       		.uleb128 0x6
+ 306 0171 38000000 		.4byte	.LVL11
+ 307 0175 B7010000 		.4byte	0x1b7
+ 308 0179 00       		.byte	0
+ 309 017a 0B       		.uleb128 0xb
+ 310 017b 50010000 		.4byte	.LASF31
+ 311 017f 0A       		.byte	0xa
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 8
+
+
+ 312 0180 1207     		.2byte	0x712
+ 313 0182 86010000 		.4byte	0x186
+ 314 0186 0C       		.uleb128 0xc
+ 315 0187 76000000 		.4byte	0x76
+ 316 018b 0D       		.uleb128 0xd
+ 317 018c 7A000000 		.4byte	.LASF16
+ 318 0190 7A000000 		.4byte	.LASF16
+ 319 0194 04       		.byte	0x4
+ 320 0195 2B       		.byte	0x2b
+ 321 0196 0D       		.uleb128 0xd
+ 322 0197 81010000 		.4byte	.LASF17
+ 323 019b 81010000 		.4byte	.LASF17
+ 324 019f 05       		.byte	0x5
+ 325 01a0 26       		.byte	0x26
+ 326 01a1 0D       		.uleb128 0xd
+ 327 01a2 2B010000 		.4byte	.LASF18
+ 328 01a6 2B010000 		.4byte	.LASF18
+ 329 01aa 06       		.byte	0x6
+ 330 01ab 18       		.byte	0x18
+ 331 01ac 0D       		.uleb128 0xd
+ 332 01ad 5D010000 		.4byte	.LASF19
+ 333 01b1 5D010000 		.4byte	.LASF19
+ 334 01b5 04       		.byte	0x4
+ 335 01b6 24       		.byte	0x24
+ 336 01b7 0D       		.uleb128 0xd
+ 337 01b8 6E010000 		.4byte	.LASF20
+ 338 01bc 6E010000 		.4byte	.LASF20
+ 339 01c0 07       		.byte	0x7
+ 340 01c1 92       		.byte	0x92
+ 341 01c2 0D       		.uleb128 0xd
+ 342 01c3 44020000 		.4byte	.LASF21
+ 343 01c7 44020000 		.4byte	.LASF21
+ 344 01cb 08       		.byte	0x8
+ 345 01cc 76       		.byte	0x76
+ 346 01cd 0D       		.uleb128 0xd
+ 347 01ce C8010000 		.4byte	.LASF22
+ 348 01d2 C8010000 		.4byte	.LASF22
+ 349 01d6 07       		.byte	0x7
+ 350 01d7 93       		.byte	0x93
+ 351 01d8 0D       		.uleb128 0xd
+ 352 01d9 66000000 		.4byte	.LASF23
+ 353 01dd 66000000 		.4byte	.LASF23
+ 354 01e1 07       		.byte	0x7
+ 355 01e2 DC       		.byte	0xdc
+ 356 01e3 0D       		.uleb128 0xd
+ 357 01e4 19020000 		.4byte	.LASF24
+ 358 01e8 19020000 		.4byte	.LASF24
+ 359 01ec 09       		.byte	0x9
+ 360 01ed 22       		.byte	0x22
+ 361 01ee 0D       		.uleb128 0xd
+ 362 01ef 00020000 		.4byte	.LASF25
+ 363 01f3 00020000 		.4byte	.LASF25
+ 364 01f7 07       		.byte	0x7
+ 365 01f8 DD       		.byte	0xdd
+ 366 01f9 00       		.byte	0
+ 367              		.section	.debug_abbrev,"",%progbits
+ 368              	.Ldebug_abbrev0:
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 9
+
+
+ 369 0000 01       		.uleb128 0x1
+ 370 0001 11       		.uleb128 0x11
+ 371 0002 01       		.byte	0x1
+ 372 0003 25       		.uleb128 0x25
+ 373 0004 0E       		.uleb128 0xe
+ 374 0005 13       		.uleb128 0x13
+ 375 0006 0B       		.uleb128 0xb
+ 376 0007 03       		.uleb128 0x3
+ 377 0008 0E       		.uleb128 0xe
+ 378 0009 1B       		.uleb128 0x1b
+ 379 000a 0E       		.uleb128 0xe
+ 380 000b 55       		.uleb128 0x55
+ 381 000c 17       		.uleb128 0x17
+ 382 000d 11       		.uleb128 0x11
+ 383 000e 01       		.uleb128 0x1
+ 384 000f 10       		.uleb128 0x10
+ 385 0010 17       		.uleb128 0x17
+ 386 0011 00       		.byte	0
+ 387 0012 00       		.byte	0
+ 388 0013 02       		.uleb128 0x2
+ 389 0014 24       		.uleb128 0x24
+ 390 0015 00       		.byte	0
+ 391 0016 0B       		.uleb128 0xb
+ 392 0017 0B       		.uleb128 0xb
+ 393 0018 3E       		.uleb128 0x3e
+ 394 0019 0B       		.uleb128 0xb
+ 395 001a 03       		.uleb128 0x3
+ 396 001b 0E       		.uleb128 0xe
+ 397 001c 00       		.byte	0
+ 398 001d 00       		.byte	0
+ 399 001e 03       		.uleb128 0x3
+ 400 001f 16       		.uleb128 0x16
+ 401 0020 00       		.byte	0
+ 402 0021 03       		.uleb128 0x3
+ 403 0022 0E       		.uleb128 0xe
+ 404 0023 3A       		.uleb128 0x3a
+ 405 0024 0B       		.uleb128 0xb
+ 406 0025 3B       		.uleb128 0x3b
+ 407 0026 0B       		.uleb128 0xb
+ 408 0027 49       		.uleb128 0x49
+ 409 0028 13       		.uleb128 0x13
+ 410 0029 00       		.byte	0
+ 411 002a 00       		.byte	0
+ 412 002b 04       		.uleb128 0x4
+ 413 002c 24       		.uleb128 0x24
+ 414 002d 00       		.byte	0
+ 415 002e 0B       		.uleb128 0xb
+ 416 002f 0B       		.uleb128 0xb
+ 417 0030 3E       		.uleb128 0x3e
+ 418 0031 0B       		.uleb128 0xb
+ 419 0032 03       		.uleb128 0x3
+ 420 0033 08       		.uleb128 0x8
+ 421 0034 00       		.byte	0
+ 422 0035 00       		.byte	0
+ 423 0036 05       		.uleb128 0x5
+ 424 0037 2E       		.uleb128 0x2e
+ 425 0038 01       		.byte	0x1
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 10
+
+
+ 426 0039 3F       		.uleb128 0x3f
+ 427 003a 19       		.uleb128 0x19
+ 428 003b 03       		.uleb128 0x3
+ 429 003c 0E       		.uleb128 0xe
+ 430 003d 3A       		.uleb128 0x3a
+ 431 003e 0B       		.uleb128 0xb
+ 432 003f 3B       		.uleb128 0x3b
+ 433 0040 0B       		.uleb128 0xb
+ 434 0041 27       		.uleb128 0x27
+ 435 0042 19       		.uleb128 0x19
+ 436 0043 11       		.uleb128 0x11
+ 437 0044 01       		.uleb128 0x1
+ 438 0045 12       		.uleb128 0x12
+ 439 0046 06       		.uleb128 0x6
+ 440 0047 40       		.uleb128 0x40
+ 441 0048 18       		.uleb128 0x18
+ 442 0049 9742     		.uleb128 0x2117
+ 443 004b 19       		.uleb128 0x19
+ 444 004c 01       		.uleb128 0x1
+ 445 004d 13       		.uleb128 0x13
+ 446 004e 00       		.byte	0
+ 447 004f 00       		.byte	0
+ 448 0050 06       		.uleb128 0x6
+ 449 0051 898201   		.uleb128 0x4109
+ 450 0054 00       		.byte	0
+ 451 0055 11       		.uleb128 0x11
+ 452 0056 01       		.uleb128 0x1
+ 453 0057 31       		.uleb128 0x31
+ 454 0058 13       		.uleb128 0x13
+ 455 0059 00       		.byte	0
+ 456 005a 00       		.byte	0
+ 457 005b 07       		.uleb128 0x7
+ 458 005c 898201   		.uleb128 0x4109
+ 459 005f 01       		.byte	0x1
+ 460 0060 11       		.uleb128 0x11
+ 461 0061 01       		.uleb128 0x1
+ 462 0062 31       		.uleb128 0x31
+ 463 0063 13       		.uleb128 0x13
+ 464 0064 00       		.byte	0
+ 465 0065 00       		.byte	0
+ 466 0066 08       		.uleb128 0x8
+ 467 0067 8A8201   		.uleb128 0x410a
+ 468 006a 00       		.byte	0
+ 469 006b 02       		.uleb128 0x2
+ 470 006c 18       		.uleb128 0x18
+ 471 006d 9142     		.uleb128 0x2111
+ 472 006f 18       		.uleb128 0x18
+ 473 0070 00       		.byte	0
+ 474 0071 00       		.byte	0
+ 475 0072 09       		.uleb128 0x9
+ 476 0073 2E       		.uleb128 0x2e
+ 477 0074 01       		.byte	0x1
+ 478 0075 3F       		.uleb128 0x3f
+ 479 0076 19       		.uleb128 0x19
+ 480 0077 03       		.uleb128 0x3
+ 481 0078 0E       		.uleb128 0xe
+ 482 0079 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 11
+
+
+ 483 007a 0B       		.uleb128 0xb
+ 484 007b 3B       		.uleb128 0x3b
+ 485 007c 0B       		.uleb128 0xb
+ 486 007d 27       		.uleb128 0x27
+ 487 007e 19       		.uleb128 0x19
+ 488 007f 49       		.uleb128 0x49
+ 489 0080 13       		.uleb128 0x13
+ 490 0081 8701     		.uleb128 0x87
+ 491 0083 19       		.uleb128 0x19
+ 492 0084 11       		.uleb128 0x11
+ 493 0085 01       		.uleb128 0x1
+ 494 0086 12       		.uleb128 0x12
+ 495 0087 06       		.uleb128 0x6
+ 496 0088 40       		.uleb128 0x40
+ 497 0089 18       		.uleb128 0x18
+ 498 008a 9742     		.uleb128 0x2117
+ 499 008c 19       		.uleb128 0x19
+ 500 008d 01       		.uleb128 0x1
+ 501 008e 13       		.uleb128 0x13
+ 502 008f 00       		.byte	0
+ 503 0090 00       		.byte	0
+ 504 0091 0A       		.uleb128 0xa
+ 505 0092 898201   		.uleb128 0x4109
+ 506 0095 01       		.byte	0x1
+ 507 0096 11       		.uleb128 0x11
+ 508 0097 01       		.uleb128 0x1
+ 509 0098 31       		.uleb128 0x31
+ 510 0099 13       		.uleb128 0x13
+ 511 009a 01       		.uleb128 0x1
+ 512 009b 13       		.uleb128 0x13
+ 513 009c 00       		.byte	0
+ 514 009d 00       		.byte	0
+ 515 009e 0B       		.uleb128 0xb
+ 516 009f 34       		.uleb128 0x34
+ 517 00a0 00       		.byte	0
+ 518 00a1 03       		.uleb128 0x3
+ 519 00a2 0E       		.uleb128 0xe
+ 520 00a3 3A       		.uleb128 0x3a
+ 521 00a4 0B       		.uleb128 0xb
+ 522 00a5 3B       		.uleb128 0x3b
+ 523 00a6 05       		.uleb128 0x5
+ 524 00a7 49       		.uleb128 0x49
+ 525 00a8 13       		.uleb128 0x13
+ 526 00a9 3F       		.uleb128 0x3f
+ 527 00aa 19       		.uleb128 0x19
+ 528 00ab 3C       		.uleb128 0x3c
+ 529 00ac 19       		.uleb128 0x19
+ 530 00ad 00       		.byte	0
+ 531 00ae 00       		.byte	0
+ 532 00af 0C       		.uleb128 0xc
+ 533 00b0 35       		.uleb128 0x35
+ 534 00b1 00       		.byte	0
+ 535 00b2 49       		.uleb128 0x49
+ 536 00b3 13       		.uleb128 0x13
+ 537 00b4 00       		.byte	0
+ 538 00b5 00       		.byte	0
+ 539 00b6 0D       		.uleb128 0xd
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 12
+
+
+ 540 00b7 2E       		.uleb128 0x2e
+ 541 00b8 00       		.byte	0
+ 542 00b9 3F       		.uleb128 0x3f
+ 543 00ba 19       		.uleb128 0x19
+ 544 00bb 3C       		.uleb128 0x3c
+ 545 00bc 19       		.uleb128 0x19
+ 546 00bd 6E       		.uleb128 0x6e
+ 547 00be 0E       		.uleb128 0xe
+ 548 00bf 03       		.uleb128 0x3
+ 549 00c0 0E       		.uleb128 0xe
+ 550 00c1 3A       		.uleb128 0x3a
+ 551 00c2 0B       		.uleb128 0xb
+ 552 00c3 3B       		.uleb128 0x3b
+ 553 00c4 0B       		.uleb128 0xb
+ 554 00c5 00       		.byte	0
+ 555 00c6 00       		.byte	0
+ 556 00c7 00       		.byte	0
+ 557              		.section	.debug_aranges,"",%progbits
+ 558 0000 24000000 		.4byte	0x24
+ 559 0004 0200     		.2byte	0x2
+ 560 0006 00000000 		.4byte	.Ldebug_info0
+ 561 000a 04       		.byte	0x4
+ 562 000b 00       		.byte	0
+ 563 000c 0000     		.2byte	0
+ 564 000e 0000     		.2byte	0
+ 565 0010 00000000 		.4byte	.LFB64
+ 566 0014 0E000000 		.4byte	.LFE64-.LFB64
+ 567 0018 00000000 		.4byte	.LFB63
+ 568 001c 40000000 		.4byte	.LFE63-.LFB63
+ 569 0020 00000000 		.4byte	0
+ 570 0024 00000000 		.4byte	0
+ 571              		.section	.debug_ranges,"",%progbits
+ 572              	.Ldebug_ranges0:
+ 573 0000 00000000 		.4byte	.LFB64
+ 574 0004 0E000000 		.4byte	.LFE64
+ 575 0008 00000000 		.4byte	.LFB63
+ 576 000c 40000000 		.4byte	.LFE63
+ 577 0010 00000000 		.4byte	0
+ 578 0014 00000000 		.4byte	0
+ 579              		.section	.debug_line,"",%progbits
+ 580              	.Ldebug_line0:
+ 581 0000 DE010000 		.section	.debug_str,"MS",%progbits,1
+ 581      02009001 
+ 581      00000201 
+ 581      FB0E0D00 
+ 581      01010101 
+ 582              	.LASF29:
+ 583 0000 57616B65 		.ascii	"WakeupIsr\000"
+ 583      75704973 
+ 583      7200
+ 584              	.LASF9:
+ 585 000a 5F5F696E 		.ascii	"__int32_t\000"
+ 585      7433325F 
+ 585      7400
+ 586              	.LASF12:
+ 587 0014 646F7562 		.ascii	"double\000"
+ 587      6C6500
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 13
+
+
+ 588              	.LASF28:
+ 589 001b 433A5C55 		.ascii	"C:\\Users\\jucsalaz\\Desktop\\CMPE129\\UACS\\Julian"
+ 589      73657273 
+ 589      5C6A7563 
+ 589      73616C61 
+ 589      7A5C4465 
+ 590 0048 5F50536F 		.ascii	"_PSoC\\Power\\TogglingPin.cydsn\000"
+ 590      435C506F 
+ 590      7765725C 
+ 590      546F6767 
+ 590      6C696E67 
+ 591              	.LASF23:
+ 592 0066 50574D5F 		.ascii	"PWM_40k_Sleep\000"
+ 592      34306B5F 
+ 592      536C6565 
+ 592      7000
+ 593              	.LASF11:
+ 594 0074 666C6F61 		.ascii	"float\000"
+ 594      7400
+ 595              	.LASF16:
+ 596 007a 536C6565 		.ascii	"SleepTimer_GetStatus\000"
+ 596      7054696D 
+ 596      65725F47 
+ 596      65745374 
+ 596      61747573 
+ 597              	.LASF1:
+ 598 008f 756E7369 		.ascii	"unsigned char\000"
+ 598      676E6564 
+ 598      20636861 
+ 598      7200
+ 599              	.LASF26:
+ 600 009d 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 600      43313120 
+ 600      352E342E 
+ 600      31203230 
+ 600      31363036 
+ 601 00d0 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 601      20726576 
+ 601      6973696F 
+ 601      6E203233 
+ 601      37373135 
+ 602 0103 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 602      66756E63 
+ 602      74696F6E 
+ 602      2D736563 
+ 602      74696F6E 
+ 603              	.LASF18:
+ 604 012b 536C6565 		.ascii	"Sleep_ISR_StartEx\000"
+ 604      705F4953 
+ 604      525F5374 
+ 604      61727445 
+ 604      7800
+ 605              	.LASF3:
+ 606 013d 73686F72 		.ascii	"short unsigned int\000"
+ 606      7420756E 
+ 606      7369676E 
+ 606      65642069 
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 14
+
+
+ 606      6E7400
+ 607              	.LASF31:
+ 608 0150 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 608      52784275 
+ 608      66666572 
+ 608      00
+ 609              	.LASF19:
+ 610 015d 536C6565 		.ascii	"SleepTimer_Start\000"
+ 610      7054696D 
+ 610      65725F53 
+ 610      74617274 
+ 610      00
+ 611              	.LASF20:
+ 612 016e 50574D5F 		.ascii	"PWM_40k_Start\000"
+ 612      34306B5F 
+ 612      53746172 
+ 612      7400
+ 613              	.LASF30:
+ 614 017c 6D61696E 		.ascii	"main\000"
+ 614      00
+ 615              	.LASF17:
+ 616 0181 546F6767 		.ascii	"Toggle_Pin_Write\000"
+ 616      6C655F50 
+ 616      696E5F57 
+ 616      72697465 
+ 616      00
+ 617              	.LASF5:
+ 618 0192 6C6F6E67 		.ascii	"long unsigned int\000"
+ 618      20756E73 
+ 618      69676E65 
+ 618      6420696E 
+ 618      7400
+ 619              	.LASF8:
+ 620 01a4 756E7369 		.ascii	"unsigned int\000"
+ 620      676E6564 
+ 620      20696E74 
+ 620      00
+ 621              	.LASF7:
+ 622 01b1 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 622      206C6F6E 
+ 622      6720756E 
+ 622      7369676E 
+ 622      65642069 
+ 623              	.LASF22:
+ 624 01c8 50574D5F 		.ascii	"PWM_40k_Stop\000"
+ 624      34306B5F 
+ 624      53746F70 
+ 624      00
+ 625              	.LASF10:
+ 626 01d5 696E7433 		.ascii	"int32_t\000"
+ 626      325F7400 
+ 627              	.LASF15:
+ 628 01dd 73697A65 		.ascii	"sizetype\000"
+ 628      74797065 
+ 628      00
+ 629              	.LASF6:
+ 630 01e6 6C6F6E67 		.ascii	"long long int\000"
+ARM GAS  C:\Users\jucsalaz\AppData\Local\Temp\ccO7qVTa.s 			page 15
+
+
+ 630      206C6F6E 
+ 630      6720696E 
+ 630      7400
+ 631              	.LASF27:
+ 632 01f4 6D61696E 		.ascii	"main.c\000"
+ 632      2E6300
+ 633              	.LASF13:
+ 634 01fb 63686172 		.ascii	"char\000"
+ 634      00
+ 635              	.LASF25:
+ 636 0200 50574D5F 		.ascii	"PWM_40k_Wakeup\000"
+ 636      34306B5F 
+ 636      57616B65 
+ 636      757000
+ 637              	.LASF2:
+ 638 020f 73686F72 		.ascii	"short int\000"
+ 638      7420696E 
+ 638      7400
+ 639              	.LASF24:
+ 640 0219 4379506D 		.ascii	"CyPmSleep\000"
+ 640      536C6565 
+ 640      7000
+ 641              	.LASF4:
+ 642 0223 6C6F6E67 		.ascii	"long int\000"
+ 642      20696E74 
+ 642      00
+ 643              	.LASF14:
+ 644 022c 6C6F6E67 		.ascii	"long double\000"
+ 644      20646F75 
+ 644      626C6500 
+ 645              	.LASF0:
+ 646 0238 7369676E 		.ascii	"signed char\000"
+ 646      65642063 
+ 646      68617200 
+ 647              	.LASF21:
+ 648 0244 43794465 		.ascii	"CyDelay\000"
+ 648      6C617900 
+ 649              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

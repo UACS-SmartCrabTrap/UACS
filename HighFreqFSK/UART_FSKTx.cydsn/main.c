@@ -35,7 +35,7 @@
 /***************************************
 * UART/TESTING MACRO
 ***************************************/
-#define UART    ENABLED
+#define UART    DISABLED
 
 /* Character LCD String Length */
 #define LINE_STR_LENGTH     (20u)
@@ -104,10 +104,10 @@ CY_ISR_PROTO(RxWakeUp); // sleep timer interrupt from UART
 static int error = 0; // flag for input error
 static int i = 2; // to iterate through data array
 static int sleepCount = 0;
-static uint16 count;
-static char8 lineStr[LINE_STR_LENGTH];
-static char8 data[LINE_STR_LENGTH];
-static uint8 newDataflag = FALSE;
+uint16 count;
+char8 lineStr[LINE_STR_LENGTH];
+char8 data[LINE_STR_LENGTH];
+uint8 newDataflag = FALSE;
 static int bitTime = 0;
 static int currentByte = Encoding_Byte;
 static int prefixTime = 0;
@@ -117,8 +117,8 @@ static int maxDataFlag = FALSE;
 static int wakeUpData = FALSE;
 
 /* UART Global Variables */
-static uint8 errorStatus = 0u; // No error at beginning
-static uint8 crabsToSend = 0x1; // Start at 1 for testing
+uint8 errorStatus = 0u; // No error at beginning
+uint8 crabsToSend = 0x1; // Start at 1 for testing
 
 
 /*******************************************************************************
@@ -186,7 +186,7 @@ int main()
                 /* Switch data or repeat data depending on sendDataCount */
                 sendDataCount++; // count how many times we send data
                 newDataflag = FALSE; // Turn sending off until new data from UART
-                
+                prefixTime = 0;
 #if(UART == ENABLED)
                 data_turn++;
                 if (data_turn == DATA_LENGTH) {
@@ -195,7 +195,7 @@ int main()
 #else 
                 // Restart data if sent MAX_DATA_SENDING
                 if(sendDataCount >= MAX_DATA_SENDING){
-                    sendDataCount = 0;
+                    
                     crabsToSend <<= 1; // Move over data a bit
                     data_turn++;
                     maxDataFlag = TRUE; // flag for extra 2 second delay between new data
@@ -225,6 +225,7 @@ int main()
                 SignalBase_Write(0);               
                 
                 if(sendDataCount >= MAX_DATA_SENDING){
+                    sendDataCount = 0;
                     SleepTimer_Start();
                     goToSleep();
                     // PSoC Sleep command. To adjust sleep time, change in the hardware
@@ -368,6 +369,9 @@ int FindParity()
 void wakeUp(void){
     //sleepToggle_Write(OFF);
     //CyPmRestoreClocks();
+#if(UART == DISABLED)
+    CyPmRestoreClocks();
+#endif /* UART == ENABLED */
     LCD_Wakeup();
     checkWatchDogTimer_Wakeup();
     PWM_Modulator_Wakeup();

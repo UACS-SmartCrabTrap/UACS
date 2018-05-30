@@ -437,6 +437,10 @@ uint8 majorityVote(){
             }
         }
     }
+    // Reset data array
+    allData[0] = 0;
+    allData[1] = 0;
+    allData[2] = 0;
     return finalResult;
 }
 

@@ -117,8 +117,8 @@ static int maxDataFlag = FALSE;
 static int wakeUpData = FALSE;
 
 /* UART Global Variables */
-uint8 errorStatus = 0u;
-uint8 crabsToSend = 0x1;
+static uint8 errorStatus = 0u; // No error at beginning
+static uint8 crabsToSend = 0x1; // Start at 1 for testing
 
 
 /*******************************************************************************
@@ -146,21 +146,10 @@ int main()
     LCD_Start();
     PWM_Modulator_Start();
     PWM_Switch_Timer_Start();
+    
     /* Start Interrupts */
     isr_sec_StartEx(isr_sec);
     Sleep_ISR_StartEx(wakeUpIsr);
-    
-//    // Set PWM to AUDIBLE_FREQ
-//    PWM_1_WritePeriod(FREQ(AUDIBLE_FREQ));
-//    PWM_1_WriteCompare((FREQ(AUDIBLE_FREQ))/2); // Sets pulse width to half
-//    
-//    // Set PWM to ONE_FREQ
-//    PWM_2_WritePeriod(FREQ(ONE_FREQ));
-//    PWM_2_WriteCompare((FREQ(ONE_FREQ))/2); // Sets pulse width to half
-//    
-//    // Set PWM to ZERO_FREQ
-//    PWM_3_WritePeriod(FREQ(ZERO_FREQ));
-//    PWM_3_WriteCompare((FREQ(ZERO_FREQ))/2); // Sets pulse width to half
     
     /* Clear LCD line. */
     LCD_Position(0u, 0u);

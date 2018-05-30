@@ -27,7 +27,7 @@
 #define TRUE              0x1
 #define FALSE             0x0
 #define FiveSecs          5000
-#define THREE_TRANSMISSIONS 2
+#define TRANSMISSIONS_3    2
 #define Delay               2
 
 /*Function Prototypes*/
@@ -93,7 +93,6 @@ int main(void)
     // Start watch dog timer to check for blocks in code
     CyWdtStart(CYWDT_2_TICKS, CYWDT_LPMODE_NOCHANGE);
     
-
     SleepTimer_Start();
 
     // Displays Loading Message before receiving pre-fix=
@@ -204,7 +203,7 @@ CY_ISR(Bit_Timer){
             threeTransmissions++;
             
             //after 3 transmissions, turn bit timer off and sleep time back on
-            if(threeTransmissions == THREE_TRANSMISSIONS){
+            if(threeTransmissions == TRANSMISSIONS_3){
                 threeTransmissions = 0;
                     SleepTimer_Start();
                     Bit_Timer_Stop();

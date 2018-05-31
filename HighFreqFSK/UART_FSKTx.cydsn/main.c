@@ -241,7 +241,9 @@ int main()
                     while(newDataflag == FALSE){
                         CyWdtClear(); // Clear watchdog timer while in sleep
                         // PSoC Sleep command. To adjust sleep time, change in the hardware
+                        //sleepToggle_Write(1);
                         //CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
+                        
                     }
                     //New Transmission, wake up PSOC
                     RxWakeUp_Stop();
@@ -453,7 +455,7 @@ CY_ISR(isr_sec)
 CY_ISR(RxIsr)
 {
     
-    sleepToggle_Write(ON);
+    //sleepToggle_Write(ON);
     uint8 rxStatus;   
     do
     {
@@ -497,7 +499,7 @@ CY_ISR(RxIsr)
     }while((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u);
     
     isr_rx_ClearPending();
-    sleepToggle_Write(OFF);
+    //sleepToggle_Write(OFF);
 } //end CY_ISR(RxIsr)
 
 /*******************************************************************************
@@ -563,6 +565,7 @@ CY_ISR(wakeUpIsr){
 *
 *******************************************************************************/
 CY_ISR(RxWakeUp){
+    sleepToggle_Write(1);
     CyPmRestoreClocks();
     UART_Wakeup();
     UART_Start();

@@ -1,0 +1,185 @@
+/*******************************************************************************
+* File Name: Audio_Buf_N.c
+* Version 1.20
+*
+* Description:
+*  This file provides the source code to the API for the Opamp (Analog Buffer)
+*  Component.
+*
+*
+********************************************************************************
+* Copyright 2013-2015, Cypress Semiconductor Corporation.  All rights reserved.
+* You may use this file only in accordance with the license, terms, conditions,
+* disclaimers, and limitations in the end user license agreement accompanying
+* the software package with which this file was provided.
+*******************************************************************************/
+
+#include "Audio_Buf_N.h"
+
+uint8 Audio_Buf_N_initVar = 0u; /* Defines if component was initialized */
+static uint32 Audio_Buf_N_internalPower = 0u; /* Defines component Power value */
+
+
+/*******************************************************************************
+* Function Name: Audio_Buf_N_Init
+********************************************************************************
+*
+* Summary:
+*  Initializes or restores the component according to the customizer Configure 
+*  dialog settings. It is not necessary to call Init() because the Start() API 
+*  calls this function and is the preferred method to begin the component operation.
+*
+* Parameters:
+*  None
+*
+* Return:
+*  None
+*
+*******************************************************************************/
+void Audio_Buf_N_Init(void)
+{
+    Audio_Buf_N_internalPower = Audio_Buf_N_POWER;
+    Audio_Buf_N_CTB_CTRL_REG = Audio_Buf_N_DEFAULT_CTB_CTRL;
+    Audio_Buf_N_OA_RES_CTRL_REG = Audio_Buf_N_DEFAULT_OA_RES_CTRL;
+    Audio_Buf_N_OA_COMP_TRIM_REG = Audio_Buf_N_DEFAULT_OA_COMP_TRIM_REG;
+}
+
+
+/*******************************************************************************
+* Function Name: Audio_Buf_N_Enable
+********************************************************************************
+*
+* Summary:
+*  Activates the hardware and begins the component operation. It is not necessary to 
+*  call Enable() because the Start() API calls this function, which is the 
+*  preferred method to begin the component operation.
+*
+* Parameters:
+*  None
+*
+* Return:
+*  None
+*
+*******************************************************************************/
+void Audio_Buf_N_Enable(void)
+{
+    Audio_Buf_N_OA_RES_CTRL_REG |= Audio_Buf_N_internalPower | \
+                                        Audio_Buf_N_OA_PUMP_EN;
+}
+
+
+/*******************************************************************************
+* Function Name: Audio_Buf_N_Start
+********************************************************************************
+*
+* Summary:
+*  Performs all of the required initialization for the component and enables power 
+*  to the block. The first time the routine is executed, the Power level, Mode, 
+*  and Output mode are set. When called to restart the Opamp following a Stop() call, 
+*  the current component parameter settings are retained.
+*
+* Parameters:
+*  None
+*
+* Return:
+*  None
+*
+* Global variables:
+*  Audio_Buf_N_initVar: Used to check the initial configuration, modified
+*  when this function is called for the first time.
+*
+*******************************************************************************/
+void Audio_Buf_N_Start(void)
+{
+    if( 0u == Audio_Buf_N_initVar)
+    {
+        Audio_Buf_N_Init();
+        Audio_Buf_N_initVar = 1u;
+    }
+    Audio_Buf_N_Enable();
+}
+
+
+/*******************************************************************************
+* Function Name: Audio_Buf_N_Stop
+********************************************************************************
+*
+* Summary:
+*  Turn off the Opamp block.
+*
+* Parameters:
+*  None
+*
+* Return:
+*  None
+*
+*******************************************************************************/
+void Audio_Buf_N_Stop(void)
+{
+    Audio_Buf_N_OA_RES_CTRL_REG &= ((uint32)~(Audio_Buf_N_OA_PWR_MODE_MASK | \
+                                                   Audio_Buf_N_OA_PUMP_EN));
+}
+
+
+/*******************************************************************************
+* Function Name: Audio_Buf_N_SetPower
+********************************************************************************
+*
+* Summary:
+*  Sets the Opamp to one of the three power levels.
+*
+* Parameters:
+*  power: power levels.
+*   Audio_Buf_N_LOW_POWER - Lowest active power
+*   Audio_Buf_N_MED_POWER - Medium power
+*   Audio_Buf_N_HIGH_POWER - Highest active power
+*
+* Return:
+*  None
+*
+**********************************************************************************/
+void Audio_Buf_N_SetPower(uint32 power)
+{
+    uint32 tmp;
+    
+    Audio_Buf_N_internalPower = Audio_Buf_N_GET_OA_PWR_MODE(power);
+    tmp = Audio_Buf_N_OA_RES_CTRL_REG & \
+           (uint32)~Audio_Buf_N_OA_PWR_MODE_MASK;
+    Audio_Buf_N_OA_RES_CTRL_REG = tmp | Audio_Buf_N_internalPower;
+}
+
+
+/*******************************************************************************
+* Function Name: Audio_Buf_N_PumpControl
+********************************************************************************
+*
+* Summary:
+*  Allows the user to turn the Opamp's boost pump on or off. By Default the Start() 
+*  function turns on the pump. Use this API to turn it off. The boost must be 
+*  turned on when the supply is less than 2.7 volts and off if the supply is more 
+*  than 4 volts.
+*
+* Parameters:
+*  onOff: Control the pump.
+*   Audio_Buf_N_PUMP_OFF - Turn off the pump
+*   Audio_Buf_N_PUMP_ON - Turn on the pump
+*
+* Return:
+*  None
+*
+**********************************************************************************/
+void Audio_Buf_N_PumpControl(uint32 onOff)
+{
+    
+    if(0u != onOff)
+    {
+        Audio_Buf_N_OA_RES_CTRL |= Audio_Buf_N_OA_PUMP_EN;    
+    }
+    else
+    {
+        Audio_Buf_N_OA_RES_CTRL &= (uint32)~Audio_Buf_N_OA_PUMP_EN;
+    }
+}
+
+
+/* [] END OF FILE */

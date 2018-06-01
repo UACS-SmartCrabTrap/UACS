@@ -1,0 +1,2489 @@
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 1
+
+
+   1              		.cpu cortex-m0
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 4
+  10              		.eabi_attribute 34, 0
+  11              		.eabi_attribute 18, 4
+  12              		.code	16
+  13              		.file	"ssd1306x.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.oled_draw_channel0,"ax",%progbits
+  18              		.align	1
+  19              		.global	oled_draw_channel0
+  20              		.code	16
+  21              		.thumb_func
+  22              		.type	oled_draw_channel0, %function
+  23              	oled_draw_channel0:
+  24              	.LFB34:
+  25              		.file 1 ".\\ssd1306x.c"
+   1:.\ssd1306x.c  **** /**************
+   2:.\ssd1306x.c  ****  * FFT on PSoC4
+   3:.\ssd1306x.c  ****  **************
+   4:.\ssd1306x.c  ****  * A project by @KaiserHaz
+   5:.\ssd1306x.c  ****  * 
+   6:.\ssd1306x.c  ****  * Extra display libraries. Extension to ssd1306.h. Function implementations
+   7:.\ssd1306x.c  ****  * 
+   8:.\ssd1306x.c  ****  */
+   9:.\ssd1306x.c  **** 
+  10:.\ssd1306x.c  **** #include <project.h>
+  11:.\ssd1306x.c  **** #include <stdlib.h>
+  12:.\ssd1306x.c  **** #include <math.h>
+  13:.\ssd1306x.c  **** #include "ssd1306x.h"
+  14:.\ssd1306x.c  **** 
+  15:.\ssd1306x.c  **** oled_eq_chan* _oled_eq_chan_tab_;
+  16:.\ssd1306x.c  **** 
+  17:.\ssd1306x.c  **** /**
+  18:.\ssd1306x.c  ****  * Method : oled_draw_channel0
+  19:.\ssd1306x.c  ****  * Args   : int16_t chan  : Channel number
+  20:.\ssd1306x.c  ****  *          int16_t mag   : Magnitude
+  21:.\ssd1306x.c  ****  *          uint16_t color: Display color
+  22:.\ssd1306x.c  ****  * Returns: -
+  23:.\ssd1306x.c  ****  * Descr  : Draws channel chan with the given magnitude mag. Standalone ver
+  24:.\ssd1306x.c  ****  *
+  25:.\ssd1306x.c  ****  */
+  26:.\ssd1306x.c  **** void oled_draw_channel0( int16_t chan, int16_t mag, uint16_t color ){
+  26              		.loc 1 26 0
+  27              		.cfi_startproc
+  28              	.LVL0:
+  29 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+  30              		.cfi_def_cfa_offset 20
+  31              		.cfi_offset 4, -20
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 2
+
+
+  32              		.cfi_offset 5, -16
+  33              		.cfi_offset 6, -12
+  34              		.cfi_offset 7, -8
+  35              		.cfi_offset 14, -4
+  36 0002 041C     		mov	r4, r0
+  27:.\ssd1306x.c  ****     
+  28:.\ssd1306x.c  ****     uint8_t ii = 0;
+  29:.\ssd1306x.c  ****     
+  30:.\ssd1306x.c  ****     display_clear();
+  31:.\ssd1306x.c  ****     
+  32:.\ssd1306x.c  ****     for( ii = 0 ; ii < mag ; ii++ ){
+  37              		.loc 1 32 0
+  38 0004 0025     		mov	r5, #0
+  33:.\ssd1306x.c  ****         gfx_drawLine( (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_ACT_OFF_, ii,
+  39              		.loc 1 33 0
+  40 0006 E400     		lsl	r4, r4, #3
+  26:.\ssd1306x.c  ****     
+  41              		.loc 1 26 0
+  42 0008 85B0     		sub	sp, sp, #20
+  43              		.cfi_def_cfa_offset 40
+  44              		.loc 1 33 0
+  45 000a A4B2     		uxth	r4, r4
+  26:.\ssd1306x.c  ****     
+  46              		.loc 1 26 0
+  47 000c 0E1C     		mov	r6, r1
+  48 000e 171C     		mov	r7, r2
+  30:.\ssd1306x.c  ****     
+  49              		.loc 1 30 0
+  50 0010 FFF7FEFF 		bl	display_clear
+  51              	.LVL1:
+  52              		.loc 1 33 0
+  53 0014 631C     		add	r3, r4, #1
+  54 0016 9BB2     		uxth	r3, r3
+  55 0018 0634     		add	r4, r4, #6
+  56 001a 0393     		str	r3, [sp, #12]
+  57 001c A4B2     		uxth	r4, r4
+  58              	.LVL2:
+  59              	.L2:
+  32:.\ssd1306x.c  ****         gfx_drawLine( (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_ACT_OFF_, ii,
+  60              		.loc 1 32 0 discriminator 1
+  61 001e B542     		cmp	r5, r6
+  62 0020 0BDA     		bge	.L5
+  63              		.loc 1 33 0 discriminator 3
+  64 0022 6B46     		mov	r3, sp
+  65 0024 291C     		mov	r1, r5
+  66 0026 0C20     		mov	r0, #12
+  67 0028 185E     		ldrsh	r0, [r3, r0]
+  68 002a 22B2     		sxth	r2, r4
+  69 002c 2B1C     		mov	r3, r5
+  70 002e 0097     		str	r7, [sp]
+  32:.\ssd1306x.c  ****         gfx_drawLine( (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_ACT_OFF_, ii,
+  71              		.loc 1 32 0 discriminator 3
+  72 0030 0135     		add	r5, r5, #1
+  73              	.LVL3:
+  74              		.loc 1 33 0 discriminator 3
+  75 0032 FFF7FEFF 		bl	gfx_drawLine
+  76              	.LVL4:
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 3
+
+
+  32:.\ssd1306x.c  ****         gfx_drawLine( (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_ACT_OFF_, ii,
+  77              		.loc 1 32 0 discriminator 3
+  78 0036 EDB2     		uxtb	r5, r5
+  79              	.LVL5:
+  80 0038 F1E7     		b	.L2
+  81              	.L5:
+  34:.\ssd1306x.c  ****                       (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_BBUF_OFF_-_OLED_EQ_ACT_OFF_, ii, color );
+  35:.\ssd1306x.c  ****     }
+  36:.\ssd1306x.c  ****     
+  37:.\ssd1306x.c  ****     display_update();
+  82              		.loc 1 37 0
+  83 003a FFF7FEFF 		bl	display_update
+  84              	.LVL6:
+  38:.\ssd1306x.c  ****     
+  39:.\ssd1306x.c  **** }
+  85              		.loc 1 39 0
+  86 003e 05B0     		add	sp, sp, #20
+  87              		@ sp needed
+  88              	.LVL7:
+  89 0040 F0BD     		pop	{r4, r5, r6, r7, pc}
+  90              		.cfi_endproc
+  91              	.LFE34:
+  92              		.size	oled_draw_channel0, .-oled_draw_channel0
+  93              		.section	.text.oled_draw_channel1,"ax",%progbits
+  94              		.align	1
+  95              		.global	oled_draw_channel1
+  96              		.code	16
+  97              		.thumb_func
+  98              		.type	oled_draw_channel1, %function
+  99              	oled_draw_channel1:
+ 100              	.LFB35:
+  40:.\ssd1306x.c  **** 
+  41:.\ssd1306x.c  **** /**
+  42:.\ssd1306x.c  ****  * Method : oled_draw_channel1
+  43:.\ssd1306x.c  ****  * Args   : int16_t chan  : Channel number
+  44:.\ssd1306x.c  ****  *          int16_t mag   : Magnitude
+  45:.\ssd1306x.c  ****  *          uint16_t color: Display color
+  46:.\ssd1306x.c  ****  * Returns: -
+  47:.\ssd1306x.c  ****  * Descr  : Draws channel chan with the given magnitude mag
+  48:.\ssd1306x.c  ****  *
+  49:.\ssd1306x.c  ****  */
+  50:.\ssd1306x.c  **** void oled_draw_channel1( int16_t chan, int16_t mag, uint16_t color ){
+ 101              		.loc 1 50 0
+ 102              		.cfi_startproc
+ 103              	.LVL8:
+ 104 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 105              		.cfi_def_cfa_offset 20
+ 106              		.cfi_offset 4, -20
+ 107              		.cfi_offset 5, -16
+ 108              		.cfi_offset 6, -12
+ 109              		.cfi_offset 7, -8
+ 110              		.cfi_offset 14, -4
+ 111 0002 0E1C     		mov	r6, r1
+ 112 0004 171C     		mov	r7, r2
+  51:.\ssd1306x.c  ****     
+  52:.\ssd1306x.c  ****     uint8_t ii = 0;
+  53:.\ssd1306x.c  ****     
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 4
+
+
+  54:.\ssd1306x.c  ****     for( ii = 0 ; ii < mag ; ii++ ){
+ 113              		.loc 1 54 0
+ 114 0006 0025     		mov	r5, #0
+  55:.\ssd1306x.c  ****         gfx_drawLine( (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_ACT_OFF_, ii,
+ 115              		.loc 1 55 0
+ 116 0008 C000     		lsl	r0, r0, #3
+ 117              	.LVL9:
+ 118 000a 84B2     		uxth	r4, r0
+ 119 000c 631C     		add	r3, r4, #1
+  50:.\ssd1306x.c  ****     
+ 120              		.loc 1 50 0
+ 121 000e 85B0     		sub	sp, sp, #20
+ 122              		.cfi_def_cfa_offset 40
+ 123              		.loc 1 55 0
+ 124 0010 9BB2     		uxth	r3, r3
+ 125 0012 0634     		add	r4, r4, #6
+ 126 0014 0393     		str	r3, [sp, #12]
+ 127 0016 A4B2     		uxth	r4, r4
+ 128              	.LVL10:
+ 129              	.L7:
+  54:.\ssd1306x.c  ****         gfx_drawLine( (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_ACT_OFF_, ii,
+ 130              		.loc 1 54 0 discriminator 1
+ 131 0018 B542     		cmp	r5, r6
+ 132 001a 0BDA     		bge	.L9
+ 133              		.loc 1 55 0 discriminator 3
+ 134 001c 6B46     		mov	r3, sp
+ 135 001e 291C     		mov	r1, r5
+ 136 0020 0C20     		mov	r0, #12
+ 137 0022 185E     		ldrsh	r0, [r3, r0]
+ 138 0024 22B2     		sxth	r2, r4
+ 139 0026 2B1C     		mov	r3, r5
+ 140 0028 0097     		str	r7, [sp]
+  54:.\ssd1306x.c  ****         gfx_drawLine( (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_ACT_OFF_, ii,
+ 141              		.loc 1 54 0 discriminator 3
+ 142 002a 0135     		add	r5, r5, #1
+ 143              	.LVL11:
+ 144              		.loc 1 55 0 discriminator 3
+ 145 002c FFF7FEFF 		bl	gfx_drawLine
+ 146              	.LVL12:
+  54:.\ssd1306x.c  ****         gfx_drawLine( (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_ACT_OFF_, ii,
+ 147              		.loc 1 54 0 discriminator 3
+ 148 0030 EDB2     		uxtb	r5, r5
+ 149              	.LVL13:
+ 150 0032 F1E7     		b	.L7
+ 151              	.L9:
+  56:.\ssd1306x.c  ****                       (chan*_OLED_EQ_CHAN_MULT_)+_OLED_EQ_BBUF_OFF_-_OLED_EQ_ACT_OFF_, ii, color );
+  57:.\ssd1306x.c  ****     }
+  58:.\ssd1306x.c  ****     
+  59:.\ssd1306x.c  **** }
+ 152              		.loc 1 59 0
+ 153 0034 05B0     		add	sp, sp, #20
+ 154              		@ sp needed
+ 155              	.LVL14:
+ 156 0036 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 157              		.cfi_endproc
+ 158              	.LFE35:
+ 159              		.size	oled_draw_channel1, .-oled_draw_channel1
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 5
+
+
+ 160              		.section	.text.oled_draw_channel2,"ax",%progbits
+ 161              		.align	1
+ 162              		.global	oled_draw_channel2
+ 163              		.code	16
+ 164              		.thumb_func
+ 165              		.type	oled_draw_channel2, %function
+ 166              	oled_draw_channel2:
+ 167              	.LFB36:
+  60:.\ssd1306x.c  **** 
+  61:.\ssd1306x.c  **** /**
+  62:.\ssd1306x.c  ****  * Method : oled_draw_channel2
+  63:.\ssd1306x.c  ****  * Args   : oled_eq_chan chan  : Channel structure
+  64:.\ssd1306x.c  ****  *          uint16_t color     : Display color
+  65:.\ssd1306x.c  ****  * Returns: -
+  66:.\ssd1306x.c  ****  * Descr  : Draws channel chan. Just calls the above method really
+  67:.\ssd1306x.c  ****  *
+  68:.\ssd1306x.c  ****  */
+  69:.\ssd1306x.c  **** void oled_draw_channel2( oled_eq_chan chan, uint16_t color ){
+ 168              		.loc 1 69 0
+ 169              		.cfi_startproc
+ 170              	.LVL15:
+ 171 0000 031C     		mov	r3, r0
+ 172 0002 13B5     		push	{r0, r1, r4, lr}
+ 173              		.cfi_def_cfa_offset 16
+ 174              		.cfi_offset 0, -16
+ 175              		.cfi_offset 1, -12
+ 176              		.cfi_offset 4, -8
+ 177              		.cfi_offset 14, -4
+ 178              		.loc 1 69 0
+ 179 0004 0A1C     		mov	r2, r1
+ 180 0006 0190     		str	r0, [sp, #4]
+  70:.\ssd1306x.c  ****     oled_draw_channel1(chan._oled_eq_chan_num,
+ 181              		.loc 1 70 0
+ 182 0008 1914     		asr	r1, r3, #16
+ 183              	.LVL16:
+ 184 000a 00B2     		sxth	r0, r0
+ 185 000c FFF7FEFF 		bl	oled_draw_channel1
+ 186              	.LVL17:
+  71:.\ssd1306x.c  ****                        chan._oled_eq_chan_mag, color);
+  72:.\ssd1306x.c  **** }
+ 187              		.loc 1 72 0
+ 188              		@ sp needed
+ 189 0010 13BD     		pop	{r0, r1, r4, pc}
+ 190              		.cfi_endproc
+ 191              	.LFE36:
+ 192              		.size	oled_draw_channel2, .-oled_draw_channel2
+ 193              		.section	.text.oled_eq_chan_init,"ax",%progbits
+ 194              		.align	1
+ 195              		.global	oled_eq_chan_init
+ 196              		.code	16
+ 197              		.thumb_func
+ 198              		.type	oled_eq_chan_init, %function
+ 199              	oled_eq_chan_init:
+ 200              	.LFB37:
+  73:.\ssd1306x.c  **** 
+  74:.\ssd1306x.c  **** /**
+  75:.\ssd1306x.c  ****  * Method : oled_eq_chan_init
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 6
+
+
+  76:.\ssd1306x.c  ****  * Args   : -
+  77:.\ssd1306x.c  ****  * Returns: -
+  78:.\ssd1306x.c  ****  * Descr  : Initializes channel structure array
+  79:.\ssd1306x.c  ****  *
+  80:.\ssd1306x.c  ****  */
+  81:.\ssd1306x.c  **** void oled_eq_chan_init(){
+ 201              		.loc 1 81 0
+ 202              		.cfi_startproc
+ 203 0000 38B5     		push	{r3, r4, r5, lr}
+ 204              		.cfi_def_cfa_offset 16
+ 205              		.cfi_offset 3, -16
+ 206              		.cfi_offset 4, -12
+ 207              		.cfi_offset 5, -8
+ 208              		.cfi_offset 14, -4
+  82:.\ssd1306x.c  ****     
+  83:.\ssd1306x.c  ****     uint8_t ii;
+  84:.\ssd1306x.c  ****     
+  85:.\ssd1306x.c  ****     _oled_eq_chan_tab_ = (oled_eq_chan*) malloc(_OLED_EQ_CHAN_CNT_*sizeof(oled_eq_chan));
+ 209              		.loc 1 85 0
+ 210 0002 4020     		mov	r0, #64
+ 211 0004 FFF7FEFF 		bl	malloc
+ 212              	.LVL18:
+ 213 0008 0024     		mov	r4, #0
+ 214 000a 0A4D     		ldr	r5, .L13
+ 215 000c 2860     		str	r0, [r5]
+ 216              	.LVL19:
+ 217              	.L12:
+  86:.\ssd1306x.c  ****     
+  87:.\ssd1306x.c  ****     for(ii = 0; ii < _OLED_EQ_CHAN_CNT_; ii++){
+  88:.\ssd1306x.c  ****         
+  89:.\ssd1306x.c  ****         _oled_eq_chan_tab_[ii]._oled_eq_chan_num = ii;     // Should be consts
+  90:.\ssd1306x.c  ****                                                            //  here but meh...
+  91:.\ssd1306x.c  ****         _oled_eq_chan_tab_[ii]._oled_eq_chan_mag = 1;
+ 218              		.loc 1 91 0 discriminator 3
+ 219 000e 0121     		mov	r1, #1
+  92:.\ssd1306x.c  ****     
+  93:.\ssd1306x.c  ****         oled_draw_channel2(_oled_eq_chan_tab_[ii], WHITE);
+ 220              		.loc 1 93 0 discriminator 3
+ 221 0010 8020     		mov	r0, #128
+  89:.\ssd1306x.c  ****                                                            //  here but meh...
+ 222              		.loc 1 89 0 discriminator 3
+ 223 0012 2A68     		ldr	r2, [r5]
+ 224 0014 A300     		lsl	r3, r4, #2
+ 225 0016 D318     		add	r3, r2, r3
+ 226 0018 1C80     		strh	r4, [r3]
+  91:.\ssd1306x.c  ****     
+ 227              		.loc 1 91 0 discriminator 3
+ 228 001a 5980     		strh	r1, [r3, #2]
+ 229              		.loc 1 93 0 discriminator 3
+ 230 001c 4002     		lsl	r0, r0, #9
+ 231 001e A3B2     		uxth	r3, r4
+ 232 0020 1843     		orr	r0, r3
+ 233 0022 0134     		add	r4, r4, #1
+ 234              	.LVL20:
+ 235 0024 FFF7FEFF 		bl	oled_draw_channel2
+ 236              	.LVL21:
+  87:.\ssd1306x.c  ****         
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 7
+
+
+ 237              		.loc 1 87 0 discriminator 3
+ 238 0028 102C     		cmp	r4, #16
+ 239 002a F0D1     		bne	.L12
+  94:.\ssd1306x.c  ****         
+  95:.\ssd1306x.c  ****     }
+  96:.\ssd1306x.c  ****     
+  97:.\ssd1306x.c  ****     display_update();
+ 240              		.loc 1 97 0
+ 241 002c FFF7FEFF 		bl	display_update
+ 242              	.LVL22:
+  98:.\ssd1306x.c  ****     
+  99:.\ssd1306x.c  **** }
+ 243              		.loc 1 99 0
+ 244              		@ sp needed
+ 245 0030 38BD     		pop	{r3, r4, r5, pc}
+ 246              	.L14:
+ 247 0032 C046     		.align	2
+ 248              	.L13:
+ 249 0034 00000000 		.word	_oled_eq_chan_tab_
+ 250              		.cfi_endproc
+ 251              	.LFE37:
+ 252              		.size	oled_eq_chan_init, .-oled_eq_chan_init
+ 253              		.section	.text.oled_update_channel_mag,"ax",%progbits
+ 254              		.align	1
+ 255              		.global	oled_update_channel_mag
+ 256              		.code	16
+ 257              		.thumb_func
+ 258              		.type	oled_update_channel_mag, %function
+ 259              	oled_update_channel_mag:
+ 260              	.LFB38:
+ 100:.\ssd1306x.c  **** 
+ 101:.\ssd1306x.c  **** /**
+ 102:.\ssd1306x.c  ****  * Method : oled_update_channel_mag
+ 103:.\ssd1306x.c  ****  * Args   : int16_t chan
+ 104:.\ssd1306x.c  ****  *          int16_t mag
+ 105:.\ssd1306x.c  ****  * Returns: -
+ 106:.\ssd1306x.c  ****  * Descr  : Update channel magnitude for specified channel
+ 107:.\ssd1306x.c  ****  *
+ 108:.\ssd1306x.c  ****  */
+ 109:.\ssd1306x.c  **** void oled_update_channel_mag( int16_t chan, int16_t mag ){
+ 261              		.loc 1 109 0
+ 262              		.cfi_startproc
+ 263              	.LVL23:
+ 110:.\ssd1306x.c  ****     
+ 111:.\ssd1306x.c  ****     _oled_eq_chan_tab_[chan]._oled_eq_chan_mag = mag;      // Hardcoded 8 to
+ 264              		.loc 1 111 0
+ 265 0000 024B     		ldr	r3, .L16
+ 266 0002 8000     		lsl	r0, r0, #2
+ 267              	.LVL24:
+ 268 0004 1B68     		ldr	r3, [r3]
+ 112:.\ssd1306x.c  ****                                                            //  save process
+ 113:.\ssd1306x.c  ****                                                            //  time?
+ 114:.\ssd1306x.c  ****     
+ 115:.\ssd1306x.c  **** }
+ 269              		.loc 1 115 0
+ 270              		@ sp needed
+ 111:.\ssd1306x.c  ****                                                            //  save process
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 8
+
+
+ 271              		.loc 1 111 0
+ 272 0006 1818     		add	r0, r3, r0
+ 273 0008 4180     		strh	r1, [r0, #2]
+ 274              		.loc 1 115 0
+ 275 000a 7047     		bx	lr
+ 276              	.L17:
+ 277              		.align	2
+ 278              	.L16:
+ 279 000c 00000000 		.word	_oled_eq_chan_tab_
+ 280              		.cfi_endproc
+ 281              	.LFE38:
+ 282              		.size	oled_update_channel_mag, .-oled_update_channel_mag
+ 283              		.section	.text.oled_update_channels_mag,"ax",%progbits
+ 284              		.align	1
+ 285              		.global	oled_update_channels_mag
+ 286              		.code	16
+ 287              		.thumb_func
+ 288              		.type	oled_update_channels_mag, %function
+ 289              	oled_update_channels_mag:
+ 290              	.LFB39:
+ 116:.\ssd1306x.c  **** 
+ 117:.\ssd1306x.c  **** /**
+ 118:.\ssd1306x.c  ****  * Method : oled_update_channels_mag
+ 119:.\ssd1306x.c  ****  * Args   : int16_t chan
+ 120:.\ssd1306x.c  ****  *          int16_t mag
+ 121:.\ssd1306x.c  ****  * Returns: -
+ 122:.\ssd1306x.c  ****  * Descr  : Update all channel magnitudes
+ 123:.\ssd1306x.c  ****  *
+ 124:.\ssd1306x.c  ****  */
+ 125:.\ssd1306x.c  **** void oled_update_channels_mag( int16_t* mag ){
+ 291              		.loc 1 125 0
+ 292              		.cfi_startproc
+ 293              	.LVL25:
+ 294 0000 38B5     		push	{r3, r4, r5, lr}
+ 295              		.cfi_def_cfa_offset 16
+ 296              		.cfi_offset 3, -16
+ 297              		.cfi_offset 4, -12
+ 298              		.cfi_offset 5, -8
+ 299              		.cfi_offset 14, -4
+ 300              		.loc 1 125 0
+ 301 0002 051C     		mov	r5, r0
+ 302 0004 0024     		mov	r4, #0
+ 303              	.LVL26:
+ 304              	.L19:
+ 305 0006 6300     		lsl	r3, r4, #1
+ 126:.\ssd1306x.c  ****     
+ 127:.\ssd1306x.c  ****     uint8_t ii;
+ 128:.\ssd1306x.c  ****     
+ 129:.\ssd1306x.c  ****     for( ii = 0; ii < _OLED_EQ_CHAN_CNT_; ii++ ){
+ 130:.\ssd1306x.c  ****         
+ 131:.\ssd1306x.c  ****         oled_update_channel_mag(ii, (int16_t)mag[ii]);
+ 306              		.loc 1 131 0 discriminator 3
+ 307 0008 20B2     		sxth	r0, r4
+ 308 000a E95E     		ldrsh	r1, [r5, r3]
+ 309 000c 0134     		add	r4, r4, #1
+ 310              	.LVL27:
+ 311 000e FFF7FEFF 		bl	oled_update_channel_mag
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 9
+
+
+ 312              	.LVL28:
+ 129:.\ssd1306x.c  ****         
+ 313              		.loc 1 129 0 discriminator 3
+ 314 0012 102C     		cmp	r4, #16
+ 315 0014 F7D1     		bne	.L19
+ 132:.\ssd1306x.c  ****         
+ 133:.\ssd1306x.c  ****     }
+ 134:.\ssd1306x.c  ****     
+ 135:.\ssd1306x.c  **** }
+ 316              		.loc 1 135 0
+ 317              		@ sp needed
+ 318              	.LVL29:
+ 319 0016 38BD     		pop	{r3, r4, r5, pc}
+ 320              		.cfi_endproc
+ 321              	.LFE39:
+ 322              		.size	oled_update_channels_mag, .-oled_update_channels_mag
+ 323              		.section	.text.oled_update_channel,"ax",%progbits
+ 324              		.align	1
+ 325              		.global	oled_update_channel
+ 326              		.code	16
+ 327              		.thumb_func
+ 328              		.type	oled_update_channel, %function
+ 329              	oled_update_channel:
+ 330              	.LFB40:
+ 136:.\ssd1306x.c  **** 
+ 137:.\ssd1306x.c  **** /**
+ 138:.\ssd1306x.c  ****  * Method : oled_update_channel
+ 139:.\ssd1306x.c  ****  * Args   : -
+ 140:.\ssd1306x.c  ****  * Returns: -
+ 141:.\ssd1306x.c  ****  * Descr  : Update channel display. Basically redraws the whole display
+ 142:.\ssd1306x.c  ****  *
+ 143:.\ssd1306x.c  ****  */
+ 144:.\ssd1306x.c  **** void oled_update_channel(){
+ 331              		.loc 1 144 0
+ 332              		.cfi_startproc
+ 333 0000 10B5     		push	{r4, lr}
+ 334              		.cfi_def_cfa_offset 8
+ 335              		.cfi_offset 4, -8
+ 336              		.cfi_offset 14, -4
+ 145:.\ssd1306x.c  ****     
+ 146:.\ssd1306x.c  ****     uint8_t ii;
+ 147:.\ssd1306x.c  ****     
+ 148:.\ssd1306x.c  ****     display_clear();
+ 337              		.loc 1 148 0
+ 338 0002 FFF7FEFF 		bl	display_clear
+ 339              	.LVL30:
+ 340 0006 0024     		mov	r4, #0
+ 341              	.LVL31:
+ 342              	.L21:
+ 149:.\ssd1306x.c  ****     
+ 150:.\ssd1306x.c  ****     for( ii = 0; ii < _OLED_EQ_CHAN_CNT_; ii++ ){
+ 151:.\ssd1306x.c  ****         
+ 152:.\ssd1306x.c  ****         oled_draw_channel2(_oled_eq_chan_tab_[ii], WHITE);
+ 343              		.loc 1 152 0 discriminator 3
+ 344 0008 074B     		ldr	r3, .L22
+ 345 000a 0121     		mov	r1, #1
+ 346 000c 1B68     		ldr	r3, [r3]
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 10
+
+
+ 347 000e 1A5B     		ldrh	r2, [r3, r4]
+ 348 0010 1B19     		add	r3, r3, r4
+ 349 0012 5888     		ldrh	r0, [r3, #2]
+ 350 0014 0434     		add	r4, r4, #4
+ 351 0016 0004     		lsl	r0, r0, #16
+ 352 0018 1043     		orr	r0, r2
+ 353 001a FFF7FEFF 		bl	oled_draw_channel2
+ 354              	.LVL32:
+ 150:.\ssd1306x.c  ****         
+ 355              		.loc 1 150 0 discriminator 3
+ 356 001e 402C     		cmp	r4, #64
+ 357 0020 F2D1     		bne	.L21
+ 153:.\ssd1306x.c  ****         
+ 154:.\ssd1306x.c  ****     }
+ 155:.\ssd1306x.c  ****     
+ 156:.\ssd1306x.c  ****     display_update();
+ 358              		.loc 1 156 0
+ 359 0022 FFF7FEFF 		bl	display_update
+ 360              	.LVL33:
+ 157:.\ssd1306x.c  ****     
+ 158:.\ssd1306x.c  **** }
+ 361              		.loc 1 158 0
+ 362              		@ sp needed
+ 363 0026 10BD     		pop	{r4, pc}
+ 364              	.L23:
+ 365              		.align	2
+ 366              	.L22:
+ 367 0028 00000000 		.word	_oled_eq_chan_tab_
+ 368              		.cfi_endproc
+ 369              	.LFE40:
+ 370              		.size	oled_update_channel, .-oled_update_channel
+ 371              		.global	__aeabi_dmul
+ 372              		.section	.text.oled_normalize_channel_mag,"ax",%progbits
+ 373              		.align	1
+ 374              		.global	oled_normalize_channel_mag
+ 375              		.code	16
+ 376              		.thumb_func
+ 377              		.type	oled_normalize_channel_mag, %function
+ 378              	oled_normalize_channel_mag:
+ 379              	.LFB41:
+ 159:.\ssd1306x.c  **** 
+ 160:.\ssd1306x.c  **** /**
+ 161:.\ssd1306x.c  ****  * Method : oled_normalize_channel_mag
+ 162:.\ssd1306x.c  ****  * Args   : double mag
+ 163:.\ssd1306x.c  ****  * Returns: double
+ 164:.\ssd1306x.c  ****  * Descr  : Normalize channel magnitude to follow a 20 log scale
+ 165:.\ssd1306x.c  ****  *
+ 166:.\ssd1306x.c  ****  */
+ 167:.\ssd1306x.c  **** double oled_normalize_channel_mag( double mag ){
+ 380              		.loc 1 167 0
+ 381              		.cfi_startproc
+ 382              	.LVL34:
+ 383 0000 08B5     		push	{r3, lr}
+ 384              		.cfi_def_cfa_offset 8
+ 385              		.cfi_offset 3, -8
+ 386              		.cfi_offset 14, -4
+ 168:.\ssd1306x.c  ****     
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 11
+
+
+ 169:.\ssd1306x.c  ****     double res;
+ 170:.\ssd1306x.c  ****     
+ 171:.\ssd1306x.c  ****     res = 20*log(mag);
+ 387              		.loc 1 171 0
+ 388 0002 FFF7FEFF 		bl	log
+ 389              	.LVL35:
+ 390 0006 0022     		mov	r2, #0
+ 391 0008 014B     		ldr	r3, .L25
+ 392 000a FFF7FEFF 		bl	__aeabi_dmul
+ 393              	.LVL36:
+ 172:.\ssd1306x.c  ****     
+ 173:.\ssd1306x.c  ****     return res;
+ 174:.\ssd1306x.c  ****     
+ 175:.\ssd1306x.c  **** }
+ 394              		.loc 1 175 0
+ 395              		@ sp needed
+ 396 000e 08BD     		pop	{r3, pc}
+ 397              	.L26:
+ 398              		.align	2
+ 399              	.L25:
+ 400 0010 00003440 		.word	1077149696
+ 401              		.cfi_endproc
+ 402              	.LFE41:
+ 403              		.size	oled_normalize_channel_mag, .-oled_normalize_channel_mag
+ 404              		.global	__aeabi_dcmplt
+ 405              		.global	__aeabi_ddiv
+ 406              		.global	__aeabi_i2d
+ 407              		.global	__aeabi_d2iz
+ 408              		.section	.text.oled_normalize_channels_mag,"ax",%progbits
+ 409              		.align	1
+ 410              		.global	oled_normalize_channels_mag
+ 411              		.code	16
+ 412              		.thumb_func
+ 413              		.type	oled_normalize_channels_mag, %function
+ 414              	oled_normalize_channels_mag:
+ 415              	.LFB42:
+ 176:.\ssd1306x.c  **** 
+ 177:.\ssd1306x.c  **** /**
+ 178:.\ssd1306x.c  ****  * Method : oled_normalize_channels_mag
+ 179:.\ssd1306x.c  ****  * Args   : double* mag
+ 180:.\ssd1306x.c  ****  *          int16_t* nmag 
+ 181:.\ssd1306x.c  ****  * Returns: -
+ 182:.\ssd1306x.c  ****  * Descr  : Normalize all channel magnitudes and log-limits them
+ 183:.\ssd1306x.c  ****  *
+ 184:.\ssd1306x.c  ****  */
+ 185:.\ssd1306x.c  **** void oled_normalize_channels_mag( double* mag, int16_t* nmag ){
+ 416              		.loc 1 185 0
+ 417              		.cfi_startproc
+ 418              	.LVL37:
+ 419 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 420              		.cfi_def_cfa_offset 20
+ 421              		.cfi_offset 4, -20
+ 422              		.cfi_offset 5, -16
+ 423              		.cfi_offset 6, -12
+ 424              		.cfi_offset 7, -8
+ 425              		.cfi_offset 14, -4
+ 426 0002 071C     		mov	r7, r0
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 12
+
+
+ 427 0004 041C     		mov	r4, r0
+ 428 0006 051C     		mov	r5, r0
+ 429 0008 061C     		mov	r6, r0
+ 430 000a 87B0     		sub	sp, sp, #28
+ 431              		.cfi_def_cfa_offset 48
+ 432              		.loc 1 185 0
+ 433 000c 0591     		str	r1, [sp, #20]
+ 434 000e 8037     		add	r7, r7, #128
+ 435              	.LVL38:
+ 436              	.L28:
+ 186:.\ssd1306x.c  ****     
+ 187:.\ssd1306x.c  ****     uint8 ii;
+ 188:.\ssd1306x.c  ****     double max = 0;
+ 189:.\ssd1306x.c  ****     
+ 190:.\ssd1306x.c  ****     for(ii=0; ii<_OLED_EQ_CHAN_CNT_; ii++){
+ 191:.\ssd1306x.c  ****         mag[ii] = oled_normalize_channel_mag(mag[ii]);
+ 437              		.loc 1 191 0 discriminator 3
+ 438 0010 3068     		ldr	r0, [r6]
+ 439 0012 7168     		ldr	r1, [r6, #4]
+ 440 0014 FFF7FEFF 		bl	oled_normalize_channel_mag
+ 441              	.LVL39:
+ 442 0018 03C6     		stmia	r6!, {r0, r1}
+ 190:.\ssd1306x.c  ****         mag[ii] = oled_normalize_channel_mag(mag[ii]);
+ 443              		.loc 1 190 0 discriminator 3
+ 444 001a BE42     		cmp	r6, r7
+ 445 001c F8D1     		bne	.L28
+ 446 001e 0022     		mov	r2, #0
+ 447 0020 0023     		mov	r3, #0
+ 448 0022 261C     		mov	r6, r4
+ 449 0024 0092     		str	r2, [sp]
+ 450 0026 0193     		str	r3, [sp, #4]
+ 451              	.LVL40:
+ 452              	.L30:
+ 192:.\ssd1306x.c  ****     }
+ 193:.\ssd1306x.c  ****     for(ii=0; ii<_OLED_EQ_CHAN_CNT_; ii++){
+ 194:.\ssd1306x.c  ****         max = (max < mag[ii]) ? mag[ii]:max;
+ 453              		.loc 1 194 0
+ 454 0028 3268     		ldr	r2, [r6]
+ 455 002a 7368     		ldr	r3, [r6, #4]
+ 456 002c 0098     		ldr	r0, [sp]
+ 457 002e 0199     		ldr	r1, [sp, #4]
+ 458 0030 0292     		str	r2, [sp, #8]
+ 459 0032 0393     		str	r3, [sp, #12]
+ 460 0034 FFF7FEFF 		bl	__aeabi_dcmplt
+ 461              	.LVL41:
+ 462 0038 0028     		cmp	r0, #0
+ 463 003a 03D0     		beq	.L29
+ 464 003c 029A     		ldr	r2, [sp, #8]
+ 465 003e 039B     		ldr	r3, [sp, #12]
+ 466 0040 0092     		str	r2, [sp]
+ 467 0042 0193     		str	r3, [sp, #4]
+ 468              	.LVL42:
+ 469              	.L29:
+ 470 0044 0836     		add	r6, r6, #8
+ 193:.\ssd1306x.c  ****         max = (max < mag[ii]) ? mag[ii]:max;
+ 471              		.loc 1 193 0 discriminator 4
+ 472 0046 BE42     		cmp	r6, r7
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 13
+
+
+ 473 0048 EED1     		bne	.L30
+ 474              	.LVL43:
+ 475              	.L31:
+ 195:.\ssd1306x.c  ****     }
+ 196:.\ssd1306x.c  ****     for(ii=0; ii<_OLED_EQ_CHAN_CNT_; ii++){
+ 197:.\ssd1306x.c  ****         mag[ii] = (mag[ii]/max)*((double)gfx_height());
+ 476              		.loc 1 197 0 discriminator 3
+ 477 004a 009A     		ldr	r2, [sp]
+ 478 004c 019B     		ldr	r3, [sp, #4]
+ 479 004e 2068     		ldr	r0, [r4]
+ 480 0050 6168     		ldr	r1, [r4, #4]
+ 481 0052 FFF7FEFF 		bl	__aeabi_ddiv
+ 482              	.LVL44:
+ 483 0056 0290     		str	r0, [sp, #8]
+ 484 0058 0391     		str	r1, [sp, #12]
+ 485 005a FFF7FEFF 		bl	gfx_height
+ 486              	.LVL45:
+ 487 005e FFF7FEFF 		bl	__aeabi_i2d
+ 488              	.LVL46:
+ 489 0062 021C     		mov	r2, r0
+ 490 0064 0B1C     		mov	r3, r1
+ 491 0066 0298     		ldr	r0, [sp, #8]
+ 492 0068 0399     		ldr	r1, [sp, #12]
+ 493 006a FFF7FEFF 		bl	__aeabi_dmul
+ 494              	.LVL47:
+ 495 006e 03C4     		stmia	r4!, {r0, r1}
+ 196:.\ssd1306x.c  ****         mag[ii] = (mag[ii]/max)*((double)gfx_height());
+ 496              		.loc 1 196 0 discriminator 3
+ 497 0070 BC42     		cmp	r4, r7
+ 498 0072 EAD1     		bne	.L31
+ 499 0074 059C     		ldr	r4, [sp, #20]
+ 500              	.LVL48:
+ 501              	.L32:
+ 198:.\ssd1306x.c  ****     }
+ 199:.\ssd1306x.c  ****     for(ii=0; ii<_OLED_EQ_CHAN_CNT_; ii++){
+ 200:.\ssd1306x.c  ****         nmag[ii] = (int16_t) mag[ii];
+ 502              		.loc 1 200 0 discriminator 3
+ 503 0076 03CD     		ldmia	r5!, {r0, r1}
+ 504 0078 FFF7FEFF 		bl	__aeabi_d2iz
+ 505              	.LVL49:
+ 506 007c 2080     		strh	r0, [r4]
+ 507 007e 0234     		add	r4, r4, #2
+ 199:.\ssd1306x.c  ****         nmag[ii] = (int16_t) mag[ii];
+ 508              		.loc 1 199 0 discriminator 3
+ 509 0080 BD42     		cmp	r5, r7
+ 510 0082 F8D1     		bne	.L32
+ 201:.\ssd1306x.c  ****     }
+ 202:.\ssd1306x.c  ****     
+ 203:.\ssd1306x.c  **** }
+ 511              		.loc 1 203 0
+ 512 0084 07B0     		add	sp, sp, #28
+ 513              	.LVL50:
+ 514              		@ sp needed
+ 515              	.LVL51:
+ 516 0086 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 517              		.cfi_endproc
+ 518              	.LFE42:
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 14
+
+
+ 519              		.size	oled_normalize_channels_mag, .-oled_normalize_channels_mag
+ 520              		.comm	_oled_eq_chan_tab_,4,4
+ 521              		.text
+ 522              	.Letext0:
+ 523              		.file 2 "d:\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\arm-none-eabi\\inc
+ 524              		.file 3 "d:\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\arm-none-eabi\\inc
+ 525              		.file 4 "Generated_Source\\PSoC4/cytypes.h"
+ 526              		.file 5 "d:\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\lib\\gcc\\arm-none
+ 527              		.file 6 ".\\ssd1306x.h"
+ 528              		.file 7 ".\\ssd1306.h"
+ 529              		.file 8 "d:\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\arm-none-eabi\\inc
+ 530              		.file 9 "d:\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\arm-none-eabi\\inc
+ 531              		.section	.debug_info,"",%progbits
+ 532              	.Ldebug_info0:
+ 533 0000 A5040000 		.4byte	0x4a5
+ 534 0004 0400     		.2byte	0x4
+ 535 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 536 000a 04       		.byte	0x4
+ 537 000b 01       		.uleb128 0x1
+ 538 000c 11000000 		.4byte	.LASF39
+ 539 0010 01       		.byte	0x1
+ 540 0011 FE000000 		.4byte	.LASF40
+ 541 0015 4A010000 		.4byte	.LASF41
+ 542 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 543 001d 00000000 		.4byte	0
+ 544 0021 00000000 		.4byte	.Ldebug_line0
+ 545 0025 02       		.uleb128 0x2
+ 546 0026 08       		.byte	0x8
+ 547 0027 04       		.byte	0x4
+ 548 0028 A8010000 		.4byte	.LASF0
+ 549 002c 02       		.uleb128 0x2
+ 550 002d 01       		.byte	0x1
+ 551 002e 06       		.byte	0x6
+ 552 002f 02030000 		.4byte	.LASF1
+ 553 0033 03       		.uleb128 0x3
+ 554 0034 00000000 		.4byte	.LASF3
+ 555 0038 02       		.byte	0x2
+ 556 0039 1D       		.byte	0x1d
+ 557 003a 3E000000 		.4byte	0x3e
+ 558 003e 02       		.uleb128 0x2
+ 559 003f 01       		.byte	0x1
+ 560 0040 08       		.byte	0x8
+ 561 0041 8F010000 		.4byte	.LASF2
+ 562 0045 03       		.uleb128 0x3
+ 563 0046 9F000000 		.4byte	.LASF4
+ 564 004a 02       		.byte	0x2
+ 565 004b 29       		.byte	0x29
+ 566 004c 50000000 		.4byte	0x50
+ 567 0050 02       		.uleb128 0x2
+ 568 0051 02       		.byte	0x2
+ 569 0052 05       		.byte	0x5
+ 570 0053 C0020000 		.4byte	.LASF5
+ 571 0057 03       		.uleb128 0x3
+ 572 0058 9D010000 		.4byte	.LASF6
+ 573 005c 02       		.byte	0x2
+ 574 005d 2B       		.byte	0x2b
+ 575 005e 62000000 		.4byte	0x62
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 15
+
+
+ 576 0062 02       		.uleb128 0x2
+ 577 0063 02       		.byte	0x2
+ 578 0064 07       		.byte	0x7
+ 579 0065 AF000000 		.4byte	.LASF7
+ 580 0069 02       		.uleb128 0x2
+ 581 006a 04       		.byte	0x4
+ 582 006b 05       		.byte	0x5
+ 583 006c E8020000 		.4byte	.LASF8
+ 584 0070 02       		.uleb128 0x2
+ 585 0071 04       		.byte	0x4
+ 586 0072 07       		.byte	0x7
+ 587 0073 4E020000 		.4byte	.LASF9
+ 588 0077 02       		.uleb128 0x2
+ 589 0078 08       		.byte	0x8
+ 590 0079 05       		.byte	0x5
+ 591 007a 91020000 		.4byte	.LASF10
+ 592 007e 02       		.uleb128 0x2
+ 593 007f 08       		.byte	0x8
+ 594 0080 07       		.byte	0x7
+ 595 0081 E8010000 		.4byte	.LASF11
+ 596 0085 04       		.uleb128 0x4
+ 597 0086 04       		.byte	0x4
+ 598 0087 05       		.byte	0x5
+ 599 0088 696E7400 		.ascii	"int\000"
+ 600 008c 02       		.uleb128 0x2
+ 601 008d 04       		.byte	0x4
+ 602 008e 07       		.byte	0x7
+ 603 008f D6010000 		.4byte	.LASF12
+ 604 0093 03       		.uleb128 0x3
+ 605 0094 CA020000 		.4byte	.LASF13
+ 606 0098 03       		.byte	0x3
+ 607 0099 15       		.byte	0x15
+ 608 009a 33000000 		.4byte	0x33
+ 609 009e 03       		.uleb128 0x3
+ 610 009f 46020000 		.4byte	.LASF14
+ 611 00a3 03       		.byte	0x3
+ 612 00a4 20       		.byte	0x20
+ 613 00a5 45000000 		.4byte	0x45
+ 614 00a9 03       		.uleb128 0x3
+ 615 00aa DF020000 		.4byte	.LASF15
+ 616 00ae 03       		.byte	0x3
+ 617 00af 21       		.byte	0x21
+ 618 00b0 57000000 		.4byte	0x57
+ 619 00b4 05       		.uleb128 0x5
+ 620 00b5 44010000 		.4byte	.LASF16
+ 621 00b9 04       		.byte	0x4
+ 622 00ba 3801     		.2byte	0x138
+ 623 00bc 3E000000 		.4byte	0x3e
+ 624 00c0 02       		.uleb128 0x2
+ 625 00c1 04       		.byte	0x4
+ 626 00c2 04       		.byte	0x4
+ 627 00c3 A9000000 		.4byte	.LASF17
+ 628 00c7 02       		.uleb128 0x2
+ 629 00c8 01       		.byte	0x1
+ 630 00c9 08       		.byte	0x8
+ 631 00ca F1020000 		.4byte	.LASF18
+ 632 00ce 03       		.uleb128 0x3
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 16
+
+
+ 633 00cf 0A000000 		.4byte	.LASF19
+ 634 00d3 05       		.byte	0x5
+ 635 00d4 D4       		.byte	0xd4
+ 636 00d5 8C000000 		.4byte	0x8c
+ 637 00d9 02       		.uleb128 0x2
+ 638 00da 04       		.byte	0x4
+ 639 00db 07       		.byte	0x7
+ 640 00dc 7D020000 		.4byte	.LASF20
+ 641 00e0 06       		.uleb128 0x6
+ 642 00e1 04       		.byte	0x4
+ 643 00e2 02       		.uleb128 0x2
+ 644 00e3 08       		.byte	0x8
+ 645 00e4 04       		.byte	0x4
+ 646 00e5 F6020000 		.4byte	.LASF21
+ 647 00e9 07       		.uleb128 0x7
+ 648 00ea 04       		.byte	0x4
+ 649 00eb 06       		.byte	0x6
+ 650 00ec 2C       		.byte	0x2c
+ 651 00ed 0A010000 		.4byte	0x10a
+ 652 00f1 08       		.uleb128 0x8
+ 653 00f2 7D010000 		.4byte	.LASF22
+ 654 00f6 06       		.byte	0x6
+ 655 00f7 2D       		.byte	0x2d
+ 656 00f8 9E000000 		.4byte	0x9e
+ 657 00fc 00       		.byte	0
+ 658 00fd 08       		.uleb128 0x8
+ 659 00fe AF010000 		.4byte	.LASF23
+ 660 0102 06       		.byte	0x6
+ 661 0103 2E       		.byte	0x2e
+ 662 0104 9E000000 		.4byte	0x9e
+ 663 0108 02       		.byte	0x2
+ 664 0109 00       		.byte	0
+ 665 010a 03       		.uleb128 0x3
+ 666 010b D2020000 		.4byte	.LASF24
+ 667 010f 06       		.byte	0x6
+ 668 0110 2F       		.byte	0x2f
+ 669 0111 E9000000 		.4byte	0xe9
+ 670 0115 09       		.uleb128 0x9
+ 671 0116 0B010000 		.4byte	.LASF27
+ 672 011a 01       		.byte	0x1
+ 673 011b 1A       		.byte	0x1a
+ 674 011c 00000000 		.4byte	.LFB34
+ 675 0120 42000000 		.4byte	.LFE34-.LFB34
+ 676 0124 01       		.uleb128 0x1
+ 677 0125 9C       		.byte	0x9c
+ 678 0126 A7010000 		.4byte	0x1a7
+ 679 012a 0A       		.uleb128 0xa
+ 680 012b 78020000 		.4byte	.LASF25
+ 681 012f 01       		.byte	0x1
+ 682 0130 1A       		.byte	0x1a
+ 683 0131 9E000000 		.4byte	0x9e
+ 684 0135 00000000 		.4byte	.LLST0
+ 685 0139 0B       		.uleb128 0xb
+ 686 013a 6D616700 		.ascii	"mag\000"
+ 687 013e 01       		.byte	0x1
+ 688 013f 1A       		.byte	0x1a
+ 689 0140 9E000000 		.4byte	0x9e
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 17
+
+
+ 690 0144 21000000 		.4byte	.LLST1
+ 691 0148 0A       		.uleb128 0xa
+ 692 0149 D0010000 		.4byte	.LASF26
+ 693 014d 01       		.byte	0x1
+ 694 014e 1A       		.byte	0x1a
+ 695 014f A9000000 		.4byte	0xa9
+ 696 0153 42000000 		.4byte	.LLST2
+ 697 0157 0C       		.uleb128 0xc
+ 698 0158 696900   		.ascii	"ii\000"
+ 699 015b 01       		.byte	0x1
+ 700 015c 1C       		.byte	0x1c
+ 701 015d 93000000 		.4byte	0x93
+ 702 0161 63000000 		.4byte	.LLST3
+ 703 0165 0D       		.uleb128 0xd
+ 704 0166 14000000 		.4byte	.LVL1
+ 705 016a 40040000 		.4byte	0x440
+ 706 016e 0E       		.uleb128 0xe
+ 707 016f 36000000 		.4byte	.LVL4
+ 708 0173 47040000 		.4byte	0x447
+ 709 0177 9D010000 		.4byte	0x19d
+ 710 017b 0F       		.uleb128 0xf
+ 711 017c 01       		.uleb128 0x1
+ 712 017d 53       		.byte	0x53
+ 713 017e 02       		.uleb128 0x2
+ 714 017f 75       		.byte	0x75
+ 715 0180 7F       		.sleb128 -1
+ 716 0181 0F       		.uleb128 0xf
+ 717 0182 01       		.uleb128 0x1
+ 718 0183 52       		.byte	0x52
+ 719 0184 02       		.uleb128 0x2
+ 720 0185 74       		.byte	0x74
+ 721 0186 00       		.sleb128 0
+ 722 0187 0F       		.uleb128 0xf
+ 723 0188 01       		.uleb128 0x1
+ 724 0189 51       		.byte	0x51
+ 725 018a 02       		.uleb128 0x2
+ 726 018b 75       		.byte	0x75
+ 727 018c 7F       		.sleb128 -1
+ 728 018d 0F       		.uleb128 0xf
+ 729 018e 01       		.uleb128 0x1
+ 730 018f 50       		.byte	0x50
+ 731 0190 04       		.uleb128 0x4
+ 732 0191 7D       		.byte	0x7d
+ 733 0192 0C       		.sleb128 12
+ 734 0193 94       		.byte	0x94
+ 735 0194 02       		.byte	0x2
+ 736 0195 0F       		.uleb128 0xf
+ 737 0196 02       		.uleb128 0x2
+ 738 0197 7D       		.byte	0x7d
+ 739 0198 00       		.sleb128 0
+ 740 0199 02       		.uleb128 0x2
+ 741 019a 77       		.byte	0x77
+ 742 019b 00       		.sleb128 0
+ 743 019c 00       		.byte	0
+ 744 019d 0D       		.uleb128 0xd
+ 745 019e 3E000000 		.4byte	.LVL6
+ 746 01a2 6C040000 		.4byte	0x46c
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 18
+
+
+ 747 01a6 00       		.byte	0
+ 748 01a7 09       		.uleb128 0x9
+ 749 01a8 1E010000 		.4byte	.LASF28
+ 750 01ac 01       		.byte	0x1
+ 751 01ad 32       		.byte	0x32
+ 752 01ae 00000000 		.4byte	.LFB35
+ 753 01b2 38000000 		.4byte	.LFE35-.LFB35
+ 754 01b6 01       		.uleb128 0x1
+ 755 01b7 9C       		.byte	0x9c
+ 756 01b8 23020000 		.4byte	0x223
+ 757 01bc 0A       		.uleb128 0xa
+ 758 01bd 78020000 		.4byte	.LASF25
+ 759 01c1 01       		.byte	0x1
+ 760 01c2 32       		.byte	0x32
+ 761 01c3 9E000000 		.4byte	0x9e
+ 762 01c7 8D000000 		.4byte	.LLST4
+ 763 01cb 0B       		.uleb128 0xb
+ 764 01cc 6D616700 		.ascii	"mag\000"
+ 765 01d0 01       		.byte	0x1
+ 766 01d1 32       		.byte	0x32
+ 767 01d2 9E000000 		.4byte	0x9e
+ 768 01d6 AE000000 		.4byte	.LLST5
+ 769 01da 0A       		.uleb128 0xa
+ 770 01db D0010000 		.4byte	.LASF26
+ 771 01df 01       		.byte	0x1
+ 772 01e0 32       		.byte	0x32
+ 773 01e1 A9000000 		.4byte	0xa9
+ 774 01e5 CF000000 		.4byte	.LLST6
+ 775 01e9 0C       		.uleb128 0xc
+ 776 01ea 696900   		.ascii	"ii\000"
+ 777 01ed 01       		.byte	0x1
+ 778 01ee 34       		.byte	0x34
+ 779 01ef 93000000 		.4byte	0x93
+ 780 01f3 F0000000 		.4byte	.LLST7
+ 781 01f7 10       		.uleb128 0x10
+ 782 01f8 30000000 		.4byte	.LVL12
+ 783 01fc 47040000 		.4byte	0x447
+ 784 0200 0F       		.uleb128 0xf
+ 785 0201 01       		.uleb128 0x1
+ 786 0202 53       		.byte	0x53
+ 787 0203 02       		.uleb128 0x2
+ 788 0204 75       		.byte	0x75
+ 789 0205 7F       		.sleb128 -1
+ 790 0206 0F       		.uleb128 0xf
+ 791 0207 01       		.uleb128 0x1
+ 792 0208 52       		.byte	0x52
+ 793 0209 02       		.uleb128 0x2
+ 794 020a 74       		.byte	0x74
+ 795 020b 00       		.sleb128 0
+ 796 020c 0F       		.uleb128 0xf
+ 797 020d 01       		.uleb128 0x1
+ 798 020e 51       		.byte	0x51
+ 799 020f 02       		.uleb128 0x2
+ 800 0210 75       		.byte	0x75
+ 801 0211 7F       		.sleb128 -1
+ 802 0212 0F       		.uleb128 0xf
+ 803 0213 01       		.uleb128 0x1
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 19
+
+
+ 804 0214 50       		.byte	0x50
+ 805 0215 04       		.uleb128 0x4
+ 806 0216 7D       		.byte	0x7d
+ 807 0217 0C       		.sleb128 12
+ 808 0218 94       		.byte	0x94
+ 809 0219 02       		.byte	0x2
+ 810 021a 0F       		.uleb128 0xf
+ 811 021b 02       		.uleb128 0x2
+ 812 021c 7D       		.byte	0x7d
+ 813 021d 00       		.sleb128 0
+ 814 021e 02       		.uleb128 0x2
+ 815 021f 77       		.byte	0x77
+ 816 0220 00       		.sleb128 0
+ 817 0221 00       		.byte	0
+ 818 0222 00       		.byte	0
+ 819 0223 09       		.uleb128 0x9
+ 820 0224 31010000 		.4byte	.LASF29
+ 821 0228 01       		.byte	0x1
+ 822 0229 45       		.byte	0x45
+ 823 022a 00000000 		.4byte	.LFB36
+ 824 022e 12000000 		.4byte	.LFE36-.LFB36
+ 825 0232 01       		.uleb128 0x1
+ 826 0233 9C       		.byte	0x9c
+ 827 0234 5F020000 		.4byte	0x25f
+ 828 0238 11       		.uleb128 0x11
+ 829 0239 78020000 		.4byte	.LASF25
+ 830 023d 01       		.byte	0x1
+ 831 023e 45       		.byte	0x45
+ 832 023f 0A010000 		.4byte	0x10a
+ 833 0243 02       		.uleb128 0x2
+ 834 0244 91       		.byte	0x91
+ 835 0245 74       		.sleb128 -12
+ 836 0246 0A       		.uleb128 0xa
+ 837 0247 D0010000 		.4byte	.LASF26
+ 838 024b 01       		.byte	0x1
+ 839 024c 45       		.byte	0x45
+ 840 024d A9000000 		.4byte	0xa9
+ 841 0251 1A010000 		.4byte	.LLST8
+ 842 0255 0D       		.uleb128 0xd
+ 843 0256 10000000 		.4byte	.LVL17
+ 844 025a A7010000 		.4byte	0x1a7
+ 845 025e 00       		.byte	0
+ 846 025f 12       		.uleb128 0x12
+ 847 0260 C2000000 		.4byte	.LASF32
+ 848 0264 01       		.byte	0x1
+ 849 0265 51       		.byte	0x51
+ 850 0266 00000000 		.4byte	.LFB37
+ 851 026a 38000000 		.4byte	.LFE37-.LFB37
+ 852 026e 01       		.uleb128 0x1
+ 853 026f 9C       		.byte	0x9c
+ 854 0270 B3020000 		.4byte	0x2b3
+ 855 0274 0C       		.uleb128 0xc
+ 856 0275 696900   		.ascii	"ii\000"
+ 857 0278 01       		.byte	0x1
+ 858 0279 53       		.byte	0x53
+ 859 027a 93000000 		.4byte	0x93
+ 860 027e 3B010000 		.4byte	.LLST9
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 20
+
+
+ 861 0282 0E       		.uleb128 0xe
+ 862 0283 08000000 		.4byte	.LVL18
+ 863 0287 73040000 		.4byte	0x473
+ 864 028b 96020000 		.4byte	0x296
+ 865 028f 0F       		.uleb128 0xf
+ 866 0290 01       		.uleb128 0x1
+ 867 0291 50       		.byte	0x50
+ 868 0292 02       		.uleb128 0x2
+ 869 0293 08       		.byte	0x8
+ 870 0294 40       		.byte	0x40
+ 871 0295 00       		.byte	0
+ 872 0296 0E       		.uleb128 0xe
+ 873 0297 28000000 		.4byte	.LVL21
+ 874 029b 23020000 		.4byte	0x223
+ 875 029f A9020000 		.4byte	0x2a9
+ 876 02a3 0F       		.uleb128 0xf
+ 877 02a4 01       		.uleb128 0x1
+ 878 02a5 51       		.byte	0x51
+ 879 02a6 01       		.uleb128 0x1
+ 880 02a7 31       		.byte	0x31
+ 881 02a8 00       		.byte	0
+ 882 02a9 0D       		.uleb128 0xd
+ 883 02aa 30000000 		.4byte	.LVL22
+ 884 02ae 6C040000 		.4byte	0x46c
+ 885 02b2 00       		.byte	0
+ 886 02b3 09       		.uleb128 0x9
+ 887 02b4 60020000 		.4byte	.LASF30
+ 888 02b8 01       		.byte	0x1
+ 889 02b9 6D       		.byte	0x6d
+ 890 02ba 00000000 		.4byte	.LFB38
+ 891 02be 10000000 		.4byte	.LFE38-.LFB38
+ 892 02c2 01       		.uleb128 0x1
+ 893 02c3 9C       		.byte	0x9c
+ 894 02c4 E5020000 		.4byte	0x2e5
+ 895 02c8 0A       		.uleb128 0xa
+ 896 02c9 78020000 		.4byte	.LASF25
+ 897 02cd 01       		.byte	0x1
+ 898 02ce 6D       		.byte	0x6d
+ 899 02cf 9E000000 		.4byte	0x9e
+ 900 02d3 4E010000 		.4byte	.LLST10
+ 901 02d7 13       		.uleb128 0x13
+ 902 02d8 6D616700 		.ascii	"mag\000"
+ 903 02dc 01       		.byte	0x1
+ 904 02dd 6D       		.byte	0x6d
+ 905 02de 9E000000 		.4byte	0x9e
+ 906 02e2 01       		.uleb128 0x1
+ 907 02e3 51       		.byte	0x51
+ 908 02e4 00       		.byte	0
+ 909 02e5 09       		.uleb128 0x9
+ 910 02e6 FF010000 		.4byte	.LASF31
+ 911 02ea 01       		.byte	0x1
+ 912 02eb 7D       		.byte	0x7d
+ 913 02ec 00000000 		.4byte	.LFB39
+ 914 02f0 18000000 		.4byte	.LFE39-.LFB39
+ 915 02f4 01       		.uleb128 0x1
+ 916 02f5 9C       		.byte	0x9c
+ 917 02f6 21030000 		.4byte	0x321
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 21
+
+
+ 918 02fa 0B       		.uleb128 0xb
+ 919 02fb 6D616700 		.ascii	"mag\000"
+ 920 02ff 01       		.byte	0x1
+ 921 0300 7D       		.byte	0x7d
+ 922 0301 21030000 		.4byte	0x321
+ 923 0305 6F010000 		.4byte	.LLST11
+ 924 0309 0C       		.uleb128 0xc
+ 925 030a 696900   		.ascii	"ii\000"
+ 926 030d 01       		.byte	0x1
+ 927 030e 7F       		.byte	0x7f
+ 928 030f 93000000 		.4byte	0x93
+ 929 0313 9B010000 		.4byte	.LLST12
+ 930 0317 0D       		.uleb128 0xd
+ 931 0318 12000000 		.4byte	.LVL28
+ 932 031c B3020000 		.4byte	0x2b3
+ 933 0320 00       		.byte	0
+ 934 0321 14       		.uleb128 0x14
+ 935 0322 04       		.byte	0x4
+ 936 0323 9E000000 		.4byte	0x9e
+ 937 0327 12       		.uleb128 0x12
+ 938 0328 AC020000 		.4byte	.LASF33
+ 939 032c 01       		.byte	0x1
+ 940 032d 90       		.byte	0x90
+ 941 032e 00000000 		.4byte	.LFB40
+ 942 0332 2C000000 		.4byte	.LFE40-.LFB40
+ 943 0336 01       		.uleb128 0x1
+ 944 0337 9C       		.byte	0x9c
+ 945 0338 70030000 		.4byte	0x370
+ 946 033c 0C       		.uleb128 0xc
+ 947 033d 696900   		.ascii	"ii\000"
+ 948 0340 01       		.byte	0x1
+ 949 0341 92       		.byte	0x92
+ 950 0342 93000000 		.4byte	0x93
+ 951 0346 BA010000 		.4byte	.LLST13
+ 952 034a 0D       		.uleb128 0xd
+ 953 034b 06000000 		.4byte	.LVL30
+ 954 034f 40040000 		.4byte	0x440
+ 955 0353 0E       		.uleb128 0xe
+ 956 0354 1E000000 		.4byte	.LVL32
+ 957 0358 23020000 		.4byte	0x223
+ 958 035c 66030000 		.4byte	0x366
+ 959 0360 0F       		.uleb128 0xf
+ 960 0361 01       		.uleb128 0x1
+ 961 0362 51       		.byte	0x51
+ 962 0363 01       		.uleb128 0x1
+ 963 0364 31       		.byte	0x31
+ 964 0365 00       		.byte	0
+ 965 0366 0D       		.uleb128 0xd
+ 966 0367 26000000 		.4byte	.LVL33
+ 967 036b 6C040000 		.4byte	0x46c
+ 968 036f 00       		.byte	0
+ 969 0370 15       		.uleb128 0x15
+ 970 0371 2B020000 		.4byte	.LASF42
+ 971 0375 01       		.byte	0x1
+ 972 0376 A7       		.byte	0xa7
+ 973 0377 25000000 		.4byte	0x25
+ 974 037b 00000000 		.4byte	.LFB41
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 22
+
+
+ 975 037f 14000000 		.4byte	.LFE41-.LFB41
+ 976 0383 01       		.uleb128 0x1
+ 977 0384 9C       		.byte	0x9c
+ 978 0385 C0030000 		.4byte	0x3c0
+ 979 0389 0B       		.uleb128 0xb
+ 980 038a 6D616700 		.ascii	"mag\000"
+ 981 038e 01       		.byte	0x1
+ 982 038f A7       		.byte	0xa7
+ 983 0390 25000000 		.4byte	0x25
+ 984 0394 CE010000 		.4byte	.LLST14
+ 985 0398 0C       		.uleb128 0xc
+ 986 0399 72657300 		.ascii	"res\000"
+ 987 039d 01       		.byte	0x1
+ 988 039e A9       		.byte	0xa9
+ 989 039f 25000000 		.4byte	0x25
+ 990 03a3 F6010000 		.4byte	.LLST15
+ 991 03a7 10       		.uleb128 0x10
+ 992 03a8 06000000 		.4byte	.LVL35
+ 993 03ac 88040000 		.4byte	0x488
+ 994 03b0 0F       		.uleb128 0xf
+ 995 03b1 06       		.uleb128 0x6
+ 996 03b2 50       		.byte	0x50
+ 997 03b3 93       		.byte	0x93
+ 998 03b4 04       		.uleb128 0x4
+ 999 03b5 51       		.byte	0x51
+ 1000 03b6 93       		.byte	0x93
+ 1001 03b7 04       		.uleb128 0x4
+ 1002 03b8 05       		.uleb128 0x5
+ 1003 03b9 F3       		.byte	0xf3
+ 1004 03ba 03       		.uleb128 0x3
+ 1005 03bb F5       		.byte	0xf5
+ 1006 03bc 00       		.uleb128 0
+ 1007 03bd 25       		.uleb128 0x25
+ 1008 03be 00       		.byte	0
+ 1009 03bf 00       		.byte	0
+ 1010 03c0 16       		.uleb128 0x16
+ 1011 03c1 E2000000 		.4byte	.LASF34
+ 1012 03c5 01       		.byte	0x1
+ 1013 03c6 B9       		.byte	0xb9
+ 1014 03c7 00000000 		.4byte	.LFB42
+ 1015 03cb 88000000 		.4byte	.LFE42-.LFB42
+ 1016 03cf 01       		.uleb128 0x1
+ 1017 03d0 9C       		.byte	0x9c
+ 1018 03d1 23040000 		.4byte	0x423
+ 1019 03d5 0B       		.uleb128 0xb
+ 1020 03d6 6D616700 		.ascii	"mag\000"
+ 1021 03da 01       		.byte	0x1
+ 1022 03db B9       		.byte	0xb9
+ 1023 03dc 23040000 		.4byte	0x423
+ 1024 03e0 18020000 		.4byte	.LLST16
+ 1025 03e4 0A       		.uleb128 0xa
+ 1026 03e5 E3010000 		.4byte	.LASF35
+ 1027 03e9 01       		.byte	0x1
+ 1028 03ea B9       		.byte	0xb9
+ 1029 03eb 21030000 		.4byte	0x321
+ 1030 03ef 5D020000 		.4byte	.LLST17
+ 1031 03f3 0C       		.uleb128 0xc
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 23
+
+
+ 1032 03f4 696900   		.ascii	"ii\000"
+ 1033 03f7 01       		.byte	0x1
+ 1034 03f8 BB       		.byte	0xbb
+ 1035 03f9 B4000000 		.4byte	0xb4
+ 1036 03fd 7C020000 		.4byte	.LLST18
+ 1037 0401 0C       		.uleb128 0xc
+ 1038 0402 6D617800 		.ascii	"max\000"
+ 1039 0406 01       		.byte	0x1
+ 1040 0407 BC       		.byte	0xbc
+ 1041 0408 25000000 		.4byte	0x25
+ 1042 040c 90020000 		.4byte	.LLST19
+ 1043 0410 0D       		.uleb128 0xd
+ 1044 0411 18000000 		.4byte	.LVL39
+ 1045 0415 70030000 		.4byte	0x370
+ 1046 0419 0D       		.uleb128 0xd
+ 1047 041a 5E000000 		.4byte	.LVL45
+ 1048 041e 9D040000 		.4byte	0x49d
+ 1049 0422 00       		.byte	0
+ 1050 0423 14       		.uleb128 0x14
+ 1051 0424 04       		.byte	0x4
+ 1052 0425 25000000 		.4byte	0x25
+ 1053 0429 17       		.uleb128 0x17
+ 1054 042a 18020000 		.4byte	.LASF43
+ 1055 042e 01       		.byte	0x1
+ 1056 042f 0F       		.byte	0xf
+ 1057 0430 3A040000 		.4byte	0x43a
+ 1058 0434 05       		.uleb128 0x5
+ 1059 0435 03       		.byte	0x3
+ 1060 0436 00000000 		.4byte	_oled_eq_chan_tab_
+ 1061 043a 14       		.uleb128 0x14
+ 1062 043b 04       		.byte	0x4
+ 1063 043c 0A010000 		.4byte	0x10a
+ 1064 0440 18       		.uleb128 0x18
+ 1065 0441 D4000000 		.4byte	.LASF36
+ 1066 0445 07       		.byte	0x7
+ 1067 0446 36       		.byte	0x36
+ 1068 0447 19       		.uleb128 0x19
+ 1069 0448 9F020000 		.4byte	.LASF44
+ 1070 044c 07       		.byte	0x7
+ 1071 044d 40       		.byte	0x40
+ 1072 044e 6C040000 		.4byte	0x46c
+ 1073 0452 1A       		.uleb128 0x1a
+ 1074 0453 9E000000 		.4byte	0x9e
+ 1075 0457 1A       		.uleb128 0x1a
+ 1076 0458 9E000000 		.4byte	0x9e
+ 1077 045c 1A       		.uleb128 0x1a
+ 1078 045d 9E000000 		.4byte	0x9e
+ 1079 0461 1A       		.uleb128 0x1a
+ 1080 0462 9E000000 		.4byte	0x9e
+ 1081 0466 1A       		.uleb128 0x1a
+ 1082 0467 A9000000 		.4byte	0xa9
+ 1083 046b 00       		.byte	0
+ 1084 046c 18       		.uleb128 0x18
+ 1085 046d C1010000 		.4byte	.LASF37
+ 1086 0471 07       		.byte	0x7
+ 1087 0472 35       		.byte	0x35
+ 1088 0473 1B       		.uleb128 0x1b
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 24
+
+
+ 1089 0474 0E030000 		.4byte	.LASF38
+ 1090 0478 08       		.byte	0x8
+ 1091 0479 61       		.byte	0x61
+ 1092 047a E0000000 		.4byte	0xe0
+ 1093 047e 88040000 		.4byte	0x488
+ 1094 0482 1A       		.uleb128 0x1a
+ 1095 0483 CE000000 		.4byte	0xce
+ 1096 0487 00       		.byte	0
+ 1097 0488 1C       		.uleb128 0x1c
+ 1098 0489 6C6F6700 		.ascii	"log\000"
+ 1099 048d 09       		.byte	0x9
+ 1100 048e 83       		.byte	0x83
+ 1101 048f 25000000 		.4byte	0x25
+ 1102 0493 9D040000 		.4byte	0x49d
+ 1103 0497 1A       		.uleb128 0x1a
+ 1104 0498 25000000 		.4byte	0x25
+ 1105 049c 00       		.byte	0
+ 1106 049d 1D       		.uleb128 0x1d
+ 1107 049e 86020000 		.4byte	.LASF45
+ 1108 04a2 07       		.byte	0x7
+ 1109 04a3 47       		.byte	0x47
+ 1110 04a4 9E000000 		.4byte	0x9e
+ 1111 04a8 00       		.byte	0
+ 1112              		.section	.debug_abbrev,"",%progbits
+ 1113              	.Ldebug_abbrev0:
+ 1114 0000 01       		.uleb128 0x1
+ 1115 0001 11       		.uleb128 0x11
+ 1116 0002 01       		.byte	0x1
+ 1117 0003 25       		.uleb128 0x25
+ 1118 0004 0E       		.uleb128 0xe
+ 1119 0005 13       		.uleb128 0x13
+ 1120 0006 0B       		.uleb128 0xb
+ 1121 0007 03       		.uleb128 0x3
+ 1122 0008 0E       		.uleb128 0xe
+ 1123 0009 1B       		.uleb128 0x1b
+ 1124 000a 0E       		.uleb128 0xe
+ 1125 000b 55       		.uleb128 0x55
+ 1126 000c 17       		.uleb128 0x17
+ 1127 000d 11       		.uleb128 0x11
+ 1128 000e 01       		.uleb128 0x1
+ 1129 000f 10       		.uleb128 0x10
+ 1130 0010 17       		.uleb128 0x17
+ 1131 0011 00       		.byte	0
+ 1132 0012 00       		.byte	0
+ 1133 0013 02       		.uleb128 0x2
+ 1134 0014 24       		.uleb128 0x24
+ 1135 0015 00       		.byte	0
+ 1136 0016 0B       		.uleb128 0xb
+ 1137 0017 0B       		.uleb128 0xb
+ 1138 0018 3E       		.uleb128 0x3e
+ 1139 0019 0B       		.uleb128 0xb
+ 1140 001a 03       		.uleb128 0x3
+ 1141 001b 0E       		.uleb128 0xe
+ 1142 001c 00       		.byte	0
+ 1143 001d 00       		.byte	0
+ 1144 001e 03       		.uleb128 0x3
+ 1145 001f 16       		.uleb128 0x16
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 25
+
+
+ 1146 0020 00       		.byte	0
+ 1147 0021 03       		.uleb128 0x3
+ 1148 0022 0E       		.uleb128 0xe
+ 1149 0023 3A       		.uleb128 0x3a
+ 1150 0024 0B       		.uleb128 0xb
+ 1151 0025 3B       		.uleb128 0x3b
+ 1152 0026 0B       		.uleb128 0xb
+ 1153 0027 49       		.uleb128 0x49
+ 1154 0028 13       		.uleb128 0x13
+ 1155 0029 00       		.byte	0
+ 1156 002a 00       		.byte	0
+ 1157 002b 04       		.uleb128 0x4
+ 1158 002c 24       		.uleb128 0x24
+ 1159 002d 00       		.byte	0
+ 1160 002e 0B       		.uleb128 0xb
+ 1161 002f 0B       		.uleb128 0xb
+ 1162 0030 3E       		.uleb128 0x3e
+ 1163 0031 0B       		.uleb128 0xb
+ 1164 0032 03       		.uleb128 0x3
+ 1165 0033 08       		.uleb128 0x8
+ 1166 0034 00       		.byte	0
+ 1167 0035 00       		.byte	0
+ 1168 0036 05       		.uleb128 0x5
+ 1169 0037 16       		.uleb128 0x16
+ 1170 0038 00       		.byte	0
+ 1171 0039 03       		.uleb128 0x3
+ 1172 003a 0E       		.uleb128 0xe
+ 1173 003b 3A       		.uleb128 0x3a
+ 1174 003c 0B       		.uleb128 0xb
+ 1175 003d 3B       		.uleb128 0x3b
+ 1176 003e 05       		.uleb128 0x5
+ 1177 003f 49       		.uleb128 0x49
+ 1178 0040 13       		.uleb128 0x13
+ 1179 0041 00       		.byte	0
+ 1180 0042 00       		.byte	0
+ 1181 0043 06       		.uleb128 0x6
+ 1182 0044 0F       		.uleb128 0xf
+ 1183 0045 00       		.byte	0
+ 1184 0046 0B       		.uleb128 0xb
+ 1185 0047 0B       		.uleb128 0xb
+ 1186 0048 00       		.byte	0
+ 1187 0049 00       		.byte	0
+ 1188 004a 07       		.uleb128 0x7
+ 1189 004b 13       		.uleb128 0x13
+ 1190 004c 01       		.byte	0x1
+ 1191 004d 0B       		.uleb128 0xb
+ 1192 004e 0B       		.uleb128 0xb
+ 1193 004f 3A       		.uleb128 0x3a
+ 1194 0050 0B       		.uleb128 0xb
+ 1195 0051 3B       		.uleb128 0x3b
+ 1196 0052 0B       		.uleb128 0xb
+ 1197 0053 01       		.uleb128 0x1
+ 1198 0054 13       		.uleb128 0x13
+ 1199 0055 00       		.byte	0
+ 1200 0056 00       		.byte	0
+ 1201 0057 08       		.uleb128 0x8
+ 1202 0058 0D       		.uleb128 0xd
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 26
+
+
+ 1203 0059 00       		.byte	0
+ 1204 005a 03       		.uleb128 0x3
+ 1205 005b 0E       		.uleb128 0xe
+ 1206 005c 3A       		.uleb128 0x3a
+ 1207 005d 0B       		.uleb128 0xb
+ 1208 005e 3B       		.uleb128 0x3b
+ 1209 005f 0B       		.uleb128 0xb
+ 1210 0060 49       		.uleb128 0x49
+ 1211 0061 13       		.uleb128 0x13
+ 1212 0062 38       		.uleb128 0x38
+ 1213 0063 0B       		.uleb128 0xb
+ 1214 0064 00       		.byte	0
+ 1215 0065 00       		.byte	0
+ 1216 0066 09       		.uleb128 0x9
+ 1217 0067 2E       		.uleb128 0x2e
+ 1218 0068 01       		.byte	0x1
+ 1219 0069 3F       		.uleb128 0x3f
+ 1220 006a 19       		.uleb128 0x19
+ 1221 006b 03       		.uleb128 0x3
+ 1222 006c 0E       		.uleb128 0xe
+ 1223 006d 3A       		.uleb128 0x3a
+ 1224 006e 0B       		.uleb128 0xb
+ 1225 006f 3B       		.uleb128 0x3b
+ 1226 0070 0B       		.uleb128 0xb
+ 1227 0071 27       		.uleb128 0x27
+ 1228 0072 19       		.uleb128 0x19
+ 1229 0073 11       		.uleb128 0x11
+ 1230 0074 01       		.uleb128 0x1
+ 1231 0075 12       		.uleb128 0x12
+ 1232 0076 06       		.uleb128 0x6
+ 1233 0077 40       		.uleb128 0x40
+ 1234 0078 18       		.uleb128 0x18
+ 1235 0079 9742     		.uleb128 0x2117
+ 1236 007b 19       		.uleb128 0x19
+ 1237 007c 01       		.uleb128 0x1
+ 1238 007d 13       		.uleb128 0x13
+ 1239 007e 00       		.byte	0
+ 1240 007f 00       		.byte	0
+ 1241 0080 0A       		.uleb128 0xa
+ 1242 0081 05       		.uleb128 0x5
+ 1243 0082 00       		.byte	0
+ 1244 0083 03       		.uleb128 0x3
+ 1245 0084 0E       		.uleb128 0xe
+ 1246 0085 3A       		.uleb128 0x3a
+ 1247 0086 0B       		.uleb128 0xb
+ 1248 0087 3B       		.uleb128 0x3b
+ 1249 0088 0B       		.uleb128 0xb
+ 1250 0089 49       		.uleb128 0x49
+ 1251 008a 13       		.uleb128 0x13
+ 1252 008b 02       		.uleb128 0x2
+ 1253 008c 17       		.uleb128 0x17
+ 1254 008d 00       		.byte	0
+ 1255 008e 00       		.byte	0
+ 1256 008f 0B       		.uleb128 0xb
+ 1257 0090 05       		.uleb128 0x5
+ 1258 0091 00       		.byte	0
+ 1259 0092 03       		.uleb128 0x3
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 27
+
+
+ 1260 0093 08       		.uleb128 0x8
+ 1261 0094 3A       		.uleb128 0x3a
+ 1262 0095 0B       		.uleb128 0xb
+ 1263 0096 3B       		.uleb128 0x3b
+ 1264 0097 0B       		.uleb128 0xb
+ 1265 0098 49       		.uleb128 0x49
+ 1266 0099 13       		.uleb128 0x13
+ 1267 009a 02       		.uleb128 0x2
+ 1268 009b 17       		.uleb128 0x17
+ 1269 009c 00       		.byte	0
+ 1270 009d 00       		.byte	0
+ 1271 009e 0C       		.uleb128 0xc
+ 1272 009f 34       		.uleb128 0x34
+ 1273 00a0 00       		.byte	0
+ 1274 00a1 03       		.uleb128 0x3
+ 1275 00a2 08       		.uleb128 0x8
+ 1276 00a3 3A       		.uleb128 0x3a
+ 1277 00a4 0B       		.uleb128 0xb
+ 1278 00a5 3B       		.uleb128 0x3b
+ 1279 00a6 0B       		.uleb128 0xb
+ 1280 00a7 49       		.uleb128 0x49
+ 1281 00a8 13       		.uleb128 0x13
+ 1282 00a9 02       		.uleb128 0x2
+ 1283 00aa 17       		.uleb128 0x17
+ 1284 00ab 00       		.byte	0
+ 1285 00ac 00       		.byte	0
+ 1286 00ad 0D       		.uleb128 0xd
+ 1287 00ae 898201   		.uleb128 0x4109
+ 1288 00b1 00       		.byte	0
+ 1289 00b2 11       		.uleb128 0x11
+ 1290 00b3 01       		.uleb128 0x1
+ 1291 00b4 31       		.uleb128 0x31
+ 1292 00b5 13       		.uleb128 0x13
+ 1293 00b6 00       		.byte	0
+ 1294 00b7 00       		.byte	0
+ 1295 00b8 0E       		.uleb128 0xe
+ 1296 00b9 898201   		.uleb128 0x4109
+ 1297 00bc 01       		.byte	0x1
+ 1298 00bd 11       		.uleb128 0x11
+ 1299 00be 01       		.uleb128 0x1
+ 1300 00bf 31       		.uleb128 0x31
+ 1301 00c0 13       		.uleb128 0x13
+ 1302 00c1 01       		.uleb128 0x1
+ 1303 00c2 13       		.uleb128 0x13
+ 1304 00c3 00       		.byte	0
+ 1305 00c4 00       		.byte	0
+ 1306 00c5 0F       		.uleb128 0xf
+ 1307 00c6 8A8201   		.uleb128 0x410a
+ 1308 00c9 00       		.byte	0
+ 1309 00ca 02       		.uleb128 0x2
+ 1310 00cb 18       		.uleb128 0x18
+ 1311 00cc 9142     		.uleb128 0x2111
+ 1312 00ce 18       		.uleb128 0x18
+ 1313 00cf 00       		.byte	0
+ 1314 00d0 00       		.byte	0
+ 1315 00d1 10       		.uleb128 0x10
+ 1316 00d2 898201   		.uleb128 0x4109
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 28
+
+
+ 1317 00d5 01       		.byte	0x1
+ 1318 00d6 11       		.uleb128 0x11
+ 1319 00d7 01       		.uleb128 0x1
+ 1320 00d8 31       		.uleb128 0x31
+ 1321 00d9 13       		.uleb128 0x13
+ 1322 00da 00       		.byte	0
+ 1323 00db 00       		.byte	0
+ 1324 00dc 11       		.uleb128 0x11
+ 1325 00dd 05       		.uleb128 0x5
+ 1326 00de 00       		.byte	0
+ 1327 00df 03       		.uleb128 0x3
+ 1328 00e0 0E       		.uleb128 0xe
+ 1329 00e1 3A       		.uleb128 0x3a
+ 1330 00e2 0B       		.uleb128 0xb
+ 1331 00e3 3B       		.uleb128 0x3b
+ 1332 00e4 0B       		.uleb128 0xb
+ 1333 00e5 49       		.uleb128 0x49
+ 1334 00e6 13       		.uleb128 0x13
+ 1335 00e7 02       		.uleb128 0x2
+ 1336 00e8 18       		.uleb128 0x18
+ 1337 00e9 00       		.byte	0
+ 1338 00ea 00       		.byte	0
+ 1339 00eb 12       		.uleb128 0x12
+ 1340 00ec 2E       		.uleb128 0x2e
+ 1341 00ed 01       		.byte	0x1
+ 1342 00ee 3F       		.uleb128 0x3f
+ 1343 00ef 19       		.uleb128 0x19
+ 1344 00f0 03       		.uleb128 0x3
+ 1345 00f1 0E       		.uleb128 0xe
+ 1346 00f2 3A       		.uleb128 0x3a
+ 1347 00f3 0B       		.uleb128 0xb
+ 1348 00f4 3B       		.uleb128 0x3b
+ 1349 00f5 0B       		.uleb128 0xb
+ 1350 00f6 11       		.uleb128 0x11
+ 1351 00f7 01       		.uleb128 0x1
+ 1352 00f8 12       		.uleb128 0x12
+ 1353 00f9 06       		.uleb128 0x6
+ 1354 00fa 40       		.uleb128 0x40
+ 1355 00fb 18       		.uleb128 0x18
+ 1356 00fc 9742     		.uleb128 0x2117
+ 1357 00fe 19       		.uleb128 0x19
+ 1358 00ff 01       		.uleb128 0x1
+ 1359 0100 13       		.uleb128 0x13
+ 1360 0101 00       		.byte	0
+ 1361 0102 00       		.byte	0
+ 1362 0103 13       		.uleb128 0x13
+ 1363 0104 05       		.uleb128 0x5
+ 1364 0105 00       		.byte	0
+ 1365 0106 03       		.uleb128 0x3
+ 1366 0107 08       		.uleb128 0x8
+ 1367 0108 3A       		.uleb128 0x3a
+ 1368 0109 0B       		.uleb128 0xb
+ 1369 010a 3B       		.uleb128 0x3b
+ 1370 010b 0B       		.uleb128 0xb
+ 1371 010c 49       		.uleb128 0x49
+ 1372 010d 13       		.uleb128 0x13
+ 1373 010e 02       		.uleb128 0x2
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 29
+
+
+ 1374 010f 18       		.uleb128 0x18
+ 1375 0110 00       		.byte	0
+ 1376 0111 00       		.byte	0
+ 1377 0112 14       		.uleb128 0x14
+ 1378 0113 0F       		.uleb128 0xf
+ 1379 0114 00       		.byte	0
+ 1380 0115 0B       		.uleb128 0xb
+ 1381 0116 0B       		.uleb128 0xb
+ 1382 0117 49       		.uleb128 0x49
+ 1383 0118 13       		.uleb128 0x13
+ 1384 0119 00       		.byte	0
+ 1385 011a 00       		.byte	0
+ 1386 011b 15       		.uleb128 0x15
+ 1387 011c 2E       		.uleb128 0x2e
+ 1388 011d 01       		.byte	0x1
+ 1389 011e 3F       		.uleb128 0x3f
+ 1390 011f 19       		.uleb128 0x19
+ 1391 0120 03       		.uleb128 0x3
+ 1392 0121 0E       		.uleb128 0xe
+ 1393 0122 3A       		.uleb128 0x3a
+ 1394 0123 0B       		.uleb128 0xb
+ 1395 0124 3B       		.uleb128 0x3b
+ 1396 0125 0B       		.uleb128 0xb
+ 1397 0126 27       		.uleb128 0x27
+ 1398 0127 19       		.uleb128 0x19
+ 1399 0128 49       		.uleb128 0x49
+ 1400 0129 13       		.uleb128 0x13
+ 1401 012a 11       		.uleb128 0x11
+ 1402 012b 01       		.uleb128 0x1
+ 1403 012c 12       		.uleb128 0x12
+ 1404 012d 06       		.uleb128 0x6
+ 1405 012e 40       		.uleb128 0x40
+ 1406 012f 18       		.uleb128 0x18
+ 1407 0130 9642     		.uleb128 0x2116
+ 1408 0132 19       		.uleb128 0x19
+ 1409 0133 01       		.uleb128 0x1
+ 1410 0134 13       		.uleb128 0x13
+ 1411 0135 00       		.byte	0
+ 1412 0136 00       		.byte	0
+ 1413 0137 16       		.uleb128 0x16
+ 1414 0138 2E       		.uleb128 0x2e
+ 1415 0139 01       		.byte	0x1
+ 1416 013a 3F       		.uleb128 0x3f
+ 1417 013b 19       		.uleb128 0x19
+ 1418 013c 03       		.uleb128 0x3
+ 1419 013d 0E       		.uleb128 0xe
+ 1420 013e 3A       		.uleb128 0x3a
+ 1421 013f 0B       		.uleb128 0xb
+ 1422 0140 3B       		.uleb128 0x3b
+ 1423 0141 0B       		.uleb128 0xb
+ 1424 0142 27       		.uleb128 0x27
+ 1425 0143 19       		.uleb128 0x19
+ 1426 0144 11       		.uleb128 0x11
+ 1427 0145 01       		.uleb128 0x1
+ 1428 0146 12       		.uleb128 0x12
+ 1429 0147 06       		.uleb128 0x6
+ 1430 0148 40       		.uleb128 0x40
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 30
+
+
+ 1431 0149 18       		.uleb128 0x18
+ 1432 014a 9642     		.uleb128 0x2116
+ 1433 014c 19       		.uleb128 0x19
+ 1434 014d 01       		.uleb128 0x1
+ 1435 014e 13       		.uleb128 0x13
+ 1436 014f 00       		.byte	0
+ 1437 0150 00       		.byte	0
+ 1438 0151 17       		.uleb128 0x17
+ 1439 0152 34       		.uleb128 0x34
+ 1440 0153 00       		.byte	0
+ 1441 0154 03       		.uleb128 0x3
+ 1442 0155 0E       		.uleb128 0xe
+ 1443 0156 3A       		.uleb128 0x3a
+ 1444 0157 0B       		.uleb128 0xb
+ 1445 0158 3B       		.uleb128 0x3b
+ 1446 0159 0B       		.uleb128 0xb
+ 1447 015a 49       		.uleb128 0x49
+ 1448 015b 13       		.uleb128 0x13
+ 1449 015c 3F       		.uleb128 0x3f
+ 1450 015d 19       		.uleb128 0x19
+ 1451 015e 02       		.uleb128 0x2
+ 1452 015f 18       		.uleb128 0x18
+ 1453 0160 00       		.byte	0
+ 1454 0161 00       		.byte	0
+ 1455 0162 18       		.uleb128 0x18
+ 1456 0163 2E       		.uleb128 0x2e
+ 1457 0164 00       		.byte	0
+ 1458 0165 3F       		.uleb128 0x3f
+ 1459 0166 19       		.uleb128 0x19
+ 1460 0167 03       		.uleb128 0x3
+ 1461 0168 0E       		.uleb128 0xe
+ 1462 0169 3A       		.uleb128 0x3a
+ 1463 016a 0B       		.uleb128 0xb
+ 1464 016b 3B       		.uleb128 0x3b
+ 1465 016c 0B       		.uleb128 0xb
+ 1466 016d 27       		.uleb128 0x27
+ 1467 016e 19       		.uleb128 0x19
+ 1468 016f 3C       		.uleb128 0x3c
+ 1469 0170 19       		.uleb128 0x19
+ 1470 0171 00       		.byte	0
+ 1471 0172 00       		.byte	0
+ 1472 0173 19       		.uleb128 0x19
+ 1473 0174 2E       		.uleb128 0x2e
+ 1474 0175 01       		.byte	0x1
+ 1475 0176 3F       		.uleb128 0x3f
+ 1476 0177 19       		.uleb128 0x19
+ 1477 0178 03       		.uleb128 0x3
+ 1478 0179 0E       		.uleb128 0xe
+ 1479 017a 3A       		.uleb128 0x3a
+ 1480 017b 0B       		.uleb128 0xb
+ 1481 017c 3B       		.uleb128 0x3b
+ 1482 017d 0B       		.uleb128 0xb
+ 1483 017e 27       		.uleb128 0x27
+ 1484 017f 19       		.uleb128 0x19
+ 1485 0180 3C       		.uleb128 0x3c
+ 1486 0181 19       		.uleb128 0x19
+ 1487 0182 01       		.uleb128 0x1
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 31
+
+
+ 1488 0183 13       		.uleb128 0x13
+ 1489 0184 00       		.byte	0
+ 1490 0185 00       		.byte	0
+ 1491 0186 1A       		.uleb128 0x1a
+ 1492 0187 05       		.uleb128 0x5
+ 1493 0188 00       		.byte	0
+ 1494 0189 49       		.uleb128 0x49
+ 1495 018a 13       		.uleb128 0x13
+ 1496 018b 00       		.byte	0
+ 1497 018c 00       		.byte	0
+ 1498 018d 1B       		.uleb128 0x1b
+ 1499 018e 2E       		.uleb128 0x2e
+ 1500 018f 01       		.byte	0x1
+ 1501 0190 3F       		.uleb128 0x3f
+ 1502 0191 19       		.uleb128 0x19
+ 1503 0192 03       		.uleb128 0x3
+ 1504 0193 0E       		.uleb128 0xe
+ 1505 0194 3A       		.uleb128 0x3a
+ 1506 0195 0B       		.uleb128 0xb
+ 1507 0196 3B       		.uleb128 0x3b
+ 1508 0197 0B       		.uleb128 0xb
+ 1509 0198 27       		.uleb128 0x27
+ 1510 0199 19       		.uleb128 0x19
+ 1511 019a 49       		.uleb128 0x49
+ 1512 019b 13       		.uleb128 0x13
+ 1513 019c 3C       		.uleb128 0x3c
+ 1514 019d 19       		.uleb128 0x19
+ 1515 019e 01       		.uleb128 0x1
+ 1516 019f 13       		.uleb128 0x13
+ 1517 01a0 00       		.byte	0
+ 1518 01a1 00       		.byte	0
+ 1519 01a2 1C       		.uleb128 0x1c
+ 1520 01a3 2E       		.uleb128 0x2e
+ 1521 01a4 01       		.byte	0x1
+ 1522 01a5 3F       		.uleb128 0x3f
+ 1523 01a6 19       		.uleb128 0x19
+ 1524 01a7 03       		.uleb128 0x3
+ 1525 01a8 08       		.uleb128 0x8
+ 1526 01a9 3A       		.uleb128 0x3a
+ 1527 01aa 0B       		.uleb128 0xb
+ 1528 01ab 3B       		.uleb128 0x3b
+ 1529 01ac 0B       		.uleb128 0xb
+ 1530 01ad 27       		.uleb128 0x27
+ 1531 01ae 19       		.uleb128 0x19
+ 1532 01af 49       		.uleb128 0x49
+ 1533 01b0 13       		.uleb128 0x13
+ 1534 01b1 3C       		.uleb128 0x3c
+ 1535 01b2 19       		.uleb128 0x19
+ 1536 01b3 01       		.uleb128 0x1
+ 1537 01b4 13       		.uleb128 0x13
+ 1538 01b5 00       		.byte	0
+ 1539 01b6 00       		.byte	0
+ 1540 01b7 1D       		.uleb128 0x1d
+ 1541 01b8 2E       		.uleb128 0x2e
+ 1542 01b9 00       		.byte	0
+ 1543 01ba 3F       		.uleb128 0x3f
+ 1544 01bb 19       		.uleb128 0x19
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 32
+
+
+ 1545 01bc 03       		.uleb128 0x3
+ 1546 01bd 0E       		.uleb128 0xe
+ 1547 01be 3A       		.uleb128 0x3a
+ 1548 01bf 0B       		.uleb128 0xb
+ 1549 01c0 3B       		.uleb128 0x3b
+ 1550 01c1 0B       		.uleb128 0xb
+ 1551 01c2 27       		.uleb128 0x27
+ 1552 01c3 19       		.uleb128 0x19
+ 1553 01c4 49       		.uleb128 0x49
+ 1554 01c5 13       		.uleb128 0x13
+ 1555 01c6 3C       		.uleb128 0x3c
+ 1556 01c7 19       		.uleb128 0x19
+ 1557 01c8 00       		.byte	0
+ 1558 01c9 00       		.byte	0
+ 1559 01ca 00       		.byte	0
+ 1560              		.section	.debug_loc,"",%progbits
+ 1561              	.Ldebug_loc0:
+ 1562              	.LLST0:
+ 1563 0000 00000000 		.4byte	.LVL0
+ 1564 0004 13000000 		.4byte	.LVL1-1
+ 1565 0008 0100     		.2byte	0x1
+ 1566 000a 50       		.byte	0x50
+ 1567 000b 13000000 		.4byte	.LVL1-1
+ 1568 000f 42000000 		.4byte	.LFE34
+ 1569 0013 0400     		.2byte	0x4
+ 1570 0015 F3       		.byte	0xf3
+ 1571 0016 01       		.uleb128 0x1
+ 1572 0017 50       		.byte	0x50
+ 1573 0018 9F       		.byte	0x9f
+ 1574 0019 00000000 		.4byte	0
+ 1575 001d 00000000 		.4byte	0
+ 1576              	.LLST1:
+ 1577 0021 00000000 		.4byte	.LVL0
+ 1578 0025 13000000 		.4byte	.LVL1-1
+ 1579 0029 0100     		.2byte	0x1
+ 1580 002b 51       		.byte	0x51
+ 1581 002c 13000000 		.4byte	.LVL1-1
+ 1582 0030 42000000 		.4byte	.LFE34
+ 1583 0034 0400     		.2byte	0x4
+ 1584 0036 F3       		.byte	0xf3
+ 1585 0037 01       		.uleb128 0x1
+ 1586 0038 51       		.byte	0x51
+ 1587 0039 9F       		.byte	0x9f
+ 1588 003a 00000000 		.4byte	0
+ 1589 003e 00000000 		.4byte	0
+ 1590              	.LLST2:
+ 1591 0042 00000000 		.4byte	.LVL0
+ 1592 0046 13000000 		.4byte	.LVL1-1
+ 1593 004a 0100     		.2byte	0x1
+ 1594 004c 52       		.byte	0x52
+ 1595 004d 13000000 		.4byte	.LVL1-1
+ 1596 0051 42000000 		.4byte	.LFE34
+ 1597 0055 0400     		.2byte	0x4
+ 1598 0057 F3       		.byte	0xf3
+ 1599 0058 01       		.uleb128 0x1
+ 1600 0059 52       		.byte	0x52
+ 1601 005a 9F       		.byte	0x9f
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 33
+
+
+ 1602 005b 00000000 		.4byte	0
+ 1603 005f 00000000 		.4byte	0
+ 1604              	.LLST3:
+ 1605 0063 00000000 		.4byte	.LVL0
+ 1606 0067 1E000000 		.4byte	.LVL2
+ 1607 006b 0200     		.2byte	0x2
+ 1608 006d 30       		.byte	0x30
+ 1609 006e 9F       		.byte	0x9f
+ 1610 006f 1E000000 		.4byte	.LVL2
+ 1611 0073 32000000 		.4byte	.LVL3
+ 1612 0077 0100     		.2byte	0x1
+ 1613 0079 55       		.byte	0x55
+ 1614 007a 38000000 		.4byte	.LVL5
+ 1615 007e 40000000 		.4byte	.LVL7
+ 1616 0082 0100     		.2byte	0x1
+ 1617 0084 55       		.byte	0x55
+ 1618 0085 00000000 		.4byte	0
+ 1619 0089 00000000 		.4byte	0
+ 1620              	.LLST4:
+ 1621 008d 00000000 		.4byte	.LVL8
+ 1622 0091 0A000000 		.4byte	.LVL9
+ 1623 0095 0100     		.2byte	0x1
+ 1624 0097 50       		.byte	0x50
+ 1625 0098 0A000000 		.4byte	.LVL9
+ 1626 009c 38000000 		.4byte	.LFE35
+ 1627 00a0 0400     		.2byte	0x4
+ 1628 00a2 F3       		.byte	0xf3
+ 1629 00a3 01       		.uleb128 0x1
+ 1630 00a4 50       		.byte	0x50
+ 1631 00a5 9F       		.byte	0x9f
+ 1632 00a6 00000000 		.4byte	0
+ 1633 00aa 00000000 		.4byte	0
+ 1634              	.LLST5:
+ 1635 00ae 00000000 		.4byte	.LVL8
+ 1636 00b2 18000000 		.4byte	.LVL10
+ 1637 00b6 0100     		.2byte	0x1
+ 1638 00b8 51       		.byte	0x51
+ 1639 00b9 18000000 		.4byte	.LVL10
+ 1640 00bd 38000000 		.4byte	.LFE35
+ 1641 00c1 0400     		.2byte	0x4
+ 1642 00c3 F3       		.byte	0xf3
+ 1643 00c4 01       		.uleb128 0x1
+ 1644 00c5 51       		.byte	0x51
+ 1645 00c6 9F       		.byte	0x9f
+ 1646 00c7 00000000 		.4byte	0
+ 1647 00cb 00000000 		.4byte	0
+ 1648              	.LLST6:
+ 1649 00cf 00000000 		.4byte	.LVL8
+ 1650 00d3 18000000 		.4byte	.LVL10
+ 1651 00d7 0100     		.2byte	0x1
+ 1652 00d9 52       		.byte	0x52
+ 1653 00da 18000000 		.4byte	.LVL10
+ 1654 00de 38000000 		.4byte	.LFE35
+ 1655 00e2 0400     		.2byte	0x4
+ 1656 00e4 F3       		.byte	0xf3
+ 1657 00e5 01       		.uleb128 0x1
+ 1658 00e6 52       		.byte	0x52
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 34
+
+
+ 1659 00e7 9F       		.byte	0x9f
+ 1660 00e8 00000000 		.4byte	0
+ 1661 00ec 00000000 		.4byte	0
+ 1662              	.LLST7:
+ 1663 00f0 00000000 		.4byte	.LVL8
+ 1664 00f4 18000000 		.4byte	.LVL10
+ 1665 00f8 0200     		.2byte	0x2
+ 1666 00fa 30       		.byte	0x30
+ 1667 00fb 9F       		.byte	0x9f
+ 1668 00fc 18000000 		.4byte	.LVL10
+ 1669 0100 2C000000 		.4byte	.LVL11
+ 1670 0104 0100     		.2byte	0x1
+ 1671 0106 55       		.byte	0x55
+ 1672 0107 32000000 		.4byte	.LVL13
+ 1673 010b 36000000 		.4byte	.LVL14
+ 1674 010f 0100     		.2byte	0x1
+ 1675 0111 55       		.byte	0x55
+ 1676 0112 00000000 		.4byte	0
+ 1677 0116 00000000 		.4byte	0
+ 1678              	.LLST8:
+ 1679 011a 00000000 		.4byte	.LVL15
+ 1680 011e 0A000000 		.4byte	.LVL16
+ 1681 0122 0100     		.2byte	0x1
+ 1682 0124 51       		.byte	0x51
+ 1683 0125 0A000000 		.4byte	.LVL16
+ 1684 0129 12000000 		.4byte	.LFE36
+ 1685 012d 0400     		.2byte	0x4
+ 1686 012f F3       		.byte	0xf3
+ 1687 0130 01       		.uleb128 0x1
+ 1688 0131 51       		.byte	0x51
+ 1689 0132 9F       		.byte	0x9f
+ 1690 0133 00000000 		.4byte	0
+ 1691 0137 00000000 		.4byte	0
+ 1692              	.LLST9:
+ 1693 013b 0E000000 		.4byte	.LVL19
+ 1694 013f 24000000 		.4byte	.LVL20
+ 1695 0143 0100     		.2byte	0x1
+ 1696 0145 54       		.byte	0x54
+ 1697 0146 00000000 		.4byte	0
+ 1698 014a 00000000 		.4byte	0
+ 1699              	.LLST10:
+ 1700 014e 00000000 		.4byte	.LVL23
+ 1701 0152 04000000 		.4byte	.LVL24
+ 1702 0156 0100     		.2byte	0x1
+ 1703 0158 50       		.byte	0x50
+ 1704 0159 04000000 		.4byte	.LVL24
+ 1705 015d 10000000 		.4byte	.LFE38
+ 1706 0161 0400     		.2byte	0x4
+ 1707 0163 F3       		.byte	0xf3
+ 1708 0164 01       		.uleb128 0x1
+ 1709 0165 50       		.byte	0x50
+ 1710 0166 9F       		.byte	0x9f
+ 1711 0167 00000000 		.4byte	0
+ 1712 016b 00000000 		.4byte	0
+ 1713              	.LLST11:
+ 1714 016f 00000000 		.4byte	.LVL25
+ 1715 0173 06000000 		.4byte	.LVL26
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 35
+
+
+ 1716 0177 0100     		.2byte	0x1
+ 1717 0179 50       		.byte	0x50
+ 1718 017a 06000000 		.4byte	.LVL26
+ 1719 017e 16000000 		.4byte	.LVL29
+ 1720 0182 0100     		.2byte	0x1
+ 1721 0184 55       		.byte	0x55
+ 1722 0185 16000000 		.4byte	.LVL29
+ 1723 0189 18000000 		.4byte	.LFE39
+ 1724 018d 0400     		.2byte	0x4
+ 1725 018f F3       		.byte	0xf3
+ 1726 0190 01       		.uleb128 0x1
+ 1727 0191 50       		.byte	0x50
+ 1728 0192 9F       		.byte	0x9f
+ 1729 0193 00000000 		.4byte	0
+ 1730 0197 00000000 		.4byte	0
+ 1731              	.LLST12:
+ 1732 019b 00000000 		.4byte	.LVL25
+ 1733 019f 06000000 		.4byte	.LVL26
+ 1734 01a3 0200     		.2byte	0x2
+ 1735 01a5 30       		.byte	0x30
+ 1736 01a6 9F       		.byte	0x9f
+ 1737 01a7 06000000 		.4byte	.LVL26
+ 1738 01ab 0E000000 		.4byte	.LVL27
+ 1739 01af 0100     		.2byte	0x1
+ 1740 01b1 54       		.byte	0x54
+ 1741 01b2 00000000 		.4byte	0
+ 1742 01b6 00000000 		.4byte	0
+ 1743              	.LLST13:
+ 1744 01ba 06000000 		.4byte	.LVL30
+ 1745 01be 08000000 		.4byte	.LVL31
+ 1746 01c2 0200     		.2byte	0x2
+ 1747 01c4 30       		.byte	0x30
+ 1748 01c5 9F       		.byte	0x9f
+ 1749 01c6 00000000 		.4byte	0
+ 1750 01ca 00000000 		.4byte	0
+ 1751              	.LLST14:
+ 1752 01ce 00000000 		.4byte	.LVL34
+ 1753 01d2 05000000 		.4byte	.LVL35-1
+ 1754 01d6 0600     		.2byte	0x6
+ 1755 01d8 50       		.byte	0x50
+ 1756 01d9 93       		.byte	0x93
+ 1757 01da 04       		.uleb128 0x4
+ 1758 01db 51       		.byte	0x51
+ 1759 01dc 93       		.byte	0x93
+ 1760 01dd 04       		.uleb128 0x4
+ 1761 01de 05000000 		.4byte	.LVL35-1
+ 1762 01e2 14000000 		.4byte	.LFE41
+ 1763 01e6 0600     		.2byte	0x6
+ 1764 01e8 F3       		.byte	0xf3
+ 1765 01e9 03       		.uleb128 0x3
+ 1766 01ea F5       		.byte	0xf5
+ 1767 01eb 00       		.uleb128 0
+ 1768 01ec 25       		.uleb128 0x25
+ 1769 01ed 9F       		.byte	0x9f
+ 1770 01ee 00000000 		.4byte	0
+ 1771 01f2 00000000 		.4byte	0
+ 1772              	.LLST15:
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 36
+
+
+ 1773 01f6 06000000 		.4byte	.LVL35
+ 1774 01fa 0D000000 		.4byte	.LVL36-1
+ 1775 01fe 1000     		.2byte	0x10
+ 1776 0200 F5       		.byte	0xf5
+ 1777 0201 00       		.uleb128 0
+ 1778 0202 25       		.uleb128 0x25
+ 1779 0203 F4       		.byte	0xf4
+ 1780 0204 25       		.uleb128 0x25
+ 1781 0205 08       		.byte	0x8
+ 1782 0206 00000000 		.4byte	0
+ 1783 020a 00003440 		.4byte	0x40340000
+ 1784 020e 1E       		.byte	0x1e
+ 1785 020f 9F       		.byte	0x9f
+ 1786 0210 00000000 		.4byte	0
+ 1787 0214 00000000 		.4byte	0
+ 1788              	.LLST16:
+ 1789 0218 00000000 		.4byte	.LVL37
+ 1790 021c 10000000 		.4byte	.LVL38
+ 1791 0220 0100     		.2byte	0x1
+ 1792 0222 50       		.byte	0x50
+ 1793 0223 10000000 		.4byte	.LVL38
+ 1794 0227 4A000000 		.4byte	.LVL43
+ 1795 022b 0100     		.2byte	0x1
+ 1796 022d 54       		.byte	0x54
+ 1797 022e 4A000000 		.4byte	.LVL43
+ 1798 0232 76000000 		.4byte	.LVL48
+ 1799 0236 0100     		.2byte	0x1
+ 1800 0238 55       		.byte	0x55
+ 1801 0239 76000000 		.4byte	.LVL48
+ 1802 023d 86000000 		.4byte	.LVL51
+ 1803 0241 0400     		.2byte	0x4
+ 1804 0243 77       		.byte	0x77
+ 1805 0244 807F     		.sleb128 -128
+ 1806 0246 9F       		.byte	0x9f
+ 1807 0247 86000000 		.4byte	.LVL51
+ 1808 024b 88000000 		.4byte	.LFE42
+ 1809 024f 0400     		.2byte	0x4
+ 1810 0251 F3       		.byte	0xf3
+ 1811 0252 01       		.uleb128 0x1
+ 1812 0253 50       		.byte	0x50
+ 1813 0254 9F       		.byte	0x9f
+ 1814 0255 00000000 		.4byte	0
+ 1815 0259 00000000 		.4byte	0
+ 1816              	.LLST17:
+ 1817 025d 00000000 		.4byte	.LVL37
+ 1818 0261 10000000 		.4byte	.LVL38
+ 1819 0265 0100     		.2byte	0x1
+ 1820 0267 51       		.byte	0x51
+ 1821 0268 10000000 		.4byte	.LVL38
+ 1822 026c 88000000 		.4byte	.LFE42
+ 1823 0270 0200     		.2byte	0x2
+ 1824 0272 91       		.byte	0x91
+ 1825 0273 64       		.sleb128 -28
+ 1826 0274 00000000 		.4byte	0
+ 1827 0278 00000000 		.4byte	0
+ 1828              	.LLST18:
+ 1829 027c 00000000 		.4byte	.LVL37
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 37
+
+
+ 1830 0280 10000000 		.4byte	.LVL38
+ 1831 0284 0200     		.2byte	0x2
+ 1832 0286 30       		.byte	0x30
+ 1833 0287 9F       		.byte	0x9f
+ 1834 0288 00000000 		.4byte	0
+ 1835 028c 00000000 		.4byte	0
+ 1836              	.LLST19:
+ 1837 0290 00000000 		.4byte	.LVL37
+ 1838 0294 28000000 		.4byte	.LVL40
+ 1839 0298 0A00     		.2byte	0xa
+ 1840 029a 9E       		.byte	0x9e
+ 1841 029b 08       		.uleb128 0x8
+ 1842 029c 00000000 		.4byte	0
+ 1843 02a0 00000000 		.4byte	0
+ 1844 02a4 28000000 		.4byte	.LVL40
+ 1845 02a8 86000000 		.4byte	.LVL50
+ 1846 02ac 0200     		.2byte	0x2
+ 1847 02ae 7D       		.byte	0x7d
+ 1848 02af 00       		.sleb128 0
+ 1849 02b0 86000000 		.4byte	.LVL50
+ 1850 02b4 88000000 		.4byte	.LFE42
+ 1851 02b8 0200     		.2byte	0x2
+ 1852 02ba 91       		.byte	0x91
+ 1853 02bb 50       		.sleb128 -48
+ 1854 02bc 00000000 		.4byte	0
+ 1855 02c0 00000000 		.4byte	0
+ 1856              		.section	.debug_aranges,"",%progbits
+ 1857 0000 5C000000 		.4byte	0x5c
+ 1858 0004 0200     		.2byte	0x2
+ 1859 0006 00000000 		.4byte	.Ldebug_info0
+ 1860 000a 04       		.byte	0x4
+ 1861 000b 00       		.byte	0
+ 1862 000c 0000     		.2byte	0
+ 1863 000e 0000     		.2byte	0
+ 1864 0010 00000000 		.4byte	.LFB34
+ 1865 0014 42000000 		.4byte	.LFE34-.LFB34
+ 1866 0018 00000000 		.4byte	.LFB35
+ 1867 001c 38000000 		.4byte	.LFE35-.LFB35
+ 1868 0020 00000000 		.4byte	.LFB36
+ 1869 0024 12000000 		.4byte	.LFE36-.LFB36
+ 1870 0028 00000000 		.4byte	.LFB37
+ 1871 002c 38000000 		.4byte	.LFE37-.LFB37
+ 1872 0030 00000000 		.4byte	.LFB38
+ 1873 0034 10000000 		.4byte	.LFE38-.LFB38
+ 1874 0038 00000000 		.4byte	.LFB39
+ 1875 003c 18000000 		.4byte	.LFE39-.LFB39
+ 1876 0040 00000000 		.4byte	.LFB40
+ 1877 0044 2C000000 		.4byte	.LFE40-.LFB40
+ 1878 0048 00000000 		.4byte	.LFB41
+ 1879 004c 14000000 		.4byte	.LFE41-.LFB41
+ 1880 0050 00000000 		.4byte	.LFB42
+ 1881 0054 88000000 		.4byte	.LFE42-.LFB42
+ 1882 0058 00000000 		.4byte	0
+ 1883 005c 00000000 		.4byte	0
+ 1884              		.section	.debug_ranges,"",%progbits
+ 1885              	.Ldebug_ranges0:
+ 1886 0000 00000000 		.4byte	.LFB34
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 38
+
+
+ 1887 0004 42000000 		.4byte	.LFE34
+ 1888 0008 00000000 		.4byte	.LFB35
+ 1889 000c 38000000 		.4byte	.LFE35
+ 1890 0010 00000000 		.4byte	.LFB36
+ 1891 0014 12000000 		.4byte	.LFE36
+ 1892 0018 00000000 		.4byte	.LFB37
+ 1893 001c 38000000 		.4byte	.LFE37
+ 1894 0020 00000000 		.4byte	.LFB38
+ 1895 0024 10000000 		.4byte	.LFE38
+ 1896 0028 00000000 		.4byte	.LFB39
+ 1897 002c 18000000 		.4byte	.LFE39
+ 1898 0030 00000000 		.4byte	.LFB40
+ 1899 0034 2C000000 		.4byte	.LFE40
+ 1900 0038 00000000 		.4byte	.LFB41
+ 1901 003c 14000000 		.4byte	.LFE41
+ 1902 0040 00000000 		.4byte	.LFB42
+ 1903 0044 88000000 		.4byte	.LFE42
+ 1904 0048 00000000 		.4byte	0
+ 1905 004c 00000000 		.4byte	0
+ 1906              		.section	.debug_line,"",%progbits
+ 1907              	.Ldebug_line0:
+ 1908 0000 00030000 		.section	.debug_str,"MS",%progbits,1
+ 1908      0200BA01 
+ 1908      00000201 
+ 1908      FB0E0D00 
+ 1908      01010101 
+ 1909              	.LASF3:
+ 1910 0000 5F5F7569 		.ascii	"__uint8_t\000"
+ 1910      6E74385F 
+ 1910      7400
+ 1911              	.LASF19:
+ 1912 000a 73697A65 		.ascii	"size_t\000"
+ 1912      5F7400
+ 1913              	.LASF39:
+ 1914 0011 474E5520 		.ascii	"GNU C 4.9.3 20150303 (release) [ARM/embedded-4_9-br"
+ 1914      4320342E 
+ 1914      392E3320 
+ 1914      32303135 
+ 1914      30333033 
+ 1915 0044 616E6368 		.ascii	"anch revision 221220] -mcpu=cortex-m0 -mthumb -g -O"
+ 1915      20726576 
+ 1915      6973696F 
+ 1915      6E203232 
+ 1915      31323230 
+ 1916 0077 73202D66 		.ascii	"s -ffunction-sections -ffat-lto-objects\000"
+ 1916      66756E63 
+ 1916      74696F6E 
+ 1916      2D736563 
+ 1916      74696F6E 
+ 1917              	.LASF4:
+ 1918 009f 5F5F696E 		.ascii	"__int16_t\000"
+ 1918      7431365F 
+ 1918      7400
+ 1919              	.LASF17:
+ 1920 00a9 666C6F61 		.ascii	"float\000"
+ 1920      7400
+ 1921              	.LASF7:
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 39
+
+
+ 1922 00af 73686F72 		.ascii	"short unsigned int\000"
+ 1922      7420756E 
+ 1922      7369676E 
+ 1922      65642069 
+ 1922      6E7400
+ 1923              	.LASF32:
+ 1924 00c2 6F6C6564 		.ascii	"oled_eq_chan_init\000"
+ 1924      5F65715F 
+ 1924      6368616E 
+ 1924      5F696E69 
+ 1924      7400
+ 1925              	.LASF36:
+ 1926 00d4 64697370 		.ascii	"display_clear\000"
+ 1926      6C61795F 
+ 1926      636C6561 
+ 1926      7200
+ 1927              	.LASF34:
+ 1928 00e2 6F6C6564 		.ascii	"oled_normalize_channels_mag\000"
+ 1928      5F6E6F72 
+ 1928      6D616C69 
+ 1928      7A655F63 
+ 1928      68616E6E 
+ 1929              	.LASF40:
+ 1930 00fe 2E5C7373 		.ascii	".\\ssd1306x.c\000"
+ 1930      64313330 
+ 1930      36782E63 
+ 1930      00
+ 1931              	.LASF27:
+ 1932 010b 6F6C6564 		.ascii	"oled_draw_channel0\000"
+ 1932      5F647261 
+ 1932      775F6368 
+ 1932      616E6E65 
+ 1932      6C3000
+ 1933              	.LASF28:
+ 1934 011e 6F6C6564 		.ascii	"oled_draw_channel1\000"
+ 1934      5F647261 
+ 1934      775F6368 
+ 1934      616E6E65 
+ 1934      6C3100
+ 1935              	.LASF29:
+ 1936 0131 6F6C6564 		.ascii	"oled_draw_channel2\000"
+ 1936      5F647261 
+ 1936      775F6368 
+ 1936      616E6E65 
+ 1936      6C3200
+ 1937              	.LASF16:
+ 1938 0144 75696E74 		.ascii	"uint8\000"
+ 1938      3800
+ 1939              	.LASF41:
+ 1940 014a 433A5C55 		.ascii	"C:\\Users\\User\\Documents\\PSoC Creator\\FFT\\FFT."
+ 1940      73657273 
+ 1940      5C557365 
+ 1940      725C446F 
+ 1940      63756D65 
+ 1941 0177 63796473 		.ascii	"cydsn\000"
+ 1941      6E00
+ 1942              	.LASF22:
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 40
+
+
+ 1943 017d 5F6F6C65 		.ascii	"_oled_eq_chan_num\000"
+ 1943      645F6571 
+ 1943      5F636861 
+ 1943      6E5F6E75 
+ 1943      6D00
+ 1944              	.LASF2:
+ 1945 018f 756E7369 		.ascii	"unsigned char\000"
+ 1945      676E6564 
+ 1945      20636861 
+ 1945      7200
+ 1946              	.LASF6:
+ 1947 019d 5F5F7569 		.ascii	"__uint16_t\000"
+ 1947      6E743136 
+ 1947      5F7400
+ 1948              	.LASF0:
+ 1949 01a8 646F7562 		.ascii	"double\000"
+ 1949      6C6500
+ 1950              	.LASF23:
+ 1951 01af 5F6F6C65 		.ascii	"_oled_eq_chan_mag\000"
+ 1951      645F6571 
+ 1951      5F636861 
+ 1951      6E5F6D61 
+ 1951      6700
+ 1952              	.LASF37:
+ 1953 01c1 64697370 		.ascii	"display_update\000"
+ 1953      6C61795F 
+ 1953      75706461 
+ 1953      746500
+ 1954              	.LASF26:
+ 1955 01d0 636F6C6F 		.ascii	"color\000"
+ 1955      7200
+ 1956              	.LASF12:
+ 1957 01d6 756E7369 		.ascii	"unsigned int\000"
+ 1957      676E6564 
+ 1957      20696E74 
+ 1957      00
+ 1958              	.LASF35:
+ 1959 01e3 6E6D6167 		.ascii	"nmag\000"
+ 1959      00
+ 1960              	.LASF11:
+ 1961 01e8 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1961      206C6F6E 
+ 1961      6720756E 
+ 1961      7369676E 
+ 1961      65642069 
+ 1962              	.LASF31:
+ 1963 01ff 6F6C6564 		.ascii	"oled_update_channels_mag\000"
+ 1963      5F757064 
+ 1963      6174655F 
+ 1963      6368616E 
+ 1963      6E656C73 
+ 1964              	.LASF43:
+ 1965 0218 5F6F6C65 		.ascii	"_oled_eq_chan_tab_\000"
+ 1965      645F6571 
+ 1965      5F636861 
+ 1965      6E5F7461 
+ 1965      625F00
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 41
+
+
+ 1966              	.LASF42:
+ 1967 022b 6F6C6564 		.ascii	"oled_normalize_channel_mag\000"
+ 1967      5F6E6F72 
+ 1967      6D616C69 
+ 1967      7A655F63 
+ 1967      68616E6E 
+ 1968              	.LASF14:
+ 1969 0246 696E7431 		.ascii	"int16_t\000"
+ 1969      365F7400 
+ 1970              	.LASF9:
+ 1971 024e 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1971      20756E73 
+ 1971      69676E65 
+ 1971      6420696E 
+ 1971      7400
+ 1972              	.LASF30:
+ 1973 0260 6F6C6564 		.ascii	"oled_update_channel_mag\000"
+ 1973      5F757064 
+ 1973      6174655F 
+ 1973      6368616E 
+ 1973      6E656C5F 
+ 1974              	.LASF25:
+ 1975 0278 6368616E 		.ascii	"chan\000"
+ 1975      00
+ 1976              	.LASF20:
+ 1977 027d 73697A65 		.ascii	"sizetype\000"
+ 1977      74797065 
+ 1977      00
+ 1978              	.LASF45:
+ 1979 0286 6766785F 		.ascii	"gfx_height\000"
+ 1979      68656967 
+ 1979      687400
+ 1980              	.LASF10:
+ 1981 0291 6C6F6E67 		.ascii	"long long int\000"
+ 1981      206C6F6E 
+ 1981      6720696E 
+ 1981      7400
+ 1982              	.LASF44:
+ 1983 029f 6766785F 		.ascii	"gfx_drawLine\000"
+ 1983      64726177 
+ 1983      4C696E65 
+ 1983      00
+ 1984              	.LASF33:
+ 1985 02ac 6F6C6564 		.ascii	"oled_update_channel\000"
+ 1985      5F757064 
+ 1985      6174655F 
+ 1985      6368616E 
+ 1985      6E656C00 
+ 1986              	.LASF5:
+ 1987 02c0 73686F72 		.ascii	"short int\000"
+ 1987      7420696E 
+ 1987      7400
+ 1988              	.LASF13:
+ 1989 02ca 75696E74 		.ascii	"uint8_t\000"
+ 1989      385F7400 
+ 1990              	.LASF24:
+ 1991 02d2 6F6C6564 		.ascii	"oled_eq_chan\000"
+ARM GAS  C:\Users\User\AppData\Local\Temp\cchbw8OR.s 			page 42
+
+
+ 1991      5F65715F 
+ 1991      6368616E 
+ 1991      00
+ 1992              	.LASF15:
+ 1993 02df 75696E74 		.ascii	"uint16_t\000"
+ 1993      31365F74 
+ 1993      00
+ 1994              	.LASF8:
+ 1995 02e8 6C6F6E67 		.ascii	"long int\000"
+ 1995      20696E74 
+ 1995      00
+ 1996              	.LASF18:
+ 1997 02f1 63686172 		.ascii	"char\000"
+ 1997      00
+ 1998              	.LASF21:
+ 1999 02f6 6C6F6E67 		.ascii	"long double\000"
+ 1999      20646F75 
+ 1999      626C6500 
+ 2000              	.LASF1:
+ 2001 0302 7369676E 		.ascii	"signed char\000"
+ 2001      65642063 
+ 2001      68617200 
+ 2002              	.LASF38:
+ 2003 030e 6D616C6C 		.ascii	"malloc\000"
+ 2003      6F6300
+ 2004              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.9.3 20150303 (release) [ARM/embedded-4_9-br

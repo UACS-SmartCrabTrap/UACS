@@ -1,0 +1,2067 @@
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 1
+
+
+   1              		.cpu cortex-m0
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 4
+  10              		.eabi_attribute 34, 0
+  11              		.eabi_attribute 18, 4
+  12              		.code	16
+  13              		.file	"main.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	__aeabi_i2d
+  18              		.global	__aeabi_dmul
+  19              		.global	__aeabi_d2f
+  20              		.global	__aeabi_fmul
+  21              		.global	__aeabi_f2iz
+  22              		.section	.text.startup.main,"ax",%progbits
+  23              		.align	1
+  24              		.global	main
+  25              		.code	16
+  26              		.thumb_func
+  27              		.type	main, %function
+  28              	main:
+  29              	.LFB34:
+  30              		.file 1 ".\\main.c"
+   1:.\main.c      **** /**************
+   2:.\main.c      ****  * FFT on PSoC4
+   3:.\main.c      ****  **************
+   4:.\main.c      ****  * A project by @KaiserHaz
+   5:.\main.c      ****  * 
+   6:.\main.c      ****  * Description:
+   7:.\main.c      ****  * ************
+   8:.\main.c      ****  *  
+   9:.\main.c      ****  *  This project aims to demonstrate an FFT algorithm running on Cortex-M0.
+  10:.\main.c      ****  *  In order to make things interesting, we will use it in the case of an audio
+  11:.\main.c      ****  *   spectrum visualizer. It will be displayed on an OLED screen (SSD1306).
+  12:.\main.c      ****  *  The FFT algorithm is based (most-probably) on Sorensen et al. (RFFT).
+  13:.\main.c      ****  *  Initially I planned to implement an FFT on hardware using PSoC, but the PSoC 4200
+  14:.\main.c      ****  *   I have does not contain enough resources to be able to do that, so I had to
+  15:.\main.c      ****  *   make do with a software implementation.
+  16:.\main.c      ****  *  But hey, at least I could make a (semi-)complete processing chain.
+  17:.\main.c      ****  *
+  18:.\main.c      ****  * Details:
+  19:.\main.c      ****  * ********
+  20:.\main.c      ****  *
+  21:.\main.c      ****  * Signal input : Differential Mono (v1.0)
+  22:.\main.c      ****  * FFT Length   : 16                (v1.0)
+  23:.\main.c      ****  * FFT Algorithm: Radix-2 DIT FFT   (vSandbox)
+  24:.\main.c      ****  * 
+  25:.\main.c      ****  * Libraries:
+  26:.\main.c      ****  * **********
+  27:.\main.c      ****  *
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 2
+
+
+  28:.\main.c      ****  * Several 'libraries' (actually they're PSoC projects) have been used in this project, namely:
+  29:.\main.c      ****  * * 64-point FFT library (http://www.cypress.com/comment/240586#comment-240586) (vSandbox)
+  30:.\main.c      ****  * * OLED Library for I2C (https://github.com/derkst/Cypress-PSOC-OLED)          (v1.0)
+  31:.\main.c      ****  *
+  32:.\main.c      ****  * Credits to these people for working hard and developing something useful for the community.
+  33:.\main.c      ****  * 
+  34:.\main.c      ****  */
+  35:.\main.c      **** 
+  36:.\main.c      **** /** Includes **/
+  37:.\main.c      **** #include <project.h>
+  38:.\main.c      **** #include <stdlib.h>
+  39:.\main.c      **** #include <math.h>                                          // Put m in settings
+  40:.\main.c      **** #include "ssd1306x.h"
+  41:.\main.c      **** 
+  42:.\main.c      **** /** Constant defines **/
+  43:.\main.c      **** #define _FFT_PI_ 3.14159
+  44:.\main.c      **** #define _FFT_LEN_ 16
+  45:.\main.c      **** #define _OLED_DISP_ADDR_ 0x3C // 011110+SA0+RW - 0x3C or 0x3D
+  46:.\main.c      **** 
+  47:.\main.c      **** /** Global vars **/
+  48:.\main.c      **** extern oled_eq_chan* _oled_eq_chan_tab_;
+  49:.\main.c      **** 
+  50:.\main.c      **** int16_t samples[_FFT_LEN_] = /*{ 0, 8, 14, 18, 20, 18, 14, 8,
+  51:.\main.c      ****                                0, -8, -14, -18, -20, -18, -14, -8 }; // Sinusoid*/
+  52:.\main.c      ****                              { 0, 2, 3, 5, 6, 8, 10,
+  53:.\main.c      ****                                1, 3, 4, 6, 8, 9, 1, 2, 4 }; // Sawtooth
+  54:.\main.c      **** 
+  55:.\main.c      **** 	
+  56:.\main.c      **** int revsamples[_FFT_LEN_];
+  57:.\main.c      **** 
+  58:.\main.c      **** int16 real0[_FFT_LEN_];		/* Array to hold the real value of samples */
+  59:.\main.c      **** int16 img0[_FFT_LEN_];			/* Array to hold the img value of samples */
+  60:.\main.c      **** 
+  61:.\main.c      **** int16 real1[_FFT_LEN_];		/* Array to hold the real value of samples */
+  62:.\main.c      **** int16 img1[_FFT_LEN_];			/* Array to hold the img value of samples */
+  63:.\main.c      **** 
+  64:.\main.c      **** int16 twiddlereal[_FFT_LEN_];	/* Array to hold the real value of twiddle factor */
+  65:.\main.c      **** int16 twiddleimg[_FFT_LEN_];	/* Array to hold the img value of twiddle factor */
+  66:.\main.c      **** 
+  67:.\main.c      **** int16 interreal[_FFT_LEN_];	/* Array to hold the real product of intermediate multiplication */
+  68:.\main.c      **** int16 interimg[_FFT_LEN_];		/* Array to hold the img product of intermediate multiplication */
+  69:.\main.c      **** 
+  70:.\main.c      **** float product;
+  71:.\main.c      **** 
+  72:.\main.c      **** ///** Complex number structure **/
+  73:.\main.c      **** //typedef struct { double _real; double _imag; } complex;
+  74:.\main.c      **** //
+  75:.\main.c      **** ///** Twiddle factor function **/
+  76:.\main.c      **** //complex twiddle_factor( uint8_t k, uint8_t n, uint8_t N ){
+  77:.\main.c      **** //    
+  78:.\main.c      **** //    complex tf = { ._real=1.0, ._imag=0.0 };
+  79:.\main.c      **** //    
+  80:.\main.c      **** //    // Case k&n = 0: no need to calculate anything, just return
+  81:.\main.c      **** //    if(k && n){
+  82:.\main.c      **** //        
+  83:.\main.c      **** //        tf._real = cos(2.0*_FFT_PI_*k*n/N);
+  84:.\main.c      **** //        tf._imag = (-1)*sin(2.0*_FFT_PI_*k*n/N);
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 3
+
+
+  85:.\main.c      **** //
+  86:.\main.c      **** //    }
+  87:.\main.c      **** //    
+  88:.\main.c      **** //    return tf;
+  89:.\main.c      **** //    
+  90:.\main.c      **** //}
+  91:.\main.c      **** 
+  92:.\main.c      **** int main(){
+  31              		.loc 1 92 0
+  32              		.cfi_startproc
+  33 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+  34              		.cfi_def_cfa_offset 20
+  35              		.cfi_offset 4, -20
+  36              		.cfi_offset 5, -16
+  37              		.cfi_offset 6, -12
+  38              		.cfi_offset 7, -8
+  39              		.cfi_offset 14, -4
+  40 0002 A5B0     		sub	sp, sp, #148
+  41              		.cfi_def_cfa_offset 168
+  93:.\main.c      ****     
+  94:.\main.c      ****     // Enable interrupts
+  95:.\main.c      ****     
+  96:.\main.c      ****     CyGlobalIntEnable;
+  42              		.loc 1 96 0
+  43              	@ 96 ".\main.c" 1
+  44 0004 62B6     		CPSIE   i
+  45              	@ 0 "" 2
+  97:.\main.c      ****     
+  98:.\main.c      ****     // OLED start routine
+  99:.\main.c      ****     
+ 100:.\main.c      ****     I2COLED_Start();                                       // Start
+  46              		.loc 1 100 0
+  47              		.code	16
+  48 0006 FFF7FEFF 		bl	I2COLED_Start
+  49              	.LVL0:
+ 101:.\main.c      **** 
+ 102:.\main.c      ****     display_init(_OLED_DISP_ADDR_);                        // Initialize display
+  50              		.loc 1 102 0
+  51 000a 3C20     		mov	r0, #60
+  52 000c FFF7FEFF 		bl	display_init
+  53              	.LVL1:
+ 103:.\main.c      ****                                                            //  with address
+ 104:.\main.c      ****     
+ 105:.\main.c      ****     oled_eq_chan_init();                                   // Initialize
+  54              		.loc 1 105 0
+  55 0010 0024     		mov	r4, #0
+  56 0012 FFF7FEFF 		bl	oled_eq_chan_init
+  57              	.LVL2:
+  58              	.L2:
+ 106:.\main.c      ****                                                            //  equalizer
+ 107:.\main.c      ****                                                            //  display
+ 108:.\main.c      ****     
+ 109:.\main.c      ****     uint8 i, j; 
+ 110:.\main.c      **** 	uint8 revi;
+ 111:.\main.c      **** 	uint8 localcounter;
+ 112:.\main.c      **** 	
+ 113:.\main.c      ****     /* Calculate the twiddle factors */
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 4
+
+
+ 114:.\main.c      **** 	for(i=0; i<(_FFT_LEN_/2); i++)
+ 115:.\main.c      **** 	{
+ 116:.\main.c      **** 		product = cos(2 * _FFT_PI_ * i / _FFT_LEN_);
+  59              		.loc 1 116 0 discriminator 3
+  60 0016 201C     		mov	r0, r4
+  61 0018 FFF7FEFF 		bl	__aeabi_i2d
+  62              	.LVL3:
+  63 001c 9E4A     		ldr	r2, .L17
+  64 001e 9F4B     		ldr	r3, .L17+4
+  65 0020 FFF7FEFF 		bl	__aeabi_dmul
+  66              	.LVL4:
+  67 0024 0022     		mov	r2, #0
+  68 0026 9E4B     		ldr	r3, .L17+8
+  69 0028 FFF7FEFF 		bl	__aeabi_dmul
+  70              	.LVL5:
+  71 002c 061C     		mov	r6, r0
+  72 002e 0F1C     		mov	r7, r1
+  73 0030 FFF7FEFF 		bl	cos
+  74              	.LVL6:
+ 117:.\main.c      ****         twiddlereal[i] = (int16) (product *256);           // Possibly a gain
+  75              		.loc 1 117 0 discriminator 3
+  76 0034 9B4B     		ldr	r3, .L17+12
+  77 0036 6500     		lsl	r5, r4, #1
+  78 0038 EB18     		add	r3, r5, r3
+  79 003a 0093     		str	r3, [sp]
+ 116:.\main.c      ****         twiddlereal[i] = (int16) (product *256);           // Possibly a gain
+  80              		.loc 1 116 0 discriminator 3
+  81 003c FFF7FEFF 		bl	__aeabi_d2f
+  82              	.LVL7:
+  83              		.loc 1 117 0 discriminator 3
+  84 0040 8721     		mov	r1, #135
+  85 0042 C905     		lsl	r1, r1, #23
+  86 0044 FFF7FEFF 		bl	__aeabi_fmul
+  87              	.LVL8:
+  88 0048 FFF7FEFF 		bl	__aeabi_f2iz
+  89              	.LVL9:
+  90 004c 009B     		ldr	r3, [sp]
+ 118:.\main.c      **** 		product = sin(2 * _FFT_PI_ * i / _FFT_LEN_);
+  91              		.loc 1 118 0 discriminator 3
+  92 004e 391C     		mov	r1, r7
+ 117:.\main.c      ****         twiddlereal[i] = (int16) (product *256);           // Possibly a gain
+  93              		.loc 1 117 0 discriminator 3
+  94 0050 1880     		strh	r0, [r3]
+  95              		.loc 1 118 0 discriminator 3
+  96 0052 301C     		mov	r0, r6
+  97 0054 FFF7FEFF 		bl	sin
+  98              	.LVL10:
+  99 0058 FFF7FEFF 		bl	__aeabi_d2f
+ 100              	.LVL11:
+ 119:.\main.c      **** 		twiddleimg[i] = (int16)(product *(-256));
+ 101              		.loc 1 119 0 discriminator 3
+ 102 005c 924B     		ldr	r3, .L17+16
+ 103 005e 9349     		ldr	r1, .L17+20
+ 104 0060 ED18     		add	r5, r5, r3
+ 118:.\main.c      **** 		product = sin(2 * _FFT_PI_ * i / _FFT_LEN_);
+ 105              		.loc 1 118 0 discriminator 3
+ 106 0062 061C     		add	r6, r0, #0
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 5
+
+
+ 107              		.loc 1 119 0 discriminator 3
+ 108 0064 FFF7FEFF 		bl	__aeabi_fmul
+ 109              	.LVL12:
+ 110 0068 FFF7FEFF 		bl	__aeabi_f2iz
+ 111              	.LVL13:
+ 112 006c 0134     		add	r4, r4, #1
+ 113              	.LVL14:
+ 114 006e 2880     		strh	r0, [r5]
+ 114:.\main.c      **** 	{
+ 115              		.loc 1 114 0 discriminator 3
+ 116 0070 082C     		cmp	r4, #8
+ 117 0072 D0D1     		bne	.L2
+ 114:.\main.c      **** 	{
+ 118              		.loc 1 114 0 is_stmt 0
+ 119 0074 0021     		mov	r1, #0
+ 120 0076 8E4B     		ldr	r3, .L17+24
+ 121 0078 1E60     		str	r6, [r3]
+ 122              	.L3:
+ 123 007a C8B2     		uxtb	r0, r1
+ 124              	.LVL15:
+ 120:.\main.c      **** 	}
+ 121:.\main.c      **** 	
+ 122:.\main.c      ****     /* First phase of FFT is arranging the input samples in bit reversed format */
+ 123:.\main.c      **** 	for(i=0; i< _FFT_LEN_; i++)
+ 124:.\main.c      **** 	{
+ 125:.\main.c      ****         revi = (((i >> 1) & 0x5) | ((i & 0x5) << 1));
+ 125              		.loc 1 125 0 is_stmt 1 discriminator 3
+ 126 007c 0522     		mov	r2, #5
+ 127 007e 031C     		mov	r3, r0
+ 128 0080 4008     		lsr	r0, r0, #1
+ 129              	.LVL16:
+ 130 0082 1340     		and	r3, r2
+ 131              	.LVL17:
+ 132 0084 5B00     		lsl	r3, r3, #1
+ 133 0086 0240     		and	r2, r0
+ 134 0088 1343     		orr	r3, r2
+ 135              	.LVL18:
+ 126:.\main.c      ****         revi = (((revi >> 2) & 0x3) | ((revi & 0x3) << 2));
+ 136              		.loc 1 126 0 discriminator 3
+ 137 008a 0322     		mov	r2, #3
+ 138 008c 1A40     		and	r2, r3
+ 139 008e 9200     		lsl	r2, r2, #2
+ 140 0090 9B08     		lsr	r3, r3, #2
+ 141              	.LVL19:
+ 127:.\main.c      **** 		
+ 128:.\main.c      **** 		revsamples[i] = samples[revi];
+ 142              		.loc 1 128 0 discriminator 3
+ 143 0092 1343     		orr	r3, r2
+ 144 0094 874A     		ldr	r2, .L17+28
+ 145 0096 5B00     		lsl	r3, r3, #1
+ 146 0098 9A5E     		ldrsh	r2, [r3, r2]
+ 147 009a 874B     		ldr	r3, .L17+32
+ 148 009c 8800     		lsl	r0, r1, #2
+ 149              	.LVL20:
+ 150 009e 0131     		add	r1, r1, #1
+ 151              	.LVL21:
+ 152 00a0 1A50     		str	r2, [r3, r0]
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 6
+
+
+ 123:.\main.c      **** 	{
+ 153              		.loc 1 123 0 discriminator 3
+ 154 00a2 1029     		cmp	r1, #16
+ 155 00a4 E9D1     		bne	.L3
+ 156              	.L14:
+ 157              	.LVL22:
+ 114:.\main.c      **** 	{
+ 158              		.loc 1 114 0
+ 159 00a6 0022     		mov	r2, #0
+ 160              	.LVL23:
+ 161              	.L4:
+ 162              	.LBB2:
+ 129:.\main.c      **** 	}
+ 130:.\main.c      **** 	
+ 131:.\main.c      **** 	for(;;)
+ 132:.\main.c      **** 	{
+ 133:.\main.c      **** 	
+ 134:.\main.c      ****     	/* First stage of FFT radix 2 implementation */
+ 135:.\main.c      ****     	
+ 136:.\main.c      ****     	for(i=0; i< _FFT_LEN_; )
+ 137:.\main.c      ****     	{
+ 138:.\main.c      ****     		real0[i] = revsamples[i] + revsamples[i+1];
+ 163              		.loc 1 138 0
+ 164 00a8 834B     		ldr	r3, .L17+32
+ 165 00aa 5100     		lsl	r1, r2, #1
+ 166 00ac C918     		add	r1, r1, r3
+ 167 00ae 4868     		ldr	r0, [r1, #4]
+ 168 00b0 0B88     		ldrh	r3, [r1]
+ 169 00b2 8249     		ldr	r1, .L17+36
+ 170 00b4 80B2     		uxth	r0, r0
+ 171 00b6 5118     		add	r1, r2, r1
+ 172 00b8 C418     		add	r4, r0, r3
+ 173 00ba 0432     		add	r2, r2, #4
+ 139:.\main.c      ****     		real0[i+1] = revsamples[i] - revsamples[i+1];
+ 174              		.loc 1 139 0
+ 175 00bc 1B1A     		sub	r3, r3, r0
+ 138:.\main.c      ****     		real0[i+1] = revsamples[i] - revsamples[i+1];
+ 176              		.loc 1 138 0
+ 177 00be 0C80     		strh	r4, [r1]
+ 178              		.loc 1 139 0
+ 179 00c0 4B80     		strh	r3, [r1, #2]
+ 136:.\main.c      ****     	{
+ 180              		.loc 1 136 0
+ 181 00c2 202A     		cmp	r2, #32
+ 182 00c4 F0D1     		bne	.L4
+ 183 00c6 0023     		mov	r3, #0
+ 184 00c8 7D4E     		ldr	r6, .L17+40
+ 185 00ca 7E4D     		ldr	r5, .L17+44
+ 186 00cc 7E4C     		ldr	r4, .L17+48
+ 187 00ce 7F48     		ldr	r0, .L17+52
+ 188              	.L5:
+ 140:.\main.c      ****     		i = i+2;
+ 141:.\main.c      ****     	}
+ 142:.\main.c      ****     	
+ 143:.\main.c      ****     	/* Second stage of FFT radix 2 implementation */
+ 144:.\main.c      ****     	for(i=0; i<_FFT_LEN_; )
+ 145:.\main.c      ****     	{
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 7
+
+
+ 146:.\main.c      ****     		real1[i] = real0[i] + real0[i+2];
+ 189              		.loc 1 146 0
+ 190 00d0 7A4A     		ldr	r2, .L17+36
+ 191 00d2 D25A     		ldrh	r2, [r2, r3]
+ 192 00d4 0092     		str	r2, [sp]
+ 193 00d6 0099     		ldr	r1, [sp]
+ 194 00d8 7288     		ldrh	r2, [r6, #2]
+ 195 00da 5118     		add	r1, r2, r1
+ 196 00dc 0192     		str	r2, [sp, #4]
+ 197 00de 7C4A     		ldr	r2, .L17+56
+ 198 00e0 D152     		strh	r1, [r2, r3]
+ 147:.\main.c      ****     		img1[i] = img0[i] + img0[i+2];
+ 199              		.loc 1 147 0
+ 200 00e2 7C4A     		ldr	r2, .L17+60
+ 201 00e4 4188     		ldrh	r1, [r0, #2]
+ 202 00e6 D75A     		ldrh	r7, [r2, r3]
+ 203 00e8 7B4A     		ldr	r2, .L17+64
+ 204 00ea 7918     		add	r1, r7, r1
+ 205 00ec 89B2     		uxth	r1, r1
+ 206 00ee D152     		strh	r1, [r2, r3]
+ 148:.\main.c      ****     		
+ 149:.\main.c      ****     		real1[i+1] = real0[i+1] + real0[i+3];
+ 207              		.loc 1 149 0
+ 208 00f0 B288     		ldrh	r2, [r6, #4]
+ 209 00f2 0833     		add	r3, r3, #8
+ 210 00f4 9446     		mov	ip, r2
+ 211 00f6 3288     		ldrh	r2, [r6]
+ 150:.\main.c      ****     		img1[i+1] = img0[i] - img0[i+3];
+ 151:.\main.c      ****     		
+ 152:.\main.c      ****     		real1[i+2] = real0[i] - real0[i+2];
+ 153:.\main.c      ****     		img1[i+2] = img0[i] + img0[i+2];
+ 212              		.loc 1 153 0
+ 213 00f8 6180     		strh	r1, [r4, #2]
+ 149:.\main.c      ****     		img1[i+1] = img0[i] - img0[i+3];
+ 214              		.loc 1 149 0
+ 215 00fa 6244     		add	r2, r2, ip
+ 216 00fc 92B2     		uxth	r2, r2
+ 217 00fe 0292     		str	r2, [sp, #8]
+ 218 0100 6A46     		mov	r2, sp
+ 219 0102 1289     		ldrh	r2, [r2, #8]
+ 220 0104 0836     		add	r6, r6, #8
+ 221 0106 2A80     		strh	r2, [r5]
+ 150:.\main.c      ****     		img1[i+1] = img0[i] - img0[i+3];
+ 222              		.loc 1 150 0
+ 223 0108 8288     		ldrh	r2, [r0, #4]
+ 224 010a BF1A     		sub	r7, r7, r2
+ 225 010c 9446     		mov	ip, r2
+ 226 010e 2780     		strh	r7, [r4]
+ 152:.\main.c      ****     		img1[i+2] = img0[i] + img0[i+2];
+ 227              		.loc 1 152 0
+ 228 0110 009A     		ldr	r2, [sp]
+ 229 0112 019F     		ldr	r7, [sp, #4]
+ 230 0114 D71B     		sub	r7, r2, r7
+ 154:.\main.c      ****     		
+ 155:.\main.c      ****     		real1[i+3] = real0[i+1] + real0[i+3];
+ 231              		.loc 1 155 0
+ 232 0116 6A46     		mov	r2, sp
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 8
+
+
+ 233 0118 1289     		ldrh	r2, [r2, #8]
+ 152:.\main.c      ****     		img1[i+2] = img0[i] + img0[i+2];
+ 234              		.loc 1 152 0
+ 235 011a 6F80     		strh	r7, [r5, #2]
+ 236              		.loc 1 155 0
+ 237 011c AA80     		strh	r2, [r5, #4]
+ 156:.\main.c      ****     		img1[i+3] = img0[i+1] + img0[i+3];
+ 238              		.loc 1 156 0
+ 239 011e 0288     		ldrh	r2, [r0]
+ 240 0120 0835     		add	r5, r5, #8
+ 241 0122 6244     		add	r2, r2, ip
+ 242 0124 A280     		strh	r2, [r4, #4]
+ 243 0126 0830     		add	r0, r0, #8
+ 244 0128 0834     		add	r4, r4, #8
+ 144:.\main.c      ****     	{
+ 245              		.loc 1 144 0
+ 246 012a 202B     		cmp	r3, #32
+ 247 012c D0D1     		bne	.L5
+ 248 012e 0022     		mov	r2, #0
+ 249              	.L6:
+ 250              	.LVL24:
+ 136:.\main.c      ****     	{
+ 251              		.loc 1 136 0
+ 252 0130 0023     		mov	r3, #0
+ 253              	.LVL25:
+ 254              	.L7:
+ 255 0132 674D     		ldr	r5, .L17+56
+ 256 0134 5800     		lsl	r0, r3, #1
+ 257 0136 5519     		add	r5, r2, r5
+ 258 0138 E918     		add	r1, r5, r3
+ 157:.\main.c      ****     		
+ 158:.\main.c      ****     		i = i + 4;
+ 159:.\main.c      ****     	}
+ 160:.\main.c      ****     	
+ 161:.\main.c      ****     	/* Third stage of FFT radix 2 implementation */
+ 162:.\main.c      ****     	for(i=0; i<_FFT_LEN_; )
+ 163:.\main.c      ****     	{
+ 164:.\main.c      ****             // Compute product of twiddle with data
+ 165:.\main.c      ****     		for(j=0; j<4; j++)
+ 166:.\main.c      ****     		{
+ 167:.\main.c      ****     			interreal[j] = (real1[i + j + 4] * twiddlereal[2*j])>>8;
+ 259              		.loc 1 167 0 discriminator 3
+ 260 013a 0824     		mov	r4, #8
+ 261 013c 0C5F     		ldrsh	r4, [r1, r4]
+ 262 013e 5949     		ldr	r1, .L17+12
+ 263 0140 095E     		ldrsh	r1, [r1, r0]
+ 264 0142 6143     		mul	r1, r4
+ 265 0144 654C     		ldr	r4, .L17+68
+ 266 0146 0912     		asr	r1, r1, #8
+ 267 0148 E152     		strh	r1, [r4, r3]
+ 268 014a 6349     		ldr	r1, .L17+64
+ 269 014c 5118     		add	r1, r2, r1
+ 270 014e 0091     		str	r1, [sp]
+ 271 0150 C918     		add	r1, r1, r3
+ 168:.\main.c      ****     			interimg[j] = (img1[i + j + 4] * twiddleimg[2*j])>>8;
+ 272              		.loc 1 168 0 discriminator 3
+ 273 0152 0824     		mov	r4, #8
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 9
+
+
+ 274 0154 0C5F     		ldrsh	r4, [r1, r4]
+ 275 0156 5449     		ldr	r1, .L17+16
+ 276 0158 095E     		ldrsh	r1, [r1, r0]
+ 277 015a 6148     		ldr	r0, .L17+72
+ 278 015c 6143     		mul	r1, r4
+ 279 015e 0912     		asr	r1, r1, #8
+ 280 0160 C152     		strh	r1, [r0, r3]
+ 281 0162 0233     		add	r3, r3, #2
+ 165:.\main.c      ****     		{
+ 282              		.loc 1 165 0 discriminator 3
+ 283 0164 082B     		cmp	r3, #8
+ 284 0166 E4D1     		bne	.L7
+ 285 0168 0023     		mov	r3, #0
+ 286              	.L8:
+ 287 016a 5449     		ldr	r1, .L17+36
+ 169:.\main.c      ****     		}
+ 170:.\main.c      ****     		
+ 171:.\main.c      ****     		// Non-returned part/Non-looped part
+ 172:.\main.c      ****     		for(localcounter=0; localcounter<4; localcounter++)
+ 173:.\main.c      ****     		{
+ 174:.\main.c      ****     			real0[i + localcounter] = real1[i + localcounter] + interreal[localcounter];
+ 288              		.loc 1 174 0 discriminator 3
+ 289 016c 5B48     		ldr	r0, .L17+68
+ 290 016e 8918     		add	r1, r1, r2
+ 291 0170 C45A     		ldrh	r4, [r0, r3]
+ 292 0172 0291     		str	r1, [sp, #8]
+ 293 0174 E95A     		ldrh	r1, [r5, r3]
+ 294 0176 0190     		str	r0, [sp, #4]
+ 295 0178 6118     		add	r1, r4, r1
+ 296 017a 029C     		ldr	r4, [sp, #8]
+ 297 017c E152     		strh	r1, [r4, r3]
+ 298 017e 5549     		ldr	r1, .L17+60
+ 299 0180 5118     		add	r1, r2, r1
+ 300 0182 0391     		str	r1, [sp, #12]
+ 175:.\main.c      ****     			img0[i + localcounter] = img1[i + localcounter] + interimg[localcounter];
+ 301              		.loc 1 175 0 discriminator 3
+ 302 0184 5649     		ldr	r1, .L17+72
+ 303 0186 CC5A     		ldrh	r4, [r1, r3]
+ 304 0188 0099     		ldr	r1, [sp]
+ 305 018a C95A     		ldrh	r1, [r1, r3]
+ 306 018c 6118     		add	r1, r4, r1
+ 307 018e 039C     		ldr	r4, [sp, #12]
+ 308 0190 E152     		strh	r1, [r4, r3]
+ 309              	.LVL26:
+ 310 0192 0233     		add	r3, r3, #2
+ 172:.\main.c      ****     		{
+ 311              		.loc 1 172 0 discriminator 3
+ 312 0194 082B     		cmp	r3, #8
+ 313 0196 E8D1     		bne	.L8
+ 314 0198 0020     		mov	r0, #0
+ 315 019a 043B     		sub	r3, r3, #4
+ 316              	.L9:
+ 317              	.LVL27:
+ 176:.\main.c      ****     		}
+ 177:.\main.c      ****     		
+ 178:.\main.c      ****             // Returned part/Looped part
+ 179:.\main.c      ****     		for(localcounter = 4; localcounter<8; localcounter++)
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 10
+
+
+ 180:.\main.c      ****     		{
+ 181:.\main.c      ****     			real0[i + localcounter] = real1[i + localcounter - 4] - interreal[localcounter % 4];
+ 318              		.loc 1 181 0 discriminator 3
+ 319 019c 0324     		mov	r4, #3
+ 320 019e 0299     		ldr	r1, [sp, #8]
+ 321 01a0 1C40     		and	r4, r3
+ 322 01a2 4E4F     		ldr	r7, .L17+68
+ 323 01a4 6400     		lsl	r4, r4, #1
+ 324 01a6 0E18     		add	r6, r1, r0
+ 325 01a8 E75B     		ldrh	r7, [r4, r7]
+ 326 01aa 295A     		ldrh	r1, [r5, r0]
+ 179:.\main.c      ****     		{
+ 327              		.loc 1 179 0 discriminator 3
+ 328 01ac 0133     		add	r3, r3, #1
+ 329              	.LVL28:
+ 330              		.loc 1 181 0 discriminator 3
+ 331 01ae C91B     		sub	r1, r1, r7
+ 332 01b0 3181     		strh	r1, [r6, #8]
+ 333 01b2 0399     		ldr	r1, [sp, #12]
+ 182:.\main.c      ****     			img0[i + localcounter] = img1[i + localcounter - 4] - interimg[localcounter % 4];
+ 334              		.loc 1 182 0 discriminator 3
+ 335 01b4 009E     		ldr	r6, [sp]
+ 336 01b6 8C46     		mov	ip, r1
+ 337 01b8 4949     		ldr	r1, .L17+72
+ 338 01ba 365A     		ldrh	r6, [r6, r0]
+ 339 01bc 645A     		ldrh	r4, [r4, r1]
+ 340 01be 8444     		add	ip, ip, r0
+ 341 01c0 361B     		sub	r6, r6, r4
+ 342 01c2 6446     		mov	r4, ip
+ 179:.\main.c      ****     		{
+ 343              		.loc 1 179 0 discriminator 3
+ 344 01c4 DBB2     		uxtb	r3, r3
+ 345              	.LVL29:
+ 346              		.loc 1 182 0 discriminator 3
+ 347 01c6 2681     		strh	r6, [r4, #8]
+ 348 01c8 0230     		add	r0, r0, #2
+ 179:.\main.c      ****     		{
+ 349              		.loc 1 179 0 discriminator 3
+ 350 01ca 082B     		cmp	r3, #8
+ 351 01cc E6D1     		bne	.L9
+ 352 01ce 1032     		add	r2, r2, #16
+ 162:.\main.c      ****     	{
+ 353              		.loc 1 162 0
+ 354 01d0 202A     		cmp	r2, #32
+ 355 01d2 ADD1     		bne	.L6
+ 356 01d4 0022     		mov	r2, #0
+ 357              	.L10:
+ 358 01d6 3948     		ldr	r0, .L17+36
+ 359 01d8 8018     		add	r0, r0, r2
+ 183:.\main.c      ****     		}
+ 184:.\main.c      ****             
+ 185:.\main.c      ****     		i = i+8;
+ 186:.\main.c      ****     	}
+ 187:.\main.c      ****     	
+ 188:.\main.c      ****     	/* Fourth stage of FFT radix 2 implementation */
+ 189:.\main.c      ****     	for(i=0; i< _FFT_LEN_;  )
+ 190:.\main.c      ****     	{
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 11
+
+
+ 191:.\main.c      ****     		// Compute product of twiddle with data
+ 192:.\main.c      ****     		for(j=0; j<8; j++)
+ 193:.\main.c      ****     		{
+ 194:.\main.c      ****     			interreal[j] = (real0[i + j + 8] * twiddlereal[j])>>8;
+ 360              		.loc 1 194 0
+ 361 01da 1024     		mov	r4, #16
+ 362 01dc 045F     		ldrsh	r4, [r0, r4]
+ 363 01de 3148     		ldr	r0, .L17+12
+ 364 01e0 805E     		ldrsh	r0, [r0, r2]
+ 365 01e2 6043     		mul	r0, r4
+ 366 01e4 019C     		ldr	r4, [sp, #4]
+ 367 01e6 0012     		asr	r0, r0, #8
+ 368 01e8 A052     		strh	r0, [r4, r2]
+ 369 01ea 3A4C     		ldr	r4, .L17+60
+ 370 01ec 1019     		add	r0, r2, r4
+ 195:.\main.c      ****     			interimg[j] = (img0[i + j + 8] * twiddleimg[j])>>8;
+ 371              		.loc 1 195 0
+ 372 01ee 1025     		mov	r5, #16
+ 373 01f0 455F     		ldrsh	r5, [r0, r5]
+ 374 01f2 2D48     		ldr	r0, .L17+16
+ 375 01f4 805E     		ldrsh	r0, [r0, r2]
+ 376 01f6 6843     		mul	r0, r5
+ 377 01f8 0012     		asr	r0, r0, #8
+ 378 01fa 8852     		strh	r0, [r1, r2]
+ 379 01fc 0232     		add	r2, r2, #2
+ 380 01fe 201C     		mov	r0, r4
+ 192:.\main.c      ****     		{
+ 381              		.loc 1 192 0
+ 382 0200 102A     		cmp	r2, #16
+ 383 0202 E8D1     		bne	.L10
+ 384 0204 0022     		mov	r2, #0
+ 385              	.LVL30:
+ 386              	.L11:
+ 196:.\main.c      ****     		}
+ 197:.\main.c      ****     		
+ 198:.\main.c      ****     		// Non-returned part/Non-looped part
+ 199:.\main.c      ****     		for(localcounter = 0; localcounter<8; localcounter++)
+ 200:.\main.c      ****     		{
+ 201:.\main.c      ****     			real1[i + localcounter] = real0[i + localcounter] + interreal[localcounter];
+ 387              		.loc 1 201 0
+ 388 0206 019C     		ldr	r4, [sp, #4]
+ 389 0208 A55A     		ldrh	r5, [r4, r2]
+ 390 020a 2C4C     		ldr	r4, .L17+36
+ 391 020c A45A     		ldrh	r4, [r4, r2]
+ 392 020e 2C19     		add	r4, r5, r4
+ 393 0210 2F4D     		ldr	r5, .L17+56
+ 394 0212 AC52     		strh	r4, [r5, r2]
+ 202:.\main.c      ****     			img1[i + localcounter] = img0[i + localcounter] + interimg[localcounter];
+ 395              		.loc 1 202 0
+ 396 0214 8D5A     		ldrh	r5, [r1, r2]
+ 397 0216 845A     		ldrh	r4, [r0, r2]
+ 398 0218 2C19     		add	r4, r5, r4
+ 399 021a 2F4D     		ldr	r5, .L17+64
+ 400 021c AC52     		strh	r4, [r5, r2]
+ 401 021e 0232     		add	r2, r2, #2
+ 199:.\main.c      ****     		{
+ 402              		.loc 1 199 0
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 12
+
+
+ 403 0220 102A     		cmp	r2, #16
+ 404 0222 F0D1     		bne	.L11
+ 405 0224 0022     		mov	r2, #0
+ 406              	.L12:
+ 407              	.LVL31:
+ 203:.\main.c      ****     		}
+ 204:.\main.c      ****     		
+ 205:.\main.c      ****             // Returned part/Looped part
+ 206:.\main.c      ****     		for(localcounter = 8; localcounter<16; localcounter++)
+ 207:.\main.c      ****     		{
+ 208:.\main.c      ****     			real1[i + localcounter] = real0[i + localcounter - 8] - interreal[localcounter % 8];
+ 408              		.loc 1 208 0
+ 409 0226 0720     		mov	r0, #7
+ 410 0228 244D     		ldr	r5, .L17+36
+ 411 022a 1840     		and	r0, r3
+ 412 022c 019F     		ldr	r7, [sp, #4]
+ 413 022e 4000     		lsl	r0, r0, #1
+ 414 0230 AD5A     		ldrh	r5, [r5, r2]
+ 415 0232 3F5A     		ldrh	r7, [r7, r0]
+ 416 0234 264C     		ldr	r4, .L17+56
+ 417 0236 ED1B     		sub	r5, r5, r7
+ 418 0238 1619     		add	r6, r2, r4
+ 419 023a 3582     		strh	r5, [r6, #16]
+ 420 023c 264D     		ldr	r5, .L17+64
+ 209:.\main.c      ****     			img1[i + localcounter] = img0[i + localcounter - 8] - interimg[localcounter % 8];
+ 421              		.loc 1 209 0
+ 422 023e 085A     		ldrh	r0, [r1, r0]
+ 423 0240 5619     		add	r6, r2, r5
+ 424 0242 B446     		mov	ip, r6
+ 425 0244 234E     		ldr	r6, .L17+60
+ 206:.\main.c      ****     		{
+ 426              		.loc 1 206 0
+ 427 0246 0133     		add	r3, r3, #1
+ 428              	.LVL32:
+ 429              		.loc 1 209 0
+ 430 0248 B65A     		ldrh	r6, [r6, r2]
+ 206:.\main.c      ****     		{
+ 431              		.loc 1 206 0
+ 432 024a DBB2     		uxtb	r3, r3
+ 433              	.LVL33:
+ 434              		.loc 1 209 0
+ 435 024c 361A     		sub	r6, r6, r0
+ 436 024e 6046     		mov	r0, ip
+ 437 0250 0232     		add	r2, r2, #2
+ 438 0252 0682     		strh	r6, [r0, #16]
+ 206:.\main.c      ****     		{
+ 439              		.loc 1 206 0
+ 440 0254 102B     		cmp	r3, #16
+ 441 0256 E6D1     		bne	.L12
+ 442 0258 0026     		mov	r6, #0
+ 443              	.LVL34:
+ 444              	.L13:
+ 210:.\main.c      ****     		}
+ 211:.\main.c      ****             
+ 212:.\main.c      ****     		i = i+16;
+ 213:.\main.c      ****     	}
+ 214:.\main.c      ****         
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 13
+
+
+ 215:.\main.c      ****         double fft_abs[_FFT_LEN_];
+ 216:.\main.c      ****         
+ 217:.\main.c      ****         for(i=0; i<_FFT_LEN_; i++)
+ 218:.\main.c      ****             fft_abs[i] = sqrt(real1[i]*real1[i] + img1[i]*img1[i]);
+ 445              		.loc 1 218 0 discriminator 3
+ 446 025a A05F     		ldrsh	r0, [r4, r6]
+ 447 025c AB5F     		ldrsh	r3, [r5, r6]
+ 448 025e 4043     		mul	r0, r0
+ 449 0260 5B43     		mul	r3, r3
+ 450 0262 C018     		add	r0, r0, r3
+ 451 0264 FFF7FEFF 		bl	__aeabi_i2d
+ 452              	.LVL35:
+ 453 0268 FFF7FEFF 		bl	sqrt
+ 454              	.LVL36:
+ 455 026c B300     		lsl	r3, r6, #2
+ 456 026e 04AA     		add	r2, sp, #16
+ 457 0270 9B18     		add	r3, r3, r2
+ 458 0272 0236     		add	r6, r6, #2
+ 459 0274 1860     		str	r0, [r3]
+ 460 0276 5960     		str	r1, [r3, #4]
+ 217:.\main.c      ****             fft_abs[i] = sqrt(real1[i]*real1[i] + img1[i]*img1[i]);
+ 461              		.loc 1 217 0 discriminator 3
+ 462 0278 202E     		cmp	r6, #32
+ 463 027a EED1     		bne	.L13
+ 219:.\main.c      ****         
+ 220:.\main.c      ****         oled_normalize_channels_mag(fft_abs, real1);
+ 464              		.loc 1 220 0
+ 465 027c 101C     		mov	r0, r2
+ 466 027e 211C     		mov	r1, r4
+ 467 0280 FFF7FEFF 		bl	oled_normalize_channels_mag
+ 468              	.LVL37:
+ 221:.\main.c      ****         
+ 222:.\main.c      ****         oled_update_channels_mag(real1);
+ 469              		.loc 1 222 0
+ 470 0284 201C     		mov	r0, r4
+ 471 0286 FFF7FEFF 		bl	oled_update_channels_mag
+ 472              	.LVL38:
+ 223:.\main.c      ****         
+ 224:.\main.c      ****         oled_update_channel();
+ 473              		.loc 1 224 0
+ 474 028a FFF7FEFF 		bl	oled_update_channel
+ 475              	.LVL39:
+ 225:.\main.c      ****         
+ 226:.\main.c      ****         CyDelay(41);
+ 476              		.loc 1 226 0
+ 477 028e 2920     		mov	r0, #41
+ 478 0290 FFF7FEFF 		bl	CyDelay
+ 479              	.LVL40:
+ 480              	.LBE2:
+ 227:.\main.c      ****         
+ 228:.\main.c      ****     }
+ 481              		.loc 1 228 0
+ 482 0294 07E7     		b	.L14
+ 483              	.L18:
+ 484 0296 C046     		.align	2
+ 485              	.L17:
+ 486 0298 6E861BF0 		.word	-266631570
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 14
+
+
+ 487 029c F9211940 		.word	1075388921
+ 488 02a0 0000B03F 		.word	1068498944
+ 489 02a4 00000000 		.word	twiddlereal
+ 490 02a8 00000000 		.word	twiddleimg
+ 491 02ac 000080C3 		.word	-1015021568
+ 492 02b0 00000000 		.word	product
+ 493 02b4 00000000 		.word	.LANCHOR0
+ 494 02b8 00000000 		.word	revsamples
+ 495 02bc 00000000 		.word	real0
+ 496 02c0 02000000 		.word	real0+2
+ 497 02c4 02000000 		.word	real1+2
+ 498 02c8 02000000 		.word	img1+2
+ 499 02cc 02000000 		.word	img0+2
+ 500 02d0 00000000 		.word	real1
+ 501 02d4 00000000 		.word	img0
+ 502 02d8 00000000 		.word	img1
+ 503 02dc 00000000 		.word	interreal
+ 504 02e0 00000000 		.word	interimg
+ 505              		.cfi_endproc
+ 506              	.LFE34:
+ 507              		.size	main, .-main
+ 508              		.comm	product,4,4
+ 509              		.comm	interimg,32,2
+ 510              		.comm	interreal,32,2
+ 511              		.comm	twiddleimg,32,2
+ 512              		.comm	twiddlereal,32,2
+ 513              		.comm	img1,32,2
+ 514              		.comm	real1,32,2
+ 515              		.comm	img0,32,2
+ 516              		.comm	real0,32,2
+ 517              		.comm	revsamples,64,4
+ 518              		.global	samples
+ 519              		.data
+ 520              		.align	1
+ 521              		.set	.LANCHOR0,. + 0
+ 522              		.type	samples, %object
+ 523              		.size	samples, 32
+ 524              	samples:
+ 525 0000 0000     		.short	0
+ 526 0002 0200     		.short	2
+ 527 0004 0300     		.short	3
+ 528 0006 0500     		.short	5
+ 529 0008 0600     		.short	6
+ 530 000a 0800     		.short	8
+ 531 000c 0A00     		.short	10
+ 532 000e 0100     		.short	1
+ 533 0010 0300     		.short	3
+ 534 0012 0400     		.short	4
+ 535 0014 0600     		.short	6
+ 536 0016 0800     		.short	8
+ 537 0018 0900     		.short	9
+ 538 001a 0100     		.short	1
+ 539 001c 0200     		.short	2
+ 540 001e 0400     		.short	4
+ 541              		.text
+ 542              	.Letext0:
+ 543              		.file 2 "d:\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\arm-none-eabi\\inc
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 15
+
+
+ 544              		.file 3 "d:\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\arm-none-eabi\\inc
+ 545              		.file 4 "Generated_Source\\PSoC4/cytypes.h"
+ 546              		.file 5 ".\\ssd1306x.h"
+ 547              		.file 6 "Generated_Source\\PSoC4/CyLib.h"
+ 548              		.file 7 ".\\ssd1306.h"
+ 549              		.file 8 "d:\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\arm-none-eabi\\inc
+ 550              		.file 9 "Generated_Source\\PSoC4/I2COLED.h"
+ 551              		.section	.debug_info,"",%progbits
+ 552              	.Ldebug_info0:
+ 553 0000 69030000 		.4byte	0x369
+ 554 0004 0400     		.2byte	0x4
+ 555 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 556 000a 04       		.byte	0x4
+ 557 000b 01       		.uleb128 0x1
+ 558 000c 14000000 		.4byte	.LASF40
+ 559 0010 01       		.byte	0x1
+ 560 0011 53010000 		.4byte	.LASF41
+ 561 0015 C7010000 		.4byte	.LASF42
+ 562 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 563 001d 00000000 		.4byte	0
+ 564 0021 00000000 		.4byte	.Ldebug_line0
+ 565 0025 02       		.uleb128 0x2
+ 566 0026 01       		.byte	0x1
+ 567 0027 06       		.byte	0x6
+ 568 0028 66020000 		.4byte	.LASF0
+ 569 002c 02       		.uleb128 0x2
+ 570 002d 01       		.byte	0x1
+ 571 002e 08       		.byte	0x8
+ 572 002f 3E010000 		.4byte	.LASF1
+ 573 0033 03       		.uleb128 0x3
+ 574 0034 A2000000 		.4byte	.LASF9
+ 575 0038 02       		.byte	0x2
+ 576 0039 29       		.byte	0x29
+ 577 003a 3E000000 		.4byte	0x3e
+ 578 003e 02       		.uleb128 0x2
+ 579 003f 02       		.byte	0x2
+ 580 0040 05       		.byte	0x5
+ 581 0041 28020000 		.4byte	.LASF2
+ 582 0045 02       		.uleb128 0x2
+ 583 0046 02       		.byte	0x2
+ 584 0047 07       		.byte	0x7
+ 585 0048 B2000000 		.4byte	.LASF3
+ 586 004c 02       		.uleb128 0x2
+ 587 004d 04       		.byte	0x4
+ 588 004e 05       		.byte	0x5
+ 589 004f 44020000 		.4byte	.LASF4
+ 590 0053 02       		.uleb128 0x2
+ 591 0054 04       		.byte	0x4
+ 592 0055 07       		.byte	0x7
+ 593 0056 19010000 		.4byte	.LASF5
+ 594 005a 02       		.uleb128 0x2
+ 595 005b 08       		.byte	0x8
+ 596 005c 05       		.byte	0x5
+ 597 005d 03020000 		.4byte	.LASF6
+ 598 0061 02       		.uleb128 0x2
+ 599 0062 08       		.byte	0x8
+ 600 0063 07       		.byte	0x7
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 16
+
+
+ 601 0064 81010000 		.4byte	.LASF7
+ 602 0068 04       		.uleb128 0x4
+ 603 0069 04       		.byte	0x4
+ 604 006a 05       		.byte	0x5
+ 605 006b 696E7400 		.ascii	"int\000"
+ 606 006f 02       		.uleb128 0x2
+ 607 0070 04       		.byte	0x4
+ 608 0071 07       		.byte	0x7
+ 609 0072 CD000000 		.4byte	.LASF8
+ 610 0076 03       		.uleb128 0x3
+ 611 0077 BF010000 		.4byte	.LASF10
+ 612 007b 03       		.byte	0x3
+ 613 007c 20       		.byte	0x20
+ 614 007d 33000000 		.4byte	0x33
+ 615 0081 05       		.uleb128 0x5
+ 616 0082 2B010000 		.4byte	.LASF11
+ 617 0086 04       		.byte	0x4
+ 618 0087 3801     		.2byte	0x138
+ 619 0089 2C000000 		.4byte	0x2c
+ 620 008d 05       		.uleb128 0x5
+ 621 008e 5C010000 		.4byte	.LASF12
+ 622 0092 04       		.byte	0x4
+ 623 0093 3A01     		.2byte	0x13a
+ 624 0095 53000000 		.4byte	0x53
+ 625 0099 05       		.uleb128 0x5
+ 626 009a 13010000 		.4byte	.LASF13
+ 627 009e 04       		.byte	0x4
+ 628 009f 3C01     		.2byte	0x13c
+ 629 00a1 3E000000 		.4byte	0x3e
+ 630 00a5 02       		.uleb128 0x2
+ 631 00a6 04       		.byte	0x4
+ 632 00a7 04       		.byte	0x4
+ 633 00a8 AC000000 		.4byte	.LASF14
+ 634 00ac 02       		.uleb128 0x2
+ 635 00ad 08       		.byte	0x8
+ 636 00ae 04       		.byte	0x4
+ 637 00af 4C010000 		.4byte	.LASF15
+ 638 00b3 02       		.uleb128 0x2
+ 639 00b4 01       		.byte	0x1
+ 640 00b5 08       		.byte	0x8
+ 641 00b6 11020000 		.4byte	.LASF16
+ 642 00ba 02       		.uleb128 0x2
+ 643 00bb 04       		.byte	0x4
+ 644 00bc 07       		.byte	0x7
+ 645 00bd FA010000 		.4byte	.LASF17
+ 646 00c1 02       		.uleb128 0x2
+ 647 00c2 08       		.byte	0x8
+ 648 00c3 04       		.byte	0x4
+ 649 00c4 5A020000 		.4byte	.LASF18
+ 650 00c8 06       		.uleb128 0x6
+ 651 00c9 63010000 		.4byte	.LASF43
+ 652 00cd 01       		.byte	0x1
+ 653 00ce 5C       		.byte	0x5c
+ 654 00cf 68000000 		.4byte	0x68
+ 655 00d3 00000000 		.4byte	.LFB34
+ 656 00d7 E4020000 		.4byte	.LFE34-.LFB34
+ 657 00db 01       		.uleb128 0x1
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 17
+
+
+ 658 00dc 9C       		.byte	0x9c
+ 659 00dd C0010000 		.4byte	0x1c0
+ 660 00e1 07       		.uleb128 0x7
+ 661 00e2 6900     		.ascii	"i\000"
+ 662 00e4 01       		.byte	0x1
+ 663 00e5 6D       		.byte	0x6d
+ 664 00e6 81000000 		.4byte	0x81
+ 665 00ea 00000000 		.4byte	.LLST0
+ 666 00ee 07       		.uleb128 0x7
+ 667 00ef 6A00     		.ascii	"j\000"
+ 668 00f1 01       		.byte	0x1
+ 669 00f2 6D       		.byte	0x6d
+ 670 00f3 81000000 		.4byte	0x81
+ 671 00f7 40000000 		.4byte	.LLST1
+ 672 00fb 08       		.uleb128 0x8
+ 673 00fc BA010000 		.4byte	.LASF19
+ 674 0100 01       		.byte	0x1
+ 675 0101 6E       		.byte	0x6e
+ 676 0102 81000000 		.4byte	0x81
+ 677 0106 54000000 		.4byte	.LLST2
+ 678 010a 08       		.uleb128 0x8
+ 679 010b 31010000 		.4byte	.LASF20
+ 680 010f 01       		.byte	0x1
+ 681 0110 6F       		.byte	0x6f
+ 682 0111 81000000 		.4byte	0x81
+ 683 0115 D8000000 		.4byte	.LLST3
+ 684 0119 09       		.uleb128 0x9
+ 685 011a A8000000 		.4byte	.LBB2
+ 686 011e EC010000 		.4byte	.LBE2-.LBB2
+ 687 0122 87010000 		.4byte	0x187
+ 688 0126 0A       		.uleb128 0xa
+ 689 0127 C5000000 		.4byte	.LASF21
+ 690 012b 01       		.byte	0x1
+ 691 012c D7       		.byte	0xd7
+ 692 012d C0010000 		.4byte	0x1c0
+ 693 0131 03       		.uleb128 0x3
+ 694 0132 91       		.byte	0x91
+ 695 0133 E87E     		.sleb128 -152
+ 696 0135 0B       		.uleb128 0xb
+ 697 0136 6C020000 		.4byte	.LVL36
+ 698 013a BB020000 		.4byte	0x2bb
+ 699 013e 0C       		.uleb128 0xc
+ 700 013f 84020000 		.4byte	.LVL37
+ 701 0143 D0020000 		.4byte	0x2d0
+ 702 0147 59010000 		.4byte	0x159
+ 703 014b 0D       		.uleb128 0xd
+ 704 014c 01       		.uleb128 0x1
+ 705 014d 51       		.byte	0x51
+ 706 014e 02       		.uleb128 0x2
+ 707 014f 74       		.byte	0x74
+ 708 0150 00       		.sleb128 0
+ 709 0151 0D       		.uleb128 0xd
+ 710 0152 01       		.uleb128 0x1
+ 711 0153 50       		.byte	0x50
+ 712 0154 03       		.uleb128 0x3
+ 713 0155 91       		.byte	0x91
+ 714 0156 E87E     		.sleb128 -152
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 18
+
+
+ 715 0158 00       		.byte	0
+ 716 0159 0C       		.uleb128 0xc
+ 717 015a 8A020000 		.4byte	.LVL38
+ 718 015e F2020000 		.4byte	0x2f2
+ 719 0162 6D010000 		.4byte	0x16d
+ 720 0166 0D       		.uleb128 0xd
+ 721 0167 01       		.uleb128 0x1
+ 722 0168 50       		.byte	0x50
+ 723 0169 02       		.uleb128 0x2
+ 724 016a 74       		.byte	0x74
+ 725 016b 00       		.sleb128 0
+ 726 016c 00       		.byte	0
+ 727 016d 0B       		.uleb128 0xb
+ 728 016e 8E020000 		.4byte	.LVL39
+ 729 0172 03030000 		.4byte	0x303
+ 730 0176 0E       		.uleb128 0xe
+ 731 0177 94020000 		.4byte	.LVL40
+ 732 017b 10030000 		.4byte	0x310
+ 733 017f 0D       		.uleb128 0xd
+ 734 0180 01       		.uleb128 0x1
+ 735 0181 50       		.byte	0x50
+ 736 0182 02       		.uleb128 0x2
+ 737 0183 08       		.byte	0x8
+ 738 0184 29       		.byte	0x29
+ 739 0185 00       		.byte	0
+ 740 0186 00       		.byte	0
+ 741 0187 0B       		.uleb128 0xb
+ 742 0188 0A000000 		.4byte	.LVL0
+ 743 018c 21030000 		.4byte	0x321
+ 744 0190 0C       		.uleb128 0xc
+ 745 0191 10000000 		.4byte	.LVL1
+ 746 0195 28030000 		.4byte	0x328
+ 747 0199 A4010000 		.4byte	0x1a4
+ 748 019d 0D       		.uleb128 0xd
+ 749 019e 01       		.uleb128 0x1
+ 750 019f 50       		.byte	0x50
+ 751 01a0 02       		.uleb128 0x2
+ 752 01a1 08       		.byte	0x8
+ 753 01a2 3C       		.byte	0x3c
+ 754 01a3 00       		.byte	0
+ 755 01a4 0B       		.uleb128 0xb
+ 756 01a5 16000000 		.4byte	.LVL2
+ 757 01a9 39030000 		.4byte	0x339
+ 758 01ad 0B       		.uleb128 0xb
+ 759 01ae 34000000 		.4byte	.LVL6
+ 760 01b2 46030000 		.4byte	0x346
+ 761 01b6 0B       		.uleb128 0xb
+ 762 01b7 58000000 		.4byte	.LVL10
+ 763 01bb 5B030000 		.4byte	0x35b
+ 764 01bf 00       		.byte	0
+ 765 01c0 0F       		.uleb128 0xf
+ 766 01c1 AC000000 		.4byte	0xac
+ 767 01c5 D0010000 		.4byte	0x1d0
+ 768 01c9 10       		.uleb128 0x10
+ 769 01ca BA000000 		.4byte	0xba
+ 770 01ce 0F       		.byte	0xf
+ 771 01cf 00       		.byte	0
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 19
+
+
+ 772 01d0 0F       		.uleb128 0xf
+ 773 01d1 76000000 		.4byte	0x76
+ 774 01d5 E0010000 		.4byte	0x1e0
+ 775 01d9 10       		.uleb128 0x10
+ 776 01da BA000000 		.4byte	0xba
+ 777 01de 0F       		.byte	0xf
+ 778 01df 00       		.byte	0
+ 779 01e0 11       		.uleb128 0x11
+ 780 01e1 20020000 		.4byte	.LASF22
+ 781 01e5 01       		.byte	0x1
+ 782 01e6 32       		.byte	0x32
+ 783 01e7 D0010000 		.4byte	0x1d0
+ 784 01eb 05       		.uleb128 0x5
+ 785 01ec 03       		.byte	0x3
+ 786 01ed 00000000 		.4byte	samples
+ 787 01f1 0F       		.uleb128 0xf
+ 788 01f2 68000000 		.4byte	0x68
+ 789 01f6 01020000 		.4byte	0x201
+ 790 01fa 10       		.uleb128 0x10
+ 791 01fb BA000000 		.4byte	0xba
+ 792 01ff 0F       		.byte	0xf
+ 793 0200 00       		.byte	0
+ 794 0201 11       		.uleb128 0x11
+ 795 0202 EC000000 		.4byte	.LASF23
+ 796 0206 01       		.byte	0x1
+ 797 0207 38       		.byte	0x38
+ 798 0208 F1010000 		.4byte	0x1f1
+ 799 020c 05       		.uleb128 0x5
+ 800 020d 03       		.byte	0x3
+ 801 020e 00000000 		.4byte	revsamples
+ 802 0212 0F       		.uleb128 0xf
+ 803 0213 99000000 		.4byte	0x99
+ 804 0217 22020000 		.4byte	0x222
+ 805 021b 10       		.uleb128 0x10
+ 806 021c BA000000 		.4byte	0xba
+ 807 0220 0F       		.byte	0xf
+ 808 0221 00       		.byte	0
+ 809 0222 11       		.uleb128 0x11
+ 810 0223 00000000 		.4byte	.LASF24
+ 811 0227 01       		.byte	0x1
+ 812 0228 3A       		.byte	0x3a
+ 813 0229 12020000 		.4byte	0x212
+ 814 022d 05       		.uleb128 0x5
+ 815 022e 03       		.byte	0x3
+ 816 022f 00000000 		.4byte	real0
+ 817 0233 11       		.uleb128 0x11
+ 818 0234 E2000000 		.4byte	.LASF25
+ 819 0238 01       		.byte	0x1
+ 820 0239 3B       		.byte	0x3b
+ 821 023a 12020000 		.4byte	0x212
+ 822 023e 05       		.uleb128 0x5
+ 823 023f 03       		.byte	0x3
+ 824 0240 00000000 		.4byte	img0
+ 825 0244 11       		.uleb128 0x11
+ 826 0245 06000000 		.4byte	.LASF26
+ 827 0249 01       		.byte	0x1
+ 828 024a 3D       		.byte	0x3d
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 20
+
+
+ 829 024b 12020000 		.4byte	0x212
+ 830 024f 05       		.uleb128 0x5
+ 831 0250 03       		.byte	0x3
+ 832 0251 00000000 		.4byte	real1
+ 833 0255 11       		.uleb128 0x11
+ 834 0256 E7000000 		.4byte	.LASF27
+ 835 025a 01       		.byte	0x1
+ 836 025b 3E       		.byte	0x3e
+ 837 025c 12020000 		.4byte	0x212
+ 838 0260 05       		.uleb128 0x5
+ 839 0261 03       		.byte	0x3
+ 840 0262 00000000 		.4byte	img1
+ 841 0266 11       		.uleb128 0x11
+ 842 0267 72020000 		.4byte	.LASF28
+ 843 026b 01       		.byte	0x1
+ 844 026c 40       		.byte	0x40
+ 845 026d 12020000 		.4byte	0x212
+ 846 0271 05       		.uleb128 0x5
+ 847 0272 03       		.byte	0x3
+ 848 0273 00000000 		.4byte	twiddlereal
+ 849 0277 11       		.uleb128 0x11
+ 850 0278 68010000 		.4byte	.LASF29
+ 851 027c 01       		.byte	0x1
+ 852 027d 41       		.byte	0x41
+ 853 027e 12020000 		.4byte	0x212
+ 854 0282 05       		.uleb128 0x5
+ 855 0283 03       		.byte	0x3
+ 856 0284 00000000 		.4byte	twiddleimg
+ 857 0288 11       		.uleb128 0x11
+ 858 0289 16020000 		.4byte	.LASF30
+ 859 028d 01       		.byte	0x1
+ 860 028e 43       		.byte	0x43
+ 861 028f 12020000 		.4byte	0x212
+ 862 0293 05       		.uleb128 0x5
+ 863 0294 03       		.byte	0x3
+ 864 0295 00000000 		.4byte	interreal
+ 865 0299 11       		.uleb128 0x11
+ 866 029a B1010000 		.4byte	.LASF31
+ 867 029e 01       		.byte	0x1
+ 868 029f 44       		.byte	0x44
+ 869 02a0 12020000 		.4byte	0x212
+ 870 02a4 05       		.uleb128 0x5
+ 871 02a5 03       		.byte	0x3
+ 872 02a6 00000000 		.4byte	interimg
+ 873 02aa 11       		.uleb128 0x11
+ 874 02ab 0C000000 		.4byte	.LASF32
+ 875 02af 01       		.byte	0x1
+ 876 02b0 46       		.byte	0x46
+ 877 02b1 A5000000 		.4byte	0xa5
+ 878 02b5 05       		.uleb128 0x5
+ 879 02b6 03       		.byte	0x3
+ 880 02b7 00000000 		.4byte	product
+ 881 02bb 12       		.uleb128 0x12
+ 882 02bc 92020000 		.4byte	.LASF39
+ 883 02c0 08       		.byte	0x8
+ 884 02c1 86       		.byte	0x86
+ 885 02c2 AC000000 		.4byte	0xac
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 21
+
+
+ 886 02c6 D0020000 		.4byte	0x2d0
+ 887 02ca 13       		.uleb128 0x13
+ 888 02cb AC000000 		.4byte	0xac
+ 889 02cf 00       		.byte	0
+ 890 02d0 14       		.uleb128 0x14
+ 891 02d1 F7000000 		.4byte	.LASF33
+ 892 02d5 05       		.byte	0x5
+ 893 02d6 3D       		.byte	0x3d
+ 894 02d7 E6020000 		.4byte	0x2e6
+ 895 02db 13       		.uleb128 0x13
+ 896 02dc E6020000 		.4byte	0x2e6
+ 897 02e0 13       		.uleb128 0x13
+ 898 02e1 EC020000 		.4byte	0x2ec
+ 899 02e5 00       		.byte	0
+ 900 02e6 15       		.uleb128 0x15
+ 901 02e7 04       		.byte	0x4
+ 902 02e8 AC000000 		.4byte	0xac
+ 903 02ec 15       		.uleb128 0x15
+ 904 02ed 04       		.byte	0x4
+ 905 02ee 76000000 		.4byte	0x76
+ 906 02f2 14       		.uleb128 0x14
+ 907 02f3 98010000 		.4byte	.LASF34
+ 908 02f7 05       		.byte	0x5
+ 909 02f8 3A       		.byte	0x3a
+ 910 02f9 03030000 		.4byte	0x303
+ 911 02fd 13       		.uleb128 0x13
+ 912 02fe EC020000 		.4byte	0x2ec
+ 913 0302 00       		.byte	0
+ 914 0303 16       		.uleb128 0x16
+ 915 0304 7E020000 		.4byte	.LASF37
+ 916 0308 05       		.byte	0x5
+ 917 0309 3B       		.byte	0x3b
+ 918 030a 10030000 		.4byte	0x310
+ 919 030e 17       		.uleb128 0x17
+ 920 030f 00       		.byte	0
+ 921 0310 14       		.uleb128 0x14
+ 922 0311 DA000000 		.4byte	.LASF35
+ 923 0315 06       		.byte	0x6
+ 924 0316 5A       		.byte	0x5a
+ 925 0317 21030000 		.4byte	0x321
+ 926 031b 13       		.uleb128 0x13
+ 927 031c 8D000000 		.4byte	0x8d
+ 928 0320 00       		.byte	0
+ 929 0321 18       		.uleb128 0x18
+ 930 0322 73010000 		.4byte	.LASF44
+ 931 0326 09       		.byte	0x9
+ 932 0327 6E       		.byte	0x6e
+ 933 0328 14       		.uleb128 0x14
+ 934 0329 4D020000 		.4byte	.LASF36
+ 935 032d 07       		.byte	0x7
+ 936 032e 34       		.byte	0x34
+ 937 032f 39030000 		.4byte	0x339
+ 938 0333 13       		.uleb128 0x13
+ 939 0334 81000000 		.4byte	0x81
+ 940 0338 00       		.byte	0
+ 941 0339 16       		.uleb128 0x16
+ 942 033a 32020000 		.4byte	.LASF38
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 22
+
+
+ 943 033e 05       		.byte	0x5
+ 944 033f 38       		.byte	0x38
+ 945 0340 46030000 		.4byte	0x346
+ 946 0344 17       		.uleb128 0x17
+ 947 0345 00       		.byte	0
+ 948 0346 19       		.uleb128 0x19
+ 949 0347 636F7300 		.ascii	"cos\000"
+ 950 034b 08       		.byte	0x8
+ 951 034c 6D       		.byte	0x6d
+ 952 034d AC000000 		.4byte	0xac
+ 953 0351 5B030000 		.4byte	0x35b
+ 954 0355 13       		.uleb128 0x13
+ 955 0356 AC000000 		.4byte	0xac
+ 956 035a 00       		.byte	0
+ 957 035b 1A       		.uleb128 0x1a
+ 958 035c 73696E00 		.ascii	"sin\000"
+ 959 0360 08       		.byte	0x8
+ 960 0361 6E       		.byte	0x6e
+ 961 0362 AC000000 		.4byte	0xac
+ 962 0366 13       		.uleb128 0x13
+ 963 0367 AC000000 		.4byte	0xac
+ 964 036b 00       		.byte	0
+ 965 036c 00       		.byte	0
+ 966              		.section	.debug_abbrev,"",%progbits
+ 967              	.Ldebug_abbrev0:
+ 968 0000 01       		.uleb128 0x1
+ 969 0001 11       		.uleb128 0x11
+ 970 0002 01       		.byte	0x1
+ 971 0003 25       		.uleb128 0x25
+ 972 0004 0E       		.uleb128 0xe
+ 973 0005 13       		.uleb128 0x13
+ 974 0006 0B       		.uleb128 0xb
+ 975 0007 03       		.uleb128 0x3
+ 976 0008 0E       		.uleb128 0xe
+ 977 0009 1B       		.uleb128 0x1b
+ 978 000a 0E       		.uleb128 0xe
+ 979 000b 55       		.uleb128 0x55
+ 980 000c 17       		.uleb128 0x17
+ 981 000d 11       		.uleb128 0x11
+ 982 000e 01       		.uleb128 0x1
+ 983 000f 10       		.uleb128 0x10
+ 984 0010 17       		.uleb128 0x17
+ 985 0011 00       		.byte	0
+ 986 0012 00       		.byte	0
+ 987 0013 02       		.uleb128 0x2
+ 988 0014 24       		.uleb128 0x24
+ 989 0015 00       		.byte	0
+ 990 0016 0B       		.uleb128 0xb
+ 991 0017 0B       		.uleb128 0xb
+ 992 0018 3E       		.uleb128 0x3e
+ 993 0019 0B       		.uleb128 0xb
+ 994 001a 03       		.uleb128 0x3
+ 995 001b 0E       		.uleb128 0xe
+ 996 001c 00       		.byte	0
+ 997 001d 00       		.byte	0
+ 998 001e 03       		.uleb128 0x3
+ 999 001f 16       		.uleb128 0x16
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 23
+
+
+ 1000 0020 00       		.byte	0
+ 1001 0021 03       		.uleb128 0x3
+ 1002 0022 0E       		.uleb128 0xe
+ 1003 0023 3A       		.uleb128 0x3a
+ 1004 0024 0B       		.uleb128 0xb
+ 1005 0025 3B       		.uleb128 0x3b
+ 1006 0026 0B       		.uleb128 0xb
+ 1007 0027 49       		.uleb128 0x49
+ 1008 0028 13       		.uleb128 0x13
+ 1009 0029 00       		.byte	0
+ 1010 002a 00       		.byte	0
+ 1011 002b 04       		.uleb128 0x4
+ 1012 002c 24       		.uleb128 0x24
+ 1013 002d 00       		.byte	0
+ 1014 002e 0B       		.uleb128 0xb
+ 1015 002f 0B       		.uleb128 0xb
+ 1016 0030 3E       		.uleb128 0x3e
+ 1017 0031 0B       		.uleb128 0xb
+ 1018 0032 03       		.uleb128 0x3
+ 1019 0033 08       		.uleb128 0x8
+ 1020 0034 00       		.byte	0
+ 1021 0035 00       		.byte	0
+ 1022 0036 05       		.uleb128 0x5
+ 1023 0037 16       		.uleb128 0x16
+ 1024 0038 00       		.byte	0
+ 1025 0039 03       		.uleb128 0x3
+ 1026 003a 0E       		.uleb128 0xe
+ 1027 003b 3A       		.uleb128 0x3a
+ 1028 003c 0B       		.uleb128 0xb
+ 1029 003d 3B       		.uleb128 0x3b
+ 1030 003e 05       		.uleb128 0x5
+ 1031 003f 49       		.uleb128 0x49
+ 1032 0040 13       		.uleb128 0x13
+ 1033 0041 00       		.byte	0
+ 1034 0042 00       		.byte	0
+ 1035 0043 06       		.uleb128 0x6
+ 1036 0044 2E       		.uleb128 0x2e
+ 1037 0045 01       		.byte	0x1
+ 1038 0046 3F       		.uleb128 0x3f
+ 1039 0047 19       		.uleb128 0x19
+ 1040 0048 03       		.uleb128 0x3
+ 1041 0049 0E       		.uleb128 0xe
+ 1042 004a 3A       		.uleb128 0x3a
+ 1043 004b 0B       		.uleb128 0xb
+ 1044 004c 3B       		.uleb128 0x3b
+ 1045 004d 0B       		.uleb128 0xb
+ 1046 004e 49       		.uleb128 0x49
+ 1047 004f 13       		.uleb128 0x13
+ 1048 0050 11       		.uleb128 0x11
+ 1049 0051 01       		.uleb128 0x1
+ 1050 0052 12       		.uleb128 0x12
+ 1051 0053 06       		.uleb128 0x6
+ 1052 0054 40       		.uleb128 0x40
+ 1053 0055 18       		.uleb128 0x18
+ 1054 0056 9642     		.uleb128 0x2116
+ 1055 0058 19       		.uleb128 0x19
+ 1056 0059 01       		.uleb128 0x1
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 24
+
+
+ 1057 005a 13       		.uleb128 0x13
+ 1058 005b 00       		.byte	0
+ 1059 005c 00       		.byte	0
+ 1060 005d 07       		.uleb128 0x7
+ 1061 005e 34       		.uleb128 0x34
+ 1062 005f 00       		.byte	0
+ 1063 0060 03       		.uleb128 0x3
+ 1064 0061 08       		.uleb128 0x8
+ 1065 0062 3A       		.uleb128 0x3a
+ 1066 0063 0B       		.uleb128 0xb
+ 1067 0064 3B       		.uleb128 0x3b
+ 1068 0065 0B       		.uleb128 0xb
+ 1069 0066 49       		.uleb128 0x49
+ 1070 0067 13       		.uleb128 0x13
+ 1071 0068 02       		.uleb128 0x2
+ 1072 0069 17       		.uleb128 0x17
+ 1073 006a 00       		.byte	0
+ 1074 006b 00       		.byte	0
+ 1075 006c 08       		.uleb128 0x8
+ 1076 006d 34       		.uleb128 0x34
+ 1077 006e 00       		.byte	0
+ 1078 006f 03       		.uleb128 0x3
+ 1079 0070 0E       		.uleb128 0xe
+ 1080 0071 3A       		.uleb128 0x3a
+ 1081 0072 0B       		.uleb128 0xb
+ 1082 0073 3B       		.uleb128 0x3b
+ 1083 0074 0B       		.uleb128 0xb
+ 1084 0075 49       		.uleb128 0x49
+ 1085 0076 13       		.uleb128 0x13
+ 1086 0077 02       		.uleb128 0x2
+ 1087 0078 17       		.uleb128 0x17
+ 1088 0079 00       		.byte	0
+ 1089 007a 00       		.byte	0
+ 1090 007b 09       		.uleb128 0x9
+ 1091 007c 0B       		.uleb128 0xb
+ 1092 007d 01       		.byte	0x1
+ 1093 007e 11       		.uleb128 0x11
+ 1094 007f 01       		.uleb128 0x1
+ 1095 0080 12       		.uleb128 0x12
+ 1096 0081 06       		.uleb128 0x6
+ 1097 0082 01       		.uleb128 0x1
+ 1098 0083 13       		.uleb128 0x13
+ 1099 0084 00       		.byte	0
+ 1100 0085 00       		.byte	0
+ 1101 0086 0A       		.uleb128 0xa
+ 1102 0087 34       		.uleb128 0x34
+ 1103 0088 00       		.byte	0
+ 1104 0089 03       		.uleb128 0x3
+ 1105 008a 0E       		.uleb128 0xe
+ 1106 008b 3A       		.uleb128 0x3a
+ 1107 008c 0B       		.uleb128 0xb
+ 1108 008d 3B       		.uleb128 0x3b
+ 1109 008e 0B       		.uleb128 0xb
+ 1110 008f 49       		.uleb128 0x49
+ 1111 0090 13       		.uleb128 0x13
+ 1112 0091 02       		.uleb128 0x2
+ 1113 0092 18       		.uleb128 0x18
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 25
+
+
+ 1114 0093 00       		.byte	0
+ 1115 0094 00       		.byte	0
+ 1116 0095 0B       		.uleb128 0xb
+ 1117 0096 898201   		.uleb128 0x4109
+ 1118 0099 00       		.byte	0
+ 1119 009a 11       		.uleb128 0x11
+ 1120 009b 01       		.uleb128 0x1
+ 1121 009c 31       		.uleb128 0x31
+ 1122 009d 13       		.uleb128 0x13
+ 1123 009e 00       		.byte	0
+ 1124 009f 00       		.byte	0
+ 1125 00a0 0C       		.uleb128 0xc
+ 1126 00a1 898201   		.uleb128 0x4109
+ 1127 00a4 01       		.byte	0x1
+ 1128 00a5 11       		.uleb128 0x11
+ 1129 00a6 01       		.uleb128 0x1
+ 1130 00a7 31       		.uleb128 0x31
+ 1131 00a8 13       		.uleb128 0x13
+ 1132 00a9 01       		.uleb128 0x1
+ 1133 00aa 13       		.uleb128 0x13
+ 1134 00ab 00       		.byte	0
+ 1135 00ac 00       		.byte	0
+ 1136 00ad 0D       		.uleb128 0xd
+ 1137 00ae 8A8201   		.uleb128 0x410a
+ 1138 00b1 00       		.byte	0
+ 1139 00b2 02       		.uleb128 0x2
+ 1140 00b3 18       		.uleb128 0x18
+ 1141 00b4 9142     		.uleb128 0x2111
+ 1142 00b6 18       		.uleb128 0x18
+ 1143 00b7 00       		.byte	0
+ 1144 00b8 00       		.byte	0
+ 1145 00b9 0E       		.uleb128 0xe
+ 1146 00ba 898201   		.uleb128 0x4109
+ 1147 00bd 01       		.byte	0x1
+ 1148 00be 11       		.uleb128 0x11
+ 1149 00bf 01       		.uleb128 0x1
+ 1150 00c0 31       		.uleb128 0x31
+ 1151 00c1 13       		.uleb128 0x13
+ 1152 00c2 00       		.byte	0
+ 1153 00c3 00       		.byte	0
+ 1154 00c4 0F       		.uleb128 0xf
+ 1155 00c5 01       		.uleb128 0x1
+ 1156 00c6 01       		.byte	0x1
+ 1157 00c7 49       		.uleb128 0x49
+ 1158 00c8 13       		.uleb128 0x13
+ 1159 00c9 01       		.uleb128 0x1
+ 1160 00ca 13       		.uleb128 0x13
+ 1161 00cb 00       		.byte	0
+ 1162 00cc 00       		.byte	0
+ 1163 00cd 10       		.uleb128 0x10
+ 1164 00ce 21       		.uleb128 0x21
+ 1165 00cf 00       		.byte	0
+ 1166 00d0 49       		.uleb128 0x49
+ 1167 00d1 13       		.uleb128 0x13
+ 1168 00d2 2F       		.uleb128 0x2f
+ 1169 00d3 0B       		.uleb128 0xb
+ 1170 00d4 00       		.byte	0
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 26
+
+
+ 1171 00d5 00       		.byte	0
+ 1172 00d6 11       		.uleb128 0x11
+ 1173 00d7 34       		.uleb128 0x34
+ 1174 00d8 00       		.byte	0
+ 1175 00d9 03       		.uleb128 0x3
+ 1176 00da 0E       		.uleb128 0xe
+ 1177 00db 3A       		.uleb128 0x3a
+ 1178 00dc 0B       		.uleb128 0xb
+ 1179 00dd 3B       		.uleb128 0x3b
+ 1180 00de 0B       		.uleb128 0xb
+ 1181 00df 49       		.uleb128 0x49
+ 1182 00e0 13       		.uleb128 0x13
+ 1183 00e1 3F       		.uleb128 0x3f
+ 1184 00e2 19       		.uleb128 0x19
+ 1185 00e3 02       		.uleb128 0x2
+ 1186 00e4 18       		.uleb128 0x18
+ 1187 00e5 00       		.byte	0
+ 1188 00e6 00       		.byte	0
+ 1189 00e7 12       		.uleb128 0x12
+ 1190 00e8 2E       		.uleb128 0x2e
+ 1191 00e9 01       		.byte	0x1
+ 1192 00ea 3F       		.uleb128 0x3f
+ 1193 00eb 19       		.uleb128 0x19
+ 1194 00ec 03       		.uleb128 0x3
+ 1195 00ed 0E       		.uleb128 0xe
+ 1196 00ee 3A       		.uleb128 0x3a
+ 1197 00ef 0B       		.uleb128 0xb
+ 1198 00f0 3B       		.uleb128 0x3b
+ 1199 00f1 0B       		.uleb128 0xb
+ 1200 00f2 27       		.uleb128 0x27
+ 1201 00f3 19       		.uleb128 0x19
+ 1202 00f4 49       		.uleb128 0x49
+ 1203 00f5 13       		.uleb128 0x13
+ 1204 00f6 3C       		.uleb128 0x3c
+ 1205 00f7 19       		.uleb128 0x19
+ 1206 00f8 01       		.uleb128 0x1
+ 1207 00f9 13       		.uleb128 0x13
+ 1208 00fa 00       		.byte	0
+ 1209 00fb 00       		.byte	0
+ 1210 00fc 13       		.uleb128 0x13
+ 1211 00fd 05       		.uleb128 0x5
+ 1212 00fe 00       		.byte	0
+ 1213 00ff 49       		.uleb128 0x49
+ 1214 0100 13       		.uleb128 0x13
+ 1215 0101 00       		.byte	0
+ 1216 0102 00       		.byte	0
+ 1217 0103 14       		.uleb128 0x14
+ 1218 0104 2E       		.uleb128 0x2e
+ 1219 0105 01       		.byte	0x1
+ 1220 0106 3F       		.uleb128 0x3f
+ 1221 0107 19       		.uleb128 0x19
+ 1222 0108 03       		.uleb128 0x3
+ 1223 0109 0E       		.uleb128 0xe
+ 1224 010a 3A       		.uleb128 0x3a
+ 1225 010b 0B       		.uleb128 0xb
+ 1226 010c 3B       		.uleb128 0x3b
+ 1227 010d 0B       		.uleb128 0xb
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 27
+
+
+ 1228 010e 27       		.uleb128 0x27
+ 1229 010f 19       		.uleb128 0x19
+ 1230 0110 3C       		.uleb128 0x3c
+ 1231 0111 19       		.uleb128 0x19
+ 1232 0112 01       		.uleb128 0x1
+ 1233 0113 13       		.uleb128 0x13
+ 1234 0114 00       		.byte	0
+ 1235 0115 00       		.byte	0
+ 1236 0116 15       		.uleb128 0x15
+ 1237 0117 0F       		.uleb128 0xf
+ 1238 0118 00       		.byte	0
+ 1239 0119 0B       		.uleb128 0xb
+ 1240 011a 0B       		.uleb128 0xb
+ 1241 011b 49       		.uleb128 0x49
+ 1242 011c 13       		.uleb128 0x13
+ 1243 011d 00       		.byte	0
+ 1244 011e 00       		.byte	0
+ 1245 011f 16       		.uleb128 0x16
+ 1246 0120 2E       		.uleb128 0x2e
+ 1247 0121 01       		.byte	0x1
+ 1248 0122 3F       		.uleb128 0x3f
+ 1249 0123 19       		.uleb128 0x19
+ 1250 0124 03       		.uleb128 0x3
+ 1251 0125 0E       		.uleb128 0xe
+ 1252 0126 3A       		.uleb128 0x3a
+ 1253 0127 0B       		.uleb128 0xb
+ 1254 0128 3B       		.uleb128 0x3b
+ 1255 0129 0B       		.uleb128 0xb
+ 1256 012a 3C       		.uleb128 0x3c
+ 1257 012b 19       		.uleb128 0x19
+ 1258 012c 01       		.uleb128 0x1
+ 1259 012d 13       		.uleb128 0x13
+ 1260 012e 00       		.byte	0
+ 1261 012f 00       		.byte	0
+ 1262 0130 17       		.uleb128 0x17
+ 1263 0131 18       		.uleb128 0x18
+ 1264 0132 00       		.byte	0
+ 1265 0133 00       		.byte	0
+ 1266 0134 00       		.byte	0
+ 1267 0135 18       		.uleb128 0x18
+ 1268 0136 2E       		.uleb128 0x2e
+ 1269 0137 00       		.byte	0
+ 1270 0138 3F       		.uleb128 0x3f
+ 1271 0139 19       		.uleb128 0x19
+ 1272 013a 03       		.uleb128 0x3
+ 1273 013b 0E       		.uleb128 0xe
+ 1274 013c 3A       		.uleb128 0x3a
+ 1275 013d 0B       		.uleb128 0xb
+ 1276 013e 3B       		.uleb128 0x3b
+ 1277 013f 0B       		.uleb128 0xb
+ 1278 0140 27       		.uleb128 0x27
+ 1279 0141 19       		.uleb128 0x19
+ 1280 0142 3C       		.uleb128 0x3c
+ 1281 0143 19       		.uleb128 0x19
+ 1282 0144 00       		.byte	0
+ 1283 0145 00       		.byte	0
+ 1284 0146 19       		.uleb128 0x19
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 28
+
+
+ 1285 0147 2E       		.uleb128 0x2e
+ 1286 0148 01       		.byte	0x1
+ 1287 0149 3F       		.uleb128 0x3f
+ 1288 014a 19       		.uleb128 0x19
+ 1289 014b 03       		.uleb128 0x3
+ 1290 014c 08       		.uleb128 0x8
+ 1291 014d 3A       		.uleb128 0x3a
+ 1292 014e 0B       		.uleb128 0xb
+ 1293 014f 3B       		.uleb128 0x3b
+ 1294 0150 0B       		.uleb128 0xb
+ 1295 0151 27       		.uleb128 0x27
+ 1296 0152 19       		.uleb128 0x19
+ 1297 0153 49       		.uleb128 0x49
+ 1298 0154 13       		.uleb128 0x13
+ 1299 0155 3C       		.uleb128 0x3c
+ 1300 0156 19       		.uleb128 0x19
+ 1301 0157 01       		.uleb128 0x1
+ 1302 0158 13       		.uleb128 0x13
+ 1303 0159 00       		.byte	0
+ 1304 015a 00       		.byte	0
+ 1305 015b 1A       		.uleb128 0x1a
+ 1306 015c 2E       		.uleb128 0x2e
+ 1307 015d 01       		.byte	0x1
+ 1308 015e 3F       		.uleb128 0x3f
+ 1309 015f 19       		.uleb128 0x19
+ 1310 0160 03       		.uleb128 0x3
+ 1311 0161 08       		.uleb128 0x8
+ 1312 0162 3A       		.uleb128 0x3a
+ 1313 0163 0B       		.uleb128 0xb
+ 1314 0164 3B       		.uleb128 0x3b
+ 1315 0165 0B       		.uleb128 0xb
+ 1316 0166 27       		.uleb128 0x27
+ 1317 0167 19       		.uleb128 0x19
+ 1318 0168 49       		.uleb128 0x49
+ 1319 0169 13       		.uleb128 0x13
+ 1320 016a 3C       		.uleb128 0x3c
+ 1321 016b 19       		.uleb128 0x19
+ 1322 016c 00       		.byte	0
+ 1323 016d 00       		.byte	0
+ 1324 016e 00       		.byte	0
+ 1325              		.section	.debug_loc,"",%progbits
+ 1326              	.Ldebug_loc0:
+ 1327              	.LLST0:
+ 1328 0000 16000000 		.4byte	.LVL2
+ 1329 0004 6E000000 		.4byte	.LVL14
+ 1330 0008 0100     		.2byte	0x1
+ 1331 000a 54       		.byte	0x54
+ 1332 000b 7C000000 		.4byte	.LVL15
+ 1333 000f 82000000 		.4byte	.LVL16
+ 1334 0013 0100     		.2byte	0x1
+ 1335 0015 50       		.byte	0x50
+ 1336 0016 82000000 		.4byte	.LVL16
+ 1337 001a 84000000 		.4byte	.LVL17
+ 1338 001e 0100     		.2byte	0x1
+ 1339 0020 53       		.byte	0x53
+ 1340 0021 84000000 		.4byte	.LVL17
+ 1341 0025 A0000000 		.4byte	.LVL21
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 29
+
+
+ 1342 0029 0100     		.2byte	0x1
+ 1343 002b 51       		.byte	0x51
+ 1344 002c A6000000 		.4byte	.LVL22
+ 1345 0030 A8000000 		.4byte	.LVL23
+ 1346 0034 0200     		.2byte	0x2
+ 1347 0036 30       		.byte	0x30
+ 1348 0037 9F       		.byte	0x9f
+ 1349 0038 00000000 		.4byte	0
+ 1350 003c 00000000 		.4byte	0
+ 1351              	.LLST1:
+ 1352 0040 30010000 		.4byte	.LVL24
+ 1353 0044 32010000 		.4byte	.LVL25
+ 1354 0048 0200     		.2byte	0x2
+ 1355 004a 30       		.byte	0x30
+ 1356 004b 9F       		.byte	0x9f
+ 1357 004c 00000000 		.4byte	0
+ 1358 0050 00000000 		.4byte	0
+ 1359              	.LLST2:
+ 1360 0054 8A000000 		.4byte	.LVL18
+ 1361 0058 92000000 		.4byte	.LVL19
+ 1362 005c 0C00     		.2byte	0xc
+ 1363 005e 73       		.byte	0x73
+ 1364 005f 00       		.sleb128 0
+ 1365 0060 33       		.byte	0x33
+ 1366 0061 1A       		.byte	0x1a
+ 1367 0062 32       		.byte	0x32
+ 1368 0063 24       		.byte	0x24
+ 1369 0064 73       		.byte	0x73
+ 1370 0065 00       		.sleb128 0
+ 1371 0066 32       		.byte	0x32
+ 1372 0067 25       		.byte	0x25
+ 1373 0068 21       		.byte	0x21
+ 1374 0069 9F       		.byte	0x9f
+ 1375 006a 92000000 		.4byte	.LVL19
+ 1376 006e 9E000000 		.4byte	.LVL20
+ 1377 0072 2400     		.2byte	0x24
+ 1378 0074 70       		.byte	0x70
+ 1379 0075 00       		.sleb128 0
+ 1380 0076 35       		.byte	0x35
+ 1381 0077 1A       		.byte	0x1a
+ 1382 0078 71       		.byte	0x71
+ 1383 0079 00       		.sleb128 0
+ 1384 007a 35       		.byte	0x35
+ 1385 007b 1A       		.byte	0x1a
+ 1386 007c 08       		.byte	0x8
+ 1387 007d FF       		.byte	0xff
+ 1388 007e 1A       		.byte	0x1a
+ 1389 007f 31       		.byte	0x31
+ 1390 0080 24       		.byte	0x24
+ 1391 0081 21       		.byte	0x21
+ 1392 0082 33       		.byte	0x33
+ 1393 0083 1A       		.byte	0x1a
+ 1394 0084 32       		.byte	0x32
+ 1395 0085 24       		.byte	0x24
+ 1396 0086 70       		.byte	0x70
+ 1397 0087 00       		.sleb128 0
+ 1398 0088 35       		.byte	0x35
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 30
+
+
+ 1399 0089 1A       		.byte	0x1a
+ 1400 008a 71       		.byte	0x71
+ 1401 008b 00       		.sleb128 0
+ 1402 008c 35       		.byte	0x35
+ 1403 008d 1A       		.byte	0x1a
+ 1404 008e 08       		.byte	0x8
+ 1405 008f FF       		.byte	0xff
+ 1406 0090 1A       		.byte	0x1a
+ 1407 0091 31       		.byte	0x31
+ 1408 0092 24       		.byte	0x24
+ 1409 0093 21       		.byte	0x21
+ 1410 0094 32       		.byte	0x32
+ 1411 0095 25       		.byte	0x25
+ 1412 0096 21       		.byte	0x21
+ 1413 0097 9F       		.byte	0x9f
+ 1414 0098 9E000000 		.4byte	.LVL20
+ 1415 009c A0000000 		.4byte	.LVL21
+ 1416 00a0 2E00     		.2byte	0x2e
+ 1417 00a2 71       		.byte	0x71
+ 1418 00a3 00       		.sleb128 0
+ 1419 00a4 08       		.byte	0x8
+ 1420 00a5 FF       		.byte	0xff
+ 1421 00a6 1A       		.byte	0x1a
+ 1422 00a7 31       		.byte	0x31
+ 1423 00a8 25       		.byte	0x25
+ 1424 00a9 35       		.byte	0x35
+ 1425 00aa 1A       		.byte	0x1a
+ 1426 00ab 71       		.byte	0x71
+ 1427 00ac 00       		.sleb128 0
+ 1428 00ad 35       		.byte	0x35
+ 1429 00ae 1A       		.byte	0x1a
+ 1430 00af 08       		.byte	0x8
+ 1431 00b0 FF       		.byte	0xff
+ 1432 00b1 1A       		.byte	0x1a
+ 1433 00b2 31       		.byte	0x31
+ 1434 00b3 24       		.byte	0x24
+ 1435 00b4 21       		.byte	0x21
+ 1436 00b5 33       		.byte	0x33
+ 1437 00b6 1A       		.byte	0x1a
+ 1438 00b7 32       		.byte	0x32
+ 1439 00b8 24       		.byte	0x24
+ 1440 00b9 71       		.byte	0x71
+ 1441 00ba 00       		.sleb128 0
+ 1442 00bb 08       		.byte	0x8
+ 1443 00bc FF       		.byte	0xff
+ 1444 00bd 1A       		.byte	0x1a
+ 1445 00be 31       		.byte	0x31
+ 1446 00bf 25       		.byte	0x25
+ 1447 00c0 35       		.byte	0x35
+ 1448 00c1 1A       		.byte	0x1a
+ 1449 00c2 71       		.byte	0x71
+ 1450 00c3 00       		.sleb128 0
+ 1451 00c4 35       		.byte	0x35
+ 1452 00c5 1A       		.byte	0x1a
+ 1453 00c6 08       		.byte	0x8
+ 1454 00c7 FF       		.byte	0xff
+ 1455 00c8 1A       		.byte	0x1a
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 31
+
+
+ 1456 00c9 31       		.byte	0x31
+ 1457 00ca 24       		.byte	0x24
+ 1458 00cb 21       		.byte	0x21
+ 1459 00cc 32       		.byte	0x32
+ 1460 00cd 25       		.byte	0x25
+ 1461 00ce 21       		.byte	0x21
+ 1462 00cf 9F       		.byte	0x9f
+ 1463 00d0 00000000 		.4byte	0
+ 1464 00d4 00000000 		.4byte	0
+ 1465              	.LLST3:
+ 1466 00d8 9C010000 		.4byte	.LVL27
+ 1467 00dc AE010000 		.4byte	.LVL28
+ 1468 00e0 0100     		.2byte	0x1
+ 1469 00e2 53       		.byte	0x53
+ 1470 00e3 C6010000 		.4byte	.LVL29
+ 1471 00e7 06020000 		.4byte	.LVL30
+ 1472 00eb 0100     		.2byte	0x1
+ 1473 00ed 53       		.byte	0x53
+ 1474 00ee 26020000 		.4byte	.LVL31
+ 1475 00f2 48020000 		.4byte	.LVL32
+ 1476 00f6 0100     		.2byte	0x1
+ 1477 00f8 53       		.byte	0x53
+ 1478 00f9 4C020000 		.4byte	.LVL33
+ 1479 00fd 5A020000 		.4byte	.LVL34
+ 1480 0101 0100     		.2byte	0x1
+ 1481 0103 53       		.byte	0x53
+ 1482 0104 00000000 		.4byte	0
+ 1483 0108 00000000 		.4byte	0
+ 1484              		.section	.debug_aranges,"",%progbits
+ 1485 0000 1C000000 		.4byte	0x1c
+ 1486 0004 0200     		.2byte	0x2
+ 1487 0006 00000000 		.4byte	.Ldebug_info0
+ 1488 000a 04       		.byte	0x4
+ 1489 000b 00       		.byte	0
+ 1490 000c 0000     		.2byte	0
+ 1491 000e 0000     		.2byte	0
+ 1492 0010 00000000 		.4byte	.LFB34
+ 1493 0014 E4020000 		.4byte	.LFE34-.LFB34
+ 1494 0018 00000000 		.4byte	0
+ 1495 001c 00000000 		.4byte	0
+ 1496              		.section	.debug_ranges,"",%progbits
+ 1497              	.Ldebug_ranges0:
+ 1498 0000 00000000 		.4byte	.LFB34
+ 1499 0004 E4020000 		.4byte	.LFE34
+ 1500 0008 00000000 		.4byte	0
+ 1501 000c 00000000 		.4byte	0
+ 1502              		.section	.debug_line,"",%progbits
+ 1503              	.Ldebug_line0:
+ 1504 0000 4B020000 		.section	.debug_str,"MS",%progbits,1
+ 1504      02005401 
+ 1504      00000201 
+ 1504      FB0E0D00 
+ 1504      01010101 
+ 1505              	.LASF24:
+ 1506 0000 7265616C 		.ascii	"real0\000"
+ 1506      3000
+ 1507              	.LASF26:
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 32
+
+
+ 1508 0006 7265616C 		.ascii	"real1\000"
+ 1508      3100
+ 1509              	.LASF32:
+ 1510 000c 70726F64 		.ascii	"product\000"
+ 1510      75637400 
+ 1511              	.LASF40:
+ 1512 0014 474E5520 		.ascii	"GNU C 4.9.3 20150303 (release) [ARM/embedded-4_9-br"
+ 1512      4320342E 
+ 1512      392E3320 
+ 1512      32303135 
+ 1512      30333033 
+ 1513 0047 616E6368 		.ascii	"anch revision 221220] -mcpu=cortex-m0 -mthumb -g -O"
+ 1513      20726576 
+ 1513      6973696F 
+ 1513      6E203232 
+ 1513      31323230 
+ 1514 007a 73202D66 		.ascii	"s -ffunction-sections -ffat-lto-objects\000"
+ 1514      66756E63 
+ 1514      74696F6E 
+ 1514      2D736563 
+ 1514      74696F6E 
+ 1515              	.LASF9:
+ 1516 00a2 5F5F696E 		.ascii	"__int16_t\000"
+ 1516      7431365F 
+ 1516      7400
+ 1517              	.LASF14:
+ 1518 00ac 666C6F61 		.ascii	"float\000"
+ 1518      7400
+ 1519              	.LASF3:
+ 1520 00b2 73686F72 		.ascii	"short unsigned int\000"
+ 1520      7420756E 
+ 1520      7369676E 
+ 1520      65642069 
+ 1520      6E7400
+ 1521              	.LASF21:
+ 1522 00c5 6666745F 		.ascii	"fft_abs\000"
+ 1522      61627300 
+ 1523              	.LASF8:
+ 1524 00cd 756E7369 		.ascii	"unsigned int\000"
+ 1524      676E6564 
+ 1524      20696E74 
+ 1524      00
+ 1525              	.LASF35:
+ 1526 00da 43794465 		.ascii	"CyDelay\000"
+ 1526      6C617900 
+ 1527              	.LASF25:
+ 1528 00e2 696D6730 		.ascii	"img0\000"
+ 1528      00
+ 1529              	.LASF27:
+ 1530 00e7 696D6731 		.ascii	"img1\000"
+ 1530      00
+ 1531              	.LASF23:
+ 1532 00ec 72657673 		.ascii	"revsamples\000"
+ 1532      616D706C 
+ 1532      657300
+ 1533              	.LASF33:
+ 1534 00f7 6F6C6564 		.ascii	"oled_normalize_channels_mag\000"
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 33
+
+
+ 1534      5F6E6F72 
+ 1534      6D616C69 
+ 1534      7A655F63 
+ 1534      68616E6E 
+ 1535              	.LASF13:
+ 1536 0113 696E7431 		.ascii	"int16\000"
+ 1536      3600
+ 1537              	.LASF5:
+ 1538 0119 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1538      20756E73 
+ 1538      69676E65 
+ 1538      6420696E 
+ 1538      7400
+ 1539              	.LASF11:
+ 1540 012b 75696E74 		.ascii	"uint8\000"
+ 1540      3800
+ 1541              	.LASF20:
+ 1542 0131 6C6F6361 		.ascii	"localcounter\000"
+ 1542      6C636F75 
+ 1542      6E746572 
+ 1542      00
+ 1543              	.LASF1:
+ 1544 013e 756E7369 		.ascii	"unsigned char\000"
+ 1544      676E6564 
+ 1544      20636861 
+ 1544      7200
+ 1545              	.LASF15:
+ 1546 014c 646F7562 		.ascii	"double\000"
+ 1546      6C6500
+ 1547              	.LASF41:
+ 1548 0153 2E5C6D61 		.ascii	".\\main.c\000"
+ 1548      696E2E63 
+ 1548      00
+ 1549              	.LASF12:
+ 1550 015c 75696E74 		.ascii	"uint32\000"
+ 1550      333200
+ 1551              	.LASF43:
+ 1552 0163 6D61696E 		.ascii	"main\000"
+ 1552      00
+ 1553              	.LASF29:
+ 1554 0168 74776964 		.ascii	"twiddleimg\000"
+ 1554      646C6569 
+ 1554      6D6700
+ 1555              	.LASF44:
+ 1556 0173 4932434F 		.ascii	"I2COLED_Start\000"
+ 1556      4C45445F 
+ 1556      53746172 
+ 1556      7400
+ 1557              	.LASF7:
+ 1558 0181 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1558      206C6F6E 
+ 1558      6720756E 
+ 1558      7369676E 
+ 1558      65642069 
+ 1559              	.LASF34:
+ 1560 0198 6F6C6564 		.ascii	"oled_update_channels_mag\000"
+ 1560      5F757064 
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 34
+
+
+ 1560      6174655F 
+ 1560      6368616E 
+ 1560      6E656C73 
+ 1561              	.LASF31:
+ 1562 01b1 696E7465 		.ascii	"interimg\000"
+ 1562      72696D67 
+ 1562      00
+ 1563              	.LASF19:
+ 1564 01ba 72657669 		.ascii	"revi\000"
+ 1564      00
+ 1565              	.LASF10:
+ 1566 01bf 696E7431 		.ascii	"int16_t\000"
+ 1566      365F7400 
+ 1567              	.LASF42:
+ 1568 01c7 433A5C55 		.ascii	"C:\\Users\\User\\Documents\\PSoC Creator\\FFT\\FFT."
+ 1568      73657273 
+ 1568      5C557365 
+ 1568      725C446F 
+ 1568      63756D65 
+ 1569 01f4 63796473 		.ascii	"cydsn\000"
+ 1569      6E00
+ 1570              	.LASF17:
+ 1571 01fa 73697A65 		.ascii	"sizetype\000"
+ 1571      74797065 
+ 1571      00
+ 1572              	.LASF6:
+ 1573 0203 6C6F6E67 		.ascii	"long long int\000"
+ 1573      206C6F6E 
+ 1573      6720696E 
+ 1573      7400
+ 1574              	.LASF16:
+ 1575 0211 63686172 		.ascii	"char\000"
+ 1575      00
+ 1576              	.LASF30:
+ 1577 0216 696E7465 		.ascii	"interreal\000"
+ 1577      72726561 
+ 1577      6C00
+ 1578              	.LASF22:
+ 1579 0220 73616D70 		.ascii	"samples\000"
+ 1579      6C657300 
+ 1580              	.LASF2:
+ 1581 0228 73686F72 		.ascii	"short int\000"
+ 1581      7420696E 
+ 1581      7400
+ 1582              	.LASF38:
+ 1583 0232 6F6C6564 		.ascii	"oled_eq_chan_init\000"
+ 1583      5F65715F 
+ 1583      6368616E 
+ 1583      5F696E69 
+ 1583      7400
+ 1584              	.LASF4:
+ 1585 0244 6C6F6E67 		.ascii	"long int\000"
+ 1585      20696E74 
+ 1585      00
+ 1586              	.LASF36:
+ 1587 024d 64697370 		.ascii	"display_init\000"
+ 1587      6C61795F 
+ARM GAS  C:\Users\User\AppData\Local\Temp\ccu2Rf1b.s 			page 35
+
+
+ 1587      696E6974 
+ 1587      00
+ 1588              	.LASF18:
+ 1589 025a 6C6F6E67 		.ascii	"long double\000"
+ 1589      20646F75 
+ 1589      626C6500 
+ 1590              	.LASF0:
+ 1591 0266 7369676E 		.ascii	"signed char\000"
+ 1591      65642063 
+ 1591      68617200 
+ 1592              	.LASF28:
+ 1593 0272 74776964 		.ascii	"twiddlereal\000"
+ 1593      646C6572 
+ 1593      65616C00 
+ 1594              	.LASF37:
+ 1595 027e 6F6C6564 		.ascii	"oled_update_channel\000"
+ 1595      5F757064 
+ 1595      6174655F 
+ 1595      6368616E 
+ 1595      6E656C00 
+ 1596              	.LASF39:
+ 1597 0292 73717274 		.ascii	"sqrt\000"
+ 1597      00
+ 1598              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.9.3 20150303 (release) [ARM/embedded-4_9-br

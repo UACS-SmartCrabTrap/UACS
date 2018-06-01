@@ -1101,7 +1101,7 @@
 #define watchDogCheck__INTC_CLR_PD_REG CYREG_NVIC_CLRPEND0
 #define watchDogCheck__INTC_MASK 0x08u
 #define watchDogCheck__INTC_NUMBER 3u
-#define watchDogCheck__INTC_PRIOR_NUM 7u
+#define watchDogCheck__INTC_PRIOR_NUM 1u
 #define watchDogCheck__INTC_PRIOR_REG CYREG_NVIC_PRI_3
 #define watchDogCheck__INTC_SET_EN_REG CYREG_NVIC_SETENA0
 #define watchDogCheck__INTC_SET_PD_REG CYREG_NVIC_SETPEND0

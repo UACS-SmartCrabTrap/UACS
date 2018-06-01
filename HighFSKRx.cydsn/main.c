@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include "LCD_Char.h"
 
+#define SLEEP_ON
 #define ARRAY_SIZE        12
 #define COUNT             100
 #define PREFIX_ACCURACY   90
@@ -98,12 +99,11 @@ int main(void)
     CyDelay(500);
    
     // Start watch dog timer to check for blocks in code
-    //CyWdtStart(CYWDT_16_TICKS, CYWDT_LPMODE_NOCHANGE); // 4-6 ms
+    CyWdtStart(CYWDT_16_TICKS, CYWDT_LPMODE_DISABLED); // 32-48 ms
 
     // Displays Loading Message before receiving pre-fix=
     sprintf(display, "counting crabs...");
-    LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
-    LCD_Char_PrintString(display);
+    LCD_Display();
     
     /*  Sleep Timer will trigger an interrup upon wakeup from sleep (8ms)
     *   System must be put to sleep right after sleep timer start
@@ -114,30 +114,30 @@ int main(void)
     *   PM_SLEEP_TIME_NONE is a relic of PSoC3
     */
     
-    
+    #ifdef SLEEP_ON
     SleepTimer_Start(); 
     sleepModules();
     CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
+    #endif 
    
     
     for(;;)
     {
-        Display(); //Displays incoming data depending on prefix/data/postfix flags
-       
-        
+           
         /*  sleepFlag starts as FALSE set 
         *   Set to TRUE if wakeup ISR DOES NOT detects data
         *   Puts the module back to sleep
         */
-        
+        #ifdef SLEEP_ON
         if(sleepFlag == TRUE){
-            
+    
             sleepFlag = FALSE;
             SleepTimer_Start(); 
             sleepModules(); 
             CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
             
         }
+        #endif
     } // end of for(;;)
     
 } // end of main()
@@ -163,6 +163,7 @@ CY_ISR(Bit_Timer){
     // Check whether bit is currently 1 or 0
     if(Out_Comp_GetCompare() != 0){
         oneCount++;
+        
     }else{
         zeroCount++;
     }
@@ -224,20 +225,28 @@ CY_ISR(Bit_Timer){
             
             threeTransmissions++;
            
-        }
-        
-        //If 3 messages recieved or data not recieved for too long
-        //then, put module back to sleep and
-        //wait for new messages 
-        if(threeTransmissions > TRANSMISSIONS_3 || overTimeCount > OVERTIME  ){
-            threeTransmissions = 0;
-            sleepModules(); 
-            CyPmSleep(PM_SLEEP_TIME_NONE, PM_SLEEP_SRC_CTW);
-            
-        }
+        }      
             
         
     } // end of if(levelCounter == COUNT)
+    
+     Display(); //Displays incoming data depending on prefix/data/postfix flags
+    
+    //If 3 messages recieved or data not recieved for too long
+    //then, put module back to sleep and
+    //wait for new messages 
+    if(threeTransmissions > TRANSMISSIONS_3 || overTimeCount > OVERTIME  ){
+        threeTransmissions = 0;
+        overTimeCount = 0;
+        #ifdef SLEEP_ON
+        sleepFlag = TRUE; 
+        #endif
+        
+
+    }
+    
+
+    
 } /* END OF CY_ISR(HighF_LevelCount) */
 
 ///*********************************************************************
@@ -250,7 +259,12 @@ CY_ISR(Bit_Timer){
 // */
 CY_ISR(watchDogCheck){
     
+    sleepToggle_Write(TRUE);
+    CyDelay(Delay); 
+    sleepToggle_Write(FALSE);
     CyWdtClear(); 
+    
+    
         
 } /* END OF CY_ISR(watchDogCheck) */
 
@@ -263,16 +277,15 @@ CY_ISR(watchDogCheck){
 // * If no prefix, disable interrupt and nothing else
 // *********************************************************************
 // */
+
+
 CY_ISR(wakeUp_ISR){
-    
-    
-    
+     #ifdef SLEEP_ON   
     CyWdtClear(); 
     
     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
     
-    startModules();
-    
+    wakeUpModules(); 
    
     /*  If data detected DO NOT SLEEP
     *   Stop sleep timer
@@ -281,6 +294,9 @@ CY_ISR(wakeUp_ISR){
     */ 
     if(Out_Comp_GetCompare() != 0){
         SleepTimer_Stop();
+        LCD_Char_ClearDisplay(); 
+        sprintf(display, "counting crabs...");
+        LCD_Display(); 
         Bit_Timer_Start();
         //trigger interrupt to avoid data loss 
         Data_ISR_SetPending();
@@ -289,6 +305,8 @@ CY_ISR(wakeUp_ISR){
         sleepFlag = TRUE; 
         
     }
+    
+    #endif
 
 }/* END OF wakeUp_ISR */
 
@@ -330,6 +348,7 @@ void Display()
         LCD_Char_Position(1u,0u);
         char8 displayB[] = "bad";
         LCD_Char_PrintString(displayB);
+        CyDelay(200);
         decodeWrong = FALSE;
     }
 } /* END OF Display() */
@@ -392,6 +411,8 @@ void sleepModules(void){
 }
 
 void wakeUpModules(void){
+    checkWatchDogTimer_Wakeup();
+    checkWatchDogTimer_Start();
     CyPmRestoreClocks();
     LCD_Char_Wakeup();
     UART_Wakeup();
@@ -399,8 +420,6 @@ void wakeUpModules(void){
     Shift_Reg_Wakeup();
     Out_Comp_Wakeup();
     // Start timer to clear watch dog
-    checkWatchDogTimer_Wakeup();
-    checkWatchDogTimer_Start();
 }
 
 void startModules(void){
@@ -422,6 +441,9 @@ void startModules(void){
 
 void LCD_Display(void){
     
+    //LCD_Char_ClearDisplay();
+    //LCD_Char_Position(1u,0u);
+    //LCD_Char_PrintString("            ");
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
     LCD_Char_PrintString(display);
 
@@ -442,6 +464,7 @@ void accuracy_Check(int count, int accuracy){
         currentBit = 0x00; 
         zeroCount = 0; 
         Count_Out_Write(0);
+
 
     }
 

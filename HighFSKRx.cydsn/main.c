@@ -15,24 +15,27 @@
 #include "LCD_Char.h"
 
 #define SLEEP_ON
-#define ARRAY_SIZE        12
-#define COUNT             100
-#define PREFIX_ACCURACY   90
-#define DATA_ACCURACY     70
-#define DATA_LENGTH       7
-#define PREFIX            0xFF
-#define POSTFIX           0x01
-#define SUCCESS           0x1
-#define FAILURE           0x0
-#define TRUE              0x1
-#define FALSE             0x0
-#define ON                0x1
-#define OFF               0x0
-#define FiveSecs          5000
-#define TRANSMISSIONS_3   2
-#define Delay             4
-#define DATA_STORED       3
-#define OVERTIME          8105  
+#define ARRAY_SIZE          12
+#define COUNT               100
+#define PREFIX_ACCURACY     90
+#define DATA_ACCURACY       70
+#define DATA_LENGTH         7
+#define PREFIX              0xFF
+#define POSTFIX             0x01
+#define SUCCESS             0x1
+#define FAILURE             0x0
+#define TRUE                0x1
+#define FALSE               0x0
+#define ON                  0x1
+#define OFF                 0x0
+#define FiveSecs            5000
+#define TRANSMISSIONS_3     2
+#define Delay               4
+#define DATA_STORED         3
+#define OVERTIME            8105  
+#define INVALID             -1
+#define BYTE                8
+
 
 #define BIT_0_MASK 0x01
 #define BIT_1_MASK 0x02
@@ -52,6 +55,9 @@ void sleepModules(void);
 void wakeUpModules(void);
 void LCD_Display(void); 
 void accuracy_Check(int count, int accuracy); 
+void dataReset(void); 
+void dataTransmission(void); 
+uint8 majorityVote(void);
 
 // Interrupt for switching bits 5 ms
 CY_ISR_PROTO(Bit_Timer);
@@ -84,8 +90,8 @@ static uint8 postFixResult[DATA_STORED];
 // FLAGS for turning on messages on LCD screen
 static uint8 lcdFlagEncode = FALSE; // Turns on pre-fix message
 static uint8 lcdFlagData = FALSE; // Displays data 
-static uint8 lcdFlagDecode = FALSE; // good or bad postfix
-static uint8 decodeWrong = FALSE;
+static uint8 lcdFlagPostfix = FALSE; // good or bad postfix
+//static uint8 decodeWrong = FALSE;
 
 
 int main(void)
@@ -216,12 +222,12 @@ CY_ISR(Bit_Timer){
         if(postfixFlag == TRUE && (dataCount > DATA_LENGTH)){
             // Correct postfix is 0x01
             if(data == POSTFIX){
-             lcdFlagDecode = TRUE; // lcd flag for "good" post-fix
+                lcdFlagPostfix = TRUE; // lcd flag for "good" post-fix
             }else{
-                decodeWrong = TRUE; // lcd flag for "bad" post-fix
+                lcdFlagPostfix = FALSE; // lcd flag for "bad" post-fix
             }
-            postfixFlag = FALSE;
-            dataFlag = FALSE; //Don't want to check for data anymore
+            postFixResult[threeTransmissions] = lcdFlagPostfix; 
+            //dataFlag = FALSE; //Don't want to check for data anymore
             
             threeTransmissions++;
            
@@ -242,6 +248,9 @@ CY_ISR(Bit_Timer){
         sleepFlag = TRUE; 
         #endif
         
+        //majorityVote(void)
+        
+        dataReset(); 
 
     }
     
@@ -329,8 +338,9 @@ void Display()
         lcdFlagEncode = FALSE; 
     // When 9 bits are received, data will display at top of screen
     }else if(lcdFlagData == TRUE){
-        paritySuccess = CheckParity(crabs);
+        parityResult[threeTransmissions - 1 ] = CheckParity(crabs);
         crabs = crabs >> 1;
+        allData[threeTransmissions - 1] = crabs; 
         sprintf(OutputString, "Crabs:%i Err:%i",crabs, !paritySuccess);
         LCD_Char_ClearDisplay();
         LCD_Char_Position(0u,0u);
@@ -338,18 +348,20 @@ void Display()
         dataFlag = FALSE;
         lcdFlagData = FALSE;
     // Postfix will display good or bad below data on screen
-    }else if(lcdFlagDecode == TRUE){
+    }else if(postfixFlag == TRUE && lcdFlagPostfix == TRUE){
         LCD_Char_Position(1u,0u);
         char8 displayG[] = "good";
         LCD_Char_PrintString(displayG);
         dataFlag = FALSE;
-        lcdFlagDecode = FALSE;
-    }else if(decodeWrong == TRUE){
+        lcdFlagPostfix = FALSE;
+        postfixFlag = FALSE;
+    }else if(postfixFlag == TRUE && lcdFlagPostfix == FALSE){
         LCD_Char_Position(1u,0u);
         char8 displayB[] = "bad";
         LCD_Char_PrintString(displayB);
         CyDelay(200);
-        decodeWrong = FALSE;
+        lcdFlagPostfix = TRUE;
+        postfixFlag = FALSE;
     }
 } /* END OF Display() */
 
@@ -390,7 +402,7 @@ int CheckParity(int crabs)
 void SendData(void)
 {
     UART_WriteTxData(crabs);
-    if((paritySuccess == SUCCESS) && (decodeWrong != TRUE)){
+    if((paritySuccess == SUCCESS) && (lcdFlagPostfix == FALSE)){
         UART_WriteTxData(SUCCESS);
     }else{
         UART_WriteTxData(FAILURE);
@@ -470,6 +482,26 @@ void accuracy_Check(int count, int accuracy){
 
 }
 
+void dataReset(void){
+
+    int i;
+    for(i = 0; i <= TRANSMISSIONS_3; i++){
+        parityResult[i] = INVALID; 
+        postFixResult[i] = INVALID;
+        allData[i] = INVALID;
+    
+    }
+    crabs = INVALID; 
+
+}
+
+void dataTransmission(void){
+    
+    UART_WriteTxData(majorityVote()); 
+    
+
+}
+
 uint8 majorityVote(void){
     int i = 0;
     int success = 0;
@@ -478,71 +510,30 @@ uint8 majorityVote(void){
         if((parityResult[i] == SUCCESS) && (postFixResult[i] == SUCCESS)){
             success++;
         }
-        if(success >= DATA_STORED){
-            finalResult = allData[0];
-        }else{
-            int zero1 = allData[0] & BIT_0_MASK;
-            int zero2 = allData[1] & BIT_0_MASK;
-            int zero3 = allData[2] & BIT_0_MASK;
-            int zeros = zero1 + zero2 + zero3;
-            if(zeros > 1){
-                finalResult = finalResult | BIT_0_MASK;
-            }
-            int one1 = allData[0] & BIT_1_MASK;
-            int one2 = allData[1] & BIT_1_MASK;
-            int one3 = allData[2] & BIT_1_MASK;
-            int ones = one1 + one2 + one3;
-            if(ones > 1){
-                finalResult = finalResult | BIT_1_MASK;
-            }
-            int two1 = allData[0] & BIT_2_MASK;
-            int two2 = allData[1] & BIT_2_MASK;
-            int two3 = allData[2] & BIT_2_MASK;
-            int twos = two1 + two2 + two3;
-            if(twos > 1){
-                finalResult = finalResult | BIT_2_MASK;
-            }
-            int three1 = allData[0] & BIT_3_MASK;
-            int three2 = allData[1] & BIT_3_MASK;
-            int three3 = allData[2] & BIT_3_MASK;
-            int threes = three1 + three2 + three3;
-            if(threes > 1){
-                finalResult = finalResult | BIT_3_MASK;
-            }
-            int four1 = allData[0] & BIT_4_MASK;
-            int four2 = allData[1] & BIT_4_MASK;
-            int four3 = allData[2] & BIT_4_MASK;
-            int fours = four1 + four2 + four3;
-            if(fours > 1){
-                finalResult = finalResult | BIT_4_MASK;
-            }
-            int five1 = allData[0] & BIT_5_MASK;
-            int five2 = allData[1] & BIT_5_MASK;
-            int five3 = allData[2] & BIT_5_MASK;
-            int fives = five1 + five2 + five3;
-            if(fives > 1){
-                finalResult = finalResult | BIT_5_MASK;
-            }
-            int six1 = allData[0] & BIT_6_MASK;
-            int six2 = allData[1] & BIT_6_MASK;
-            int six3 = allData[2] & BIT_6_MASK;
-            int sixes = six1 + six2 + six3;
-            if(sixes > 1){
-                finalResult = finalResult | BIT_6_MASK;
-            }
-            int seven1 = allData[0] & BIT_7_MASK;
-            int seven2 = allData[1] & BIT_7_MASK;
-            int seven3 = allData[2] & BIT_7_MASK;
-            int sevens = seven1 + seven2 + seven3;
-            if(sevens > 1){
-                finalResult = finalResult | BIT_7_MASK;
-            }
-        }
     }
-    // Reset data array
-    allData[0] = 0;
-    allData[1] = 0;
-    allData[2] = 0;
+    
+    if(success >= DATA_STORED){
+        finalResult = allData[0];
+    }else{
+        int bit1;  
+        int j; 
+        int majorityResult = 0; 
+        
+        for(i = 0; i < BYTE; i++){
+            for (j = 0; j < DATA_STORED; j++){
+                bit1 = allData[j] & (BIT_0_MASK << i);
+                bit1 = bit1 >> i; 
+                majorityResult += bit1;
+            }
+            
+            if(majorityResult > 1){
+                finalResult = finalResult | (BIT_0_MASK << i);
+            }
+
+        }
+       
+    }
+    
     return finalResult;
 }
 

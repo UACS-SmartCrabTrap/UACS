@@ -29,6 +29,14 @@ int main(void)
     UART_Start();
     LCD_Start();
     isr_rx_StartEx(RxIsr);
+    
+        /* Clear LCD line. */
+    LCD_Position(0u, 0u);
+    LCD_PrintString("                    ");
+
+    /* Output string on LCD. */
+    LCD_Position(0u, 0u);
+    LCD_PrintString("Hello");
 
     for(;;)
     {

@@ -35,7 +35,7 @@
 /***************************************
 * UART/TESTING MACRO
 ***************************************/
-#define UART    DISABLED                                                                                                      
+#define UART    ENABLED                                                                                                      
 
 /* Character LCD String Length */
 #define LINE_STR_LENGTH     (20u)                                                              

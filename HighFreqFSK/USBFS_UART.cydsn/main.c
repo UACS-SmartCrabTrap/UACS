@@ -120,7 +120,18 @@ int main()
         /* Start UART interface and fill array with 3 parameters until valid */
         while(gettingData){
             while(0u == GetCrabs()){
-
+                if(sendReady == TRUE){
+                    while (0u == USBUART_CDCIsReady())
+                    {
+                    }
+                    USBUART_PutString("Data Ready");
+                    sendReady = FALSE;
+                    /* Wait until component is ready to send data to host. */
+                    while (0u == USBUART_CDCIsReady())
+                    {
+                    }
+                    USBUART_PutCRLF();
+                }
             }
             crabs = CalculateCrabs();
             if(crabs != ERROR){
@@ -370,18 +381,7 @@ CY_ISR(tx_done){
     if(countTx >= WAITTIME){
         dataDone = TRUE;
         sendReady = TRUE;
-        if(sendReady == TRUE){
-            while (0u == USBUART_CDCIsReady())
-            {
-            }
-            USBUART_PutString("Data Ready");
-            sendReady = FALSE;
-            /* Wait until component is ready to send data to host. */
-            while (0u == USBUART_CDCIsReady())
-            {
-            }
-            USBUART_PutCRLF();
-        }
+
         countTx = 0;
         Data_Timer_Stop();
     }

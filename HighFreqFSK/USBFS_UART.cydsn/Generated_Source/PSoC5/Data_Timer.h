@@ -168,7 +168,7 @@ void Data_Timer_Wakeup(void)        ;
 *    Initialial Parameter Constants
 ***************************************/
 
-#define Data_Timer_INIT_PERIOD             266666665u
+#define Data_Timer_INIT_PERIOD             65555554u
 #define Data_Timer_INIT_CAPTURE_MODE       ((uint8)((uint8)1u << Data_Timer_CTRL_CAP_MODE_SHIFT))
 #define Data_Timer_INIT_TRIGGER_MODE       ((uint8)((uint8)0u << Data_Timer_CTRL_TRIG_MODE_SHIFT))
 #if (Data_Timer_UsingFixedFunction)

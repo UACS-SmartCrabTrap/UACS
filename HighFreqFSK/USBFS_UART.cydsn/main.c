@@ -78,9 +78,10 @@ int oneDigit = 0; // flag for end of input with one character
 int twoDigit = 0; // flag for end of input with two characters
 int error = 0; // flag for input error
 int i = 2; // to iterate through data array
-int dataDone = TRUE; // check if 
+int dataDone = TRUE; // check if data is done sending
 int sendReady = FALSE;
 uint16 count;
+uint16 countTx = 0;
 char8 lineStr[LINE_STR_LENGTH];
 uint8 buffer[USBUART_BUFFER_SIZE];
 uint8 data[3] = {0};
@@ -102,7 +103,6 @@ int main()
     /* Start USBFS and UART  */
     USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
     UART_Start();     
-    Data_Timer_Start();
     
     tx_done_StartEx(tx_done);
 
@@ -120,18 +120,7 @@ int main()
         /* Start UART interface and fill array with 3 parameters until valid */
         while(gettingData){
             while(0u == GetCrabs()){
-                if(sendReady == TRUE){
-                    while (0u == USBUART_CDCIsReady())
-                    {
-                    }
-                    USBUART_PutString("Data Ready");
-                    sendReady = FALSE;
-                    /* Wait until component is ready to send data to host. */
-                    while (0u == USBUART_CDCIsReady())
-                    {
-                    }
-                    USBUART_PutCRLF();
-                }
+
             }
             crabs = CalculateCrabs();
             if(crabs != ERROR){
@@ -377,12 +366,23 @@ void DisplayCrabs(int crabs){
 *
 *******************************************************************************/
 CY_ISR(tx_done){
-    count++;
-    if(count >= 10){
+    countTx++; // every 41 seconds
+    if(countTx >= 80){
         dataDone = TRUE;
         sendReady = TRUE;
-        
-        count = 0;
+        if(sendReady == TRUE){
+            while (0u == USBUART_CDCIsReady())
+            {
+            }
+            USBUART_PutString("Data Ready");
+            sendReady = FALSE;
+            /* Wait until component is ready to send data to host. */
+            while (0u == USBUART_CDCIsReady())
+            {
+            }
+            USBUART_PutCRLF();
+        }
+        countTx = 0;
         Data_Timer_Stop();
     }
 

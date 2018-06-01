@@ -66,6 +66,7 @@ static uint8 decodeFlag = 0; // Flag to start looking for post-fix
 static uint8 paritySuccess = 0; // Flag for whether transmitted parity matches data
 static uint8 threeTransmissions = 0; // checks for 3 transmission before reinstatiating sleep timer
 static uint8 sleepFlag = FALSE; 
+static uint8 countSleep = 0;
 
 // LCD String Variables
 static char OutputString[ARRAY_SIZE];
@@ -100,10 +101,10 @@ int main(void)
     watchDogCheck_StartEx(watchDogCheck); 
       
     // Start watch dog timer to check for blocks in code
-    CyWdtStart(CYWDT_16_TICKS, CYWDT_LPMODE_NOCHANGE); // 4-6 ms
+    CyWdtStart(CYWDT_16_TICKS, CYWDT_LPMODE_DISABLED); // 4-6 ms, 32-48 ms
     
     SleepTimer_Start();
-
+   
     // Displays Loading Message before receiving pre-fix=
     sprintf(display, "counting crabs...");
     LCD_Char_Position(0u,0u); // Resets cursor to top of LCD Screen
@@ -236,8 +237,11 @@ CY_ISR(watchDogCheck){
 // *********************************************************************
 // */
 CY_ISR(wakeUp_ISR){
-    
-    CyWdtClear(); 
+//    countSleep++;
+//    if(countSleep >= 3){
+//        countSleep = 0;
+//        CyWdtClear(); 
+//    }
     SleepTimer_GetStatus(); // Clears the sleep timer interrupt
     Power_Toggle_Write(TRUE);
     startModules();
@@ -255,6 +259,7 @@ CY_ISR(wakeUp_ISR){
     }else{
         sleepFlag = TRUE; 
     }
+    sleepFlag = TRUE; 
 
 }/* END OF wakeUp_ISR */
 
@@ -352,6 +357,7 @@ void stopModules(void){
     Out_Comp_Sleep();
     Bit_Timer_Sleep();
     checkWatchDogTimer_Sleep();
+    watchDogCheck_ClearPending();
     CyPmSaveClocks();
 
 }

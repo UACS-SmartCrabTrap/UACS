@@ -93,8 +93,11 @@ CY_ISR(RxIsr)
                 LCD_PrintString(data);
 
             }else{
+                /* Clear LCD line. */
+                LCD_Position(0u, 0u);
+                LCD_PrintString("             ");
                 isr_rx_SetPending();
-                sprintf(data,"%d", errorStatus);
+                sprintf(data,"Error %d", errorStatus);
                 LCD_PrintString(data);
             }
 
@@ -103,7 +106,6 @@ CY_ISR(RxIsr)
     }while((rxStatus & UART_RX_STS_FIFO_NOTEMPTY) != 0u);
     
     isr_rx_ClearPending();
-    //sleepToggle_Write(OFF);
 } //end CY_ISR(RxIsr)
 
 

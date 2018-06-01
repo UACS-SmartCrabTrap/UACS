@@ -15,27 +15,24 @@
 #include "LCD_Char.h"
 
 #define SLEEP_ON
-#define ARRAY_SIZE          12
-#define COUNT               100
-#define PREFIX_ACCURACY     90
-#define DATA_ACCURACY       70
-#define DATA_LENGTH         7
-#define PREFIX              0xFF
-#define POSTFIX             0x01
-#define SUCCESS             0x1
-#define FAILURE             0x0
-#define TRUE                0x1
-#define FALSE               0x0
-#define ON                  0x1
-#define OFF                 0x0
-#define FiveSecs            5000
-#define TRANSMISSIONS_3     2
-#define Delay               4
-#define DATA_STORED         3
-#define OVERTIME            8105  
-#define INVALID             -1
-#define BYTE                8
-
+#define ARRAY_SIZE        12
+#define COUNT             100
+#define PREFIX_ACCURACY   90
+#define DATA_ACCURACY     70
+#define DATA_LENGTH       7
+#define PREFIX            0xFF
+#define POSTFIX           0x01
+#define SUCCESS           0x1
+#define FAILURE           0x0
+#define TRUE              0x1
+#define FALSE             0x0
+#define ON                0x1
+#define OFF               0x0
+#define FiveSecs          5000
+#define TRANSMISSIONS_3   2
+#define Delay             4
+#define DATA_STORED       3
+#define OVERTIME          8105  
 
 #define BIT_0_MASK 0x01
 #define BIT_1_MASK 0x02
@@ -55,9 +52,6 @@ void sleepModules(void);
 void wakeUpModules(void);
 void LCD_Display(void); 
 void accuracy_Check(int count, int accuracy); 
-void dataReset(void); 
-void dataTransmission(void); 
-uint8 majorityVote(void);
 
 // Interrupt for switching bits 5 ms
 CY_ISR_PROTO(Bit_Timer);
@@ -83,15 +77,15 @@ static char OutputString[ARRAY_SIZE];
 static char display[ARRAY_SIZE];
 
 // Store Received Data
-static int8 allData[DATA_STORED];
-static int8 parityResult[DATA_STORED];
-static int8 postFixResult[DATA_STORED];
+static uint8 allData[DATA_STORED];
+static uint8 parityResult[DATA_STORED];
+static uint8 postFixResult[DATA_STORED];
 
 // FLAGS for turning on messages on LCD screen
 static uint8 lcdFlagEncode = FALSE; // Turns on pre-fix message
 static uint8 lcdFlagData = FALSE; // Displays data 
-static uint8 lcdFlagPostfix = FALSE; // good or bad postfix
-//static uint8 decodeWrong = FALSE;
+static uint8 lcdFlagDecode = FALSE; // good or bad postfix
+static uint8 decodeWrong = FALSE;
 
 
 int main(void)
@@ -222,12 +216,12 @@ CY_ISR(Bit_Timer){
         if(postfixFlag == TRUE && (dataCount > DATA_LENGTH)){
             // Correct postfix is 0x01
             if(data == POSTFIX){
-                lcdFlagPostfix = TRUE; // lcd flag for "good" post-fix
+             lcdFlagDecode = TRUE; // lcd flag for "good" post-fix
             }else{
-                lcdFlagPostfix = FALSE; // lcd flag for "bad" post-fix
+                decodeWrong = TRUE; // lcd flag for "bad" post-fix
             }
-            postFixResult[threeTransmissions] = lcdFlagPostfix; 
-            //dataFlag = FALSE; //Don't want to check for data anymore
+            postfixFlag = FALSE;
+            dataFlag = FALSE; //Don't want to check for data anymore
             
             threeTransmissions++;
            
@@ -244,14 +238,10 @@ CY_ISR(Bit_Timer){
     if(threeTransmissions > TRANSMISSIONS_3 || overTimeCount > OVERTIME  ){
         threeTransmissions = 0;
         overTimeCount = 0;
-        //dataTransmission(); // send final data result to buoy module
         #ifdef SLEEP_ON
         sleepFlag = TRUE; 
         #endif
         
-        //majorityVote(void)
-        
-        dataReset(); 
 
     }
     
@@ -339,9 +329,8 @@ void Display()
         lcdFlagEncode = FALSE; 
     // When 9 bits are received, data will display at top of screen
     }else if(lcdFlagData == TRUE){
-        parityResult[threeTransmissions - 1 ] = CheckParity(crabs);
+        paritySuccess = CheckParity(crabs);
         crabs = crabs >> 1;
-        allData[threeTransmissions - 1] = crabs; 
         sprintf(OutputString, "Crabs:%i Err:%i",crabs, !paritySuccess);
         LCD_Char_ClearDisplay();
         LCD_Char_Position(0u,0u);
@@ -349,21 +338,18 @@ void Display()
         dataFlag = FALSE;
         lcdFlagData = FALSE;
     // Postfix will display good or bad below data on screen
-    }else if(postfixFlag == TRUE && lcdFlagPostfix == TRUE){
+    }else if(lcdFlagDecode == TRUE){
         LCD_Char_Position(1u,0u);
         char8 displayG[] = "good";
         LCD_Char_PrintString(displayG);
         dataFlag = FALSE;
-        lcdFlagPostfix = FALSE;
-        postfixFlag = FALSE;
-    }else if(postfixFlag == TRUE && lcdFlagPostfix == FALSE){
+        lcdFlagDecode = FALSE;
+    }else if(decodeWrong == TRUE){
         LCD_Char_Position(1u,0u);
         char8 displayB[] = "bad";
         LCD_Char_PrintString(displayB);
         CyDelay(200);
-        //lcdFlagPostfix = TRUE;
-        dataFlag = FALSE;
-        postfixFlag = FALSE;
+        decodeWrong = FALSE;
     }
 } /* END OF Display() */
 
@@ -404,7 +390,7 @@ int CheckParity(int crabs)
 void SendData(void)
 {
     UART_WriteTxData(crabs);
-    if((paritySuccess == SUCCESS) && (lcdFlagPostfix == FALSE)){
+    if((paritySuccess == SUCCESS) && (decodeWrong != TRUE)){
         UART_WriteTxData(SUCCESS);
     }else{
         UART_WriteTxData(FAILURE);
@@ -484,197 +470,79 @@ void accuracy_Check(int count, int accuracy){
 
 }
 
-void dataReset(void){
-
-    int i;
-    for(i = 0; i <= TRANSMISSIONS_3; i++){
-        parityResult[i] = INVALID; 
-        postFixResult[i] = INVALID;
-        allData[i] = INVALID;
-    
-    }
-    crabs = INVALID; 
-
-}
-
-void dataTransmission(void){
-    uint8 finalData = majorityVote();
-    sprintf(display,"crabs:%d",finalData);
-    LCD_Display(); 
-    UART_WriteTxData(finalData); 
-    
-
-}
-
 uint8 majorityVote(void){
     int i = 0;
-    int paritySuccess = 0;
-    int postSuccess = 0; 
+    int success = 0;
     uint8 finalResult = 0;
-    int majorityFlag = FALSE;
-    int correctParities[DATA_STORED];
-    int correctPosts[DATA_STORED];
-    
     for(i = 0; i<DATA_STORED; i++){
-        if(parityResult[i] == SUCCESS){
-           correctParities[paritySuccess] = i;  
-           paritySuccess++;
+        if((parityResult[i] == SUCCESS) && (postFixResult[i] == SUCCESS)){
+            success++;
         }
-        if(postFixResult[i] == SUCCESS){
-           correctPosts[postSuccess] = i;
-           postSuccess++;
-        }        
-    }
-    
-    switch (paritySuccess) {
-    
-        case 0:
-            switch (postSuccess){
-                case 0:
-                    finalResult = INVALID; 
-                    break;
-                case 1:
-                    finalResult = allData[correctPosts[0]];
-                    break;
-                case 2:
-                    if(allData[correctPosts[0]] == allData[correctPosts[1]]){
-                        finalResult = allData[correctPosts[0]]; 
-                    } else{
-                        finalResult = INVALID; 
-                    } 
-                    break;
-                case 3:
-                    majorityFlag = TRUE; 
-                    break;
-                default:
-                    break; 
+        if(success >= DATA_STORED){
+            finalResult = allData[0];
+        }else{
+            int zero1 = allData[0] & BIT_0_MASK;
+            int zero2 = allData[1] & BIT_0_MASK;
+            int zero3 = allData[2] & BIT_0_MASK;
+            int zeros = zero1 + zero2 + zero3;
+            if(zeros > 1){
+                finalResult = finalResult | BIT_0_MASK;
             }
-            break;
-        case 1:
-            switch (postSuccess){
-                case 0:
-                    finalResult = INVALID; 
-                    break;
-                case 1:
-                    if(correctPosts[0] == correctParities[0]){
-                        finalResult = allData[correctPosts[0]];
-                    }else{
-                        finalResult = INVALID;
-                    }
-                    break;
-                case 2:
-                    if(correctPosts[0] == correctParities[0]){
-                        finalResult = allData[correctPosts[0]];
-                    }else if(correctPosts[1] == correctParities[0]){
-                        finalResult = allData[correctPosts[1]];
-                    } else {
-                        finalResult = INVALID;
-                    }
-                    break;
-                case 3:
-                    majorityFlag = TRUE; 
-                    break;
-                default:
-                    break; 
-            }            
-            break;
-        case 2:
-            switch (postSuccess){
-                case 0:
-                    if(allData[correctParities[0]] == allData[correctParities[1]]){
-                        finalResult = allData[correctParities[0]];
-                    }else{
-                         finalResult = INVALID;
-                    }
-                    break;
-                case 1:
-                    if(correctPosts[0] == correctParities[0]){
-                        finalResult = allData[correctParities[0]];
-                    }else if (correctPosts[0] == correctParities[1]){
-                        finalResult = allData[correctParities[1]];
-                    }else {
-                        finalResult = INVALID;
-                    }
-                   
-                    break;
-                case 2:
-                    if(correctPosts[0] == correctParities[0]){
-                        finalResult = allData[correctParities[0]];
-                    }else if (correctPosts[0] == correctParities[1]){
-                        finalResult = allData[correctParities[1]];
-                    }else if(correctPosts[1] == correctParities[0]) {
-                        finalResult = allData[correctParities[0]];
-                    }else if(correctPosts[1] == correctParities[1]) {
-                        finalResult = allData[correctParities[1]];
-                    }
-                    
-                    else{
-                        finalResult = INVALID;
-                    }
-                    
-                    break;
-                case 3:
-                    majorityFlag = TRUE; 
-                    break;
-                default:
-                    break; 
+            int one1 = allData[0] & BIT_1_MASK;
+            int one2 = allData[1] & BIT_1_MASK;
+            int one3 = allData[2] & BIT_1_MASK;
+            int ones = one1 + one2 + one3;
+            if(ones > 1){
+                finalResult = finalResult | BIT_1_MASK;
             }
-            
-            break;
-        case 3: //all good parities
-            switch (postSuccess){
-                case 0:
-                    majorityFlag = TRUE;
-                    break;
-                case 1:
-                    finalResult = allData[correctPosts[0]]; 
-                    break;
-                case 2:
-                    if(allData[correctPosts[0]] == allData[correctPosts[1]]){
-                        finalResult = allData[correctPosts[0]]; 
-                    } else{
-                        finalResult = INVALID; 
-                    }        
-                    break;
-                case 3:
-                    majorityFlag = TRUE;
-                    break;
-                default:
-                    
-                    break; 
+            int two1 = allData[0] & BIT_2_MASK;
+            int two2 = allData[1] & BIT_2_MASK;
+            int two3 = allData[2] & BIT_2_MASK;
+            int twos = two1 + two2 + two3;
+            if(twos > 1){
+                finalResult = finalResult | BIT_2_MASK;
             }
-            
-            break; 
-        default:
-            break;
-    
-    }
-    
-    if(majorityFlag == TRUE){
-        
-        int bit1;  
-        int j; 
-        int majorityResult = 0; 
-        
-        for(i = 0; i < BYTE; i++){
-            for (j = 0; j < DATA_STORED; j++){
-                bit1 = allData[j] & (BIT_0_MASK << i);
-                bit1 = bit1 >> i; 
-                majorityResult += bit1;
+            int three1 = allData[0] & BIT_3_MASK;
+            int three2 = allData[1] & BIT_3_MASK;
+            int three3 = allData[2] & BIT_3_MASK;
+            int threes = three1 + three2 + three3;
+            if(threes > 1){
+                finalResult = finalResult | BIT_3_MASK;
             }
-            
-            if(majorityResult > 1){
-                finalResult = finalResult | (BIT_0_MASK << i);
+            int four1 = allData[0] & BIT_4_MASK;
+            int four2 = allData[1] & BIT_4_MASK;
+            int four3 = allData[2] & BIT_4_MASK;
+            int fours = four1 + four2 + four3;
+            if(fours > 1){
+                finalResult = finalResult | BIT_4_MASK;
             }
-
+            int five1 = allData[0] & BIT_5_MASK;
+            int five2 = allData[1] & BIT_5_MASK;
+            int five3 = allData[2] & BIT_5_MASK;
+            int fives = five1 + five2 + five3;
+            if(fives > 1){
+                finalResult = finalResult | BIT_5_MASK;
+            }
+            int six1 = allData[0] & BIT_6_MASK;
+            int six2 = allData[1] & BIT_6_MASK;
+            int six3 = allData[2] & BIT_6_MASK;
+            int sixes = six1 + six2 + six3;
+            if(sixes > 1){
+                finalResult = finalResult | BIT_6_MASK;
+            }
+            int seven1 = allData[0] & BIT_7_MASK;
+            int seven2 = allData[1] & BIT_7_MASK;
+            int seven3 = allData[2] & BIT_7_MASK;
+            int sevens = seven1 + seven2 + seven3;
+            if(sevens > 1){
+                finalResult = finalResult | BIT_7_MASK;
+            }
         }
-        
-    }   
- 
-        
-       
-    
-    
+    }
+    // Reset data array
+    allData[0] = 0;
+    allData[1] = 0;
+    allData[2] = 0;
     return finalResult;
 }
 

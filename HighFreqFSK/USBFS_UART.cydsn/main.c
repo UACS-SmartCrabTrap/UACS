@@ -60,7 +60,7 @@
 #define FALSE 0x0
 #define DATA_LENGTH 4
 #define DECODE_VALUE 0x01
-//
+#define WAITTIME 80
 #define PREFIX_BIT_LENGTH 6
 #define PREFIX_MESSAGE 0xFF
 
@@ -366,8 +366,8 @@ void DisplayCrabs(int crabs){
 *
 *******************************************************************************/
 CY_ISR(tx_done){
-    countTx++; // every 41 seconds
-    if(countTx >= 80){
+    countTx++; // every 1.024 seconds
+    if(countTx >= WAITTIME){
         dataDone = TRUE;
         sendReady = TRUE;
         if(sendReady == TRUE){
